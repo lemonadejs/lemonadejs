@@ -1,0 +1,17 @@
+{
+    "name": "lemonadejs",
+    "title": "Micro two-way binding and hook JavaScript vanilla library.",
+    "description": "Lemonade is a lightweight, micro vanilla javascript library to create quick and reusable JS components without dependencies.",
+    "author": {
+        "name": "Paul Hodel <paul@jexcel.net>",
+        "url": "https://bossanova.uk/lemonadejs"
+    },
+    "keywords": [
+        "two-way binding",
+        "hooks",
+        "js",
+        "library"
+    ],
+    "main": "dist/lemonade.js",
+    "version": "1.0.1"
+}
