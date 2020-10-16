@@ -12,6 +12,6 @@
         "js",
         "library"
     ],
-    "main": "dist/lemonade.js",
-    "version": "1.0.1"
+    "main": "dist/lemonadejs.js",
+    "version": "1.0.2"
 }
