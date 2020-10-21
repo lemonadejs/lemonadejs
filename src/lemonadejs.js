@@ -28,6 +28,16 @@
             self = {};
         }
 
+        // Verify pending in the queue
+        var queue = function(q) {
+            if (q.length) {
+                var t = null;
+                while (t = q.shift()) {
+                    t.onload();
+                }
+            }
+        }
+
         if (o instanceof Element || o instanceof HTMLDocument) {
             el.appendChild(o);
         } else {
@@ -35,14 +45,18 @@
                 var o = new o();
                 el.appendChild(o.create());
             } else {
-                el.appendChild(o(self));
+                var o = o(self);
+                el.appendChild(o);
+                // Verify any pending ready
+                if (o.self && o.self.queue) {
+                    queue(o.self.queue);
+                }
             }
         }
 
-        if (self && self.queue) {
-            for (var i = 0; i < self.queue.length; i++) {
-                self.queue[i].onload();
-            }
+        // Verify any pending ready
+        if (self.queue) {
+            queue(self.queue);
         }
 
         return o;
@@ -54,9 +68,11 @@
          * @param html - template
          * @param s - self component object
          */
-        var obj = function(html, s) {
+        var obj = function(html, self) {
             // Self
-            var self = s ? s : {};
+            if (! self) {
+                self = {};
+            }
             // Create only if is a new self
             if (! self.state) {
                 self.state = {};
@@ -66,7 +82,6 @@
             }
             // Queue
             self.queue = [];
-
             // Create the root element
             var div = document.createElement('div');
 
@@ -74,12 +89,14 @@
             div.innerHTML = html.trim();
 
             // Already single DOM, do not need a container
-            if (div.children.length == 1) {
-                div = div.children[0];
+            if (div.childNodes.length == 1) {
+                div = div.childNodes[0];
             }
 
             // Parse the content
-            parse(div.children.length > 1 ? div : div.children[0], self);
+            parse(div, self);
+            // Share self
+            div.self = self;
 
             return div;
         }
@@ -164,10 +181,8 @@
                         element.appendChild(e);
                     }
                 } else {
-                    if (typeof(element[type]) !== 'undefined') {
-                        e = element;
-                        e[type] = value;
-                    }
+                    e = element;
+                    e[type] = value;
                 }
 
                 if (! e) {
@@ -225,7 +240,7 @@
             // Attributes
             var attr = {};
 
-            if (element.attributes.length) {
+            if (element.attributes && element.attributes.length) {
                 for (var i = 0; i < element.attributes.length; i++) {
                     attr[element.attributes[i].name] = element.attributes[i].value;
                 }
@@ -287,7 +302,7 @@
                                 var property = 'value';
                             }
                             // Way back
-                            create(element, { p:0, v:attr[k[i]] }, property, self);
+                            create(element, { v:attr[k[i]] }, property, self);
                             // Remove attribute
                             element.removeAttribute(k[i]);
                         } else {
