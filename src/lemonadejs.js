@@ -1,5 +1,5 @@
 /**
- * lemonadejs v1.0.2
+ * lemonadejs v1.0.3
  *
  * Author: Paul Hodel <paul.hodel@gmail.com>
  * Website: https://bossanova.uk/lemonadejs/
