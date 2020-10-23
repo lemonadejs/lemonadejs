@@ -1,5 +1,5 @@
 /**
- * lemonadejs v1.0.3
+ * lemonadejs v1.0.4
  *
  * Author: Paul Hodel <paul.hodel@gmail.com>
  * Website: https://bossanova.uk/lemonadejs/
@@ -16,9 +16,9 @@
 
     'use strict';
 
-    var lemonadejs = {};
+    var L = {};
 
-    lemonadejs.render = function(o, el, self) {
+    L.render = function(o, el, self) {
         if (! (el instanceof Element || el instanceof HTMLDocument)) {
             console.log('DOM element given is not valid')
             return false;
@@ -28,47 +28,44 @@
             self = {};
         }
 
-        // Verify pending in the queue
-        var queue = function(q) {
-            if (q.length) {
-                var t = null;
-                while (t = q.shift()) {
-                    t.onload();
-                }
-            }
-        }
-
         if (o instanceof Element || o instanceof HTMLDocument) {
             el.appendChild(o);
         } else {
-            if (lemonadejs.isClass(o)) {
-                var o = new o();
-                el.appendChild(o.create());
+            if (L.isClass(o)) {
+                var o = new o().create();
             } else {
                 var o = o(self);
-                el.appendChild(o);
-                // Verify any pending ready
-                if (o.self && o.self.queue) {
-                    queue(o.self.queue);
-                }
             }
         }
 
+        // Append child
+        el.appendChild(o);
+
         // Verify any pending ready
-        if (self.queue) {
-            queue(self.queue);
+        if (o.self && o.self.queue) {
+            var q = null;
+            while (q = o.self.queue.shift()) {
+                q.onload();
+            }
         }
 
         return o;
     }
 
-    lemonadejs.element = (function() {
+    L.blender = function(template, self, el) {
+        return L.render(L.element(template, self), el, self);
+    }
+
+    /**
+     * Mix the self and the template
+     */
+    L.element = (function() {
         /**
          * Create a new component
          * @param html - template
          * @param s - self component object
          */
-        var obj = function(html, self) {
+        var obj = function(template, self) {
             // Self
             if (! self) {
                 self = {};
@@ -86,7 +83,7 @@
             var div = document.createElement('div');
 
             // Get the DOM content
-            div.innerHTML = html.trim();
+            div.innerHTML = template.trim();
 
             // Already single DOM, do not need a container
             if (div.childNodes.length == 1) {
@@ -336,7 +333,7 @@
                     for (var i = 0; i < element.attributes.length; i++) {
                         e[element.attributes[i].name] = element.attributes[i].value;
                     }
-                    if (lemonadejs.isClass(m)) {
+                    if (L.isClass(m)) {
                         var instance = new m();
                         element.appendChild(instance.create());
                     } else {
@@ -349,16 +346,16 @@
         return obj;
     })();
 
-    lemonadejs.isClass = function(func) {
+    L.isClass = function(func) {
         return typeof func === 'function' && /^class\s/.test(Function.prototype.toString.call(func));
     }
 
-    lemonadejs.component = class {
+    L.component = class {
         constructor() {
         }
 
         create() {
-            var element = lemonadejs.element(this.render(), this);
+            var element = L.element(this.render(), this);
 
             if (typeof(this.onload) == 'function') {
                 this.onload(element, this);
@@ -368,5 +365,5 @@
         }
     }
 
-    return lemonadejs;
+    return L;
 })));
