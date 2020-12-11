@@ -1,8 +1,7 @@
 /**
- * lemonadejs v1.0.4
+ * Lemonadejs v1.0.4
  *
- * Author: Paul Hodel <paul.hodel@gmail.com>
- * Website: https://bossanova.uk/lemonadejs/
+ * Website: https://lemonadejs.net
  * Description: Create amazing web based reusable components.
  *
  * This software is distribute under MIT License
@@ -18,8 +17,15 @@
 
     var L = {};
 
+    L.isDOM = function(o) {
+        return (o instanceof Element || o instanceof HTMLDocument);
+    }
+
+    /**
+     * Render a lemonade DOM element, method or class into a root DOM element
+     */
     L.render = function(o, el, self) {
-        if (! (el instanceof Element || el instanceof HTMLDocument)) {
+        if (! L.isDOM(el)) {
             console.log('DOM element given is not valid')
             return false;
         }
@@ -28,19 +34,27 @@
             self = {};
         }
 
-        if (o instanceof Element || o instanceof HTMLDocument) {
-            el.appendChild(o);
-        } else {
+        if (! L.isDOM(o)) {
             if (L.isClass(o)) {
                 var o = new o().create();
-            } else {
+            } else if (typeof(o) == 'function') {
                 var o = o(self);
             }
         }
 
-        // Append child
+        // Append child if not appended
         el.appendChild(o);
 
+        // Process ready queue
+        L.queue(o);
+
+        return o;
+    }
+
+    /**
+     * Process the queue from one lemonadejs DOM element
+     */
+    L.queue = function(o) {
         // Verify any pending ready
         if (o.self && o.self.queue) {
             var q = null;
@@ -48,24 +62,33 @@
                 q.onload();
             }
         }
-
-        return o;
     }
 
+    /**
+     * Mix all template, self
+     */
     L.blender = function(template, self, el) {
         return L.render(L.element(template, self), el, self);
     }
 
     /**
-     * Mix the self and the template
+     * Apply self to an existing appended DOM element
      */
-    L.element = (function() {
+    L.apply = function(el, self) {
+        L.template(el, self);
+        L.queue(el);
+    }
+
+        /**
+     * Mix the self and the template or DOM element
+     */
+    L.template = (function() {
         /**
          * Create a new component
-         * @param html - template
+         * @param mixed - DOM/template
          * @param s - self component object
          */
-        var obj = function(template, self) {
+        var obj = function(t, self) {
             // Self
             if (! self) {
                 self = {};
@@ -79,15 +102,19 @@
             }
             // Queue
             self.queue = [];
+
+            if (! L.isDOM(t)) {
             // Create the root element
             var div = document.createElement('div');
 
             // Get the DOM content
-            div.innerHTML = template.trim();
-
-            // Already single DOM, do not need a container
-            if (div.childNodes.length == 1) {
-                div = div.childNodes[0];
+                div.innerHTML = t.trim();
+                // Already single DOM, do not need a container
+                if (div.childNodes.length == 1) {
+                    div = div.childNodes[0];
+                }
+            } else {
+                var div = t;
             }
 
             // Parse the content
@@ -111,17 +138,16 @@
                 if (self.tracking[property]) {
                     for (var i = 0; i < self.tracking[property].length; i++) {
                         var value = eval(self.tracking[property][i].v);
-                        if (self.tracking[property][i].property == 'html') {
+                        if (self.tracking[property][i].property == 'innerHTML') {
                             self.tracking[property][i].element.innerHTML = value;
                         } else if (self.tracking[property][i].property == 'textContent') {
                             self.tracking[property][i].element.textContent = value;
                         } else if (self.tracking[property][i].property == 'value') {
-                            if (typeof(self.tracking[property][i].element.change) == 'function') {
-                                if (self.tracking[property][i].element.value != value) {
+                            if (self.tracking[property][i].element.value != value) {
+                                self.tracking[property][i].element.value = value;
+                                if (typeof(self.tracking[property][i].element.change) == 'function') {
                                     self.tracking[property][i].element.change(value);
                                 }
-                            } else {
-                                self.tracking[property][i].element.value = value;
                             }
                         } else if (self.tracking[property][i].property == 'checked') {
                             if (self.tracking[property][i].element.type == 'radio') {
@@ -168,7 +194,7 @@
             var tokens = res.v.match(/self\.([a-zA-Z0-9_].*?)*/g);
             if (tokens.length) {
                 // Value
-                var value = eval(res.v);
+                var value = eval(res.v) || '';
                 // Create text node
                 if (type == 'textContent') {
                     var e = document.createTextNode(value);
@@ -217,7 +243,7 @@
                     return '';
                 }));
             } else {
-                if (typeof(element[type]) == 'string') {
+                if (typeof(element[type]) == 'string' && element[type]) {
                     element[type] = element[type].replace(/\{\{(.*?)\}\}/g, function (a,b,c,d) {
                         result.push({ p: c - index, v: b });
                         index = index + a.length;
@@ -227,6 +253,10 @@
             }
 
             if (result.length) {
+                if (result.length == 1 && type == 'textContent' && ! element.innerText) {
+                    type = 'innerHTML';
+                }
+
                 for (var i = result.length - 1; i >= 0; i--) {
                     create(element, result[i], type, self);
                 }
@@ -333,18 +363,16 @@
                     for (var i = 0; i < element.attributes.length; i++) {
                         e[element.attributes[i].name] = element.attributes[i].value;
                     }
-                    if (L.isClass(m)) {
-                        var instance = new m();
-                        element.appendChild(instance.create());
-                    } else {
-                        element.appendChild(m(e));
-                    }
+
+                    L.render(m, element, e);
                 }
             }
         }
 
         return obj;
     })();
+
+    L.element = L.template;
 
     L.isClass = function(func) {
         return typeof func === 'function' && /^class\s/.test(Function.prototype.toString.call(func));
