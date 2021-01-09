@@ -1,5 +1,5 @@
 /**
- * Lemonadejs v1.1.0
+ * Lemonadejs v1.2.0
  *
  * Website: https://lemonadejs.net
  * Description: Create amazing web based reusable components.
@@ -44,13 +44,6 @@
         return (o instanceof Element || o instanceof HTMLDocument);
     }
 
-    /**
-     * The argument is a valid JS class
-     */
-    var isClass = function(f) {
-        return typeof f === 'function' && /^class\s/.test(Function.prototype.toString.call(f));
-    }
-
     // Lemonadejs object
     var L = {};
 
@@ -72,10 +65,9 @@
 
         // Flexible element (class or method)
         if (! isDOM(o)) {
-            if (isClass(o)) {
-                var o = new o().create();
-            } else if (typeof(o) == 'function') {
-                var o = o(self);
+            o = new o(self);
+            if (typeof(o.render) == 'function') {
+                o = L.template(o.render(), o);
             }
         }
 
@@ -411,16 +403,6 @@
 
     L.component = class {
         constructor() {
-        }
-
-        create() {
-            var element = L.template(this.render(), this);
-
-            if (typeof(this.onload) == 'function') {
-                this.onload(element, this);
-            }
-
-            return element;
         }
     }
 
