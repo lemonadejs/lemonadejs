@@ -1,5 +1,5 @@
 /**
- * Lemonadejs v1.0.4
+ * Lemonadejs v1.1.0
  *
  * Website: https://lemonadejs.net
  * Description: Create amazing web based reusable components.
@@ -15,46 +15,19 @@
 
     'use strict';
 
-    var L = {};
-
-    L.isDOM = function(o) {
-        return (o instanceof Element || o instanceof HTMLDocument);
+    /**
+     * Multiple options private helper
+     */
+    var children = function(v) {
+        for (var j = 0; j < this.children.length; j++) {
+            this.children[j].selected = v.indexOf(this.children[j].value) >= 0;
+        }
     }
 
     /**
-     * Render a lemonade DOM element, method or class into a root DOM element
+     * Private method to process anything in the queue from one lemonadejs ready properties
      */
-    L.render = function(o, el, self) {
-        if (! L.isDOM(el)) {
-            console.log('DOM element given is not valid')
-            return false;
-        }
-
-        if (! self) {
-            self = {};
-        }
-
-        if (! L.isDOM(o)) {
-            if (L.isClass(o)) {
-                var o = new o().create();
-            } else if (typeof(o) == 'function') {
-                var o = o(self);
-            }
-        }
-
-        // Append child if not appended
-        el.appendChild(o);
-
-        // Process ready queue
-        L.queue(o);
-
-        return o;
-    }
-
-    /**
-     * Process the queue from one lemonadejs DOM element
-     */
-    L.queue = function(o) {
+    var queue = function(o) {
         // Verify any pending ready
         if (o.self && o.self.queue) {
             var q = null;
@@ -65,10 +38,61 @@
     }
 
     /**
+     * The element passed is a DOM element
+     */
+    var isDOM = function(o) {
+        return (o instanceof Element || o instanceof HTMLDocument);
+    }
+
+    /**
+     * The argument is a valid JS class
+     */
+    var isClass = function(f) {
+        return typeof f === 'function' && /^class\s/.test(Function.prototype.toString.call(f));
+    }
+
+    // Lemonadejs object
+    var L = {};
+
+    /**
+     * Render a lemonade DOM element, method or class into a root DOM element
+     * @param o - Lemonade DOM created from a template
+     * @param el - DOM Element to append the lemonade element
+     */
+    L.render = function(o, el, self) {
+        // Root element but be a valid DOM element
+        if (! isDOM(el)) {
+            console.log('DOM element given is not valid')
+            return false;
+        }
+
+        if (! self) {
+            self = {};
+        }
+
+        // Flexible element (class or method)
+        if (! isDOM(o)) {
+            if (isClass(o)) {
+                var o = new o().create();
+            } else if (typeof(o) == 'function') {
+                var o = o(self);
+            }
+        }
+
+        // Append child if not appended
+        el.appendChild(o);
+
+        // Process ready queue
+        queue(o);
+
+        return o;
+    }
+
+    /**
      * Mix all template, self
      */
     L.blender = function(template, self, el) {
-        return L.render(L.element(template, self), el, self);
+        return L.render(L.template(template, self), el, self);
     }
 
     /**
@@ -76,10 +100,11 @@
      */
     L.apply = function(el, self) {
         L.template(el, self);
-        L.queue(el);
+        // Process whatever we have in the queue
+        queue(el);
     }
 
-        /**
+    /**
      * Mix the self and the template or DOM element
      */
     L.template = (function() {
@@ -103,11 +128,11 @@
             // Queue
             self.queue = [];
 
-            if (! L.isDOM(t)) {
-            // Create the root element
-            var div = document.createElement('div');
+            if (! isDOM(t)) {
+                // Create the root element
+                var div = document.createElement('div');
 
-            // Get the DOM content
+                // Get the DOM content
                 div.innerHTML = t.trim();
                 // Already single DOM, do not need a container
                 if (div.childNodes.length == 1) {
@@ -134,32 +159,35 @@
 
             // Refresh
             var refreshProperty = function() {
+                var t = null;
                 // Tracking
-                if (self.tracking[property]) {
-                    for (var i = 0; i < self.tracking[property].length; i++) {
-                        var value = eval(self.tracking[property][i].v);
-                        if (self.tracking[property][i].property == 'innerHTML') {
-                            self.tracking[property][i].element.innerHTML = value;
-                        } else if (self.tracking[property][i].property == 'textContent') {
-                            self.tracking[property][i].element.textContent = value;
-                        } else if (self.tracking[property][i].property == 'value') {
-                            if (self.tracking[property][i].element.value != value) {
-                                self.tracking[property][i].element.value = value;
-                                if (typeof(self.tracking[property][i].element.change) == 'function') {
-                                    self.tracking[property][i].element.change(value);
+                if (t = self.tracking[property]) {
+                    for (var i = 0; i < t.length; i++) {
+                        var value = eval(t[i].v);
+                        if (t[i].property == 'innerHTML') {
+                            t[i].element.innerHTML = value;
+                        } else if (t[i].property == 'textContent') {
+                            t[i].element.textContent = value;
+                        } else if (t[i].property == 'value') {
+                            if (t[i].element.value != value) {
+                                t[i].element.value = value;
+                                if (typeof(t[i].element.change) == 'function') {
+                                    t[i].element.change(value);
                                 }
                             }
-                        } else if (self.tracking[property][i].property == 'checked') {
-                            if (self.tracking[property][i].element.type == 'radio') {
-                                self.tracking[property][i].element.checked = false;
-                                if (self.tracking[property][i].element.value == value) {
-                                    self.tracking[property][i].element.checked = true;
+                        } else if (t[i].property == 'children') {
+                            children.call(t[i].element, value);
+                        } else if (t[i].property == 'checked') {
+                            if (t[i].element.type == 'radio') {
+                                t[i].element.checked = false;
+                                if (t[i].element.value == value) {
+                                    t[i].element.checked = true;
                                 }
                             } else {
-                                self.tracking[property][i].element.checked = value ? true : false;
+                                t[i].element.checked = value ? true : false;
                             }
                         } else {
-                            self.tracking[property][i].element.setAttribute(self.tracking[property][i].property, value);
+                            t[i].element.setAttribute(t[i].property, value);
                         }
                     }
                 }
@@ -203,6 +231,9 @@
                     } else {
                         element.appendChild(e);
                     }
+                } else if (type == 'children') {
+                    e = element;
+                    children.call(element, value);
                 } else {
                     e = element;
                     e[type] = value;
@@ -324,9 +355,13 @@
                                 element.events.change = attr[k[i]] + ' = this.value;';
                                 var property = 'checked';
                             } else {
-                                // TODO: multiple select
-                                element.events.change = attr[k[i]] + ' = this.value';
-                                var property = 'value';
+                                if (element.multiple == true) {
+                                    element.events.change = 'var a = []; for (var i = 0; i < this.options.length; i++) { if (this.options[i].selected) { a.push(this.options[i].value); } } ' + attr[k[i]] + ' = a; ' + attr[k[i]] + '.refresh()';
+                                    var property = 'children';
+                                } else {
+                                    element.events.change = attr[k[i]] + ' = this.value';
+                                    var property = 'value';
+                                }
                             }
                             // Way back
                             create(element, { v:attr[k[i]] }, property, self);
@@ -374,16 +409,12 @@
 
     L.element = L.template;
 
-    L.isClass = function(func) {
-        return typeof func === 'function' && /^class\s/.test(Function.prototype.toString.call(func));
-    }
-
     L.component = class {
         constructor() {
         }
 
         create() {
-            var element = L.element(this.render(), this);
+            var element = L.template(this.render(), this);
 
             if (typeof(this.onload) == 'function') {
                 this.onload(element, this);
