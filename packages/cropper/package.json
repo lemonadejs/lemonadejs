@@ -13,6 +13,9 @@
         "library",
         "javascript plugins"
     ],
+    "dependencies": {
+        "@jsuites/cropper": "^1.1.3"
+    },
     "main": "dist/cropper.js",
     "version": "1.0.0"
 }
