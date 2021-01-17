@@ -1,5 +1,5 @@
 /**
- * Lemonadejs v1.2.0
+ * Lemonadejs v1.3.0
  *
  * Website: https://lemonadejs.net
  * Description: Create amazing web based reusable components.
@@ -16,15 +16,6 @@
     'use strict';
 
     /**
-     * Multiple options private helper
-     */
-    var children = function(v) {
-        for (var j = 0; j < this.children.length; j++) {
-            this.children[j].selected = v.indexOf(this.children[j].value) >= 0;
-        }
-    }
-
-    /**
      * Private method to process anything in the queue from one lemonadejs ready properties
      */
     var queue = function(o) {
@@ -33,6 +24,26 @@
             var q = null;
             while (q = o.self.queue.shift()) {
                 q.onload();
+            }
+        }
+    }
+
+    /**
+     * Set value helper
+     */
+    var setValue = function(e, v, t) {
+        if (t == 'children') {
+            for (var j = 0; j < e.children.length; j++) {
+                e.children[j].selected = v.indexOf(e.children[j].value) >= 0;
+            }
+        } else if (t == 'checked') {
+            if (e.type == 'radio') {
+                e.checked = false;
+                if (e.value == v) {
+                    e.checked = true;
+                }
+            } else {
+                e.checked = v ? true : false;
             }
         }
     }
@@ -64,9 +75,11 @@
         }
 
         // Flexible element (class or method)
-        if (! isDOM(o)) {
-            o = new o(self);
-            if (typeof(o.render) == 'function') {
+        if (typeof(o) == 'function') {
+            try {
+                o = o.call(self);
+            } catch {
+                o = new o(self);
                 o = L.template(o.render(), o);
             }
         }
@@ -123,7 +136,6 @@
             if (! isDOM(t)) {
                 // Create the root element
                 var div = document.createElement('div');
-
                 // Get the DOM content
                 div.innerHTML = t.trim();
                 // Already single DOM, do not need a container
@@ -156,30 +168,17 @@
                 if (t = self.tracking[property]) {
                     for (var i = 0; i < t.length; i++) {
                         var value = eval(t[i].v);
-                        if (t[i].property == 'innerHTML') {
-                            t[i].element.innerHTML = value;
-                        } else if (t[i].property == 'textContent') {
-                            t[i].element.textContent = value;
-                        } else if (t[i].property == 'value') {
+                        if (t[i].property == 'value') {
                             if (t[i].element.value != value) {
                                 t[i].element.value = value;
                                 if (typeof(t[i].element.change) == 'function') {
                                     t[i].element.change(value);
                                 }
                             }
-                        } else if (t[i].property == 'children') {
-                            children.call(t[i].element, value);
-                        } else if (t[i].property == 'checked') {
-                            if (t[i].element.type == 'radio') {
-                                t[i].element.checked = false;
-                                if (t[i].element.value == value) {
-                                    t[i].element.checked = true;
-                                }
-                            } else {
-                                t[i].element.checked = value ? true : false;
-                            }
+                        } else if (t[i].property == 'children' || t[i].property == 'checked') {
+                            setValue(t[i].element, value, t[i].property);
                         } else {
-                            t[i].element.setAttribute(t[i].property, value);
+                            t[i].element[t[i].property] = value;
                         }
                     }
                 }
@@ -223,9 +222,9 @@
                     } else {
                         element.appendChild(e);
                     }
-                } else if (type == 'children') {
+                } else if (type == 'children' || type == 'checked') {
                     e = element;
-                    children.call(element, value);
+                    setValue(element, value, type);
                 } else {
                     e = element;
                     e[type] = value;
@@ -312,11 +311,7 @@
                         if (! element.events) {
                             element.events = []
                         }
-                        element.events[event.substring(2)] = value;
-                        element[event] = function(e) {
-                            eval(this.events[e.type]);
-                        }
-                        // Other properties
+                        element[event] = Function('self', value).bind(element, self);
                     } else {
                         // Events
                         if (! element.events) {
@@ -324,36 +319,33 @@
                         }
                         if (k[i] == '@ready') {
                             self.queue.push(element);
-                            element.events.load = attr[k[i]];
-                            element.onload = function(e) {
-                                eval(this.events.load);
-                            }
+                            element.onload = Function('self', attr[k[i]]).bind(element, self);
                             // Remove attribute
                             element.removeAttribute(k[i]);
                         } else if (k[i] == '@ref') {
-                            eval(attr[k[i]] + ' = element');
+                            var ref = attr[k[i]].replace('self.', '');
+                            self[ref] = element;
                             // Remove attribute
                             element.removeAttribute(k[i]);
                         } else if (k[i] == '@bind') {
-                            // Onchange event for the element
-                            element.onchange = function(e) {
-                                eval(this.events.change);
-                            }
                             // Based on the element
-                            if (element.type == 'checkbox') {
-                                element.events.change = attr[k[i]] + ' = this.checked';
-                                var property = 'checked';
-                            } else if (element.type == 'radio') {
-                                element.events.change = attr[k[i]] + ' = this.value;';
-                                var property = 'checked';
+                            var keyup = false;
+                            if (element.multiple == true) {
+                                var e = 'var a = []; for (var i = 0; i < this.options.length; i++) { if (this.options[i].selected) { a.push(this.options[i].value); } } ' + attr[k[i]] + ' = a; ' + attr[k[i]] + '.refresh()';
+                                var property = 'children';
                             } else {
-                                if (element.multiple == true) {
-                                    element.events.change = 'var a = []; for (var i = 0; i < this.options.length; i++) { if (this.options[i].selected) { a.push(this.options[i].value); } } ' + attr[k[i]] + ' = a; ' + attr[k[i]] + '.refresh()';
-                                    var property = 'children';
+                                if (element.type == 'checkbox' || element.type == 'radio') {
+                                    var property = 'checked';
                                 } else {
-                                    element.events.change = attr[k[i]] + ' = this.value';
                                     var property = 'value';
+                                    var keyup = true;
                                 }
+                                var e = attr[k[i]] + (element.type == 'checkbox' ? ' = this.checked' : ' = this.value');
+                            }
+                            // Onchange event for the element
+                            element.onchange = Function('self', e).bind(element, self);
+                            if (keyup == true) {
+                                element.onkeyup = element.onchange;
                             }
                             // Way back
                             create(element, { v:attr[k[i]] }, property, self);
@@ -375,7 +367,7 @@
                 attributes(element, 'innerText', 'textContent', self);
             }
 
-            // Create instances
+            // TODO: Subelements
             if (element.constructor == HTMLUnknownElement) {
                 var m = element.tagName;
                 m = m.charAt(0).toUpperCase() + m.slice(1).toLowerCase();
