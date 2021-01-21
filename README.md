@@ -14,3 +14,18 @@ It would help you to deliver reusable components and does not require transpiler
 <li>Highly flexible and customizable</li>
 <li>Lightweight and simple to use</li>
 </ul>
+
+<h2>Instalation</h2>
+
+% npm install lemonadejs
+
+
+<h2>License</h2>
+
+This software is free to use and it is distributed under the MIT license.
+
+
+<h2>Other tools</h2>
+
+https://jsuites.net<br>
+https://jexcel.net
