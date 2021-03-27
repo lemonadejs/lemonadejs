@@ -1,5 +1,5 @@
 /**
- * Lemonadejs v1.3.0
+ * Lemonadejs v1.4.0
  *
  * Website: https://lemonadejs.net
  * Description: Create amazing web based reusable components.
@@ -20,10 +20,15 @@
      */
     var queue = function(o) {
         // Verify any pending ready
-        if (o.self && o.self.queue) {
-            var q = null;
-            while (q = o.self.queue.shift()) {
-                q.onload();
+        if (o.self) {
+            if (o.self.queue) {
+                var q = null;
+                while (q = o.self.queue.shift()) {
+                    q.onload();
+                }
+            }
+            if (typeof(o.self.onload) == 'function') {
+                o.self.onload.call(o.self, o);
             }
         }
     }
@@ -171,8 +176,8 @@
                         if (t[i].property == 'value') {
                             if (t[i].element.value != value) {
                                 t[i].element.value = value;
-                                if (typeof(t[i].element.change) == 'function') {
-                                    t[i].element.change(value);
+                                if (typeof(t[i].element.val) == 'function') {
+                                    t[i].element.val(value);
                                 }
                             }
                         } else if (t[i].property == 'children' || t[i].property == 'checked') {
@@ -207,6 +212,11 @@
 
             // Create tracking container for the property
             self.tracking[property] = [];
+
+            // Onchange
+            if (typeof(self.onchange) == 'function') {
+                self.onchange.call(self, property);
+            }
         }
 
         var create = function(element, res, type, self) {
@@ -328,23 +338,22 @@
                             // Remove attribute
                             element.removeAttribute(k[i]);
                         } else if (k[i] == '@bind') {
+                            // Definitions
+                            var property = 'value';
+                            var e = attr[k[i]] + ' = this.value;';
                             // Based on the element
-                            var keyup = false;
                             if (element.multiple == true) {
-                                var e = 'var a = []; for (var i = 0; i < this.options.length; i++) { if (this.options[i].selected) { a.push(this.options[i].value); } } ' + attr[k[i]] + ' = a; ' + attr[k[i]] + '.refresh()';
+                                var e = 'var a = []; for (var i = 0; i < this.options.length; i++) { if (this.options[i].selected) { a.push(this.options[i].value); } } ' + attr[k[i]] + ' = a; ' + attr[k[i]] + '.refresh();';
                                 var property = 'children';
-                            } else {
-                                if (element.type == 'checkbox' || element.type == 'radio') {
-                                    var property = 'checked';
-                                } else {
-                                    var property = 'value';
-                                    var keyup = true;
-                                }
-                                var e = attr[k[i]] + (element.type == 'checkbox' ? ' = this.checked' : ' = this.value');
+                            } else if (element.type == 'checkbox') {
+                                var e = attr[k[i]] + " = this.checked && this.getAttribute('value') ? this.value : this.checked;";
+                                var property = 'checked';
+                            } else if (element.type == 'radio') {
+                                var property = 'checked';
                             }
                             // Onchange event for the element
                             element.onchange = Function('self', e).bind(element, self);
-                            if (keyup == true) {
+                            if (property == 'value') {
                                 element.onkeyup = element.onchange;
                             }
                             // Way back
@@ -392,6 +401,38 @@
     })();
 
     L.element = L.template;
+
+    /**
+     * Get only the properties described on v
+     */
+    L.getProperties = function(v) {
+        var o = {};
+        for (var property in v) {
+            o[property] = this[property];
+        }
+        return o;
+    }
+
+    /**
+     * Set the values described on v
+     */
+    L.setProperties = function(v) {
+        for (var property in v) {
+            if (this.hasOwnProperty(property)) {
+                this[property] = v[property];
+            }
+        }
+        return this;
+    }
+
+    /**
+     * Reset the values described on v
+     */
+    L.resetProperties = function(v) {
+        for (var property in v) {
+            this[property] = '';
+        }
+    }
 
     L.component = class {
         constructor() {
