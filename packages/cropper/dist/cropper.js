@@ -118,9 +118,9 @@
                 newImage.setAttribute('data-cover', cover);
                 // Callback for the blob
                 var createImage = function(b) {
-                    newImage.content = newImage.src;
+                    newImage.content.content = newImage.content.file;
                     // Get blob URL
-                    newImage.src = window.URL.createObjectURL(b);
+                    newImage.content.file = newImage.src = window.URL.createObjectURL(b);
                     // Append image
                     self.image.appendChild(newImage);
                 }

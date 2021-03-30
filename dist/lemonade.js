@@ -1,5 +1,5 @@
 /**
- * Lemonadejs v1.4.0
+ * Lemonadejs v1.5.0
  *
  * Website: https://lemonadejs.net
  * Description: Create amazing web based reusable components.
@@ -187,6 +187,11 @@
                         }
                     }
                 }
+
+                // Onchange
+                if (typeof(self.onchange) == 'function') {
+                    self.onchange.call(self, property, t);
+                }
             }
 
             // Save as state
@@ -212,11 +217,6 @@
 
             // Create tracking container for the property
             self.tracking[property] = [];
-
-            // Onchange
-            if (typeof(self.onchange) == 'function') {
-                self.onchange.call(self, property);
-            }
         }
 
         var create = function(element, res, type, self) {
