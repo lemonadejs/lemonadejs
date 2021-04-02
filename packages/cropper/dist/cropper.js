@@ -2,7 +2,7 @@
  * (c) LemonadeJS components
  *
  * Website: https://lemonadejs.net
- * Description: Create amazing web based applications with Lemonadejs
+ * Description: Image cropper
  *
  * MIT License
  *
@@ -21,7 +21,6 @@
             var jSuites = window.jSuites;
         } else if (typeof(require) === 'function') {
             var jSuites = require('jsuites');
-            require('jsuites/dist/jsuites.css');
         }
     }
 
@@ -30,9 +29,9 @@
     }
 
     return (function(photoContainer) {
-        // Square propertion
-        var square = photoContainer.getAttribute('data-square') ? 1 : 0;
-        var cover = photoContainer.getAttribute('data-cover') ? 1 : 0;
+        var original = photoContainer.getAttribute('data-original') ? 1 : 0;
+        var width = photoContainer.getAttribute('width') || 300;
+        var height = photoContainer.getAttribute('height') || 240;
         var modal = null;
         var crop = null;
 
@@ -47,7 +46,7 @@
             modal = jSuites.modal(o, {
                 closed: true,
                 width: '800px',
-                height: '620px',
+                height: '680px',
                 title: 'Photo Upload',
                 padding: '0'
             });
@@ -56,20 +55,15 @@
         self.createCropper = function(o) {
             var area = jSuites.getWindowWidth();
             if (area < 800) {
-                var a = [ area, area * 0.66 ];
+                var a = [ area, area ];
                 var c = [ area, area ];
             } else {
-                if (square) {
-                    var a = [798, 300];
-                    var c = [220, 220];
-                } else {
-                    var a = [798, 300];
-                    var c = [220, 220];
-                }
+                var a = [798, 360];
+                var c = [width, height];
             }
             crop = jSuites.crop(o, {
                 area: a,
-                crop: c,
+                crop: c ,
                 allowResize: false,
                 onchange: function(el, image) {
                     if (image) {
@@ -77,13 +71,6 @@
                     }
                 }
             });
-        }
-
-        self.setValue = function(o) {
-            var img = document.createElement('img');
-            img.src = o;
-            self.image.innerHTML = '';
-            self.image.appendChild(img);
         }
 
         self.updateZoom = function(o) {
@@ -112,16 +99,31 @@
                 self.image.innerHTML = '';
                 // Create image with metadata
                 var newImage = crop.getCroppedImage();
-                // Image should be the size of the container?
-                newImage.style.width = '100%';
-                // Cover
-                newImage.setAttribute('data-cover', cover);
                 // Callback for the blob
                 var createImage = function(b) {
-                    newImage.content.content = newImage.content.file;
-                    // Get blob URL
-                    newImage.content.file = newImage.src = window.URL.createObjectURL(b);
-                    // Append image
+                    // Transform to blob
+                    var filename = window.URL.createObjectURL(b);
+                    // Set upload information
+                    var data = {
+                        file: filename,
+                        content: newImage.src,
+                        extension: newImage.content.extension,
+                    };
+                    // Upload original image
+                    if (original == true) {
+                        data.original = crop.getImage().src;
+                    }
+                    // Update file to blob
+                    newImage.src = filename;
+                    // Integration with jSuites.form
+                    if (photoContainer.getAttribute('name')) {
+                        photoContainer.content = [data];
+
+                        newImage.classList.remove('jfile');
+                    } else {
+                        // Legacy
+                        newImage.content = data;
+                    }
                     self.image.appendChild(newImage);
                 }
                 // Create image
@@ -161,6 +163,31 @@
             }
         }
 
+        self.getValue = function() {
+            return photoContainer.content;
+        }
+
+        self.setValue = function(data) {
+            if (typeof(data) == 'string') {
+                data = {
+                    file: data
+                }
+            }
+            if (data.file) {
+                var img = document.createElement('img');
+                img.setAttribute('src', data.file);
+                img.setAttribute('tabindex', -1);
+                self.image.innerHTML = '';
+                self.image.appendChild(img);
+            }
+
+            if (data.original) {
+                crop.addFromFile(data.original);
+            }
+
+            photoContainer.content = data;
+        }
+
         // Template
         var template = `
             <div @ref='self.image'></div>
@@ -173,13 +200,17 @@
                             <div style="background-color: white;"></div>
                         </div>
                         <div role='content' style='background-color: #ccc;'>
-                            <div style='text-align: center;'>
-                                <label style="text-align: center; display: inline-block;"> Zoom <input type='range' step='.05' min='0.1' max='5.45' value='1' oninput='self.updateZoom(this)' style="display: block; block; margin-top:10px;" class='jrange controls' disabled='disabled'></label>
-                                <label style="text-align: center; display: inline-block; margin-left: 20px;"> Rotate <input type='range' step='.05' min='-1' max='1' value='0' oninput='self.updateRotate(this)' style="display: block; block; margin-top:10px;" class='jrange controls' disabled='disabled'></label>
+                            <div>
+                                <div class="center row">
+                                    <label class="f1 p6"> Zoom <input type='range' step='.05' min='0.1' max='5.45' value='1' oninput='self.updateZoom(this)' style="margin-top:10px;" class='jrange controls' disabled='disabled'></label>
+                                    <label class="f1 p6"> Rotate <input type='range' step='.05' min='-1' max='1' value='0' oninput='self.updateRotate(this)' style="margin-top:10px;" class='jrange controls' disabled='disabled'></label>
+                                </div>
                             </div>
-                            <div style='text-align: center;'>
-                                <label style="text-align: center; display: inline-block;"> Brigthness <input type='range' min='-1' max='1' step='.05' value='0' @bind='self.brightness' oninput='self.setBrightness(this)' style="display: block; margin-top:10px;" class='jrange controls' disabled='disabled'></label>
-                                <label style="text-align: center; display: inline-block; margin-left: 20px;"> Contrast <input type='range' min='-1' max='1' step='.05' value='0' @bind='self.contrast' oninput='self.setContrast(this)' style="display: block; block; margin-top:10px;" class='jrange controls' disabled='disabled'></label>
+                            <div>
+                                <div class="center row">
+                                    <label class="f1 p6"> Brigthness <input type='range' min='-1' max='1' step='.05' value='0' @bind='self.brightness' oninput='self.setBrightness(this)' style="margin-top:10px;" class='jrange controls' disabled='disabled'></label>
+                                    <label class="f1 p6"> Contrast <input type='range' min='-1' max='1' step='.05' value='0' @bind='self.contrast' oninput='self.setContrast(this)' style="margin-top:10px;" class='jrange controls' disabled='disabled'></label>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -220,7 +251,7 @@
         photoContainer.classList.add('jupload');
         photoContainer.onmousedown = function(e) {
             if (! modal.isOpen()) {
-                // Open modale
+                // Open modal
                 modal.open();
                 // Create controls for the first time only
                 if (! photoContainer.classList.contains('controls')) {
@@ -238,7 +269,14 @@
         // Create lemonade component
         lemonade.blender(template, self, photoContainer);
 
+        photoContainer.val = function(v) {
+            if (v === undefined) {
+                return self.getValue();
+            } else {
+                self.setValue(v);
+            }
+        }
+
         return self;
     });
-
 })));
