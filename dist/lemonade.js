@@ -1,5 +1,5 @@
 /**
- * Lemonadejs v1.5.0
+ * Lemonadejs v1.6.0
  *
  * Website: https://lemonadejs.net
  * Description: Create amazing web based reusable components.
@@ -36,7 +36,7 @@
     /**
      * Set value helper
      */
-    var setValue = function(e, v, t) {
+    var setAttribute = function(e, v, t) {
         if (t == 'children') {
             for (var j = 0; j < e.children.length; j++) {
                 e.children[j].selected = v.indexOf(e.children[j].value) >= 0;
@@ -50,6 +50,10 @@
             } else {
                 e.checked = v ? true : false;
             }
+        } else if (t == 'value' || typeof(e[t]) !== 'undefined') {
+            e[t] = v;
+        } else {
+            e.setAttribute(t, v);
         }
     }
 
@@ -175,15 +179,13 @@
                         var value = eval(t[i].v);
                         if (t[i].property == 'value') {
                             if (t[i].element.value != value) {
-                                t[i].element.value = value;
                                 if (typeof(t[i].element.val) == 'function') {
                                     t[i].element.val(value);
                                 }
+                                t[i].element.value = value;
                             }
-                        } else if (t[i].property == 'children' || t[i].property == 'checked') {
-                            setValue(t[i].element, value, t[i].property);
                         } else {
-                            t[i].element[t[i].property] = value;
+                            setAttribute(t[i].element, value, t[i].property);
                         }
                     }
                 }
@@ -232,12 +234,9 @@
                     } else {
                         element.appendChild(e);
                     }
-                } else if (type == 'children' || type == 'checked') {
-                    e = element;
-                    setValue(element, value, type);
                 } else {
                     e = element;
-                    e[type] = value;
+                    setAttribute(element, value, type);
                 }
 
                 if (! e) {
@@ -297,6 +296,7 @@
 
         var parse = function(element, self) {
             // Attributes
+            var tmp = null;
             var attr = {};
 
             if (element.attributes && element.attributes.length) {
@@ -362,6 +362,12 @@
                             element.removeAttribute(k[i]);
                         } else {
                             attributes(element, attr[k[i]], k[i], self);
+                            // Translate
+                            if (L.dictionary) {
+                                if (tmp = L.translate(attr[k[i]])) {
+                                    element.setAttribute(k[i], tmp);
+                                }
+                            }
                         }
                     }
                 }
@@ -374,6 +380,12 @@
                 }
             } else {
                 attributes(element, 'innerText', 'textContent', self);
+                // Translate
+                if (L.dictionary) {
+                    if (tmp = L.translate(element.innerText)) {
+                        element.innerText = tmp;
+                    }
+                }
             }
 
             // TODO: Subelements
@@ -431,6 +443,16 @@
     L.resetProperties = function(v) {
         for (var property in v) {
             this[property] = '';
+        }
+    }
+
+    /**
+     * Translate
+     */
+    L.translate = function(o) {
+        if (o.substr(0,3) == '^^[' && o.substr(-3) == ']^^') {
+            o = o.replace('^^[','').replace(']^^','');
+            return L.dictionary[o] || o;
         }
     }
 
