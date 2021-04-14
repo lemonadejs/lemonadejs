@@ -147,6 +147,8 @@
                 self.setControls(false);
                 // Reset from container
                 self.image.innerHTML = '';
+                // Reset container
+                photoContainer.content = null;
             }
         }
 
@@ -185,7 +187,7 @@
                 crop.addFromFile(data.original);
             }
 
-            photoContainer.content = data;
+            photoContainer.content = [data];
         }
 
         // Template
@@ -260,6 +262,13 @@
                     // Flag controls are ready
                     photoContainer.classList.add('controls');
                 }
+            }
+        }
+
+        // Remove current image
+        photoContainer.onkeydown = function(e) {
+            if (e.key == 'Delete' && e.target.tagName == 'IMG') {
+                self.deletePhoto();
             }
         }
 
