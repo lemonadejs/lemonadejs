@@ -2,7 +2,7 @@
  * (c) LemonadeJS components
  *
  * Website: https://lemonadejs.net
- * Description: Image cropper
+ * Description: Image cropper v1.2.1
  *
  * MIT License
  *
@@ -170,24 +170,29 @@
         }
 
         self.setValue = function(data) {
-            if (typeof(data) == 'string') {
-                data = {
-                    file: data
+            if (! data) {
+                // Reset container
+                self.deletePhoto();
+            } else {
+                if (typeof(data) == 'string') {
+                    data = {
+                        file: data
+                    }
                 }
-            }
-            if (data.file) {
-                var img = document.createElement('img');
-                img.setAttribute('src', data.file);
-                img.setAttribute('tabindex', -1);
-                self.image.innerHTML = '';
-                self.image.appendChild(img);
-            }
+                if (data.file) {
+                    var img = document.createElement('img');
+                    img.setAttribute('src', data.file);
+                    img.setAttribute('tabindex', -1);
+                    self.image.innerHTML = '';
+                    self.image.appendChild(img);
+                }
 
-            if (data.original) {
-                crop.addFromFile(data.original);
-            }
+                if (data.original) {
+                    crop.addFromFile(data.original);
+                }
 
-            photoContainer.content = [data];
+                photoContainer.content = [data];
+            }
         }
 
         // Template
