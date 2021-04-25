@@ -33,13 +33,14 @@
     }
 
     return (function(el, options) {
-        var obj = {};
+        var obj = options && options.app ? options.app : {};
         obj.options = {};
 
         // Default configuration
         var defaults = {
             socket: null,
             route: null,
+            onload: null,
         }
 
         // Loop through our object
@@ -53,73 +54,6 @@
 
         // Controllers
         var controllers = {};
-
-        // Application
-        var application = application = jSuites.app(el, {
-            route: obj.options.route,
-            onbeforecreatepage: function (instance, page) {
-                // Dynamic controller
-                if (! controllers[page.options.ident]) {
-                    // Get route string and transform to object string
-                    var route = page.options.ident.substr(1).replace(new RegExp('/', 'g'), '.');
-                    // If the related object with the matching route string, create controller reference
-                    if (route = jSuites.path.call(window, route)) {
-                        // Exists as a method, create the reference
-                        if (typeof (route) == 'function') {
-                            controllers[page.options.ident] = { controller: route };
-                        }
-                    }
-                }
-
-                // If the controller does not exist, try to get the controller the view from the backend
-                if (! controllers[page.options.ident]) {
-                    page.options.url = page.options.route;
-                }
-            },
-            oncreatepage: function (instance, page, view) {
-                // Create and append the lemonade self to our container of controllers
-                var o = controllers[page.options.ident];
-                if (o) {
-                    var controller = o.controller;
-                } else {
-                    // Get any autoload component
-                    var lemonadeAutoload = page.querySelector("[data-autoload]");
-                    if (lemonadeAutoload) {
-                        var component = lemonadeAutoload.getAttribute('data-autoload');
-                        // Get self
-                        if (component && typeof (app[component]) == 'function') {
-                            // Dynamic controller
-                            var controller = app[component];
-                        }
-                    }
-                }
-
-                if (controller) {
-                    if (! controllers[page.options.ident]) {
-                        controllers[page.options.ident] = { controller: controller };
-                    }
-                    // Self
-                    controllers[page.options.ident].self = controller(instance, page);
-                    // Execute the lemonade parser
-                    try {
-                        lemonade.apply(page, controllers[page.options.ident].self);
-                    } catch (e) {
-                        console.log(e);
-                    }
-                }
-            },
-            onchangepage: function (instance, page, oldPage) {
-                // If the controller exists
-                var o = controllers[page.options.ident];
-                if (o) {
-                    // And the onenter event is available
-                    if (o.self && typeof (o.self.onenter) == 'function') {
-                        // Call event onenter
-                        return o.self.onenter(page);
-                    }
-                }
-            }
-        });
 
         /**
          * Get the controller
@@ -184,15 +118,85 @@
             return false;
         }
 
+        // Application
+        var application = jSuites.app(el, {
+            route: obj.options.route,
+            onbeforecreatepage: function (instance, page) {
+                // Dynamic controller
+                if (! controllers[page.options.ident]) {
+                    // Get route string and transform to object string
+                    var route = page.options.ident.substr(1).replace(new RegExp('/', 'g'), '.');
+                    // If the related object with the matching route string, create controller reference
+                    if (route = jSuites.path.call(window, route)) {
+                        // Exists as a method, create the reference
+                        if (typeof(route) == 'function') {
+                            controllers[page.options.ident] = { controller: route };
+                        }
+                    }
+                }
+                // If the controller does not exist, try to get the controller the view from the backend
+                if (! controllers[page.options.ident]) {
+                    page.options.url = page.options.route;
+                }
+            },
+            oncreatepage: function (instance, page, view) {
+                // Create and append the lemonade self to our container of controllers
+                var o = controllers[page.options.ident];
+                if (o) {
+                    var controller = o.controller;
+                } else {
+                    // Get any autoload component
+                    var route = page.querySelector("[data-autoload]");
+                    if (route) {
+                        if (route = route.getAttribute('data-autoload')) {
+                            // Get self
+                            if (route = jSuites.path.call(window, route)) {
+                                // Dynamic controller
+                                if (typeof(route) == 'function') {
+                                    var controller = route;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if (controller) {
+                    if (! controllers[page.options.ident]) {
+                        controllers[page.options.ident] = { controller: controller };
+                    }
+
+                    // Self
+                    controllers[page.options.ident].self = controller(instance, page);
+
+                    // Execute the lemonade parser
+                    try {
+                        lemonade.apply(page, controllers[page.options.ident].self);
+                    } catch (e) {
+                        console.log(e);
+                    }
+                }
+            },
+            onchangepage: function (instance, page, oldPage) {
+                // If the controller exists
+                var o = controllers[page.options.ident];
+                if (o) {
+                    // And the onenter event is available
+                    if (o.self && typeof (o.self.onenter) == 'function') {
+                        // Call event onenter
+                        return o.self.onenter(page);
+                    }
+                }
+            }
+        });
+
+        // Initial page
+        application.pages(window.location.pathname + window.location.search);
+
         // Onload
         if (typeof(obj.options.onload) == 'function') {
             obj.options.onload(obj, application);
         }
 
-        // Initial page
-        application.pages(window.location.pathname + window.location.search);
-
-        // Keep the reference via DOM
         el.application = obj;
 
         return obj;
