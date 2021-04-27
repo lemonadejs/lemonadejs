@@ -389,7 +389,7 @@
             }
 
             // TODO: Subelements
-            if (element.constructor == HTMLUnknownElement) {
+            /*if (element.constructor == HTMLUnknownElement) {
                 var m = element.tagName;
                 m = m.charAt(0).toUpperCase() + m.slice(1).toLowerCase();
                 m = eval(m);
@@ -406,7 +406,7 @@
 
                     L.render(m, element, e);
                 }
-            }
+            }*/
         }
 
         return obj;

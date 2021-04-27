@@ -189,14 +189,15 @@
             }
         });
 
-        // Initial page
-        application.pages(window.location.pathname + window.location.search);
-
         // Onload
         if (typeof(obj.options.onload) == 'function') {
             obj.options.onload(obj, application);
         }
 
+        // Initial page
+        application.pages(window.location.pathname + window.location.search);
+
+        // Shortcut
         el.application = obj;
 
         return obj;
