@@ -41,6 +41,7 @@
             socket: null,
             route: null,
             onload: null,
+            onerror: null,
         }
 
         // Loop through our object
@@ -186,7 +187,12 @@
                         return o.self.onenter(page);
                     }
                 }
-            }
+            },
+            onerrorpage: function(instance, page) {
+                if (typeof(obj.options.onerror) == 'function') {
+                    obj.options.onerror(obj, instance, page);
+                }
+            },
         });
 
         // Onload
