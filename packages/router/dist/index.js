@@ -27,13 +27,8 @@
     if (! jSuites.app) {
         if (window.jSuites.app) {
             jSuites.app = window.jSuites.app;
-            jSuites.actionsheet = window.jSuites.actionsheet;
-            jSuites.dialog = window.jSuites.dialog;
-            jSuites.confirm = window.jSuites.confirm;
-            jSuites.refresh = window.jSuites.refresh;
         } else if (typeof(require) === 'function') {
-            var mobile = require('@jsuites/mobile');
-            Object.assign(jSuites, mobile);
+            jSuites.app = require('@jsuites/mobile');
         }
     }
 
@@ -220,9 +215,7 @@
         }
 
         // Initial page
-        if (! el.innerHTML) {
-            application.pages(window.location.pathname + window.location.search);
-        }
+        application.pages(window.location.pathname + window.location.search);
 
         // Shortcut
         el.application = obj;
