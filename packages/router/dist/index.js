@@ -214,9 +214,6 @@
             obj.options.onload(obj, application);
         }
 
-        // Initial page
-        application.pages(window.location.pathname + window.location.search);
-
         // Shortcut
         el.application = obj;
 
