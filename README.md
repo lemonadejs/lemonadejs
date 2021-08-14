@@ -16,11 +16,14 @@ It would help you to deliver reusable components and does not require transpiler
 <h2>Example<h2>
 <h3>Node</h3>
 
+Build modern applications with lemonadeJS and node.
+ 
+ <a href='https://codesandbox.io/s/lemonadejs-reactive-app-no2dl'>See this example on codesandbox</a>
 
+```javascript
+ 
 import lemonade from "lemonadejs";
 import Hello from "./Hello";
- 
-```javascript
 export default function App() {
   let self = {};
   self.count = 1;
@@ -35,6 +38,8 @@ export default function App() {
 ```
 
 <h3>Browser</h3>
+
+Simplicity to run in the browser without dependencies, servers, transpilers.<br>
 
 ```  
 <html>
