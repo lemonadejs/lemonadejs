@@ -127,7 +127,7 @@
          * @param mixed - DOM/template
          * @param s - self component object
          */
-        var obj = function(t, self) {
+        var obj = function(t, self, ext) {
             // Self
             if (! self) {
                 self = {};
@@ -156,7 +156,7 @@
             }
 
             // Parse the content
-            parse(div, self);
+            parse(div, self, ext);
             // Share self
             div.self = self;
 
@@ -294,7 +294,7 @@
             }
         }
 
-        var parse = function(element, self) {
+        var parse = function(element, self, ext) {
             // Attributes
             var tmp = null;
             var attr = {};
@@ -376,7 +376,7 @@
             // Check the children
             if (element.children.length) {
                 for (var i = 0; i < element.children.length; i++) {
-                    parse(element.children[i], self);
+                    parse(element.children[i], self, ext);
                 }
             } else {
                 attributes(element, 'innerText', 'textContent', self);
@@ -388,25 +388,27 @@
                 }
             }
 
-            // TODO: Subelements
-            /*if (element.constructor == HTMLUnknownElement) {
+            // Extensions
+            if (ext && element.constructor == HTMLUnknownElement) {
+                // Method name
                 var m = element.tagName;
+                // Custom uccase
                 m = m.charAt(0).toUpperCase() + m.slice(1).toLowerCase();
-                m = eval(m);
-                if (typeof(m) == 'function') {
+                // Verify scope in the declared extensions
+                if (typeof(ext[m]) == 'function') {
                     if (element.getAttribute('extended') == 'true') {
                         var e = self;
                     } else {
                         var e = {};
                     }
-
+                    // Options
                     for (var i = 0; i < element.attributes.length; i++) {
                         e[element.attributes[i].name] = element.attributes[i].value;
                     }
-
-                    L.render(m, element, e);
+                    // Render
+                    L.render(ext[m], element, e);
                 }
-            }*/
+            }
         }
 
         return obj;
