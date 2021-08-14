@@ -81,4 +81,4 @@ This software is free to use and it is distributed under the MIT license.
 <h2>Other tools</h2>
 
 https://jsuites.net<br>
-https://jexcel.net
+https://jspreadsheet.com<br>
