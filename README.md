@@ -28,7 +28,7 @@ export default function App() {
   let self = {};
   self.count = 1;
   let template = `<div>
-        <div><Hello ></Hello></div>
+        <div><Hello /></div>
         <p>You clicked {{self.count}} times</p>
         <button onclick="self.count++;">Click me</button>
     </div>`;
@@ -60,7 +60,7 @@ function App() {
   let self = {};
   self.count = 1;
   let template = `<div>
-        <iv><Hello /></div>
+        <div><Hello /></div>
         <p>You clicked {{self.count}} times</p>
         <button onclick="self.count++;">Click me</button>
     </div>`;
