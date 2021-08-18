@@ -41,7 +41,7 @@ export default function App() {
 
 Simplicity to run in the browser without dependencies, servers, transpilers.<br>
 
-```  
+```  html
 <html>
 <script src="https://lemonadejs.net/v1/lemonade.js"></script>
 
