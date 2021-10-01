@@ -16,155 +16,153 @@
 
     'use strict';
 
-    if (! jSuites) {
-        if (window.jSuites) {
-            var jSuites = window.jSuites;
-        } else if (typeof(require) === 'function') {
+    // Load jSuites
+    if (typeof(jSuites) == 'undefined') {
+        if (typeof(require) === 'function') {
             var jSuites = require('jsuites');
+        } else if (window.jSuites) {
+            var jSuites = window.jSuites;
         }
     }
 
-    if (! jSuites.app) {
-        if (window.jSuites.app) {
-            jSuites.app = window.jSuites.app;
-        } else if (typeof(require) === 'function') {
-            jSuites.app = require('@jsuites/mobile');
+    // Set the app extensions
+    if (typeof(jSuites.app) == 'undefined') {
+        if (typeof(require) === 'function') {
+            // Loading App Extensions
+            var app = require('@jsuites/app');
+            // Set the jSuites.app extension
+            jSuites.setExtensions(app);
+        }
+    }
+
+    /**
+     * Get existing route controller
+     * @param route
+     * @returns {object}
+     */
+    var getController = function(route) {
+        if (this.controllers[route]) {
+            return this.controllers[route];
+        }
+        return null;
+    }
+
+    /**
+     * Set a router controller
+     * @param route
+     * @returns {object}
+     */
+    var setController = function(route, controller) {
+        if (typeof(route) == 'string') {
+            this.controllers[route] = {
+                controller: controller,
+                self: null
+            };
         }
     }
 
     return (function(el, options) {
-        var obj = options && options.app ? options.app : {};
-        obj.options = {};
-
-        // Default configuration
-        var defaults = {
-            socket: null,
-            onload: null,
-            onerror: null,
-            scope: null,
-            config: {},
-        }
-
-        // Loop through our object
-        for (var property in defaults) {
-            if (options && options.hasOwnProperty(property)) {
-                obj.options[property] = options[property];
-            } else {
-                obj.options[property] = defaults[property];
-            }
-        }
-
-        // Scope global
-        if (! obj.options.scope) {
-            obj.options.scope = window;
-        }
-
         // Controllers
         var controllers = {};
 
         /**
-         * Get the controller
+         * Find a controller object based on a general route string
+         * @param route
+         * @returns {string}
          */
-        obj.getController = function(route) {
-            return controllers[route];
-        }
-
-        /**
-         * Set the controller
-         */
-        obj.setController = function(route, o) {
-            controllers[route] = o;
-        }
-
-        /**
-         * Get the application
-         */
-        obj.getApplication = function() {
-            return application;
-        }
-
-        /**
-         * Loading necessary socket.io scripts
-         */
-        obj.socket = function(url, callback) {
-            jSuites.loading.show();
-
-            var head = document.head;
-            var script = document.createElement('script');
-            script.type = 'text/javascript';
-            script.src = url;
-            script.onreadystatechange = callback;
-            script.onload = function() {
-                callback();
-                jSuites.loading.hide();
-            };
-            head.appendChild(script);
-        }
-
-        /**
-         * Read JWT information
-         * @param piece
-         * @returns {*|boolean}
-         */
-        obj.jwt = function(piece) {
-            if (! piece) {
-                piece = 'user_id';
-            }
-            var cookie = document.cookie.match(/bossanova=(.*);?/);
-            if (cookie && cookie[1]) {
-                cookie = cookie[1].split(';');
-                cookie = cookie[0].split('.');
-                if (cookie[1]) {
-                    var json = atob(cookie[1]);
-                    if (json) {
-                        json = JSON.parse(json);
-                        return json[piece] ? json[piece] : false;
+        var findController = function(route) {
+            // Remove any possible query string from the route
+            route = route.split('?')[0];
+            // Search matching route in the container
+            var k = Object.keys(controllers);
+            var e = null;
+            if (k.length) {
+                for (var i = 0; i < k.length; i++) {
+                    e = new RegExp(k[i], 'gi');
+                    if (route.match(e)) {
+                        return k[i];
                     }
                 }
             }
-            return false;
+            return route;
         }
 
-        // Configuration of the applicadtion
-        if (! obj.options.config) {
-            obj.options.config = {};
+        // Make sure the options is an object with the configuration
+        if (! options && typeof(options) !== 'object') {
+            options = {};
+        }
+        // Scope must exist for the automatic view path identification
+        if (! options.scope) {
+            options.scope = window;
+        }
+        // Autoload helps to bind the controller with the route
+        if (typeof(options.autoload) == 'undefined') {
+            options.autoload = true;
+        }
+        // Application config
+        if (options.config) {
+            var config = options.config;
+        } else {
+            var config = {};
+        }
+
+        // Router identifier
+        if (! config.ident) {
+            config.ident = findController;
         }
 
         // Default 
-        obj.options.config.onbeforecreatepage = function (instance, page) {
-            // Dynamic controller
-            if (! controllers[page.options.ident]) {
-                // Get route string and transform to object string
-                var route = page.options.ident.substr(1).replace(new RegExp('/', 'g'), '.');
-                // If the related object with the matching route string, create controller reference
-                if (route = jSuites.path.call(obj.options.scope, route)) {
-                    // Exists as a method, create the reference
-                    if (typeof(route) == 'function') {
-                        controllers[page.options.ident] = { controller: route };
+        config.onbeforecreatepage = function (instance, page) {
+            // Controller
+            var controller = null;
+            // Pre-defined routes
+            var route = config.ident(page.options.ident);
+            if (route && controllers[route]) {
+                controller = controllers[route];
+            }
+            // Autoload
+            if (options.autoload == true) {
+                // Dynamic controller
+                if (! controller) {
+                    // Get route string and transform to object string
+                    route = page.options.ident.substr(1).replace(new RegExp('/', 'g'), '.');
+                    // If the related object with the matching route string, create controller reference
+                    var path = null
+                    if (path = jSuites.path.call(options.scope, route)) {
+                        // Exists as a method, create the reference
+                        if (typeof (path) == 'function') {
+                            // Controller
+                            controller = path;
+                            // Register controller
+                            controllers[page.options.ident] = { controller: controller };
+                        }
                     }
                 }
             }
+
             // If the controller does not exist, try to get the controller the view from the backend
-            if (! controllers[page.options.ident]) {
+            if (!controller) {
                 page.options.url = page.options.route;
             }
         }
 
-        obj.options.config.oncreatepage = function (instance, page, view) {
+        config.oncreatepage = function (instance, page, view) {
+            // Controller
+            var controller = null;
             // Create and append the lemonade self to our container of controllers
             var o = controllers[page.options.ident];
             if (o) {
-                var controller = o.controller;
+                controller = o.controller;
             } else {
                 // Get any autoload component
                 var route = page.querySelector("[data-autoload]");
                 if (route) {
                     if (route = route.getAttribute('data-autoload')) {
                         // Get self
-                        if (route = jSuites.path.call(obj.options.scope, route)) {
+                        if (route = jSuites.path.call(config.scope, route)) {
                             // Dynamic controller
                             if (typeof(route) == 'function') {
-                                var controller = route;
+                                controller = route;
                             }
                         }
                     }
@@ -177,7 +175,7 @@
                 }
 
                 // Self
-                controllers[page.options.ident].self = controller(instance, page);
+                controllers[page.options.ident].self = controller.call(instance, page);
 
                 // Execute the lemonade parser
                 try {
@@ -188,7 +186,7 @@
             }
         }
 
-        obj.options.config.onchangepage = function(instance, page, oldPage) {
+        config.onchangepage = function(instance, page, oldPage) {
             // If the controller exists
             var o = controllers[page.options.ident];
             if (o) {
@@ -198,25 +196,46 @@
                     return o.self.onenter(page);
                 }
             }
-        }
+            if (oldPage) {
+                // If the controller exists
+                var o = controllers[oldPage.options.ident];
+                if (o) {
+                    // And the onenter event is available
+                    if (o.self && typeof (o.self.onleave) == 'function') {
+                        // Call event onenter
+                        return o.self.onleave(oldPage);
+                    }
+                }
+            }
 
-        if (typeof(obj.options.onerror) == 'function') {
-            obj.options.config.onerrorpage = function(instance, page) {
-                obj.options.onerror(obj, instance, page);
+            if (typeof(options.onchange) == 'function') {
+                options.onchange(router, instance, page);
             }
         }
 
         // Application
-        var application = jSuites.app(el, obj.options.config);
+        var application = jSuites.app(el, config);
+
+        // Extensions
+        application.controllers = controllers;
+        application.getController = getController;
+        application.setController = setController;
 
         // Onload
-        if (typeof(obj.options.onload) == 'function') {
-            obj.options.onload(obj, application);
+        if (typeof(options.onload) == 'function') {
+            if (jSuites.ajax.pending('app')) {
+                jSuites.ajax.oncomplete.app = function () {
+                    options.onload(router, application);
+                }
+            } else {
+                options.onload(router, application);
+            }
         }
 
         // Shortcut
-        el.application = obj;
+        el.application = router;
 
-        return obj;
+        // Return instance
+        return application;
     });
 })));

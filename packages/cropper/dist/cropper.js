@@ -16,16 +16,16 @@
 
     'use strict';
 
-    if (! jSuites) {
-        if (window.jSuites) {
-            var jSuites = window.jSuites;
-        } else if (typeof(require) === 'function') {
+    if (typeof(require) === 'function') {
+        // Load jSuites
+        if (typeof(jSuites) == 'undefined') {
             var jSuites = require('jsuites');
         }
-    }
-
-    if (! jSuites.crop && typeof(require) === 'function') {
-        jSuites.crop = require('@jsuites/cropper');
+        // Set the app extensions
+        if (typeof(jSuites.crop) == 'undefined') {
+            // Loading App Extensions
+            jSuites.crop = require('@jsuites/cropper');
+        }
     }
 
     return (function(photoContainer) {
@@ -209,14 +209,14 @@
                         <div role='content' style='background-color: #ccc;'>
                             <div>
                                 <div class="center row">
-                                    <label class="f1 p6"> Zoom <input type='range' step='.05' min='0.1' max='5.45' value='1' oninput='self.updateZoom(this)' style="margin-top:10px;" class='jrange controls' disabled='disabled'></label>
-                                    <label class="f1 p6"> Rotate <input type='range' step='.05' min='-1' max='1' value='0' oninput='self.updateRotate(this)' style="margin-top:10px;" class='jrange controls' disabled='disabled'></label>
+                                    <label class="f1 p6" style="padding-top:0px"> Zoom <input type='range' step='.05' min='0.1' max='5.45' value='1' oninput='self.updateZoom(this)' style="margin-top:10px;" class='jrange controls' disabled='disabled'></label>
+                                    <label class="f1 p6" style="padding-top:0px"> Rotate <input type='range' step='.05' min='-1' max='1' value='0' oninput='self.updateRotate(this)' style="margin-top:10px;" class='jrange controls' disabled='disabled'></label>
                                 </div>
                             </div>
                             <div>
                                 <div class="center row">
-                                    <label class="f1 p6"> Brigthness <input type='range' min='-1' max='1' step='.05' value='0' @bind='self.brightness' oninput='self.setBrightness(this)' style="margin-top:10px;" class='jrange controls' disabled='disabled'></label>
-                                    <label class="f1 p6"> Contrast <input type='range' min='-1' max='1' step='.05' value='0' @bind='self.contrast' oninput='self.setContrast(this)' style="margin-top:10px;" class='jrange controls' disabled='disabled'></label>
+                                    <label class="f1 p6" style="padding-top:0px"> Brigthness <input type='range' min='-1' max='1' step='.05' value='0' @bind='self.brightness' oninput='self.setBrightness(this)' style="margin-top:10px;" class='jrange controls' disabled='disabled'></label>
+                                    <label class="f1 p6" style="padding-top:0px"> Contrast <input type='range' min='-1' max='1' step='.05' value='0' @bind='self.contrast' oninput='self.setContrast(this)' style="margin-top:10px;" class='jrange controls' disabled='disabled'></label>
                                 </div>
                             </div>
                         </div>
