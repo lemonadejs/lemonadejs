@@ -87,3 +87,4 @@ This software is free to use and it is distributed under the MIT license.
 
 https://jsuites.net<br>
 https://jspreadsheet.com<br>
+https://bossanova.uk/jspreadsheet<br>
