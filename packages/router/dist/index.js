@@ -35,6 +35,11 @@
         }
     }
 
+    // Load lemonadejs
+    if (typeof(lemonade) == 'undefined' && typeof (require) === 'function') {
+        var lemonade = require('lemonadejs');
+    }
+
     /**
      * Get existing route controller
      * @param route
@@ -61,9 +66,13 @@
         }
     }
 
-    return (function(el, options) {
+    var router = (function(el, options) {
         // Controllers
         var controllers = {};
+
+        if (options.routes && typeof(options.routes) == 'object') {
+            controllers = options.routes;
+        }
 
         /**
          * Find a controller object based on a general route string
@@ -80,7 +89,7 @@
                 for (var i = 0; i < k.length; i++) {
                     e = new RegExp(k[i], 'gi');
                     if (route.match(e)) {
-                        return k[i];
+                        return route;
                     }
                 }
             }
@@ -111,37 +120,45 @@
             config.ident = findController;
         }
 
-        // Default 
+        // Default
         config.onbeforecreatepage = function (instance, page) {
             // Controller
             var controller = null;
             // Pre-defined routes
-            var route = config.ident(page.options.ident);
+            var route = config.ident(page.options.route, page);
             if (route && controllers[route]) {
                 controller = controllers[route];
             }
+
             // Autoload
             if (options.autoload == true) {
                 // Dynamic controller
                 if (! controller) {
-                    // Get route string and transform to object string
-                    route = page.options.ident.substr(1).replace(new RegExp('/', 'g'), '.');
-                    // If the related object with the matching route string, create controller reference
-                    var path = null
-                    if (path = jSuites.path.call(options.scope, route)) {
-                        // Exists as a method, create the reference
-                        if (typeof (path) == 'function') {
-                            // Controller
-                            controller = path;
-                            // Register controller
-                            controllers[page.options.ident] = { controller: controller };
+                    if (page.options.controller) {
+                        controller = page.options.controller;
+                    } else {
+                        // Get route string and transform to object string
+                        route = page.options.ident.substr(1).replace(new RegExp('/', 'g'), '.');
+                        // If the related object with the matching route string, create controller reference
+                        var path = null
+                        if (path = jSuites.path.call(options.scope, route)) {
+                            // Exists as a method, create the reference
+                            if (typeof (path) == 'function') {
+                                // Controller
+                                controller = path;
+                            }
                         }
                     }
+                }
+
+                // Register controller
+                if (controller) {
+                    controllers[page.options.ident] = { controller: controller };
                 }
             }
 
             // If the controller does not exist, try to get the controller the view from the backend
-            if (!controller) {
+            if (! controller && ! page.options.url) {
                 page.options.url = page.options.route;
             }
         }
@@ -218,8 +235,8 @@
 
         // Extensions
         application.controllers = controllers;
-        application.getController = getController;
-        application.setController = setController;
+        application.get = getController;
+        application.set = setController;
 
         // Onload
         if (typeof(options.onload) == 'function') {
@@ -233,9 +250,11 @@
         }
 
         // Shortcut
-        el.application = router;
+        el.application = application;
 
         // Return instance
         return application;
     });
+
+    return router;
 })));

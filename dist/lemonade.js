@@ -1,5 +1,5 @@
 /**
- * Lemonadejs v1.7.0
+ * Lemonadejs v1.7.1
  *
  * Website: https://lemonadejs.net
  * Description: Create amazing web based reusable components.

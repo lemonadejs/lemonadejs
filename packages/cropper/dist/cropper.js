@@ -2,7 +2,7 @@
  * (c) LemonadeJS components
  *
  * Website: https://lemonadejs.net
- * Description: Image cropper v1.2.1
+ * Description: Image cropper v1.4.0
  *
  * MIT License
  *
@@ -16,16 +16,19 @@
 
     'use strict';
 
-    if (typeof(require) === 'function') {
-        // Load jSuites
-        if (typeof(jSuites) == 'undefined') {
+    // Load jSuites
+    if (typeof(jSuites) == 'undefined') {
+        if (window.jSuites) {
+            var jSuites = window.jSuites;
+        } else if (typeof(require) === 'function') {
             var jSuites = require('jsuites');
         }
-        // Set the app extensions
-        if (typeof(jSuites.crop) == 'undefined') {
-            // Loading App Extensions
-            jSuites.crop = require('@jsuites/cropper');
-        }
+    }
+
+    // Set the app extensions
+    if (typeof(jSuites.crop) == 'undefined' && typeof(require) === 'function') {
+        // Loading App Extensions
+        jSuites.crop = require('@jsuites/cropper');
     }
 
     return (function(photoContainer) {
@@ -34,6 +37,7 @@
         var height = photoContainer.getAttribute('height') || 240;
         var modal = null;
         var crop = null;
+        var menu = null;
 
         var self = {};
         self.cropperArea = null;
@@ -69,6 +73,16 @@
                     if (image) {
                         self.setControls(true);
                     }
+                }
+            });
+        }
+
+        self.createMenu = function(o) {
+            // Start contextmenu component
+            menu = jSuites.contextmenu(o, {
+                onclick: function(a,b) {
+                    a.close();
+                    b.stopPropagation();
                 }
             });
         }
@@ -195,9 +209,23 @@
             }
         }
 
+        self.open = function() {
+            if (! modal.isOpen()) {
+                // Open modal
+                modal.open();
+                // Create controls for the first time only
+                if (!photoContainer.classList.contains('controls')) {
+                    // Create controls
+                    createControls(self.controls);
+                    // Flag controls are ready
+                    photoContainer.classList.add('controls');
+                }
+            }
+        }
+
         // Template
         var template = `
-            <div @ref='self.image'></div>
+            <div @ref='self.image' class="jphoto"></div>
             <div @ready='self.createModal(this)'>
                 <div @ready='self.createCropper(this)' @ref='self.cropperArea'></div>
                 <div @ref='self.controls'>
@@ -231,7 +259,9 @@
                         </div>
                     </div>
                 </div>
-            </div>`;
+            </div>
+            <div @ready="self.createMenu(this)"></div>
+            `;
 
         // Controls
         var createControls = function(o) {
@@ -254,19 +284,52 @@
             tabs.content.style.backgroundColor = '#eee';
         }
 
-        // Onclick event
-        photoContainer.classList.add('jupload');
         photoContainer.onmousedown = function(e) {
-            if (! modal.isOpen()) {
-                // Open modal
-                modal.open();
-                // Create controls for the first time only
-                if (! photoContainer.classList.contains('controls')) {
-                    // Create controls
-                    createControls(self.controls);
-                    // Flag controls are ready
-                    photoContainer.classList.add('controls');
+            if (e.target.tagName == 'IMG') {
+                e.target.focus();
+            }
+        }
+
+        // Onclick event
+        photoContainer.onclick = function(e) {
+            e = e || window.event;
+            if (e.buttons) {
+                var mouseButton = e.buttons;
+            } else if (e.button) {
+                var mouseButton = e.button;
+            } else {
+                var mouseButton = e.which;
+            }
+
+            if (mouseButton == 1) {
+                self.open();
+            } else {
+                if (e.target.tagName == 'IMG') {
+                    e.target.focus();
                 }
+            }
+        }
+
+        photoContainer.oncontextmenu = function(e) {
+            if (e.target.tagName == 'IMG') {
+                menu.open(e, [
+                    {
+                        title: jSuites.translate('Change image'),
+                        icon: 'edit',
+                        onclick: function() {
+                            self.open();
+                        }
+                    },
+                    {
+                        title: jSuites.translate('Delete image'),
+                        icon: 'delete',
+                        shortcut: 'DELETE',
+                        onclick: function() {
+                            e.target.remove();
+                        }
+                    }
+                ]);
+                e.preventDefault();
             }
         }
 
