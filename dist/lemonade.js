@@ -195,14 +195,14 @@
         var index = 0;
 
         if (e.getAttribute && e.getAttribute(type)) {
-            e.setAttribute(type, e.getAttribute(type).replace(/\{\{(.*?)\}\}/g, function (a,b,c,d) {
+            e.setAttribute(type, e.getAttribute(type).replace(/{{(.*?)}}/g, function (a,b,c,d) {
                 result.push({ p: c - index, v: b });
                 index = index + a.length;
                 return '';
             }));
         } else {
             if (typeof(e[type]) == 'string' && e[type]) {
-                e[type] = e[type].replace(/\{\{(.*?)\}\}/g, function (a,b,c,d) {
+                e[type] = e[type].replace(/{{(.*?)}}/g, function (a,b,c,d) {
                     result.push({ p: c - index, v: b });
                     index = index + a.length;
                     return '';
@@ -319,7 +319,7 @@
             }
         }
 
-        // Extensions
+        // TODO: add extensions to queue!
         if (this.components && element.constructor == HTMLUnknownElement) {
             // Method name
             var m = element.tagName;
