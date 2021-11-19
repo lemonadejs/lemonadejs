@@ -1,5 +1,5 @@
 /**
- * Lemonadejs v2.0.0.alpha
+ * Lemonadejs v2.0.1
  *
  * Website: https://lemonadejs.net
  * Description: Create amazing web based reusable components.
@@ -9,8 +9,8 @@
 
 ;(function (global, factory) {
     typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
-        typeof define === 'function' && define.amd ? define(factory) :
-            global.lemonade = factory();
+    typeof define === 'function' && define.amd ? define(factory) :
+    global.lemonade = factory();
 }(this, (function () {
 
     'use strict';
@@ -71,7 +71,7 @@
      * Dispatch changes in the self properties
      */
     var dispatch = function(property) {
-        var t,v,e = null;
+        var t,v,e,p = null;
         // Tracking
         if (t = this.tracking[property]) {
             for (var i = 0; i < t.length; i++) {
@@ -81,20 +81,24 @@
                 e = t[i].element
                 // Parse value
                 v = eval(t[i].v);
+                // Property
+                p = t[i].property;
                 // If the property is the value
-                if (t[i].property == 'value') {
+                if (p == 'value') {
                     if (e.value != v) {
                         if (typeof(e.val) == 'function') {
                             e.val(v);
                         }
                         e.value = v;
                     }
+                } else if (p == '@loop') {
+                    generate.call(e, v)
                 } else {
                     // Other properties
-                    if (e.lemon) {
-                        e.lemon.self[t[i].property] = v;
+                    if (e.self) {
+                        e.self[p] = v;
                     } else {
-                        setAttribute(e, v, t[i].property);
+                        setAttribute(e, v, p);
                     }
                 }
             }
@@ -110,14 +114,14 @@
      * Bind an property to one action and start tracking
      */
     var bind = function(property) {
+        // Lemon handler
+        var lemon = this;
         // Save as state
         if (Array.isArray(this.self[property])) {
             Array.prototype.refresh = function() {
                 dispatch.call(lemon, property);
             }
         } else {
-            // Lemon handler
-            var lemon = this;
             // Create the observer
             Object.defineProperty(this.self, property, {
                 set: function(val) {
@@ -147,8 +151,10 @@
                 } else {
                     element.appendChild(e);
                 }
+            } else if (type == '@loop') {
+                var e = element;
             } else {
-                e = element;
+                var e = element;
                 setAttribute(element, value, type);
             }
 
@@ -189,24 +195,21 @@
         }
     }
 
-    var attributes = function(e, attr, type) {
+    var attributes = function(e, type) {
         // Content
         var result = [];
         var index = 0;
+        var r = function (a,b,c,d)  {
+            result.push({ p: c - index, v: b });
+            index = index + a.length;
+            return '';
+        }
 
         if (e.getAttribute && e.getAttribute(type)) {
-            e.setAttribute(type, e.getAttribute(type).replace(/{{(.*?)}}/g, function (a,b,c,d) {
-                result.push({ p: c - index, v: b });
-                index = index + a.length;
-                return '';
-            }));
+            e.setAttribute(type, e.getAttribute(type).replace(/{{(.*?)}}/g, r));
         } else {
             if (typeof(e[type]) == 'string' && e[type]) {
-                e[type] = e[type].replace(/{{(.*?)}}/g, function (a,b,c,d) {
-                    result.push({ p: c - index, v: b });
-                    index = index + a.length;
-                    return '';
-                });
+                e[type] = e[type].replace(/{{(.*?)}}/g, r);
             }
         }
 
@@ -221,14 +224,36 @@
         }
     }
 
+    /**
+     * Get attributes in JSON format
+     */
+    var getAttributes = function() {
+        var a = {};
+        if (this.attributes && this.attributes.length) {
+            for (var i = 0; i < this.attributes.length; i++) {
+                a[this.attributes[i].name] = this.attributes[i].value;
+            }
+        }
+        return a;
+    }
+
     var parse = function(element) {
         // Attributes
         var tmp = null;
-        var attr = {};
+        var attr = getAttributes.call(element);
 
-        if (element.attributes && element.attributes.length) {
-            for (var i = 0; i < element.attributes.length; i++) {
-                attr[element.attributes[i].name] = element.attributes[i].value;
+        // Mark custom handlers
+        if (this.components && element.constructor == HTMLUnknownElement) {
+            // Method name
+            var m = element.tagName;
+            // Custom uccase
+            m = m.charAt(0).toUpperCase() + m.slice(1).toLowerCase();
+            // Expected function
+            var f = this.components[m];
+            // Verify scope in the declared extensions
+            if (typeof(f) == 'function') {
+                element.handler = f;
+                element.self = {};
             }
         }
 
@@ -254,16 +279,17 @@
                     if (! element.events) {
                         element.events = []
                     }
+                    // Property name
+                    var prop = attr[k[i]].replace('self.', '');
+                    // Special properties
                     if (k[i] == '@ready') {
                         // Add this method to the queue
                         this.queue.push(Function('self', attr[k[i]]).bind(element, this.self));
                         // Remove attribute
                         element.removeAttribute(k[i]);
                     } else if (k[i] == '@ref') {
-                        // Get the property name of the reference
-                        var ref = attr[k[i]].replace('self.', '');
                         // Make it available to the self
-                        this.self[ref] = element;
+                        this.self[prop] = element;
                         // Remove attribute
                         element.removeAttribute(k[i]);
                     } else if (k[i] == '@bind') {
@@ -289,10 +315,15 @@
                         create.call(this, element, { v:attr[k[i]] }, property);
                         // Remove attribute
                         element.removeAttribute(k[i]);
+                    } else if (k[i] == '@loop') {
+                        // Parse attributes
+                        create.call(this, element, { v:attr[k[i]] }, '@loop');
+                        element.loop = this.self[prop];
+                        element.removeAttribute(k[i]);
                     } else {
                         // Parse attributes
-                        attributes.call(this, element, attr[k[i]], k[i]);
-                        // TODO: Translate move to attributes?
+                        attributes.call(this, element, k[i]);
+                        // Lemonade translation helper
                         if (L.dictionary) {
                             if (tmp = L.translate(attr[k[i]])) {
                                 element.setAttribute(k[i], tmp);
@@ -310,8 +341,8 @@
             }
         } else {
             // Parse textual content
-            attributes.call(this, element, 'innerText', 'textContent');
-            // TODO: Translate move to attributes?
+            attributes.call(this, element, 'textContent');
+            // Lemonade translation helper
             if (L.dictionary) {
                 if (tmp = L.translate(element.innerText)) {
                     element.innerText = tmp;
@@ -319,23 +350,66 @@
             }
         }
 
-        // TODO: add extensions to queue!
-        if (this.components && element.constructor == HTMLUnknownElement) {
-            // Method name
-            var m = element.tagName;
-            // Custom uccase
-            m = m.charAt(0).toUpperCase() + m.slice(1).toLowerCase();
-            // Verify scope in the declared extensions
-            if (typeof(this.components[m]) == 'function') {
-                var s = {};
-                // Options
-                for (var i = 0; i < element.attributes.length; i++) {
-                    s[element.attributes[i].name] = element.attributes[i].value;
+        // Process the custom handler
+        var t = typeof(element.handler);
+        if (t !== 'undefined') {
+            // Root for custom is the parent
+            if (t === 'function') {
+                // Keep the reference of the parent
+                element.parent = element.parentNode;
+                var r = element.parent;
+                var f = element.handler;
+                var l = element.loop;
+                if (typeof(l) == 'undefined') {
+                    // Make sure the self goes as a reference
+                    var s = L.setProperties.call(element.self, getAttributes.call(element));
+                    // Add handler to the queue
+                    //this.queue.push(Function('f','e','s', 'lemonade.render(f, e, s)').bind(r, f, r, s));
+                    L.render(f, r, s);
+                } else {
+                    // Generate loop
+                    generate.call(element, l);
                 }
-                // Render
-                var o = L.render(this.components[m], element, s);
-                // Custom lemonade
-                element.lemon = o.lemon;
+            }
+            // Remove DOM from the view
+            element.remove();
+        }
+    }
+
+    /**
+     * Append custom compoents to the DOM
+     */
+    var generate = function(data) {
+        var t = null;
+        // Root parent
+        var r = this.parent;
+        // Function handler
+        var f = this.handler;
+        // DOM element that need to go to the root
+        var d = [];
+        if (data.length) {
+            for (var i = 0; i < data.length; i++) {
+                let o = data[i].__el;
+                if (! o) {
+                    // Create element
+                    o = L.render(f, r, data[i]);
+                    // Create propety
+                    Object.defineProperty(data[i], '__el', {
+                        get: function() {
+                            // Keep the reference to the DOM
+                            return o;
+                        }
+                    });
+                }
+                d.push(o);
+            }
+            // Remove all DOM
+            while (r.firstChild) {
+                r.firstChild.remove();
+            }
+            // Insert necessary DOM
+            while (t = d.shift()) {
+                r.appendChild(t);
             }
         }
     }
@@ -406,6 +480,8 @@
             // Already single DOM, do not need a container
             if (div.childNodes.length == 1) {
                 div = div.childNodes[0];
+            } else {
+                console.error('The template should have a single root');
             }
         } else {
             var div = t;
@@ -454,9 +530,9 @@
     /**
      * Set the values described on v
      */
-    L.setProperties = function(v) {
+    L.setProperties = function(v, create) {
         for (var property in v) {
-            if (this.hasOwnProperty(property)) {
+            if (this.hasOwnProperty(property) || create) {
                 this[property] = v[property];
             }
         }

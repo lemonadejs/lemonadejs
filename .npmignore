@@ -1,5 +1,7 @@
+.idea
 .project
 .settings
 .gitignore
+.npmignore
 src
 packages

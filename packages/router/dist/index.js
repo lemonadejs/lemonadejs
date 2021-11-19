@@ -120,6 +120,11 @@
             config.ident = findController;
         }
 
+        // Dictionary
+        if (options.dictionary) {
+            lemonade.dictionary = options.dictionary;
+        }
+
         // Default
         config.onbeforecreatepage = function (instance, page) {
             // Controller
