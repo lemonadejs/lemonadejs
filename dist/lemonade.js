@@ -167,7 +167,7 @@
 
                 // Current value of token
                 var b = false;
-                var v = this.self[token];
+                var v = this.self[token]||'';
 
                 // Create tracking
                 if (! this.tracking[token]) {
