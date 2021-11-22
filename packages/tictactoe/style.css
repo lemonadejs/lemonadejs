@@ -1,0 +1,30 @@
+.play-area section {
+    display: flex;
+    margin-bottom: 1px;
+}
+.play-area section span {
+    position: relative;
+    display: block;
+    height: 90px;
+    width: 90px;
+    margin: 2px;
+    color: #fff;
+    font-size: 40px;
+    line-height: 80px;
+    text-align: center;
+    border-radius: 5px;
+    background: #6c6c6c;
+}
+.btn button {
+    font-size: 18px;
+    font-weight: 500;
+    padding: 8px 20px;
+    border: none;
+    background: #6c6c6c;
+    border-radius: 5px;
+    color: #fff;
+    outline: none;
+    cursor: pointer;
+    margin-top: 10px;
+    transition: all 0.3s ease;
+}

@@ -36,8 +36,12 @@
     }
 
     // Load lemonadejs
-    if (typeof(lemonade) == 'undefined' && typeof (require) === 'function') {
-        var lemonade = require('lemonadejs');
+    if (typeof(lemonade) == 'undefined') {
+        if (typeof(require) === 'function') {
+            var lemonade = require('lemonadejs');
+        } else if (window.lemonade) {
+            var lemonade = window.lemonade;
+        }
     }
 
     /**
