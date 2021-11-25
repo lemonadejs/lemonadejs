@@ -1,5 +1,5 @@
 /**
- * Lemonadejs v2.0.1
+ * Lemonadejs v2.0.3
  *
  * Website: https://lemonadejs.net
  * Description: Create amazing web based reusable components.
@@ -104,9 +104,9 @@
             }
         }
 
-        // Onchange
-        if (typeof(this.onchange) == 'function') {
-            this.onchange.call(this.self, property, t);
+        // Onchange // DOCS update
+        if (typeof(this.self.onchange) == 'function') {
+            this.self.onchange.call(this, property, t, this.self);
         }
     }
 
@@ -141,6 +141,7 @@
     var create = function(element, res, type) {
         var tokens = res.v.match(/self\.([a-zA-Z0-9_].*?)*/g);
         if (tokens.length) {
+            var self = this.self;
             // Value
             var value = eval(res.v) || '';
             // Create text node
@@ -254,6 +255,9 @@
             if (typeof(f) == 'function') {
                 element.handler = f;
                 element.self = {};
+                element.self.template = element.innerHTML;
+                // Remove the template
+                element.innerHTML = '';
             }
         }
 
@@ -289,7 +293,7 @@
                         element.removeAttribute(k[i]);
                     } else if (k[i] == '@ref') {
                         // Make it available to the self
-                        this.self[prop] = element;
+                        this.self[prop] = element.self ? element.self : element;
                         // Remove attribute
                         element.removeAttribute(k[i]);
                     } else if (k[i] == '@bind') {
@@ -364,8 +368,7 @@
                     // Make sure the self goes as a reference
                     var s = L.setProperties.call(element.self, getAttributes.call(element));
                     // Add handler to the queue
-                    //this.queue.push(Function('f','e','s', 'lemonade.render(f, e, s)').bind(r, f, r, s));
-                    L.render(f, r, s);
+                    this.queue.push(Function('f','e','s', 'lemonade.render(f, e, s)').bind(r, f, r, s));
                 } else {
                     // Generate loop
                     generate.call(element, l);
@@ -388,29 +391,36 @@
         // DOM element that need to go to the root
         var d = [];
         if (data.length) {
-            for (var i = 0; i < data.length; i++) {
-                let o = data[i].__el;
+            for (let i = 0; i < data.length; i++) {
+                let o = data[i].el;
                 if (! o) {
                     // Create element
                     o = L.render(f, r, data[i]);
                     // Create propety
-                    Object.defineProperty(data[i], '__el', {
+                    Object.defineProperty(data[i], 'el', {
                         get: function() {
                             // Keep the reference to the DOM
                             return o;
                         }
                     });
+                    // Parent
+                    Object.defineProperty(data[i], 'parent', {
+                        get: function() {
+                            // Keep the reference to the parent
+                            return data;
+                        }
+                    });
                 }
                 d.push(o);
             }
-            // Remove all DOM
-            while (r.firstChild) {
-                r.firstChild.remove();
-            }
-            // Insert necessary DOM
-            while (t = d.shift()) {
-                r.appendChild(t);
-            }
+        }
+        // Remove all DOM
+        while (r.firstChild) {
+            r.firstChild.remove();
+        }
+        // Insert necessary DOM
+        while (t = d.shift()) {
+            r.appendChild(t);
         }
     }
 
@@ -474,26 +484,26 @@
 
         if (! isDOM(t)) {
             // Create the root element
-            var div = document.createElement('div');
+            var el = document.createElement('div');
             // Get the DOM content
-            div.innerHTML = t.trim();
+            el.innerHTML = t.trim();
             // Already single DOM, do not need a container
-            if (div.childNodes.length == 1) {
-                div = div.childNodes[0];
+            if (el.childNodes.length == 1) {
+                el = el.childNodes[0];
             } else {
                 console.error('The template should have a single root');
             }
         } else {
-            var div = t;
+            var el = t;
         }
 
         // Parse the content
-        parse.call(lemon, div);
+        parse.call(lemon, el);
 
         // Make lemon object available though the DOM is there a better way
-        div.lemon = lemon;
+        el.lemon = lemon;
 
-        return div;
+        return el;
     }
 
     // Deprected
