@@ -1,5 +1,5 @@
 /**
- * Lemonadejs v2.0.3
+ * Lemonadejs v2.0.4
  *
  * Website: https://lemonadejs.net
  * Description: Create amazing web based reusable components.
@@ -60,7 +60,7 @@
             } else {
                 e.checked = v ? true : false;
             }
-        } else if (t == 'value' || typeof(e[t]) !== 'undefined') {
+        } else if (typeof(e[t]) !== 'undefined' || typeof(v) == 'function' || typeof(v) == 'object') {
             e[t] = v;
         } else {
             e.setAttribute(t, v);
@@ -226,18 +226,31 @@
     }
 
     /**
-     * Get attributes in JSON format
+     * Get attributes as an object
+     * @param {boolean} props Get all properties from the property of the element or the property string
+     * @return {object}
      */
-    var getAttributes = function() {
-        var a = {};
-        if (this.attributes && this.attributes.length) {
-            for (var i = 0; i < this.attributes.length; i++) {
-                a[this.attributes[i].name] = this.attributes[i].value;
+    var getAttributes = function(props) {
+        var o = {};
+        var k = null;
+        var a = this.attributes;
+        if (a && a.length) {
+            for (var i = 0; i < a.length; i++) {
+                k = a[i].name;
+                if (props == true && typeof(this[k]) !== 'undefined') {
+                    o[k] = this[k];
+                } else {
+                    o[k] = a[i].value;
+                }
             }
         }
-        return a;
+        return o;
     }
 
+    /**
+     * Parse all attributes from one element
+     * @param {HTMLElement} element
+     */
     var parse = function(element) {
         // Attributes
         var tmp = null;
@@ -344,12 +357,14 @@
                 parse.call(this, element.children[i]);
             }
         } else {
-            // Parse textual content
-            attributes.call(this, element, 'textContent');
-            // Lemonade translation helper
-            if (L.dictionary) {
-                if (tmp = L.translate(element.innerText)) {
-                    element.innerText = tmp;
+            if (element.textContent) {
+                // Parse textual content
+                attributes.call(this, element, 'textContent');
+                // Lemonade translation helper
+                if (L.dictionary) {
+                    if (tmp = L.translate(element.innerText)) {
+                        element.innerText = tmp;
+                    }
                 }
             }
         }
@@ -366,12 +381,12 @@
                 var l = element.loop;
                 if (typeof(l) == 'undefined') {
                     // Make sure the self goes as a reference
-                    var s = L.setProperties.call(element.self, getAttributes.call(element));
+                    var s = L.setProperties.call(element.self, getAttributes.call(element, true), true);
                     // Add handler to the queue
                     this.queue.push(Function('f','e','s', 'lemonade.render(f, e, s)').bind(r, f, r, s));
                 } else {
                     // Generate loop
-                    generate.call(element, l);
+                    generate.call(element, l, this.self);
                 }
             }
             // Remove DOM from the view
@@ -382,7 +397,7 @@
     /**
      * Append custom compoents to the DOM
      */
-    var generate = function(data) {
+    var generate = function(data, parent) {
         var t = null;
         // Root parent
         var r = this.parent;
@@ -407,7 +422,7 @@
                     Object.defineProperty(data[i], 'parent', {
                         get: function() {
                             // Keep the reference to the parent
-                            return data;
+                            return parent;
                         }
                     });
                 }
