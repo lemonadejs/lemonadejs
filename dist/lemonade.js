@@ -1,5 +1,5 @@
 /**
- * Lemonadejs v2.0.4
+ * Lemonadejs v2.0.5
  *
  * Website: https://lemonadejs.net
  * Description: Create amazing web based reusable components.
@@ -14,6 +14,13 @@
 }(this, (function () {
 
     'use strict';
+
+    /**
+     * Refresh prototype
+     */
+    Array.prototype.refresh = function() {
+        console.error('Deprected. Please use self.refresh("property")');
+    }
 
     /**
      * The element passed is a DOM element
@@ -58,7 +65,7 @@
                     e.checked = true;
                 }
             } else {
-                e.checked = v ? true : false;
+                e.checked = ! v || v === '0' || v === 'false' ? false : true;
             }
         } else if (typeof(e[t]) !== 'undefined' || typeof(v) == 'function' || typeof(v) == 'object') {
             e[t] = v;
@@ -71,12 +78,13 @@
      * Dispatch changes in the self properties
      */
     var dispatch = function(property) {
-        var t,v,e,p = null;
+        var self,t,v,e,p,i = null;
         // Tracking
         if (t = this.tracking[property]) {
-            for (var i = 0; i < t.length; i++) {
-                // Make sure self is visible during eval
-                var self = this.self;
+            // Make sure self is visible during eval
+            self = this.self;
+            // Loop all affected elements
+            for (i = 0; i < t.length; i++) {
                 // Element
                 e = t[i].element
                 // Parse value
@@ -92,7 +100,7 @@
                         e.value = v;
                     }
                 } else if (p == '@loop') {
-                    generate.call(e, v)
+                    generate.call(e, v, self)
                 } else {
                     // Other properties
                     if (e.self) {
@@ -102,11 +110,11 @@
                     }
                 }
             }
-        }
 
-        // Onchange // DOCS update
-        if (typeof(this.self.onchange) == 'function') {
-            this.self.onchange.call(this, property, t, this.self);
+            // Onchange // DOCS update
+            if (typeof(self.onchange) == 'function') {
+                self.onchange.call(this, property, t, self);
+            }
         }
     }
 
@@ -116,26 +124,19 @@
     var bind = function(property) {
         // Lemon handler
         var lemon = this;
-        // Save as state
-        if (Array.isArray(this.self[property])) {
-            Array.prototype.refresh = function() {
+        // Create the observer
+        Object.defineProperty(this.self, property, {
+            set: function(val) {
+                // Update val
+                lemon.state[property] = val;
+                // Refresh binded elements
                 dispatch.call(lemon, property);
+            },
+            get: function() {
+                // Get value
+                return lemon.state[property];
             }
-        } else {
-            // Create the observer
-            Object.defineProperty(this.self, property, {
-                set: function(val) {
-                    // Update val
-                    lemon.state[property] = val;
-                    // Refresh binded elements
-                    dispatch.call(lemon, property);
-                },
-                get: function() {
-                    // Get value
-                    return lemon.state[property];
-                }
-            });
-        }
+        });
     }
 
     var create = function(element, res, type) {
@@ -267,8 +268,10 @@
             // Verify scope in the declared extensions
             if (typeof(f) == 'function') {
                 element.handler = f;
+                element.parent = element.parentNode;
                 element.self = {};
-                element.self.template = element.innerHTML;
+                // When has a template
+                element.template = element.innerHTML;
                 // Remove the template
                 element.innerHTML = '';
             }
@@ -284,18 +287,14 @@
                     // Get event
                     var event = k[i].toLowerCase();
                     var value = attr[k[i]];
-
                     // Get action
                     element.removeAttribute(event);
-                    if (! element.events) {
-                        element.events = []
-                    }
                     element[event] = Function('self', value).bind(element, this.self);
-                } else {
-                    // Events
-                    if (! element.events) {
-                        element.events = []
+                    // Add attribute to the self
+                    if (element.handler) {
+                        element.self[event] = element[event];
                     }
+                } else {
                     // Property name
                     var prop = attr[k[i]].replace('self.', '');
                     // Special properties
@@ -326,10 +325,12 @@
                         // Onchange event for the element
                         element.onchange = Function('self', e).bind(element, this.self);
                         if (property == 'value') {
-                            element.onkeyup = element.onchange;
+                            element.oninput = element.onchange;
                         }
                         // Way back
                         create.call(this, element, { v:attr[k[i]] }, property);
+                        // Keep reference to the original definition
+                        element[k[i]] = prop;
                         // Remove attribute
                         element.removeAttribute(k[i]);
                     } else if (k[i] == '@loop') {
@@ -374,23 +375,15 @@
         if (t !== 'undefined') {
             // Root for custom is the parent
             if (t === 'function') {
-                // Keep the reference of the parent
-                element.parent = element.parentNode;
-                var r = element.parent;
-                var f = element.handler;
-                var l = element.loop;
-                if (typeof(l) == 'undefined') {
+                if (typeof(element.loop) == 'undefined') {
                     // Make sure the self goes as a reference
                     var s = L.setProperties.call(element.self, getAttributes.call(element, true), true);
                     // Add handler to the queue
-                    this.queue.push(Function('f','e','s', 'lemonade.render(f, e, s)').bind(r, f, r, s));
-                } else {
-                    // Generate loop
-                    generate.call(element, l, this.self);
+                    L.render(element.handler, element.parent, s, element.template);
                 }
+                // Remove DOM from the view
+                element.remove();
             }
-            // Remove DOM from the view
-            element.remove();
         }
     }
 
@@ -409,10 +402,9 @@
             for (let i = 0; i < data.length; i++) {
                 let o = data[i].el;
                 if (! o) {
-                    // Create element
-                    o = L.render(f, r, data[i]);
                     // Create propety
                     Object.defineProperty(data[i], 'el', {
+                        enumerable: false,
                         get: function() {
                             // Keep the reference to the DOM
                             return o;
@@ -420,11 +412,14 @@
                     });
                     // Parent
                     Object.defineProperty(data[i], 'parent', {
+                        enumerable: false,
                         get: function() {
                             // Keep the reference to the parent
                             return parent;
                         }
                     });
+                    // Create element
+                    o = L.render(f, r, data[i]);
                 }
                 d.push(o);
             }
@@ -446,8 +441,10 @@
      * Render a lemonade DOM element, method or class into a root DOM element
      * @param o - Lemonade DOM created from a template
      * @param el - DOM Element to append the lemonade element
+     * @param self - existing self
+     * @param t - template when used used as a custom component
      */
-    L.render = function(o, el, self) {
+    L.render = function(o, el, self, t) {
         // Root element but be a valid DOM element
         if (! isDOM(el)) {
             console.log('DOM element given is not valid')
@@ -461,10 +458,10 @@
         // Flexible element (class or method)
         if (typeof(o) == 'function') {
             try {
-                o = o.call(self);
+                o = o.call(self, t);
             } catch {
                 o = new o(self);
-                o = L.element(o.render(), o);
+                o = L.element(o.render(t), o);
             }
         }
 
@@ -514,6 +511,15 @@
 
         // Parse the content
         parse.call(lemon, el);
+
+        // Refresh properties
+        Object.defineProperty(lemon.self, 'refresh', {
+            get: function() {
+                return function(prop) {
+                    dispatch.call(lemon, prop);
+                }
+            }
+        });
 
         // Make lemon object available though the DOM is there a better way
         el.lemon = lemon;
