@@ -167,7 +167,7 @@
             }
 
             // If the controller does not exist, try to get the controller the view from the backend
-            if (! controller && ! page.options.url) {
+            if (! controller) {
                 page.options.url = page.options.route;
             }
         }
@@ -185,7 +185,7 @@
                 if (route) {
                     if (route = route.getAttribute('data-autoload')) {
                         // Get self
-                        if (route = jSuites.path.call(config.scope, route)) {
+                        if (route = jSuites.path.call(options.scope, route)) {
                             // Dynamic controller
                             if (typeof(route) == 'function') {
                                 controller = route;
