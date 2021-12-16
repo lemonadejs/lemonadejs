@@ -134,25 +134,28 @@
             // Controller
             var controller = null;
             // Pre-defined routes
-            if (controllers[page.options.ident]) {
-                controller = controllers[page.options.ident].controller;
+            var route = config.ident(page.options.route, page);
+            if (route && controllers[route]) {
+                controller = controllers[route];
             }
 
             // Autoload
-            if (! controller && options.autoload == true) {
+            if (options.autoload == true) {
                 // Dynamic controller
-                if (page.options.controller) {
-                    controller = page.options.controller;
-                } else {
-                    // Get route string and transform to object string
-                    var route = page.options.ident.substr(1).replace(new RegExp('/', 'g'), '.');
-                    // If the related object with the matching route string, create controller reference
-                    var path = null
-                    if (path = jSuites.path.call(options.scope, route)) {
-                        // Exists as a method, create the reference
-                        if (typeof (path) == 'function') {
-                            // Controller
-                            controller = path;
+                if (! controller) {
+                    if (page.options.controller) {
+                        controller = page.options.controller;
+                    } else {
+                        // Get route string and transform to object string
+                        route = page.options.ident.substr(1).replace(new RegExp('/', 'g'), '.');
+                        // If the related object with the matching route string, create controller reference
+                        var path = null
+                        if (path = jSuites.path.call(options.scope, route)) {
+                            // Exists as a method, create the reference
+                            if (typeof (path) == 'function') {
+                                // Controller
+                                controller = path;
+                            }
                         }
                     }
                 }

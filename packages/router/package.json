@@ -15,9 +15,9 @@
         "javascript plugins"
     ],
     "dependencies": {
-        "lemonadejs": "^1.7.1",
-        "jsuites": "^4.9.10"
+        "lemonadejs": "^2.0.5",
+        "jsuites": "^4.9.27"
     },
     "main": "dist/index.js",
-    "version": "2.0.8"
+    "version": "2.1.0"
 }
