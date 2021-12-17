@@ -1,5 +1,5 @@
 /**
- * Lemonadejs v2.0.5
+ * Lemonadejs v2.1.2.beta
  *
  * Website: https://lemonadejs.net
  * Description: Create amazing web based reusable components.
@@ -9,8 +9,8 @@
 
 ;(function (global, factory) {
     typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
-        typeof define === 'function' && define.amd ? define(factory) :
-            global.lemonade = factory();
+    typeof define === 'function' && define.amd ? define(factory) :
+        global.lemonade = factory();
 }(this, (function () {
 
     'use strict';
@@ -51,21 +51,54 @@
     }
 
     /**
+     * Get the attribute helper
+     */
+    var getAttribute = function(e) {
+        var v = null;
+        if (typeof(e.val) === 'function') {
+            v = e.val();
+        } else {
+            if (e.tagName == 'SELECT' && e.getAttribute('multiple')) {
+                v = [];
+                for (var i = 0; i < e.options.length; i++) {
+                    if (e.options[i].selected) {
+                        v.push(e.options[i].value);
+                    }
+                }
+            } else if (e.type == 'checkbox') {
+                v = e.checked && e.getAttribute('value') ? e.value : e.checked;
+            } else {
+                v = e.value;
+            }
+        }
+        return v;
+    }
+
+    /**
      * Set attribute value helper
      */
     var setAttribute = function(e, v, t) {
-        if (t == 'children') {
-            for (var j = 0; j < e.children.length; j++) {
-                e.children[j].selected = v.indexOf(e.children[j].value) >= 0;
-            }
-        } else if (t == 'checked') {
-            if (e.type == 'radio') {
+        if (t === 'value') {
+            // Update HTML form element
+            if (e.tagName == 'SELECT' && e.getAttribute('multiple')) {
+                for (var j = 0; j < e.children.length; j++) {
+                    e.children[j].selected = v.indexOf(e.children[j].value) >= 0;
+                }
+            } else if (e.type == 'checkbox') {
+                e.checked = ! v || v === '0' || v === 'false' ? false : true;
+            } else if (e.type == 'radio') {
                 e.checked = false;
                 if (e.value == v) {
                     e.checked = true;
                 }
             } else {
-                e.checked = ! v || v === '0' || v === 'false' ? false : true;
+                if (typeof(e.val) === 'function') {
+                    if (e.val() != v) {
+                        e.val(v);
+                    }
+                } else {
+                    e.value = v;
+                }
             }
         } else if (typeof(e[t]) !== 'undefined' || typeof(v) == 'function' || typeof(v) == 'object') {
             e[t] = v;
@@ -92,14 +125,7 @@
                 // Property
                 p = t[i].property;
                 // If the property is the value
-                if (p == 'value') {
-                    if (e.value != v) {
-                        if (typeof(e.val) == 'function') {
-                            e.val(v);
-                        }
-                        e.value = v;
-                    }
-                } else if (p == '@loop') {
+                if (p == '@loop') {
                     generate.call(e, v, self)
                 } else {
                     // Other properties
@@ -113,7 +139,7 @@
 
             // Onchange // DOCS update
             if (typeof(self.onchange) == 'function') {
-                self.onchange.call(this, property, t, self);
+                self.onchange.call(e, property, t, self);
             }
         }
     }
@@ -121,20 +147,20 @@
     /**
      * Bind an property to one action and start tracking
      */
-    var bind = function(property) {
+    var bind = function(p) {
         // Lemon handler
         var lemon = this;
         // Create the observer
-        Object.defineProperty(this.self, property, {
-            set: function(val) {
+        Object.defineProperty(this.self, p, {
+            set: function(v) {
                 // Update val
-                lemon.state[property] = val;
+                lemon.state[p] = v;
                 // Refresh binded elements
-                dispatch.call(lemon, property);
+                dispatch.call(lemon, p);
             },
             get: function() {
                 // Get value
-                return lemon.state[property];
+                return lemon.state[p];
             }
         });
     }
@@ -253,6 +279,7 @@
      * @param {HTMLElement} element
      */
     var parse = function(element) {
+        var lemon = this;
         // Attributes
         var tmp = null;
         var attr = getAttributes.call(element);
@@ -308,26 +335,15 @@
                         // Remove attribute
                         element.removeAttribute(k[i]);
                     } else if (k[i] == '@bind') {
-                        // Definitions
-                        var property = 'value';
-                        var e = attr[k[i]] + ' = this.value;';
-                        // Based on the element
-                        if (element.multiple == true) {
-                            var e = 'var a = []; for (var i = 0; i < this.options.length; i++) { if (this.options[i].selected) { a.push(this.options[i].value); } } ' + attr[k[i]] + ' = a; ' + attr[k[i]] + '.refresh();';
-                            var property = 'children';
-                        } else if (element.type == 'checkbox') {
-                            var e = attr[k[i]] + " = this.checked && this.getAttribute('value') ? this.value : this.checked;";
-                            var property = 'checked';
-                        } else if (element.type == 'radio') {
-                            var property = 'checked';
-                        }
                         // Onchange event for the element
-                        element.onchange = Function('self', e).bind(element, this.self);
-                        if (property == 'value') {
-                            element.oninput = element.onchange;
-                        }
+                        element.oninput = function(a, b) {
+                            // Update val
+                            this.state[b] = getAttribute(a);
+                            // Refresh binded elements
+                            dispatch.call(this, b);
+                        }.bind(this, element, prop);
                         // Way back
-                        create.call(this, element, { v:attr[k[i]] }, property);
+                        create.call(this, element, { v:attr[k[i]] }, 'value');
                         // Keep reference to the original definition
                         element[k[i]] = prop;
                         // Remove attribute
@@ -353,8 +369,12 @@
 
         // Check the children
         if (element.children.length) {
+            var tmp = [];
             for (var i = 0; i < element.children.length; i++) {
-                parse.call(this, element.children[i]);
+                tmp.push(element.children[i]);
+            }
+            for (var i = 0; i < tmp.length; i++) {
+                parse.call(this, tmp[i]);
             }
         } else {
             if (element.textContent) {
@@ -370,19 +390,21 @@
         }
 
         // Process the custom handler
-        var t = typeof(element.handler);
-        if (t !== 'undefined') {
-            // Root for custom is the parent
-            if (t === 'function') {
-                if (typeof(element.loop) == 'undefined') {
-                    // Make sure the self goes as a reference
-                    var s = L.setProperties.call(element.self, getAttributes.call(element, true), true);
-                    // Add handler to the queue
-                    L.render(element.handler, element.parent, s, element.template);
-                }
-                // Remove DOM from the view
-                element.remove();
+        var h = element.handler;
+
+        // Root for custom is the parent
+        if (typeof(h) === 'function') {
+            // Root
+            var r = element.parentNode;
+            // Component type
+            if (typeof(element.loop) == 'undefined') {
+                // Make sure the self goes as a reference
+                var s = L.setProperties.call(element.self, getAttributes.call(element, true), true);
+                // Create componet
+                L.render(h, r, s, element.template, element);
             }
+            // Remove component container
+            element.remove();
         }
     }
 
@@ -392,6 +414,9 @@
     var generate = function(data, parent) {
         var t = null;
         // Root parent
+        if (! this.parent) {
+            this.parent = this.parentNode;
+        }
         var r = this.parent;
         // Function handler
         var f = this.handler;
@@ -423,9 +448,10 @@
                 d.push(o);
             }
         }
+
         // Remove all DOM
-        while (r.firstChild) {
-            r.firstChild.remove();
+        while (r.children[0]) {
+            r.children[0].remove();
         }
         // Insert necessary DOM
         while (t = d.shift()) {
@@ -443,7 +469,7 @@
      * @param self - existing self
      * @param t - template when used used as a custom component
      */
-    L.render = function(o, el, self, t) {
+    L.render = function(o, el, self, t, ref) {
         // Root element but be a valid DOM element
         if (! isDOM(el)) {
             console.log('DOM element given is not valid')
@@ -464,8 +490,22 @@
             }
         }
 
-        // Append child if not appended
-        el.appendChild(o);
+        // Append element to the root
+        if (o.tagName == 'ROOT') {
+            while (o.firstChild) {
+                if (ref) {
+                    el.insertBefore(o.firstChild, ref);
+                } else {
+                    el.appendChild(o.firstChild);
+                }
+            }
+        } else {
+            if (ref) {
+                el.insertBefore(o, ref);
+            } else {
+                el.appendChild(o);
+            }
+        }
 
         // Process ready queue
         queue(o);
@@ -494,15 +534,20 @@
         }
 
         if (! isDOM(t)) {
+            // Close any custom not fully closed component
+            t = t.replace(/((<([A-Z]{1}[a-zA-Z0-9_-]+).*)\/.{0,1}>)/g, "$2><\/$3>");
+            // Parse fragment
+            t = t.replace(/<>/gi, "<root>").replace(/<\/>/gi, "<\/root>").trim();
             // Create the root element
             var el = document.createElement('div');
             // Get the DOM content
-            el.innerHTML = t.trim();
+            el.innerHTML = t;
             // Already single DOM, do not need a container
-            if (el.childNodes.length == 1) {
-                el = el.childNodes[0];
-            } else {
+            if (el.childNodes.length > 1) {
                 console.error('The template should have a single root');
+                return;
+            } else {
+                el = el.firstChild;
             }
         } else {
             var el = t;
