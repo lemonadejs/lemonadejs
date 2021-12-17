@@ -268,7 +268,6 @@
             // Verify scope in the declared extensions
             if (typeof(f) == 'function') {
                 element.handler = f;
-                element.parent = element.parentNode;
                 element.self = {};
                 // When has a template
                 element.template = element.innerHTML;
