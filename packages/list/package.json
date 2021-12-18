@@ -1,0 +1,22 @@
+{
+    "name": "@lemonadejs/list",
+    "title": "LemonadeJS listing extension",
+    "description": "LemonadeJS list extension. A useful 1.5kbytes listing library with search and pagination.",
+    "author": {
+        "name": "Contact <contact@lemonadejs.net>",
+        "url": "https://lemonadejs.net"
+    },
+    "keywords": [
+        "javascript template with search and pagination",
+        "javascript router",
+        "lemonadejs plugins",
+        "js",
+        "library",
+        "javascript plugins"
+    ],
+    "dependencies": {
+        "lemonadejs": "^2.1.2"
+    },
+    "main": "dist/index.js",
+    "version": "1.0.1"
+}
