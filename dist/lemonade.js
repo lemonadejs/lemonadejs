@@ -1,5 +1,5 @@
 /**
- * Lemonadejs v2.1.2.beta
+ * Lemonadejs v2.1.3.beta
  *
  * Website: https://lemonadejs.net
  * Description: Create amazing web based reusable components.
@@ -9,8 +9,8 @@
 
 ;(function (global, factory) {
     typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
-    typeof define === 'function' && define.amd ? define(factory) :
-        global.lemonade = factory();
+        typeof define === 'function' && define.amd ? define(factory) :
+            global.lemonade = factory();
 }(this, (function () {
 
     'use strict';
@@ -110,7 +110,7 @@
     /**
      * Dispatch changes in the self properties
      */
-    var dispatch = function(property) {
+    var dispatch = function(property, first) {
         var self,t,v,e,p,i = null;
         // Tracking
         if (t = this.tracking[property]) {
@@ -138,7 +138,7 @@
             }
 
             // Onchange // DOCS update
-            if (typeof(self.onchange) == 'function') {
+            if (! first && typeof(self.onchange) == 'function') {
                 self.onchange.call(e, property, t, self);
             }
         }
@@ -150,13 +150,17 @@
     var bind = function(p) {
         // Lemon handler
         var lemon = this;
+        // First call
+        var first = true;
         // Create the observer
         Object.defineProperty(this.self, p, {
             set: function(v) {
                 // Update val
                 lemon.state[p] = v;
                 // Refresh binded elements
-                dispatch.call(lemon, p);
+                dispatch.call(lemon, p, first);
+                // First call
+                first = false;
             },
             get: function() {
                 // Get value
