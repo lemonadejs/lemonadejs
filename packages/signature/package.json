@@ -1,0 +1,21 @@
+{
+    "name": "@lemonadejs/signature",
+    "title": "LemonadeJS signature pad extension",
+    "description": "LemonadeJS list extension. A useful 1.4 kBytes signature pad library.",
+    "author": {
+        "name": "Contact <contact@lemonadejs.net>",
+        "url": "https://lemonadejs.net"
+    },
+    "keywords": [
+        "signature pad",
+        "lemonadejs plugins",
+        "js",
+        "library",
+        "javascript plugins"
+    ],
+    "dependencies": {
+        "lemonadejs": "^2.1.5"
+    },
+    "main": "dist/index.js",
+    "version": "1.0.0"
+}

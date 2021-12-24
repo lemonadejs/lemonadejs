@@ -1,5 +1,5 @@
 /**
- * Lemonadejs v2.1.3.beta
+ * Lemonadejs v2.1.5.beta
  *
  * Website: https://lemonadejs.net
  * Description: Create amazing web based reusable components.
@@ -27,6 +27,13 @@
      */
     var isDOM = function(o) {
         return (o instanceof Element || o instanceof HTMLDocument);
+    }
+
+    /**
+     * Is a class
+     */
+    var isClass = function(f) {
+        return typeof f === 'function' && /^class\s/.test(Function.prototype.toString.call(f));
     }
 
     /**
@@ -170,29 +177,26 @@
     }
 
     var create = function(element, res, type) {
-        var tokens = res.v.match(/self\.([a-zA-Z0-9_].*?)*/g);
-        if (tokens.length) {
-            var self = this.self;
-            // Value
-            var value = eval(res.v) || '';
-            // Create text node
-            if (type == 'textContent') {
-                var e = document.createTextNode(value);
-                if (element.childNodes[0]) {
-                    element.insertBefore(e, element.childNodes[0].splitText(res.p));
-                } else {
-                    element.appendChild(e);
-                }
-            } else if (type == '@loop') {
-                var e = element;
+        var self = this.self;
+        // Value
+        var value = eval(res.v) || '';
+        // Create text node
+        if (type == 'textContent') {
+            var e = document.createTextNode(value);
+            if (element.childNodes[0]) {
+                element.insertBefore(e, element.childNodes[0].splitText(res.p));
             } else {
-                var e = element;
-                setAttribute(element, value, type);
+                element.appendChild(e);
             }
+        } else if (type == '@loop') {
+            var e = element;
+        } else {
+            var e = element;
+            setAttribute(element, value, type);
+        }
 
-            if (! e) {
-                return;
-            }
+        var tokens = res.v.match(/self\.([a-zA-Z0-9_].*?)*/g);
+        if (tokens && tokens.length) {
             for (var i = 0; i < tokens.length; i++) {
                 // Get property name
                 var token = tokens[i].replace('self.', '');
@@ -249,7 +253,6 @@
             if (result.length == 1 && type == 'textContent' && ! e.innerText) {
                 type = 'innerHTML';
             }
-
             for (var i = result.length - 1; i >= 0; i--) {
                 create.call(this, e, result[i], type);
             }
@@ -289,10 +292,10 @@
         var attr = getAttributes.call(element);
 
         // Mark custom handlers
-        if (this.components && element.constructor == HTMLUnknownElement) {
+        if (this.components) {
             // Method name
             var m = element.tagName;
-            // Custom uccase
+            // Custom ucfirst
             m = m.charAt(0).toUpperCase() + m.slice(1).toLowerCase();
             // Expected function
             var f = this.components[m];
@@ -405,7 +408,7 @@
                 // Make sure the self goes as a reference
                 var s = L.setProperties.call(element.self, getAttributes.call(element, true), true);
                 // Create componet
-                L.render(h, r, s, element.template, element);
+                L.render(h, r, s, element.template, element, lemon.components);
             }
             // Remove component container
             element.remove();
@@ -473,10 +476,10 @@
      * @param self - existing self
      * @param t - template when used used as a custom component
      */
-    L.render = function(o, el, self, t, ref) {
+    L.render = function(o, el, self, t, ref, ext) {
         // Root element but be a valid DOM element
         if (! isDOM(el)) {
-            console.log('DOM element given is not valid')
+            console.log('Not valid DOM')
             return false;
         }
 
@@ -486,11 +489,11 @@
 
         // Flexible element (class or method)
         if (typeof(o) == 'function') {
-            try {
-                o = o.call(self, t);
-            } catch {
+            if (isClass(o)) {
                 o = new o(self);
-                o = L.element(o.render(t), o);
+                o = L.element(o.render(t, ext), o);
+            } else {
+                o = o.call(self, t, ext);
             }
         }
 
@@ -539,7 +542,7 @@
 
         if (! isDOM(t)) {
             // Close any custom not fully closed component
-            t = t.replace(/((<([A-Z]{1}[a-zA-Z0-9_-]+).*)\/.{0,1}>)/g, "$2><\/$3>");
+            t = t.replace(/((<([A-Z]{1}[a-zA-Z0-9_-]+)[\s\S]+?)\/.{0,1}>)/gm, "$2><\/$3>");
             // Parse fragment
             t = t.replace(/<>/gi, "<root>").replace(/<\/>/gi, "<\/root>").trim();
             // Create the root element
