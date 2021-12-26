@@ -542,7 +542,7 @@
 
         if (! isDOM(t)) {
             // Close any custom not fully closed component
-            t = t.replace(/((<([A-Z]{1}[a-zA-Z0-9_-]+)[\s\S]+?)\/.{0,1}>)/gm, "$2><\/$3>");
+            t = t.replace(/(<([A-Z]{1}[a-zA-Z0-9_-]+)[^>]*)(\/|\/.{1})>/gm, "$1></$2>");
             // Parse fragment
             t = t.replace(/<>/gi, "<root>").replace(/<\/>/gi, "<\/root>").trim();
             // Create the root element
