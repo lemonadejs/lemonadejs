@@ -1,13 +1,13 @@
 {
     "name": "@lemonadejs/router",
-    "title": "LemonadeJS single page app router plugin",
-    "description": "LemonadeJS lightweight SPA w/ router builder",
+    "title": "LemonadeJS router library",
+    "description": "LemonadeJS router library",
     "author": {
         "name": "Contact <contact@lemonadejs.net>",
         "url": "https://lemonadejs.net"
     },
     "keywords": [
-        "single page app router",
+        "router library",
         "javascript router",
         "lemonadejs plugins",
         "js",
@@ -15,9 +15,8 @@
         "javascript plugins"
     ],
     "dependencies": {
-        "lemonadejs": "^2.0.5",
-        "jsuites": "^4.9.27"
+        "lemonadejs": "^2.0.5"
     },
     "main": "dist/index.js",
-    "version": "2.1.0"
+    "version": "3.0.1"
 }

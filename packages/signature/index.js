@@ -17,6 +17,8 @@
         var self = this;
         var x = null;
         var y = null;
+        var canvas = null;
+        var ctx = null;
 
         // Onchange declared event
         var c = self.onchange;
@@ -74,7 +76,7 @@
         }
 
         self.onchange = function() {
-            var c = self.value;
+              var c = self.value;
             if (c && c.length) {
                 // Position to the initial point
                 var t = c.shift();
@@ -101,27 +103,27 @@
             update();
         }
 
-        var template = `<div><canvas value="{{self.value}}" width="{{self.width}}" width="{{self.height}}"></canvas><div>{{self.instructions}}</div></div>`;
+        self.init = function(o) {
+            canvas = o;
 
-        // Create lemonade component
-        var root = lemonade.element(template, self);
+            // Canvas references
+            ctx = o.getContext('2d');
 
-        // Canvas references
-        var canvas = root.firstChild;
-        var ctx = canvas.getContext('2d');
-
-        // Integration with forms
-        canvas.val = function(v) {
-            if (typeof(v) === 'undefined') {
-                return self.value;
-            } else {
-                self.value = v;
+            // Integration with forms
+            o.val = function(v) {
+                if (typeof(v) === 'undefined') {
+                    return self.value;
+                } else {
+                    self.value = v;
+                }
             }
+
+            // Intercept click
+            o.onmousedown = o.ontouchstart = point;
+            o.onmousemove = o.ontouchmove = draw;
         }
 
-        // Intercept click
-        canvas.onmousedown = point;
-        canvas.onmousemove = draw;
+        var template = `<div><canvas value="{{self.value}}" width="{{self.width}}" width="{{self.height}}" @ready="self.init(this)"></canvas><div>{{self.instructions}}</div></div>`;
 
         document.onmouseup = function(e) {
             if (x !== null) {
@@ -134,6 +136,6 @@
 
         valid();
 
-        return root;
+        return lemonade.element(template, self);
     }
 })));

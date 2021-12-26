@@ -1,8 +1,17 @@
 ;(function (global, factory) {
     typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
-        typeof define === 'function' && define.amd ? define(factory) :
-            global.List = factory();
+    typeof define === 'function' && define.amd ? define(factory) :
+    global.List = factory();
 }(this, (function () {
+
+    // Load lemonadejs
+    if (typeof(lemonade) == 'undefined') {
+        if (typeof(require) === 'function') {
+            var lemonade = require('lemonadejs');
+        } else if (window.lemonade) {
+            var lemonade = window.lemonade;
+        }
+    }
 
     return function(html) {
         // Lemonade element

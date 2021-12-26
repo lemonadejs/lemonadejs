@@ -1,0 +1,43 @@
+.toolbar {
+    display: flex;
+    align-items: center;
+    box-sizing: border-box;
+    vertical-align:middle;
+    justify-content: space-evenly;
+    position: fixed;
+    bottom: 0;
+    margin: 0;
+    left: 0;
+    width: 100%;
+    background: #f7f7f8;
+    z-index: 1;
+    box-shadow: 0 -1px 2px rgba(0,0,0,.1);
+    border-radius: 0px;
+}
+
+.toolbar div {
+    flex: 1;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    padding: 8px;
+    text-align:center;
+}
+
+.toolbar a {
+    text-decoration: none;
+    display: inline-block;
+    color: #000;
+}
+
+.toolbar i {
+    display: block;
+    color:#333;
+}
+
+.toolbar span {
+    font-size:0.7em;
+    display:block;
+    color:#929292;
+}

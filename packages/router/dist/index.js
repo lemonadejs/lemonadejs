@@ -1,39 +1,8 @@
-/**
- * (c) LemonadeJS components
- *
- * Website: https://lemonadejs.net
- * Description: Single page app router
- *
- * MIT License
- *
- */
-
 ;(function (global, factory) {
     typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
-        typeof define === 'function' && define.amd ? define(factory) :
-            global.router = factory();
+    typeof define === 'function' && define.amd ? define(factory) :
+    global.Router = factory();
 }(this, (function () {
-
-    'use strict';
-
-    // Load jSuites
-    if (typeof(jSuites) == 'undefined') {
-        if (typeof(require) === 'function') {
-            var jSuites = require('jsuites');
-        } else if (window.jSuites) {
-            var jSuites = window.jSuites;
-        }
-    }
-
-    // Set the app extensions
-    if (typeof(jSuites.app) == 'undefined') {
-        if (typeof(require) === 'function') {
-            // Loading App Extensions
-            var app = require('@jsuites/app');
-            // Set the jSuites.app extension
-            jSuites.setExtensions(app);
-        }
-    }
 
     // Load lemonadejs
     if (typeof(lemonade) == 'undefined') {
@@ -44,226 +13,176 @@
         }
     }
 
-    /**
-     * Get existing route controller
-     * @param route
-     * @returns {object}
-     */
-    var getController = function(route) {
-        if (this.controllers[route]) {
-            return this.controllers[route];
+    return function(html, ext) {
+        var self = this;
+        var config = [];
+        var current = null;
+
+        if (! ext) {
+            ext = {};
         }
-        return null;
-    }
 
-    /**
-     * Set a router controller
-     * @param route
-     * @returns {object}
-     */
-    var setController = function(route, controller) {
-        if (typeof(route) == 'string') {
-            this.controllers[route] = {
-                controller: controller,
-                self: null
-            };
+        self.onchange = function(attr) {
+            if (attr == 'path') {
+                set();
+            }
         }
-    }
 
-    var router = (function(el, options) {
-        // Controllers
-        var controllers = {};
-
-        if (options.routes && typeof(options.routes) == 'object') {
-            controllers = options.routes;
+        self.onload = function() {
+            self.path = location.pathname;
         }
 
         /**
-         * Find a controller object based on a general route string
-         * @param route
-         * @returns {string}
+         * Create a DIV container
          */
-        var findController = function(route) {
-            // Remove any possible query string from the route
-            route = route.split('?')[0];
-            // Search matching route in the container
-            var k = Object.keys(controllers);
-            var e = null;
-            if (k.length) {
-                for (var i = 0; i < k.length; i++) {
-                    e = new RegExp(k[i], 'gi');
-                    if (route.match(e)) {
-                        return route;
-                    }
+        var div = function() {
+            return document.createElement('div');
+        }
+
+        /**
+         * Extract configuration
+         */
+        var extract = function() {
+            var d = div();
+            d.innerHTML = html;
+            var o,t = null;
+            var c = d.children;
+            for (var i = 0; i < c.length; i++) {
+                o = {};
+                t = c[i].attributes;
+                for (var j = 0; j < t.length; j++) {
+                    o[t[j].name] = t[j].value;
                 }
+                // Controller
+                o.controller = ext[o.controller];
+                // Preload
+                if (o.preload) {
+                    create(o);
+                }
+                // Save configuration
+                config.push(o);
             }
-            return route;
-        }
+        };
 
-        // Make sure the options is an object with the configuration
-        if (! options && typeof(options) !== 'object') {
-            options = {};
-        }
-        // Scope must exist for the automatic view path identification
-        if (! options.scope) {
-            options.scope = window;
-        }
-        // Autoload helps to bind the controller with the route
-        if (typeof(options.autoload) == 'undefined') {
-            options.autoload = true;
-        }
-        // Application config
-        if (options.config) {
-            var config = options.config;
-        } else {
-            var config = {};
-        }
-
-        // Router identifier
-        if (! config.ident) {
-            config.ident = findController;
-        }
-
-        // Dictionary
-        if (options.dictionary) {
-            lemonade.dictionary = options.dictionary;
-        }
-
-        // Default
-        config.onbeforecreatepage = function (instance, page) {
+        /**
+         * Create new page
+         */
+        var create = function(o) {
             // Controller
-            var controller = null;
-            // Pre-defined routes
-            var route = config.ident(page.options.route, page);
-            if (route && controllers[route]) {
-                controller = controllers[route];
-            }
-
-            // Autoload
-            if (options.autoload == true) {
-                // Dynamic controller
-                if (! controller) {
-                    if (page.options.controller) {
-                        controller = page.options.controller;
-                    } else {
-                        // Get route string and transform to object string
-                        route = page.options.ident.substr(1).replace(new RegExp('/', 'g'), '.');
-                        // If the related object with the matching route string, create controller reference
-                        var path = null
-                        if (path = jSuites.path.call(options.scope, route)) {
-                            // Exists as a method, create the reference
-                            if (typeof (path) == 'function') {
-                                // Controller
-                                controller = path;
-                            }
-                        }
-                    }
-                }
-
-                // Register controller
-                if (controller) {
-                    controllers[page.options.ident] = { controller: controller };
+            var c = o.controller;
+            // Renderer
+            var r = lemonade.render;
+            // Create the self and make that available on the route configuration
+            var s = o.self = {};
+            // Create element container
+            var e = div();
+            e.classList.add('page');
+            // Add the element to the configuration
+            o.element = e;
+            // Temp
+            var t = null;
+            // Make sure the order is correct
+            for (var i = 0; i < config.length; i++) {
+                if (t = config[i].element) {
+                    self.root.appendChild(t);
                 }
             }
-
-            // If the controller does not exist, try to get the controller the view from the backend
-            if (! controller) {
-                page.options.url = page.options.route;
-            }
-        }
-
-        config.oncreatepage = function (instance, page, view) {
-            // Controller
-            var controller = null;
-            // Create and append the lemonade self to our container of controllers
-            var o = controllers[page.options.ident];
-            if (o) {
-                controller = o.controller;
+            if (o.url) {
+                // Fetch a remote view
+                fetch(o.url).then(function(v) {
+                    v.text().then(function(v) {
+                        // Call the LemonadeJS renderer
+                        r(c, e, s, "<>"+v+"</>");
+                    })
+                });
             } else {
-                // Get any autoload component
-                var route = page.querySelector("[data-autoload]");
-                if (route) {
-                    if (route = route.getAttribute('data-autoload')) {
-                        // Get self
-                        if (route = jSuites.path.call(options.scope, route)) {
-                            // Dynamic controller
-                            if (typeof(route) == 'function') {
-                                controller = route;
-                            }
-                        }
-                    }
-                }
+                // Call the LemonadeJS renderer
+                r(c, e, s);
             }
+        }
 
-            if (controller) {
-                if (! controllers[page.options.ident]) {
-                    controllers[page.options.ident] = { controller: controller };
-                }
-
-                // Self
-                controllers[page.options.ident].self = controller.call(instance, page);
-
-                // Execute the lemonade parser
-                try {
-                    lemonade.apply(page, controllers[page.options.ident].self);
-                } catch (e) {
-                    console.log(e);
+        /**
+         * Get route
+         */
+        var get = function() {
+            var c = config;
+            for (var i = 0; i < c.length; i++) {
+                if (self.path.match(new RegExp('^'+c[i].path+'$', 'gi'))) {
+                    return c[i];
                 }
             }
         }
 
-        config.onchangepage = function(instance, page, oldPage) {
-            // If the controller exists
-            var o = controllers[page.options.ident];
-            if (o) {
-                // And the onenter event is available
-                if (o.self && typeof (o.self.onenter) == 'function') {
-                    // Call event onenter
-                    return o.self.onenter(page);
-                }
+        var hide = function(c) {
+            if (current) {
+                current.element.style.display = 'none';
             }
-            if (oldPage) {
-                // If the controller exists
-                var o = controllers[oldPage.options.ident];
-                if (o) {
-                    // And the onenter event is available
-                    if (o.self && typeof (o.self.onleave) == 'function') {
-                        // Call event onenter
-                        return o.self.onleave(oldPage);
-                    }
-                }
-            }
-
-            if (typeof(options.onchange) == 'function') {
-                options.onchange(router, instance, page);
+            // Current page
+            current = c;
+            // On enter
+            if (c.self.onenter) {
+                c.self.onenter.call(c, c.element);
             }
         }
 
-        // Application
-        var application = jSuites.app(el, config);
-
-        // Extensions
-        application.controllers = controllers;
-        application.get = getController;
-        application.set = setController;
-
-        // Onload
-        if (typeof(options.onload) == 'function') {
-            if (jSuites.ajax.pending('app')) {
-                jSuites.ajax.oncomplete.app = function () {
-                    options.onload(router, application);
+        /**
+         * Set route
+         */
+        var set = function() {
+            var c = get();
+            if (c) {
+                if (! c.element) {
+                    create(c);
+                }
+                // Show element
+                c.element.style.display = '';
+                // Hide old element
+                if (self.animation && current && c.element !== current.element) {
+                    animation(c);
+                } else {
+                    hide(c);
                 }
             } else {
-                options.onload(router, application);
+                // Not found
             }
         }
 
-        // Shortcut
-        el.application = application;
+        var animation = function(c) {
+            // Correct class
+            var e = self.root.classList;
+            var d = 'slide-left-' + (config.indexOf(c) < config.indexOf(current)?'in':'out');
+            e.add(d);
+            setTimeout(function() {
+                e.remove(d);
+                hide(c);
+            }, 400);
+        }
 
-        // Return instance
-        return application;
-    });
+        var template = `<div class="pages" path="{{self.path}}" @ref="self.root"></div>`;
 
-    return router;
+        // Intercept click
+        document.onclick = function(e) {
+            var a = e.target.closest('a');
+            if (a && a.tagName == 'A') {
+                // Pathname
+                var p = a.pathname;
+                history.pushState({ route: p }, '', p);
+                self.path = p;
+                e.preventDefault();
+            }
+        }
+
+        // Events
+        window.onpopstate = function(e) {
+            if (e.state && e.state.route) {
+                self.path = e.state.route;
+            }
+        }
+
+        // Extra the configuration
+        extract();
+
+        // Create lemonade component
+        return lemonade.element(template, self, ext);
+    }
 })));
