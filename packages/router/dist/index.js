@@ -32,6 +32,11 @@
             self.path = location.pathname;
         }
 
+        var setHistory = function(p) {
+            history.pushState({ route: p }, '', p);
+            self.path = p;
+        }
+
         /**
          * Create a DIV container
          */
@@ -73,7 +78,7 @@
             // Renderer
             var r = lemonade.render;
             // Create the self and make that available on the route configuration
-            var s = o.self = {};
+            var s = o.self = { setHistory };
             // Create element container
             var e = div();
             e.classList.add('page');
@@ -87,9 +92,9 @@
                     self.root.appendChild(t);
                 }
             }
-            if (o.url) {
+            if (o.template) {
                 // Fetch a remote view
-                fetch(o.url).then(function(v) {
+                fetch(o.template).then(function(v) {
                     v.text().then(function(v) {
                         // Call the LemonadeJS renderer
                         r(c, e, s, "<>"+v+"</>");
@@ -164,10 +169,7 @@
         document.onclick = function(e) {
             var a = e.target.closest('a');
             if (a && a.tagName == 'A') {
-                // Pathname
-                var p = a.pathname;
-                history.pushState({ route: p }, '', p);
-                self.path = p;
+                setHistory(a.pathname);
                 e.preventDefault();
             }
         }

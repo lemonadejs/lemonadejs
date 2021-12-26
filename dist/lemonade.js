@@ -9,11 +9,18 @@
 
 ;(function (global, factory) {
     typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
-        typeof define === 'function' && define.amd ? define(factory) :
-            global.lemonade = factory();
+    typeof define === 'function' && define.amd ? define(factory) :
+    global.lemonade = factory();
 }(this, (function () {
 
     'use strict';
+
+    /**
+     * Global queue
+     */
+    if (! document.lemonadejs) {
+        document.lemonadejs = [];
+    }
 
     /**
      * Refresh prototype
@@ -46,13 +53,23 @@
             if (o.queue) {
                 var q = null;
                 while (q = o.queue.shift()) {
-                    q();
+                    document.lemonadejs.push(q);
                 }
             }
 
             // Onload events
-            if (typeof(o.self.onload) == 'function') {
+            if (typeof (o.self.onload) == 'function') {
                 o.self.onload.call(o.self, e);
+            }
+        }
+    }
+
+    var unqueue = function(e) {
+        var b = document.body.contains(e);
+        if (b && document.lemonadejs.length) {
+            var q = null;
+            while (q = document.lemonadejs.shift()) {
+                q();
             }
         }
     }
@@ -516,6 +533,9 @@
 
         // Process ready queue
         queue(o);
+
+        // When everything is in the DOM
+        unqueue(el);
 
         return o;
     }
