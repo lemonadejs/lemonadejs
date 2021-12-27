@@ -1,5 +1,5 @@
 /**
- * Lemonadejs v2.1.5.beta
+ * Lemonadejs v2.1.6.beta
  *
  * Website: https://lemonadejs.net
  * Description: Create amazing web based reusable components.
@@ -91,6 +91,8 @@
                 }
             } else if (e.type == 'checkbox') {
                 v = e.checked && e.getAttribute('value') ? e.value : e.checked;
+            } else if (e.getAttribute('contenteditable')) {
+                v = e.innerHTML;
             } else {
                 v = e.value;
             }
@@ -114,6 +116,10 @@
                 e.checked = false;
                 if (e.value == v) {
                     e.checked = true;
+                }
+            } else if (e.getAttribute('contenteditable')) {
+                if (e.innerHTML != v) {
+                    e.innerHTML = v;
                 }
             } else {
                 if (typeof(e.val) === 'function') {
