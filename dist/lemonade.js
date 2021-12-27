@@ -1,5 +1,5 @@
 /**
- * Lemonadejs v2.1.7.beta
+ * Lemonadejs v2.1.8
  *
  * Website: https://lemonadejs.net
  * Description: Create amazing web based reusable components.
@@ -59,7 +59,7 @@
 
             // Onload events
             if (typeof (o.self.onload) == 'function') {
-                o.self.onload.call(o.self, e);
+                document.lemonadejs.push(o.self.onload.bind(o.self, e));
             }
         }
     }
@@ -619,7 +619,7 @@
      * Apply self to an existing appended DOM element
      */
     L.apply = function(el, self) {
-        L.template(el, self);
+        L.element(el, self);
         // Process whatever we have in the queue
         queue(el);
     }
