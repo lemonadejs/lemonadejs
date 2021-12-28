@@ -19,7 +19,10 @@
      * Global queue
      */
     if (! document.lemonadejs) {
-        document.lemonadejs = [];
+        document.lemonadejs = {
+            queue: [],
+            register: {}
+        }
     }
 
     /**
@@ -664,6 +667,14 @@
             o = o.replace('^^[','').replace(']^^','');
             return L.dictionary[o] || o;
         }
+    }
+
+    L.get = function(a, b) {
+        return document.lemonadejs.register[a];
+    }
+
+    L.set = function(a, b) {
+        return document.lemonadejs.register[a] = b;
     }
 
     L.component = class {
