@@ -1,5 +1,5 @@
 /**
- * Lemonadejs v2.1.8
+ * Lemonadejs v2.1.9
  *
  * Website: https://lemonadejs.net
  * Description: Create amazing web based reusable components.
@@ -29,7 +29,7 @@
      * Refresh prototype
      */
     Array.prototype.refresh = function() {
-        console.error('Deprected. Please use self.refresh("property")');
+        console.error('Deprecated. Please use self.refresh("property")');
     }
 
     /**
@@ -56,22 +56,22 @@
             if (o.queue) {
                 var q = null;
                 while (q = o.queue.shift()) {
-                    document.lemonadejs.push(q);
+                    document.lemonadejs.queue.push(q);
                 }
             }
 
             // Onload events
             if (typeof (o.self.onload) == 'function') {
-                document.lemonadejs.push(o.self.onload.bind(o.self, e));
+                document.lemonadejs.queue.push(o.self.onload.bind(o.self, e));
             }
         }
     }
 
     var unqueue = function(e) {
         var b = document.body.contains(e);
-        if (b && document.lemonadejs.length) {
+        if (b && document.lemonadejs.queue.length) {
             var q = null;
-            while (q = document.lemonadejs.shift()) {
+            while (q = document.lemonadejs.queue.shift()) {
                 q();
             }
         }
@@ -198,7 +198,9 @@
             get: function() {
                 // Get value
                 return lemon.state[p];
-            }
+            },
+            configurable: true, // For JSON export
+            enumerable: true  // For JSON export
         });
     }
 
