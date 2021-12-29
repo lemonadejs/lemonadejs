@@ -1,5 +1,5 @@
 /**
- * Lemonadejs v2.1.10
+ * Lemonadejs v2.1.9
  *
  * Website: https://lemonadejs.net
  * Description: Create amazing web based reusable components.
@@ -68,8 +68,7 @@
     }
 
     var unqueue = function(e) {
-        var b = document.body.contains(e);
-        if (b && R.queue.length) {
+        if (document.body.contains(e) && R.queue.length) {
             var q = null;
             while (q = R.queue.shift()) {
                 q();
@@ -435,12 +434,26 @@
             if (typeof(element.loop) == 'undefined') {
                 // Make sure the self goes as a reference
                 var s = L.setProperties.call(element.self, getAttributes.call(element, true), true);
-                // Create componet
+                // Reference to the element
+                register(s, 'el', r);
+                // Create component
                 L.render(h, r, s, element.template, element, lemon.components);
             }
             // Remove component container
             element.remove();
         }
+    }
+
+    /**
+     * Register element
+     */
+    var register = function(o, p, r) {
+        Object.defineProperty(o, p, {
+            enumerable: false,
+            get: function() {
+                return r;
+            }
+        });
     }
 
     /**
@@ -455,30 +468,19 @@
         var r = this.parent;
         // Function handler
         var f = this.handler;
+        // Template
+        var t = this.template;
         // DOM element that need to go to the root
         var d = [];
         if (data.length) {
             for (let i = 0; i < data.length; i++) {
                 let o = data[i].el;
                 if (! o) {
-                    // Create propety
-                    Object.defineProperty(data[i], 'el', {
-                        enumerable: false,
-                        get: function() {
-                            // Keep the reference to the DOM
-                            return o;
-                        }
-                    });
-                    // Parent
-                    Object.defineProperty(data[i], 'parent', {
-                        enumerable: false,
-                        get: function() {
-                            // Keep the reference to the parent
-                            return parent;
-                        }
-                    });
+                    // Create reference to the element
+                    register(data[i], 'el', o);
+                    register(data[i], 'parent', parent);
                     // Create element
-                    o = L.render(f, r, data[i]);
+                    o = L.render(f, r, data[i], t);
                 }
                 d.push(o);
             }
