@@ -1,5 +1,5 @@
 /**
- * Lemonadejs v2.1.9
+ * Lemonadejs v2.1.10
  *
  * Website: https://lemonadejs.net
  * Description: Create amazing web based reusable components.
@@ -19,9 +19,9 @@
      * Global queue
      */
     if (! document.lemonadejs) {
-        document.lemonadejs = {
+        var R = document.lemonadejs = {
             queue: [],
-            register: {}
+            container: {}
         }
     }
 
@@ -56,22 +56,22 @@
             if (o.queue) {
                 var q = null;
                 while (q = o.queue.shift()) {
-                    document.lemonadejs.queue.push(q);
+                    R.queue.push(q);
                 }
             }
 
             // Onload events
             if (typeof (o.self.onload) == 'function') {
-                document.lemonadejs.queue.push(o.self.onload.bind(o.self, e));
+                R.queue.push(o.self.onload.bind(o.self, e));
             }
         }
     }
 
     var unqueue = function(e) {
         var b = document.body.contains(e);
-        if (b && document.lemonadejs.queue.length) {
+        if (b && R.queue.length) {
             var q = null;
-            while (q = document.lemonadejs.queue.shift()) {
+            while (q = R.queue.shift()) {
                 q();
             }
         }
@@ -671,12 +671,57 @@
         }
     }
 
-    L.get = function(a, b) {
-        return document.lemonadejs.register[a];
+    /**
+     * Lemonade CC (common container) helps you share a self or function through the whole application
+     * @param String - alias for your declared object(self) or function
+     * @returns Object | Function
+     */
+    L.get = function(a) {
+        return R.container[a];
     }
 
-    L.set = function(a, b) {
-        return document.lemonadejs.register[a] = b;
+    /**
+     * Register something to the Lemonade CC (common container)
+     * @param a: String - alias for your declared object(self) or function
+     * @param e: Object | Function - the element to be added to the common container. Can be an object(self) or function.
+     * @param p?: Boolean - the persistence flag. Only applicable for functions.
+     * @returns Object | Function
+     */
+    L.set = function(a, e, p) {
+        // Add to the common container
+        R.container[a] = e;
+        // Applicable only when the o is a function
+        if (typeof(e) === 'function' && p === true) {
+            // Keep the flag
+            R.container[a].storage = true;
+            // Any existing values
+            var t = localStorage.getItem(a);
+            if (t) {
+                // Parse JSON
+                t = JSON.parse(t);
+                // Execute method with the existing values
+                e(t);
+            }
+        }
+    }
+
+    /**
+     * Dispatch the new values to the function
+     * @param a: String - alias to the element saved on the Lemonade CC (common container)
+     * @param d: Object - data to be dispatched
+     */
+    L.dispatch = function(a, d) {
+        // Get from the container
+        var h = R.container[a];
+        // Confirm that the alias is a function
+        if (typeof(h) === 'function') {
+            // Dispatch the data to the function
+            h(d);
+            // Save the data to the local storage
+            if (h.storage === true) {
+                localStorage.setItem(a, JSON.stringify(d));
+            }
+        }
     }
 
     L.component = class {
