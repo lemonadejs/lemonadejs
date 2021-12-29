@@ -1,5 +1,5 @@
 /**
- * Lemonadejs v2.1.9
+ * Lemonadejs v2.1.10
  *
  * Website: https://lemonadejs.net
  * Description: Create amazing web based reusable components.
@@ -49,12 +49,12 @@
     /**
      * Process all methods queued from the ready property
      */
-    var queue = function(e) {
+    var queue = function(e, el) {
+        var q = null;
         var o = null;
         if (o = e.lemon) {
             // Verify any pending ready
             if (o.queue) {
-                var q = null;
                 while (q = o.queue.shift()) {
                     R.queue.push(q);
                 }
@@ -65,11 +65,9 @@
                 R.queue.push(o.self.onload.bind(o.self, e));
             }
         }
-    }
 
-    var unqueue = function(e) {
-        if (document.body.contains(e) && R.queue.length) {
-            var q = null;
+        // Unqueue
+        if (document.body.contains(el) && R.queue.length) {
             while (q = R.queue.shift()) {
                 q();
             }
@@ -545,10 +543,7 @@
         }
 
         // Process ready queue
-        queue(o);
-
-        // When everything is in the DOM
-        unqueue(el);
+        queue(o, el);
 
         return o;
     }
@@ -628,7 +623,7 @@
     L.apply = function(el, self) {
         L.element(el, self);
         // Process whatever we have in the queue
-        queue(el);
+        queue(el, el);
     }
 
     /**
