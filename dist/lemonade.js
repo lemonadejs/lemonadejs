@@ -1,5 +1,5 @@
 /**
- * Lemonadejs v2.1.10
+ * Lemonadejs v2.1.12
  *
  * Website: https://lemonadejs.net
  * Description: Create amazing web based reusable components.
@@ -474,11 +474,11 @@
             for (let i = 0; i < data.length; i++) {
                 let o = data[i].el;
                 if (! o) {
+                    // Create element
+                    o = L.render(f, r, data[i], t);
                     // Create reference to the element
                     register(data[i], 'el', o);
                     register(data[i], 'parent', parent);
-                    // Create element
-                    o = L.render(f, r, data[i], t);
                 }
                 d.push(o);
             }
@@ -592,12 +592,8 @@
         parse.call(lemon, el);
 
         // Refresh properties
-        Object.defineProperty(lemon.self, 'refresh', {
-            get: function() {
-                return function(prop) {
-                    dispatch.call(lemon, prop);
-                }
-            }
+        register(lemon.self, 'refresh', function(prop) {
+            dispatch.call(lemon, prop);
         });
 
         // Make lemon object available though the DOM is there a better way
