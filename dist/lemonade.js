@@ -1,5 +1,5 @@
 /**
- * Lemonadejs v2.1.12
+ * Lemonadejs v2.1.13
  *
  * Website: https://lemonadejs.net
  * Description: Create amazing web based reusable components.
@@ -44,6 +44,15 @@
      */
     var isClass = function(f) {
         return typeof f === 'function' && /^class\s/.test(Function.prototype.toString.call(f));
+    }
+
+    /**
+     * Basic handler
+     * @param h - HTML
+     * @returns lemonade.element
+     */
+    var Basic = function(h) {
+        return L.element(h, this)
     }
 
     /**
@@ -106,7 +115,11 @@
     var setAttribute = function(e, v, t) {
         if (t === 'value') {
             // Update HTML form element
-            if (e.tagName == 'SELECT' && e.getAttribute('multiple')) {
+            if (typeof(e.val) === 'function') {
+                if (e.val() != v) {
+                    e.val(v);
+                }
+            } else if (e.tagName == 'SELECT' && e.getAttribute('multiple')) {
                 for (var j = 0; j < e.children.length; j++) {
                     e.children[j].selected = v.indexOf(e.children[j].value) >= 0;
                 }
@@ -122,13 +135,7 @@
                     e.innerHTML = v;
                 }
             } else {
-                if (typeof(e.val) === 'function') {
-                    if (e.val() != v) {
-                        e.val(v);
-                    }
-                } else {
-                    e.value = v;
-                }
+                e.value = v;
             }
         } else if (typeof(e[t]) !== 'undefined' || typeof(v) == 'function' || typeof(v) == 'object') {
             e[t] = v;
@@ -313,26 +320,32 @@
     var parse = function(element) {
         var lemon = this;
         // Attributes
-        var tmp = null;
+        var t = null;
         var attr = getAttributes.call(element);
 
         // Mark custom handlers
         if (this.components) {
             // Method name
             var m = element.tagName;
-            // Custom ucfirst
+            // Custom capital letter first
             m = m.charAt(0).toUpperCase() + m.slice(1).toLowerCase();
             // Expected function
-            var f = this.components[m];
+            t = this.components[m];
             // Verify scope in the declared extensions
-            if (typeof(f) == 'function') {
-                element.handler = f;
+            if (typeof(t) == 'function') {
+                element.handler = t;
                 element.self = {};
-                // When has a template
                 element.template = element.innerHTML;
-                // Remove the template
                 element.innerHTML = '';
             }
+        }
+
+        // Loop without a handler
+        if (element.getAttribute('@loop') && ! t) {
+            element.parent = element;
+            element.self = {};
+            element.template = element.innerHTML;
+            element.innerHTML = '';
         }
 
         // Keys
@@ -371,7 +384,7 @@
                         element.oninput = function(a, b) {
                             // Update val
                             this.state[b] = getAttribute(a);
-                            // Refresh binded elements
+                            // Refresh bound elements
                             dispatch.call(this, b);
                         }.bind(this, element, prop);
                         // Way back
@@ -390,8 +403,8 @@
                         attributes.call(this, element, k[i]);
                         // Lemonade translation helper
                         if (L.dictionary) {
-                            if (tmp = L.translate(attr[k[i]])) {
-                                element.setAttribute(k[i], tmp);
+                            if (t = L.translate(attr[k[i]])) {
+                                element.setAttribute(k[i], t);
                             }
                         }
                     }
@@ -401,12 +414,12 @@
 
         // Check the children
         if (element.children.length) {
-            var tmp = [];
+            var t = [];
             for (var i = 0; i < element.children.length; i++) {
-                tmp.push(element.children[i]);
+                t.push(element.children[i]);
             }
-            for (var i = 0; i < tmp.length; i++) {
-                parse.call(this, tmp[i]);
+            for (var i = 0; i < t.length; i++) {
+                parse.call(this, t[i]);
             }
         } else {
             if (element.textContent) {
@@ -414,8 +427,8 @@
                 attributes.call(this, element, 'textContent');
                 // Lemonade translation helper
                 if (L.dictionary) {
-                    if (tmp = L.translate(element.innerText)) {
-                        element.innerText = tmp;
+                    if (t = L.translate(element.innerText)) {
+                        element.innerText = t;
                     }
                 }
             }
@@ -426,10 +439,10 @@
 
         // Root for custom is the parent
         if (typeof(h) === 'function') {
-            // Root
-            var r = element.parentNode;
             // Component type
             if (typeof(element.loop) == 'undefined') {
+                // Root
+                var r = element.parentNode;
                 // Make sure the self goes as a reference
                 var s = L.setProperties.call(element.self, getAttributes.call(element, true), true);
                 // Reference to the element
@@ -462,6 +475,10 @@
         // Root parent
         if (! this.parent) {
             this.parent = this.parentNode;
+        }
+        // Handler
+        if (! this.handler) {
+            this.handler = Basic;
         }
         var r = this.parent;
         // Function handler
