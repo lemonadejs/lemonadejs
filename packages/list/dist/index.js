@@ -115,7 +115,7 @@
                     if (s > 0) {
                         pages.push({
                             title: 0,
-                            value: 'Â«'
+                            value: '«'
                         });
                     }
 
@@ -132,13 +132,13 @@
                     if (f < n) {
                         pages.push({
                             title: f + i,
-                            value: 'Â»'
+                            value: '»'
                         });
                     }
-
-                    self.pages = pages;
                 }
             }
+
+            self.pages = pages;
         }
 
         var Item = function() {
