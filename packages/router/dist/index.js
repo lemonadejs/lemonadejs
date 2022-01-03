@@ -33,8 +33,10 @@
         }
 
         var setHistory = function(p) {
-            history.pushState({ route: p }, '', p);
-            self.path = p;
+            if (p !== self.path) {
+                history.pushState({route: p}, '', p);
+                self.path = p;
+            }
         }
 
         /**
@@ -92,9 +94,9 @@
                     self.root.appendChild(t);
                 }
             }
-            if (o.template) {
+            if (o.url) {
                 // Fetch a remote view
-                fetch(o.template).then(function(v) {
+                fetch(o.url).then(function(v) {
                     v.text().then(function(v) {
                         // Call the LemonadeJS renderer
                         r(c, e, s, "<>"+v+"</>");
@@ -168,7 +170,7 @@
         // Intercept click
         document.onclick = function(e) {
             var a = e.target.closest('a');
-            if (a && a.tagName == 'A') {
+            if (a && a.tagName == 'A' && a.pathname) {
                 setHistory(a.pathname);
                 e.preventDefault();
             }

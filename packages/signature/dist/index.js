@@ -76,7 +76,7 @@
         }
 
         self.onchange = function() {
-              var c = self.value;
+            var c = self.value;
             if (c && c.length) {
                 // Position to the initial point
                 var t = c.shift();
@@ -123,9 +123,9 @@
             o.onmousemove = o.ontouchmove = draw;
         }
 
-        var template = `<div><canvas value="{{self.value}}" width="{{self.width}}" width="{{self.height}}" @ready="self.init(this)"></canvas><div>{{self.instructions}}</div></div>`;
+        var template = `<div><canvas value="{{self.value}}" width="{{self.width}}" height="{{self.height}}" @ready="self.init(this)"></canvas><div>{{self.instructions}}</div></div>`;
 
-        document.onmouseup = function(e) {
+        document.onmouseup = function() {
             if (x !== null) {
                 x = null;
                 y = null;
