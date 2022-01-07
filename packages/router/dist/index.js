@@ -22,6 +22,8 @@
             ext = {};
         }
 
+        var change = this.onchange;
+
         self.onchange = function(attr) {
             if (attr == 'path') {
                 set();
@@ -32,7 +34,7 @@
             self.path = location.pathname;
         }
 
-        var setHistory = function(p) {
+        self.setPath = function(p) {
             if (p !== self.path) {
                 history.pushState({route: p}, '', p);
                 self.path = p;
@@ -80,7 +82,7 @@
             // Renderer
             var r = lemonade.render;
             // Create the self and make that available on the route configuration
-            var s = o.self = { setHistory };
+            var s = o.self = {};
             // Create element container
             var e = div();
             e.classList.add('page');
@@ -124,6 +126,10 @@
             if (current) {
                 current.element.style.display = 'none';
             }
+            // Onchange
+            if (change) {
+                change(c, current);
+            }
             // Current page
             current = c;
             // On enter
@@ -144,7 +150,7 @@
                 // Show element
                 c.element.style.display = '';
                 // Hide old element
-                if (self.animation && current && c.element !== current.element) {
+                if (self.animation === 'true' && current && c.element !== current.element) {
                     animation(c);
                 } else {
                     hide(c);
@@ -171,7 +177,7 @@
         document.onclick = function(e) {
             var a = e.target.closest('a');
             if (a && a.tagName == 'A' && a.pathname) {
-                setHistory(a.pathname);
+                self.setPath(a.pathname);
                 e.preventDefault();
             }
         }

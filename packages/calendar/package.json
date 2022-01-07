@@ -1,20 +1,21 @@
 {
-    "name": "@lemonadejs/signature",
-    "title": "LemonadeJS signature pad extension",
-    "description": "LemonadeJS list extension. A useful 1.4 kBytes signature pad library.",
+    "name": "@lemonadejs/calendar",
+    "title": "LemonadeJS calendar",
+    "description": "LemonadeJS calendar integration.",
     "author": {
         "name": "Contact <contact@lemonadejs.net>",
         "url": "https://lemonadejs.net"
     },
     "keywords": [
-        "signature pad",
+        "javascript calendar",
         "lemonadejs plugins",
         "js",
         "library",
         "javascript plugins"
     ],
     "dependencies": {
-        "lemonadejs": "^2.1.12"
+        "lemonadejs": "^2.1.13",
+        "jsuites": "^4.9.33"
     },
     "main": "dist/index.js",
     "version": "1.1.1"

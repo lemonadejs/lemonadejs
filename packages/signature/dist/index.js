@@ -76,7 +76,10 @@
         }
 
         self.onchange = function() {
-            var c = self.value;
+            // Reset
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            // Update points
+            var c = JSON.parse(JSON.stringify(self.value));
             if (c && c.length) {
                 // Position to the initial point
                 var t = c.shift();
@@ -95,8 +98,6 @@
                     }
                 }
             } else {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-
                 valid();
             }
 
@@ -123,7 +124,7 @@
             o.onmousemove = o.ontouchmove = draw;
         }
 
-        var template = `<div><canvas value="{{self.value}}" width="{{self.width}}" height="{{self.height}}" @ready="self.init(this)"></canvas><div>{{self.instructions}}</div></div>`;
+        var template = `<><canvas value="{{self.value}}" width="{{self.width}}" height="{{self.height}}" @ready="self.init(this)"></canvas><div>{{self.instructions}}</div></>`;
 
         document.onmouseup = function() {
             if (x !== null) {

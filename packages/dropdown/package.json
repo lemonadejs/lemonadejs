@@ -1,21 +1,22 @@
 {
-    "name": "@lemonadejs/signature",
-    "title": "LemonadeJS signature pad extension",
-    "description": "LemonadeJS list extension. A useful 1.4 kBytes signature pad library.",
+    "name": "@lemonadejs/dropdown",
+    "title": "LemonadeJS dropdown",
+    "description": "LemonadeJS dropdown integration.",
     "author": {
         "name": "Contact <contact@lemonadejs.net>",
         "url": "https://lemonadejs.net"
     },
     "keywords": [
-        "signature pad",
+        "javascript dropdown",
         "lemonadejs plugins",
         "js",
         "library",
         "javascript plugins"
     ],
     "dependencies": {
-        "lemonadejs": "^2.1.12"
+        "lemonadejs": "^2.1.13",
+        "jsuites": "^4.9.33"
     },
     "main": "dist/index.js",
-    "version": "1.1.1"
+    "version": "1.1.0"
 }

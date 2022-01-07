@@ -16,12 +16,21 @@
 
     'use strict';
 
-    // Load jSuites
+    // Load lemonadejs
+    if (typeof(lemonade) == 'undefined') {
+        if (typeof(require) === 'function') {
+            var lemonade = require('lemonadejs');
+        } else if (window.lemonade) {
+            var lemonade = window.lemonade;
+        }
+    }
+
+    // Load jsuites
     if (typeof(jSuites) == 'undefined') {
-        if (window.jSuites) {
-            var jSuites = window.jSuites;
-        } else if (typeof(require) === 'function') {
+        if (typeof(require) === 'function') {
             var jSuites = require('jsuites');
+        } else if (window.jSuites) {
+            var jSuites = window.jSuites;
         }
     }
 
