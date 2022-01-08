@@ -68,10 +68,19 @@
         }
 
         var draw = function(e) {
-            if (x !== null && ! self.disabled) {
-                move(x, y);
-                point(e);
-                line(x, y);
+            if (x !== null) {
+                if (e.which) {
+                    if (! self.disabled) {
+                        move(x, y);
+                        point(e);
+                        line(x, y);
+                    }
+                } else {
+                    x = null;
+                    y = null;
+                    self.value.push('1');
+                    update();
+                }
             }
         }
 
@@ -104,6 +113,10 @@
             update();
         }
 
+        self.getImage = function() {
+            return canvas.toDataURL();
+        }
+
         self.init = function(o) {
             canvas = o;
 
@@ -125,15 +138,6 @@
         }
 
         var template = `<><canvas value="{{self.value}}" width="{{self.width}}" height="{{self.height}}" @ready="self.init(this)"></canvas><div>{{self.instructions}}</div></>`;
-
-        document.onmouseup = function() {
-            if (x !== null) {
-                x = null;
-                y = null;
-                self.value.push('1');
-                update();
-            }
-        }
 
         valid();
 
