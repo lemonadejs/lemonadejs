@@ -1,0 +1,22 @@
+{
+    "name": "@lemonadejs/rating",
+    "title": "LemonadeJS star rating javascript plugin",
+    "description": "LemonadeJS star rating plugin",
+    "author": {
+        "name": "Contact <contact@lemonadejs.net>",
+        "url": "https://lemonadejs.net"
+    },
+    "keywords": [
+        "javascript star rating",
+        "javascript rating",
+        "lemonadejs plugins",
+        "js",
+        "library",
+        "javascript plugins"
+    ],
+    "dependencies": {
+        "lemonadejs": "^2.1.12"
+    },
+    "main": "dist/index.js",
+    "version": "1.0.0"
+}
