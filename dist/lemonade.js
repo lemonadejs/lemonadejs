@@ -1,5 +1,5 @@
 /**
- * Lemonadejs v2.1.14
+ * Lemonadejs v2.1.15
  *
  * Website: https://lemonadejs.net
  * Description: Create amazing web based reusable components.
@@ -211,7 +211,10 @@
     var create = function(element, res, type) {
         var self = this.self;
         // Value
-        var value = eval(res.v) || '';
+        var value = eval(res.v);
+        if (typeof(value) === 'undefined') {
+            value = '';
+        }
         // Create text node
         if (type == 'textContent') {
             var e = document.createTextNode(value);
@@ -235,7 +238,10 @@
 
                 // Current value of token
                 var b = false;
-                var v = this.self[token]||'';
+                var v = this.self[token];
+                if (typeof(v) === 'undefined') {
+                    v = '';
+                }
 
                 // Create tracking
                 if (! this.tracking[token]) {
