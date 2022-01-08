@@ -1,7 +1,7 @@
 ;(function (global, factory) {
     typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
-    typeof define === 'function' && define.amd ? define(factory) :
-    global.Router = factory();
+        typeof define === 'function' && define.amd ? define(factory) :
+            global.Router = factory();
 }(this, (function () {
 
     // Load lemonadejs
@@ -31,12 +31,23 @@
         }
 
         self.onload = function() {
-            self.path = location.pathname;
+            self.setPath(location.pathname, true);
         }
 
-        self.setPath = function(p) {
+        self.setPath = function(p, ignore) {
+            if (typeof(self.onbeforechange) === 'function') {
+                var r = self.onbeforechange(p);
+                if (r === false) {
+                    return ;
+                } else if (r) {
+                    p = r;
+                }
+            }
+
             if (p !== self.path) {
-                history.pushState({route: p}, '', p);
+                if (! ignore) {
+                    history.pushState({route: p}, '', p);
+                }
                 self.path = p;
             }
         }
@@ -184,9 +195,7 @@
 
         // Events
         window.onpopstate = function(e) {
-            if (e.state && e.state.route) {
-                self.path = e.state.route;
-            }
+            self.setPath(window.location.pathname, true);
         }
 
         // Extra the configuration
