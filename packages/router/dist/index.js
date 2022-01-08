@@ -1,7 +1,7 @@
 ;(function (global, factory) {
     typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
-        typeof define === 'function' && define.amd ? define(factory) :
-            global.Router = factory();
+    typeof define === 'function' && define.amd ? define(factory) :
+    global.Router = factory();
 }(this, (function () {
 
     // Load lemonadejs
@@ -38,7 +38,7 @@
             if (typeof(self.onbeforechange) === 'function') {
                 var r = self.onbeforechange(p);
                 if (r === false) {
-                    return ;
+                    return;
                 } else if (r) {
                     p = r;
                 }

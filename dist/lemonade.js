@@ -18,8 +18,9 @@
     /**
      * Global queue
      */
+    var R = null;
     if (! document.lemonadejs) {
-        var R = document.lemonadejs = {
+        R = document.lemonadejs = {
             queue: [],
             container: {}
         }
@@ -76,7 +77,7 @@
         }
 
         // Unqueue
-        if (document.body.contains(el) && R.queue.length) {
+        if (document.body.contains(el) && R && R.queue && R.queue.length) {
             while (q = R.queue.shift()) {
                 q();
             }
