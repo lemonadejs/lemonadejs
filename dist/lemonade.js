@@ -449,7 +449,6 @@
                 // Make sure the self goes as a reference
                 var s = L.setProperties.call(element.self, getAttributes.call(element, true), true);
                 // Reference to the element
-                register(s, 'el', r);
                 register(s, 'parent', this.self);
                 // Create component
                 L.render(h, r, s, element.template, element, lemon.components);
@@ -494,7 +493,6 @@
                     // Create element
                     o = L.render(f, r, data[i], t);
                     // Create reference to the element
-                    register(data[i], 'el', o);
                     register(data[i], 'parent', parent);
                 }
                 d.push(o);
@@ -613,13 +611,16 @@
             dispatch.call(lemon, prop);
         });
 
+        // Create the el bound to the self
+        register(lemon.self, 'el', el);
+
         // Make lemon object available though the DOM is there a better way
         el.lemon = lemon;
 
         return el;
     }
 
-    // Deprected
+    // Deprecated
     L.template = L.element;
 
 
