@@ -1,8 +1,10 @@
-<h1>Lemonadejs: Create amazing web-based interfaces</h1>
+<h1>Lemonadejs: Reactive micro library</h1>
+
+<h2>Create amazing web-based interfaces with Lemonade v2</h2>
 
 <img src='https://lemonadejs.net/templates/v1/img/home.png' align="right" width="50%">
 
-Lemonadejs is a super lightweight reactive vanilla javascript micro-library (4Kb). It aims to help the integration between the JavaScript (controllers) and the HTML (view). It supports two-way binding and integrates natively with jSuites to help to create amazing interfaces quicker.<br><br>
+Lemonadejs is a super lightweight reactive vanilla javascript micro-library (5Kb). It aims to help the integration between the JavaScript (controllers) and the HTML (view). It supports two-way binding and integrates natively with jSuites to help to create amazing interfaces quicker.<br><br>
 
 It would help you deliver reusable components and does not require transpilers, babel, or hundreds of other dependencies. It works just fine in any javascript dev environment. LemonadeJS has a quick learning curve and keeps coding fun and very close to native JS.
 
@@ -13,7 +15,8 @@ It would help you deliver reusable components and does not require transpilers, 
 - Highly flexible and customizable
 - Lightweight and simple to use
 
-<h2>Example<h2>
+<h2>Examples</h2>
+
 <h3>Node</h3>
 
 Build modern applications with lemonadeJS and node.
@@ -21,7 +24,6 @@ Build modern applications with lemonadeJS and node.
  <a href='https://codesandbox.io/s/lemonadejs-reactive-app-no2dl'>See this example on codesandbox</a>
 
 ```javascript
- 
 import lemonade from "lemonadejs";
 import Hello from "./Hello";
 export default function App() {
@@ -41,7 +43,7 @@ export default function App() {
 
 Simplicity to run in the browser without dependencies, servers, transpilers.<br>
 
-```  html
+```html
 <html>
 <script src="https://lemonadejs.net/v1/lemonade.js"></script>
 
@@ -71,6 +73,32 @@ function App() {
 lemonade.render(App, document.getElementById('root'));
 </script>
 </html>
+```
+
+<h3>Creating a table from an array of objects</h3>
+
+```javascript
+import lemonade from "lemonadejs";
+ 
+export default function Component() {
+    let self = {};
+ 
+    self.rows = [
+        { title:'Google', description: 'The alpha search engine...' },
+        { title:'Bind', description: 'The microsoft search engine...' },
+        { title:'Duckduckgo', description: 'Privacy in the first place...' },
+    ];
+ 
+    // Custom components such as List should always be unique inside a real tag.
+    let template = `<table cellpadding="6">
+            <thead><tr><th>Title</th><th>Description</th></th></thead>
+            <tbody @loop="self.rows">
+            <tr><td>{{self.title}}</td><td>{{self.description}}</td></tr>
+        </tbody>
+        </table>`;
+ 
+    return lemonade.element(template, self);
+}
 ```
 
 <h2>Installation</h2>
