@@ -357,7 +357,6 @@
 
         // Keys
         var k = Object.keys(attr);
-
         if (k.length) {
             for (var i = 0; i < k.length; i++) {
                 // Parse events
@@ -588,10 +587,20 @@
             t = t.replace(/(<([A-Z]{1}[a-zA-Z0-9_-]+)[^>]*)(\/|\/.{1})>/gm, "$1></$2>");
             // Parse fragment
             t = t.replace(/<>/gi, "<root>").replace(/<\/>/gi, "<\/root>").trim();
+            // Remove white spaces
+            t = t.trim();
             // Create the root element
-            var el = document.createElement('div');
+            var el = document.createElement('template');
             // Get the DOM content
             el.innerHTML = t;
+            // Extract
+            if (el.content) {
+                el = el.content;
+            } else {
+                el = document.createElement('div');
+                el.innerHTML = t;
+            }
+
             // Already single DOM, do not need a container
             if (el.childNodes.length > 1) {
                 console.error('The template should have a single root');
