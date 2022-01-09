@@ -480,13 +480,9 @@
         if (! this.parent) {
             this.parent = this.parentNode;
         }
-        // Handler
-        if (! this.handler) {
-            this.handler = Basic;
-        }
         var r = this.parent;
         // Function handler
-        var f = this.handler;
+        var f = this.handler || Basic;
         // Template
         var t = this.template;
         // DOM element that need to go to the root
