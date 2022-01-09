@@ -4,7 +4,7 @@
 
 <img src='https://lemonadejs.net/templates/v1/img/home.png' align="right" width="50%">
 
-Lemonadejs is a super lightweight reactive vanilla javascript micro-library (5Kb). It aims to help the integration between the JavaScript (controllers) and the HTML (view). It supports two-way binding and integrates natively with jSuites to help to create amazing interfaces quicker.<br><br>
+Lemonadejs is a super lightweight reactive vanilla javascript micro-library (6 KBytes). It aims to help the integration between the JavaScript (controllers) and the HTML (view). It supports two-way binding and integrates natively with jSuites to help to create amazing interfaces quicker.<br><br>
 
 It would help you deliver reusable components and does not require transpilers, babel, or hundreds of other dependencies. It works just fine in any javascript dev environment. LemonadeJS has a quick learning curve and keeps coding fun and very close to native JS.
 
