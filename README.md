@@ -93,8 +93,8 @@ export default function Component() {
     let template = `<table cellpadding="6">
             <thead><tr><th>Title</th><th>Description</th></th></thead>
             <tbody @loop="self.rows">
-            <tr><td>{{self.title}}</td><td>{{self.description}}</td></tr>
-        </tbody>
+                <tr><td>{{self.title}}</td><td>{{self.description}}</td></tr>
+            </tbody>
         </table>`;
  
     return lemonade.element(template, self);
