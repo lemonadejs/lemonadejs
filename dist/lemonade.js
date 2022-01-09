@@ -27,10 +27,10 @@
     }
 
     /**
-     * Refresh prototype
+     * Refresh prototype - Depracted, please use: self.refresh("property")
      */
     Array.prototype.refresh = function() {
-        console.error('Deprecated. Please use self.refresh("property")');
+        console.error('Deprecated');
     }
 
     /**
@@ -341,15 +341,17 @@
             // Verify scope in the declared extensions
             if (typeof(t) == 'function') {
                 element.handler = t;
-                element.self = {};
-                element.template = element.innerHTML;
-                element.innerHTML = '';
             }
         }
 
         // Loop without a handler
         if (element.getAttribute('@loop') && ! t) {
+            t = true;
             element.parent = element;
+        }
+
+        // Bind properties
+        if (t) {
             element.self = {};
             element.template = element.innerHTML;
             element.innerHTML = '';
@@ -403,12 +405,6 @@
                     } else {
                         // Parse attributes
                         attributes.call(this, element, k[i]);
-                        // Lemonade translation helper
-                        if (L.dictionary) {
-                            if (t = L.translate(attr[k[i]])) {
-                                element.setAttribute(k[i], t);
-                            }
-                        }
                     }
                 }
             }
@@ -427,12 +423,6 @@
             if (element.textContent) {
                 // Parse textual content
                 attributes.call(this, element, 'textContent');
-                // Lemonade translation helper
-                if (L.dictionary) {
-                    if (t = L.translate(element.innerText)) {
-                        element.innerText = t;
-                    }
-                }
             }
         }
 
@@ -587,8 +577,6 @@
             t = t.replace(/(<([A-Z]{1}[a-zA-Z0-9_-]+)[^>]*)(\/|\/.{1})>/gm, "$1></$2>");
             // Parse fragment
             t = t.replace(/<>/gi, "<root>").replace(/<\/>/gi, "<\/root>").trim();
-            // Remove white spaces
-            t = t.trim();
             // Create the root element
             var el = document.createElement('template');
             // Get the DOM content
@@ -603,7 +591,7 @@
 
             // Already single DOM, do not need a container
             if (el.childNodes.length > 1) {
-                console.error('The template should have a single root');
+                console.error('Single root required');
                 return;
             } else {
                 el = el.firstChild;
@@ -636,15 +624,15 @@
     /**
      * Mix all template, self
      */
-    L.blender = function(template, self, el) {
-        return L.render(L.element(template, self), el, self);
+    L.blender = function(t, s, el) {
+        return L.render(L.element(t, s), el, s);
     }
 
     /**
      * Apply self to an existing appended DOM element
      */
-    L.apply = function(el, self) {
-        L.element(el, self);
+    L.apply = function(el, s) {
+        L.element(el, s);
         // Process whatever we have in the queue
         queue(el, el);
     }
@@ -663,10 +651,10 @@
     /**
      * Set the values described on v
      */
-    L.setProperties = function(v, create) {
-        for (var property in v) {
-            if (this.hasOwnProperty(property) || create) {
-                this[property] = v[property];
+    L.setProperties = function(v, c) {
+        for (var p in v) {
+            if (this.hasOwnProperty(p) || c) {
+                this[p] = v[p];
             }
         }
         return this;
@@ -676,18 +664,8 @@
      * Reset the values described on v
      */
     L.resetProperties = function(v) {
-        for (var property in v) {
-            this[property] = '';
-        }
-    }
-
-    /**
-     * Translate
-     */
-    L.translate = function(o) {
-        if (o.substr(0,3) == '^^[' && o.substr(-3) == ']^^') {
-            o = o.replace('^^[','').replace(']^^','');
-            return L.dictionary[o] || o;
+        for (var p in v) {
+            this[p] = '';
         }
     }
 
@@ -715,7 +693,7 @@
             // Keep the flag
             R.container[a].storage = true;
             // Any existing values
-            var t = localStorage.getItem(a);
+            var t = window.localStorage.getItem(a);
             if (t) {
                 // Parse JSON
                 t = JSON.parse(t);
@@ -739,7 +717,7 @@
             h(d);
             // Save the data to the local storage
             if (h.storage === true) {
-                localStorage.setItem(a, JSON.stringify(d));
+                window.localStorage.setItem(a, JSON.stringify(d));
             }
         }
     }
