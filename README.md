@@ -2,7 +2,7 @@
 
 <h2>Create amazing web-based interfaces with Lemonade v2</h2>
 
-<img src='https://lemonadejs.net/templates/v1/img/home.png' align="right" width="50%">
+<img src='https://lemonadejs.net/templates/default/img/home.png' align="right" width="50%">
 
 Lemonadejs is a super lightweight reactive vanilla javascript micro-library (6 KBytes). It aims to help the integration between the JavaScript (controllers) and the HTML (view). It supports two-way binding and integrates natively with jSuites to help to create amazing interfaces quicker.<br><br>
 
