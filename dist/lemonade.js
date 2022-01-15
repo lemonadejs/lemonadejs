@@ -479,10 +479,10 @@
             for (let i = 0; i < data.length; i++) {
                 let o = data[i].el;
                 if (! o) {
-                    // Create element
-                    o = L.render(f, r, data[i], t);
                     // Create reference to the element
                     register(data[i], 'parent', parent);
+                    // Create element
+                    o = L.render(f, r, data[i], t);
                 }
                 d.push(o);
             }
@@ -526,6 +526,11 @@
                 o = L.element(o.render(t, ext), o);
             } else {
                 o = o.call(self, t, ext);
+            }
+
+            if (! isDOM(o)) {
+                console.log('Component did not returned a valid DOM');
+                return false;
             }
         }
 

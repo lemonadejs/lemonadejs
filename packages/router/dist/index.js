@@ -13,6 +13,15 @@
         }
     }
 
+    /**
+     * Basic handler
+     * @param h - HTML
+     * @returns lemonade.element
+     */
+    const Base = function(h) {
+        return lemonade.element(h, this)
+    }
+
     return function(html, ext) {
         var self = this;
         var config = [];
@@ -69,20 +78,23 @@
             var c = d.children;
             for (var i = 0; i < c.length; i++) {
                 o = {};
+                // Push to the configuration
+                config.push(o);
+                // Load attributes
                 t = c[i].attributes;
                 for (var j = 0; j < t.length; j++) {
                     o[t[j].name] = t[j].value;
                 }
                 // Controller
-                o.controller = ext[o.controller];
+                o.controller = ext[o.controller] || Base;
                 // Preload
                 if (o.preload) {
                     create(o);
+                    // Hide that
+                    o.element.style.display = 'none';
                 }
-                // Save configuration
-                config.push(o);
             }
-        };
+        }
 
         /**
          * Create new page
@@ -104,12 +116,12 @@
             // Make sure the order is correct
             for (var i = 0; i < config.length; i++) {
                 if (t = config[i].element) {
-                    self.root.appendChild(t);
+                    root.appendChild(t);
                 }
             }
             if (o.url) {
                 // Fetch a remote view
-                fetch(o.url).then(function(v) {
+                fetch(o.url, { headers: { 'X-Requested-With': 'http' }}).then(function(v) {
                     v.text().then(function(v) {
                         // Call the LemonadeJS renderer
                         r(c, e, s, "<>"+v+"</>");
@@ -173,7 +185,7 @@
 
         var animation = function(c) {
             // Correct class
-            var e = self.root.classList;
+            var e = root.classList;
             var d = 'slide-left-' + (config.indexOf(c) < config.indexOf(current)?'in':'out');
             e.add(d);
             setTimeout(function() {
@@ -182,7 +194,7 @@
             }, 400);
         }
 
-        var template = `<div class="pages" path="{{self.path}}" @ref="self.root"></div>`;
+        var template = `<div class="pages" path="{{self.path}}"></div>`;
 
         // Intercept click
         document.onclick = function(e) {
@@ -198,10 +210,12 @@
             self.setPath(window.location.pathname, true);
         }
 
+        // Create lemonade component
+        var root = lemonade.element(template, self, ext);
+
         // Extra the configuration
         extract();
 
-        // Create lemonade component
-        return lemonade.element(template, self, ext);
+        return root;
     }
 })));

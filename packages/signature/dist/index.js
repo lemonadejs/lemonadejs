@@ -69,7 +69,7 @@
 
         var draw = function(e) {
             if (x !== null) {
-                if (e.which) {
+                if (e.which || e.type == 'touchmove') {
                     if (! self.disabled) {
                         move(x, y);
                         point(e);

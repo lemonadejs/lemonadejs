@@ -14,5 +14,6 @@
         "library"
     ],
     "main": "dist/lemonade.js",
-    "version": "2.2.1"
+    "types": "dist/lemonade.d.ts",
+    "version": "2.2.3"
 }
