@@ -1,5 +1,5 @@
 /**
- * Lemonadejs v2.2.0
+ * Lemonadejs v2.2.4
  *
  * Website: https://lemonadejs.net
  * Description: Create amazing web based reusable components.
@@ -364,11 +364,13 @@
                 // Parse events
                 if (! element.handler && k[i].substring(0,2) == 'on') {
                     // Get event
-                    var event = k[i].toLowerCase();
-                    var value = attr[k[i]];
+                    let event = k[i].toLowerCase();
+                    let value = attr[k[i]];
                     // Get action
                     element.removeAttribute(event);
-                    element[event] = Function('self', value).bind(element, this.self);
+                    element.addEventListener(k[i].substring(2), function(e) {
+                        Function('self','e', value).call(element, lemon.self, e);
+                    });
                 } else {
                     // Property name
                     var prop = attr[k[i]].replace('self.', '');
