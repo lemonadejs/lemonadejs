@@ -45,7 +45,7 @@ Simplicity to run in the browser without dependencies, servers, transpilers.<br>
 
 ```html
 <html>
-<script src="https://lemonadejs.net/v1/lemonade.js"></script>
+<script src="https://lemonadejs.net/v2/lemonade.js"></script>
 
 <div id="root"></div>
 
@@ -99,6 +99,34 @@ export default function Component() {
  
     return lemonade.element(template, self);
 }
+```
+
+
+<h3>The event object</h3>
+
+```javascript
+<html>
+<script src="https://lemonadejs.net/v2/lemonade.js"></script>
+<div id='root'></div>
+<script>
+var Component = (function() {
+    // Create the self object
+    var self = {};
+    self.test = function(e) {
+        console.log(e);
+        e.preventDefault();
+    }
+    // The property call is added to the observable list when added to the DOM
+    var template = `<>
+        <input type="button" value="Click test" onclick="self.test(e);"/>
+        </>`;
+    // Render the template and create the observation
+    return lemonade.element(template, self);
+});
+// Render the LemonadeJS element into the DOM
+lemonade.render(Component, document.getElementById('root'));
+</script>
+</html>
 ```
 
 <h2>Installation</h2>
