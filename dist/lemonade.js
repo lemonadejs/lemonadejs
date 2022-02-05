@@ -27,13 +27,6 @@
     }
 
     /**
-     * Refresh prototype - Depracted, please use: self.refresh("property")
-     */
-    Array.prototype.refresh = function() {
-        console.error('Deprecated');
-    }
-
-    /**
      * The element passed is a DOM element
      */
     var isDOM = function(o) {
