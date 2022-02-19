@@ -1,5 +1,5 @@
 /**
- * Lemonadejs v2.2.5
+ * Lemonadejs v2.2.6
  *
  * Website: https://lemonadejs.net
  * Description: Create amazing web based reusable components.
@@ -400,6 +400,12 @@
                     } else {
                         // Parse attributes
                         attributes.call(this, element, k[i]);
+                        // Lemonade translation helper
+                        if (document.dictionary) {
+                            if (t = L.translate(attr[k[i]])) {
+                                element.setAttribute(k[i], t);
+                            }
+                        }
                     }
                 }
             }
@@ -418,6 +424,12 @@
             if (element.textContent) {
                 // Parse textual content
                 attributes.call(this, element, 'textContent');
+                // Lemonade translation helper
+                if (document.dictionary) {
+                    if (t = L.translate(element.innerText)) {
+                        element.innerText = t;
+                    }
+                }
             }
         }
 
@@ -719,6 +731,16 @@
             if (h.storage === true) {
                 window.localStorage.setItem(a, JSON.stringify(d));
             }
+        }
+    }
+
+    /**
+     * Translate
+     */
+    L.translate = function(o) {
+        if (o.substr(0,3) == '^^[' && o.substr(-3) == ']^^') {
+            o = o.replace('^^[','').replace(']^^','');
+            return document.dictionary[o] || o;
         }
     }
 
