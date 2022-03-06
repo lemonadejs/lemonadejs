@@ -2,7 +2,7 @@
  * (c) LemonadeJS components
  *
  * Website: https://lemonadejs.net
- * Description: Image cropper v1.4.0
+ * Description: Image cropper v1.5.2
  *
  * MIT License
  *
@@ -34,21 +34,23 @@
         }
     }
 
-    // Set the app extensions
-    if (typeof(jSuites.crop) == 'undefined' && typeof(require) === 'function') {
-        // Loading App Extensions
-        jSuites.crop = require('@jsuites/cropper');
+    if (typeof(jSuites.crop) == 'undefined') {
+        if (typeof(require) === 'function') {
+            var Cropper = require('@jsuites/cropper');
+        } else if (window.jSuites) {
+            var Cropper = jSuites.crop;
+        }
     }
 
-    return (function(photoContainer) {
-        var original = photoContainer.getAttribute('data-original') ? 1 : 0;
-        var width = photoContainer.getAttribute('width') || 300;
-        var height = photoContainer.getAttribute('height') || 240;
+    return (function() {
+        var self = this;
+        var original = self.original ? 1 : 0;
+        var width = self.width || 300;
+        var height = self.height || 240;
         var modal = null;
         var crop = null;
         var menu = null;
 
-        var self = {};
         self.cropperArea = null;
         self.brightness = 0;
         self.contrast = 0;
@@ -74,7 +76,7 @@
                 var a = [798, 360];
                 var c = [width, height];
             }
-            crop = jSuites.crop(o, {
+            crop = Cropper(o, {
                 area: a,
                 crop: c ,
                 allowResize: false,
@@ -94,6 +96,27 @@
                     b.stopPropagation();
                 }
             });
+        }
+
+        // Controls
+        self.createControls = function(o) {
+            var tabs = jSuites.tabs(o.children[0], {
+                data: [{
+                    title: 'Crop',
+                    icon: 'crop',
+                    width: '100px',
+                },
+                    {
+                        title:'Adjusts',
+                        icon: 'image',
+                        width: '100px',
+                    }],
+                padding:'20px',
+                animation: true,
+                position: 'bottom',
+            });
+
+            tabs.content.style.backgroundColor = '#eee';
         }
 
         self.updateZoom = function(o) {
@@ -139,20 +162,20 @@
                     // Update file to blob
                     newImage.src = filename;
                     // Integration with jSuites.form
-                    if (photoContainer.getAttribute('name')) {
-                        photoContainer.content = [data];
-
+                    if (self.name) {
                         newImage.classList.remove('jfile');
-                    } else {
-                        // Legacy
-                        newImage.content = data;
                     }
+                    // Value
+                    self.value = [data];
+                    // Append new image
                     self.image.appendChild(newImage);
                 }
                 // Create image
                 crop.getCroppedAsBlob(createImage);
                 // Close the modal
-                modal.close();
+                setTimeout(function() {
+                    modal.close();
+                });
             }
         }
 
@@ -164,19 +187,17 @@
             if (self.image) {
                 // Reset photo from crop
                 crop.reset();
-                // Closes modal
-                modal.close();
                 // Disable controls
                 self.setControls(false);
                 // Reset from container
                 self.image.innerHTML = '';
                 // Reset container
-                photoContainer.content = null;
+                self.value = null;
             }
         }
 
         self.setControls = function(state) {
-            var controls = photoContainer.querySelectorAll('input.controls');
+            var controls = self.el.querySelectorAll('input.controls');
             if (state == false) {
                 for (var i = 0; i < controls.length; i++) {
                     controls[i].setAttribute('disabled', 'disabled');
@@ -186,10 +207,16 @@
                     controls[i].removeAttribute('disabled');
                 }
             }
+
+            for (var i = 0; i < controls.length; i++) {
+                if (controls[i].type === 'range') {
+                    controls[i].value = 0;
+                }
+            }
         }
 
         self.getValue = function() {
-            return photoContainer.content;
+            return self.value;
         }
 
         self.setValue = function(data) {
@@ -202,6 +229,7 @@
                         file: data
                     }
                 }
+
                 if (data.file) {
                     var img = document.createElement('img');
                     img.setAttribute('src', data.file);
@@ -214,93 +242,66 @@
                     crop.addFromFile(data.original);
                 }
 
-                photoContainer.content = [data];
+                self.value = [data];
             }
         }
 
         self.open = function() {
             if (! modal.isOpen()) {
-                // Open modal
                 modal.open();
-                // Create controls for the first time only
-                if (!photoContainer.classList.contains('controls')) {
-                    // Create controls
-                    createControls(self.controls);
-                    // Flag controls are ready
-                    photoContainer.classList.add('controls');
-                }
             }
+        }
+
+        self.onload = function() {
+            self.image.style.maxWidth = self.width + 'px';
+            self.image.style.maxHeight = self.height + 'px';
         }
 
         // Template
         var template = `
-            <div @ref='self.image' class="jphoto"></div>
-            <div @ready='self.createModal(this)'>
-                <div @ready='self.createCropper(this)' @ref='self.cropperArea'></div>
-                <div @ref='self.controls'>
-                    <div role='tabs'>
-                        <div role='headers'>
-                            <div style="background-color: white; padding: 15px !important;"></div>
-                            <div style="background-color: white;"></div>
-                        </div>
-                        <div role='content' style='background-color: #ccc;'>
-                            <div>
-                                <div class="center row">
-                                    <label class="f1 p6" style="padding-top:0px"> Zoom <input type='range' step='.05' min='0.1' max='5.45' value='1' oninput='self.updateZoom(this)' style="margin-top:10px;" class='jrange controls' disabled='disabled'></label>
-                                    <label class="f1 p6" style="padding-top:0px"> Rotate <input type='range' step='.05' min='-1' max='1' value='0' oninput='self.updateRotate(this)' style="margin-top:10px;" class='jrange controls' disabled='disabled'></label>
+            <div name="{{self.name}}" value="{{self.value}}">
+                <div @ref='self.image' class="jphoto jcropper"></div>
+                <div @ready='self.createModal(this)'>
+                    <div @ready='self.createCropper(this)' @ref='self.cropperArea'></div>
+                    <div @ready='self.createControls(this)' class="controls">
+                        <div role='tabs'>
+                            <div role='headers'>
+                                <div style="background-color: white; padding: 15px !important;"></div>
+                                <div style="background-color: white;"></div>
+                            </div>
+                            <div role='content' style='background-color: #ccc;'>
+                                <div>
+                                    <div class="center row">
+                                        <label class="f1 p6" style="padding-top:0px"> Zoom <input type='range' step='.05' min='0.1' max='5.45' value='1' oninput='self.updateZoom(this)' style="margin-top:10px;" class='jrange controls' disabled='disabled'></label>
+                                        <label class="f1 p6" style="padding-top:0px"> Rotate <input type='range' step='.05' min='-1' max='1' value='0' oninput='self.updateRotate(this)' style="margin-top:10px;" class='jrange controls' disabled='disabled'></label>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="center row">
+                                        <label class="f1 p6" style="padding-top:0px"> Brigthness <input type='range' min='-1' max='1' step='.05' value='0' @bind='self.brightness' oninput='self.setBrightness(this)' style="margin-top:10px;" class='jrange controls' disabled='disabled'></label>
+                                        <label class="f1 p6" style="padding-top:0px"> Contrast <input type='range' min='-1' max='1' step='.05' value='0' @bind='self.contrast' oninput='self.setContrast(this)' style="margin-top:10px;" class='jrange controls' disabled='disabled'></label>
+                                    </div>
                                 </div>
                             </div>
-                            <div>
-                                <div class="center row">
-                                    <label class="f1 p6" style="padding-top:0px"> Brigthness <input type='range' min='-1' max='1' step='.05' value='0' @bind='self.brightness' oninput='self.setBrightness(this)' style="margin-top:10px;" class='jrange controls' disabled='disabled'></label>
-                                    <label class="f1 p6" style="padding-top:0px"> Contrast <input type='range' min='-1' max='1' step='.05' value='0' @bind='self.contrast' oninput='self.setContrast(this)' style="margin-top:10px;" class='jrange controls' disabled='disabled'></label>
-                                </div>
-                            </div>
                         </div>
-                    </div>
-                    <div class='row p20 form-group' style='border-top: 1px solid #aaa'>
-                        <div class='column p6 f1'>
-                            <input type='button' value='Save Photo' class='jbutton dark controls w100' style='min-width: 140px;' onclick='self.updatePhoto()' disabled='disabled'>
-                        </div><div class='column p6'>
-                            <input type='button' value='Upload Photo' class='jbutton dark w100' style='min-width: 140px;' onclick='self.uploadPhoto()'>
-                        </div><div class='column p6' style='text-align:right'>
-                            <input type='button' value='Delete Photo' class='jbutton dark controls w100' style='min-width: 140px;' onclick='self.deletePhoto()' disabled='disabled'>
+                        <div class='row p20 form-group' style='border-top: 1px solid #aaa'>
+                            <div class='column p6 f1'>
+                                <input type='button' value='Save Photo' class='jbutton dark controls w100' style='min-width: 140px;' onclick='self.updatePhoto()' disabled='disabled'>
+                            </div><div class='column p6'>
+                                <input type='button' value='Upload Photo' class='jbutton dark w100' style='min-width: 140px;' onclick='self.uploadPhoto()'>
+                            </div><div class='column p6' style='text-align:right'>
+                                <input type='button' value='Delete Photo' class='jbutton dark controls w100' style='min-width: 140px;' onclick='self.deletePhoto()' disabled='disabled'>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-            <div @ready="self.createMenu(this)"></div>
-            `;
+                <div @ready="self.createMenu(this)"></div>
+            </div>`;
 
-        // Controls
-        var createControls = function(o) {
-            var tabs = jSuites.tabs(o.children[0], {
-                data: [{
-                    title: 'Crop',
-                    icon: 'crop',
-                    width: '100px',
-                },
-                    {
-                        title:'Adjusts',
-                        icon: 'image',
-                        width: '100px',
-                    }],
-                padding:'20px',
-                animation: true,
-                position: 'bottom',
-            });
-
-            tabs.content.style.backgroundColor = '#eee';
-        }
-
-        photoContainer.onmousedown = function(e) {
-            if (e.target.tagName == 'IMG') {
-                e.target.focus();
-            }
-        }
+        var root = lemonade.element(template, self);
 
         // Onclick event
-        photoContainer.onclick = function(e) {
+        root.addEventListener('click',  function(e) {
             e = e || window.event;
             if (e.buttons) {
                 var mouseButton = e.buttons;
@@ -317,9 +318,9 @@
                     e.target.focus();
                 }
             }
-        }
+        });
 
-        photoContainer.oncontextmenu = function(e) {
+        root.addEventListener('contextmenu', function(e) {
             if (e.target.tagName == 'IMG') {
                 menu.open(e, [
                     {
@@ -340,22 +341,15 @@
                 ]);
                 e.preventDefault();
             }
-        }
+        });
 
-        // Remove current image
-        photoContainer.onkeydown = function(e) {
+        root.addEventListener('onkeydown', function(e) {
             if (e.key == 'Delete' && e.target.tagName == 'IMG') {
                 self.deletePhoto();
             }
-        }
+        })
 
-        // Quick reference
-        photoContainer.self = self;
-
-        // Create lemonade component
-        lemonade.blender(template, self, photoContainer);
-
-        photoContainer.val = function(v) {
+        root.val = function(v) {
             if (v === undefined) {
                 return self.getValue();
             } else {
@@ -363,6 +357,6 @@
             }
         }
 
-        return self;
+        return root;
     });
 })));

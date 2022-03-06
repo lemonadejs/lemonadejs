@@ -140,7 +140,7 @@
             }
             if (o.url) {
                 // Fetch a remote view
-                fetch(o.url + '?dt=' + new Date(), { headers: { 'X-Requested-With': 'http' }}).then(function(v) {
+                fetch(o.url + '?dt=' + new Date().getTime(), { headers: { 'X-Requested-With': 'http' }}).then(function(v) {
                     v.text().then(function(v) {
                         e.innerHTML = v;
                         if (t = e.querySelector('[data-autoload]')) {
@@ -225,7 +225,7 @@
         // Intercept click
         document.onclick = function(e) {
             var a = e.target.closest('a');
-            if (a && a.tagName == 'A' && a.pathname && ! a.classList.contains('remote')) {
+            if (a && a.tagName == 'A' && a.pathname  && ! a.getAttribute('target')) {
                 self.setPath(a.pathname);
                 e.preventDefault();
             }

@@ -1,5 +1,5 @@
 /**
- * Lemonadejs v2.2.6
+ * Lemonadejs v2.3.0
  *
  * Website: https://lemonadejs.net
  * Description: Create amazing web based reusable components.
@@ -380,12 +380,10 @@
                         element.removeAttribute(k[i]);
                     } else if (k[i] == '@bind') {
                         // Onchange event for the element
-                        element.oninput = function(a, b) {
-                            // Update val
-                            this.state[b] = getAttribute(a);
-                            // Refresh bound elements
-                            dispatch.call(this, b);
-                        }.bind(this, element, prop);
+                        element.addEventListener('input', function() {
+                            lemon.state[prop] = getAttribute(this);
+                            dispatch.call(lemon, prop);
+                        });
                         // Way back
                         create.call(this, element, { v:attr[k[i]] }, 'value');
                         // Keep reference to the original definition
