@@ -13,7 +13,11 @@
         "js",
         "library"
     ],
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/lemonadejs/lemonadejs.git"
+    },
     "main": "dist/lemonade.js",
     "types": "dist/lemonade.d.ts",
-    "version": "2.3.0"
+    "version": "2.3.1"
 }
