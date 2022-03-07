@@ -379,11 +379,14 @@
                         // Remove attribute
                         element.removeAttribute(k[i]);
                     } else if (k[i] == '@bind') {
+                        var f = function(a, b) {
+                            // Update val
+                            this.state[b] = getAttribute(a);
+                            // Refresh bound elements
+                            dispatch.call(this, b);
+                        }.bind(this, element, prop);
                         // Onchange event for the element
-                        element.addEventListener('input', function() {
-                            lemon.state[prop] = getAttribute(this);
-                            dispatch.call(lemon, prop);
-                        });
+                        element.addEventListener('input', f);
                         // Way back
                         create.call(this, element, { v:attr[k[i]] }, 'value');
                         // Keep reference to the original definition
