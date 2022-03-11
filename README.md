@@ -51,8 +51,8 @@ Simplicity to run in the browser without dependencies, servers, transpilers.<br>
 
 <script>
 function Hello() {
-    let self = {};
-    let template = `<h1>Hello World</h1>`;
+    let self = this;
+    let template = `<h1>{{self.title}}</h1>`;
 
     return lemonade.element(template, self);
 }
@@ -61,11 +61,11 @@ function Hello() {
 function App() {
   let self = {};
   self.count = 1;
-  let template = `<div>
-        <div><Hello /></div>
+  let template = `<>
+        <Hello title="your title" />
         <p>You clicked {{self.count}} times</p>
         <button onclick="self.count++;">Click me</button>
-    </div>`;
+    </>`;
 
     return lemonade.element(template, self, { Hello });
 }
