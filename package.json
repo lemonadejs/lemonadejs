@@ -19,5 +19,5 @@
     },
     "main": "dist/lemonade.js",
     "types": "dist/lemonade.d.ts",
-    "version": "2.3.3"
+    "version": "2.4.1"
 }
