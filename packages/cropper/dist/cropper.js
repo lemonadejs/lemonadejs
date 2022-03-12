@@ -40,7 +40,9 @@
         } else if (window.jSuites) {
             var Cropper = jSuites.crop;
         }
-    }
+    } else {
+         var Cropper = jSuites.crop;
+     }
 
     return (function() {
         var self = this;
