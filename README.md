@@ -129,6 +129,28 @@ lemonade.render(Component, document.getElementById('root'));
 </html>
 ```
 
+<h3>Enable/disable HTML elements</h3>
+
+```javascript
+<html>
+<script src="https://lemonadejs.net/v2/lemonade.js"></script>
+<div id='root'></div>
+<script>
+var App = (function() {
+  let self = {};
+  self.disabled= false;
+  let template = `<>
+        <button onclick="self.disabled = !self.disabled">Toggle</button>
+        <input type="text" disabled="{{self.disabled}}" />
+        </>`;
+     return lemonade.element(template, self);
+});
+lemonade.render(App, document.getElementById('root'));
+</script>
+</html>
+```
+
+
 <h2>Installation</h2>
 
 % npm install lemonadejs
