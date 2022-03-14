@@ -1,5 +1,5 @@
 /**
- * Lemonadejs v2.4.0
+ * Lemonadejs v2.4.2
  *
  * Website: https://lemonadejs.net
  * Description: Create amazing web based reusable components.
@@ -139,6 +139,13 @@
     }
 
     /**
+     * Parse javascript
+     */
+    var run = function(s) {
+        return Function('self', '"use strict";return (' + s + ')')(this);
+    }
+
+    /**
      * Dispatch changes in the self properties
      */
     var dispatch = function(property, first) {
@@ -152,7 +159,7 @@
                 // Element
                 e = t[i].element
                 // Parse value
-                v = eval(t[i].v);
+                v = run.call(self, t[i].v);
                 // Property
                 p = t[i].property;
                 // If the property is the value
@@ -188,7 +195,7 @@
             set: function(v) {
                 // Update val
                 lemon.state[p] = v;
-                // Refresh binded elements
+                // Refresh bound elements
                 dispatch.call(lemon, p, first);
                 // First call
                 first = false;
@@ -205,7 +212,7 @@
     var create = function(element, res, type) {
         var self = this.self;
         // Value
-        var value = eval(res.v);
+        var value = run.call(self, res.v);
         if (typeof(value) === 'undefined') {
             value = '';
         }
@@ -362,7 +369,7 @@
                     // Get action
                     element.removeAttribute(event);
                     element.addEventListener(k[i].substring(2), function(e) {
-                        Function('self','e', value).call(element, lemon.self, e);
+                        Function('self','e', value).call(this, lemon.self, e);
                     });
                 } else {
                     // Property name
