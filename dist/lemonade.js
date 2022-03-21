@@ -1,5 +1,5 @@
 /**
- * Lemonadejs v2.4.2
+ * Lemonadejs v2.6.0
  *
  * Website: https://lemonadejs.net
  * Description: Create amazing web based reusable components.
@@ -43,10 +43,11 @@
     /**
      * Basic handler
      * @param h - HTML
+     * @param e - Extensions
      * @returns lemonade.element
      */
-    var Basic = function(h) {
-        return L.element(h, this)
+    var Basic = function(h, e) {
+        return L.element(h, this, e)
     }
 
     /**
@@ -164,7 +165,7 @@
                 p = t[i].property;
                 // If the property is the value
                 if (p == '@loop') {
-                    generate.call(e, v, self)
+                    generate.call(e, v, self, this.components)
                 } else {
                     // Other properties
                     if (e.self) {
@@ -474,9 +475,12 @@
     }
 
     /**
-     * Append custom compoents to the DOM
+     * Append custom components to the DOM
+     * @param {object} data - self for each element in the array
+     * @param {HTMLElement} - parentNode or root for the children
+     * @param {object} ext - components declared in the lemonade.element
      */
-    var generate = function(data, parent) {
+    var generate = function(data, parent, ext) {
         var t = null;
         // Root parent
         if (! this.parent) {
@@ -496,7 +500,7 @@
                     // Create reference to the element
                     register(data[i], 'parent', parent);
                     // Create element
-                    o = L.render(f, r, data[i], t);
+                    o = L.render(f, r, data[i], t, null, ext);
                 }
                 d.push(o);
             }

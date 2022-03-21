@@ -4,7 +4,7 @@
     global.Router = factory();
 }(this, (function () {
 
-    // Load lemonadejs
+    // Load LemonadeJS
     if (typeof(lemonade) == 'undefined') {
         if (typeof(require) === 'function') {
             var lemonade = require('lemonadejs');
