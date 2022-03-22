@@ -654,8 +654,8 @@
     /**
      * Apply self to an existing appended DOM element
      */
-    L.apply = function(el, s) {
-        L.element(el, s);
+    L.apply = function(el, s, ext) {
+        L.element(el, s, ext);
         // Process whatever we have in the queue
         queue(el, el);
     }
