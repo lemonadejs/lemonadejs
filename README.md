@@ -26,9 +26,11 @@ Build modern applications with lemonadeJS and node.
 ```javascript
 import lemonade from "lemonadejs";
 import Hello from "./Hello";
+
 export default function App() {
   let self = {};
   self.count = 1;
+
   let template = `<div>
         <div><Hello /></div>
         <p>You clicked {{self.count}} times</p>
@@ -50,6 +52,7 @@ Simplicity to run in the browser without dependencies, servers, transpilers.<br>
 
         <script src="https://cdn.jsdelivr.net/npm/lemonadejs/dist/lemonade.min.js"></script>
         <script>
+
         function Hello() {
             let self = this;
             let template = `<h1>{{self.title}}</h1>`;
@@ -59,13 +62,14 @@ Simplicity to run in the browser without dependencies, servers, transpilers.<br>
 
 
         function App() {
-        let self = {};
-        self.count = 1;
-        let template = `<>
-                <Hello title="your title" />
-                <p>You clicked {{self.count}} times</p>
-                <button onclick="self.count++;">Click me</button>
-            </>`;
+            let self = {};
+            self.count = 1;
+
+            let template = `<>
+                    <Hello title="your title" />
+                    <p>You clicked {{self.count}} times</p>
+                    <button onclick="self.count++;">Click me</button>
+                </>`;
 
             return lemonade.element(template, self, { Hello });
         }
@@ -119,13 +123,16 @@ export default function Component() {
                 console.log(e);
                 e.preventDefault();
             }
+
             // The property call is added to the observable list when added to the DOM
             var template = `<>
                 <input type="button" value="Click test" onclick="self.test(e);"/>
                 </>`;
+
             // Render the template and create the observation
             return lemonade.element(template, self);
         });
+
         // Render the LemonadeJS element into the DOM
         lemonade.render(Component, document.getElementById('root'));
         </script>
@@ -143,14 +150,17 @@ export default function Component() {
         <script src="https://cdn.jsdelivr.net/npm/lemonadejs/dist/lemonade.min.js"></script>
         <script>
         var App = (function() {
-        let self = {};
-        self.disabled= false;
-        let template = `<>
-                <button onclick="self.disabled = !self.disabled">Toggle</button>
-                <input type="text" disabled="{{self.disabled}}" />
-                </>`;
+            let self = {};
+            self.disabled= false;
+
+            let template = `<>
+                    <button onclick="self.disabled = !self.disabled">Toggle</button>
+                    <input type="text" disabled="{{self.disabled}}" />
+                    </>`;
+
             return lemonade.element(template, self);
         });
+
         lemonade.render(App, document.getElementById('root'));
         </script>
     </body>
