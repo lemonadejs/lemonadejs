@@ -547,7 +547,7 @@
             }
 
             if (! isDOM(o)) {
-                console.log('Component did not returned a valid DOM');
+                console.log('Component did not return a valid DOM');
                 return false;
             }
         }
@@ -593,9 +593,9 @@
 
         if (! isDOM(t)) {
             // Close any custom not fully closed component
-            t = t.replace(/(<([A-Z]{1}[a-zA-Z0-9_-]+)[^>]*)(\/|\/.{1})>/gm, "$1></$2>");
+            t = t.replace(/(<([A-Z]{1}[a-zA-Z0-9_-]+)[^>]*)(\/|\/.{1})>/gm, '$1></$2>');
             // Parse fragment
-            t = t.replace(/<>/gi, "<root>").replace(/<\/>/gi, "<\/root>").trim();
+            t = t.replace(/<>/gi, '<root>').replace(/<\/>/gi, '<\/root>').trim();
             // Create the root element
             var el = document.createElement('template');
             // Get the DOM content
