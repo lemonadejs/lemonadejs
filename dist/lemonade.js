@@ -1,5 +1,5 @@
 /**
- * Lemonadejs v2.6.0
+ * LemonadeJS v2.6.1
  *
  * Website: https://lemonadejs.net
  * Description: Create amazing web based reusable components.
@@ -524,7 +524,7 @@
      * @param o - Lemonade DOM created from a template
      * @param el - DOM Element to append the lemonade element
      * @param self - existing self
-     * @param t - template when used used as a custom component
+     * @param t - template when used as a custom component
      */
     L.render = function(o, el, self, t, ref, ext) {
         // Root element but be a valid DOM element
@@ -588,11 +588,7 @@
             state: {},
             tracking: {},
             queue: [],
-        }
-
-        // Extended components
-        if (ext) {
-            lemon.components = ext;
+            components: ext||{}
         }
 
         if (! isDOM(t)) {
