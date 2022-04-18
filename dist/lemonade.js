@@ -1,5 +1,5 @@
 /**
- * Lemonadejs v2.6.0
+ * Lemonadejs v2.6.2
  *
  * Website: https://lemonadejs.net
  * Description: Create amazing web based reusable components.
@@ -468,6 +468,7 @@
     var register = function(o, p, r) {
         Object.defineProperty(o, p, {
             enumerable: false,
+            configurable: true,
             get: function() {
                 return r;
             }
@@ -501,6 +502,9 @@
                     register(data[i], 'parent', parent);
                     // Create element
                     o = L.render(f, r, data[i], t, null, ext);
+                }
+                if (r.getAttribute('unique') === 'false') {
+                    register(data[i], 'el', null);
                 }
                 d.push(o);
             }

@@ -40,7 +40,7 @@
         var getConfig = function(p) {
             var c = config;
             for (var i = 0; i < c.length; i++) {
-                if (p.match(new RegExp('^'+c[i].path+'$', 'gi'))) {
+                if (p==c[i].path || p.match(new RegExp('^'+c[i].path+'$', 'gi'))) {
                     return c[i];
                 }
             }
@@ -48,7 +48,8 @@
         }
 
         self.onload = function() {
-            self.setPath(location.pathname, true);
+            var a = window.location;
+            self.setPath(a.pathname + a.search, true);
         }
 
         self.setPath = function(p, ignore) {
@@ -140,7 +141,13 @@
             }
             if (o.url) {
                 // Fetch a remote view
-                fetch(o.url + '?dt=' + new Date().getTime(), { headers: { 'X-Requested-With': 'http' }}).then(function(v) {
+                var u = o.url;
+                if (u.indexOf('?') == -1) {
+                    u += '?dt='
+                } else {
+                    u += '&dt=';
+                }
+                fetch(u + new Date().getTime(), { headers: { 'X-Requested-With': 'http' }}).then(function(v) {
                     v.text().then(function(v) {
                         e.innerHTML = v;
                         if (t = e.querySelector('[data-autoload]')) {
@@ -225,15 +232,16 @@
         // Intercept click
         document.onclick = function(e) {
             var a = e.target.closest('a');
-            if (a && a.tagName == 'A' && a.pathname  && ! a.getAttribute('target')) {
-                self.setPath(a.pathname);
+            if (a && a.tagName == 'A' && a.pathname && ! a.getAttribute('target')) {
+                self.setPath(a.pathname + a.search);
                 e.preventDefault();
             }
         }
 
         // Events
         window.onpopstate = function(e) {
-            self.setPath(window.location.pathname, true);
+            var a = window.location;
+            self.setPath(a.pathname + a.search, true);
         }
 
         // Create lemonade component
