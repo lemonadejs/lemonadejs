@@ -1,5 +1,5 @@
 /**
- * Lemonadejs v2.6.2
+ * Lemonadejs v2.6.3
  *
  * Website: https://lemonadejs.net
  * Description: Create amazing web based reusable components.
@@ -19,7 +19,7 @@
      * Global queue
      */
     var R = null;
-    if (! document.lemonadejs) {
+    if (typeof(document) !== "undefined" && ! document.lemonadejs) {
         R = document.lemonadejs = {
             queue: [],
             container: {}
