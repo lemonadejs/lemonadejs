@@ -123,7 +123,7 @@
             // Renderer
             var r = lemonade.render;
             // Create the self and make that available on the route configuration
-            var s = o.self = {};
+            var s = o.self = { parent: self.parent };
             // Create element container
             var e = div();
             e.classList.add('page');
@@ -147,6 +147,7 @@
                 } else {
                     u += '&dt=';
                 }
+                // Fetch a remote view
                 fetch(u + new Date().getTime(), { headers: { 'X-Requested-With': 'http' }}).then(function(v) {
                     v.text().then(function(v) {
                         e.innerHTML = v;
@@ -227,7 +228,7 @@
             }, 400);
         }
 
-        var template = `<div class="pages"></div>`;
+        var template = `<div class="pages" path="{{self.path}}"></div>`;
 
         // Intercept click
         document.onclick = function(e) {

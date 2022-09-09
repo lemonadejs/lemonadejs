@@ -32,6 +32,10 @@
         }
 
         self.create = function(o) {
+            if (this.time || this.time == 'true') {
+                this.time = true;
+            }
+
             self.instance = jSuites.calendar(o, this);
         }
 

@@ -5,6 +5,10 @@
  * Description: Create amazing web based reusable components.
  *
  * This software is distribute under MIT License
+ *
+ * Roadmap
+ * - Add @bind to custom elements
+ * - @bind dentro do drodpown jsuites nao seta o valor inicial se o bind tiver valor
  */
 
 ;(function (global, factory) {
