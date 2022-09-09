@@ -1,22 +1,22 @@
 {
-    "name": "@lemonadejs/modal",
-    "title": "LemonadeJS modal",
-    "description": "LemonadeJS modal integration.",
+    "name": "@lemonadejs/actionsheet",
+    "title": "LemonadeJS actionsheet component",
+    "description": "LemonadeJS actionsheet component",
     "author": {
         "name": "Contact <contact@lemonadejs.net>",
         "url": "https://lemonadejs.net"
     },
     "keywords": [
-        "javascript modal",
+        "javascript action sheet (IOS style)",
+        "javascript router",
         "lemonadejs plugins",
         "js",
         "library",
         "javascript plugins"
     ],
     "dependencies": {
-        "lemonadejs": "^2.6.3",
-        "jsuites": "^4.15.1"
+        "lemonadejs": "^2.6.3"
     },
     "main": "dist/index.js",
-    "version": "1.2.0"
+    "version": "1.0.0"
 }

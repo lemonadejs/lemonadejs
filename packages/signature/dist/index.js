@@ -82,6 +82,7 @@
                     update();
                 }
             }
+            e.preventDefault();
         }
 
         self.onchange = function() {

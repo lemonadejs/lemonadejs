@@ -1,7 +1,7 @@
 ;(function (global, factory) {
     typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
     typeof define === 'function' && define.amd ? define(factory) :
-    global.Dropdown = factory();
+    global.Modal = factory();
 }(this, (function () {
 
     // Load lemonadejs
@@ -22,14 +22,18 @@
         }
     }
 
-    return function() {
+    return function(html) {
         var self = this;
 
         self.create = function(o) {
-            self.instance = jSuites.calendar(o, this);
+            self.modal = jSuites.modal(o, self);
         }
 
-        var template = `<div @ready="self.create(this)" name="{{self.name}}"></div>`;
+        var template = `
+            <div @ready="self.create(this)" name={{self.name}}>
+                ${html}
+            </div>
+        `;
 
         return lemonade.element(template, self);
     }

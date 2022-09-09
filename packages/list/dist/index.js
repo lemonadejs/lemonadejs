@@ -28,6 +28,7 @@
                 // Change the page sending the element where the property page is associated
                 page();
             }
+
         }
 
         // Apply the paginatino after initialization
@@ -160,10 +161,11 @@
                         <Pagination @loop="self.pages"/>
                     </ul>
                 </div>
-                <div class="list-content">
+                <div class="list-content" @ref="self.container">
                     <Item @loop="self.result"/>
                 </div>
             </>`;
+
 
         return lemonade.element(template, self, { Item, Pagination });
     }

@@ -1,13 +1,13 @@
 {
-    "name": "@lemonadejs/modal",
-    "title": "LemonadeJS modal",
-    "description": "LemonadeJS modal integration.",
+    "name": "@lemonadejs/dialog",
+    "title": "LemonadeJS dialog",
+    "description": "LemonadeJS dialog IOS style",
     "author": {
         "name": "Contact <contact@lemonadejs.net>",
         "url": "https://lemonadejs.net"
     },
     "keywords": [
-        "javascript modal",
+        "javascript dialog (IOS style)",
         "lemonadejs plugins",
         "js",
         "library",
@@ -18,5 +18,5 @@
         "jsuites": "^4.15.1"
     },
     "main": "dist/index.js",
-    "version": "1.2.0"
+    "version": "1.0.0"
 }

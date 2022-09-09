@@ -1,22 +1,22 @@
 {
-    "name": "@lemonadejs/modal",
-    "title": "LemonadeJS modal",
-    "description": "LemonadeJS modal integration.",
+    "name": "@lemonadejs/timeline",
+    "title": "LemonadeJS timeline component",
+    "description": "LemonadeJS timeline component",
     "author": {
         "name": "Contact <contact@lemonadejs.net>",
         "url": "https://lemonadejs.net"
     },
     "keywords": [
-        "javascript modal",
+        "single page app router",
+        "javascript router",
         "lemonadejs plugins",
         "js",
         "library",
         "javascript plugins"
     ],
     "dependencies": {
-        "lemonadejs": "^2.6.3",
-        "jsuites": "^4.15.1"
+        "lemonadejs": "^2.6.3"
     },
     "main": "dist/index.js",
-    "version": "1.2.0"
+    "version": "1.1.0"
 }
