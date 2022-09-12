@@ -41,3 +41,7 @@
     display:block;
     color:#929292;
 }
+
+.toolbar:empty {
+    display: none;
+}
