@@ -11,7 +11,7 @@
 ;(function (global, factory) {
     typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
     typeof define === 'function' && define.amd ? define(factory) :
-    global.cropper = factory();
+    global.Cropper = factory();
 }(this, (function () {
 
     'use strict';
@@ -34,15 +34,15 @@
         }
     }
 
-    if (typeof(jSuites.crop) == 'undefined') {
+    if (typeof(cropper) == 'undefined') {
         if (typeof(require) === 'function') {
-            var Cropper = require('@jsuites/cropper');
-        } else if (window.jSuites) {
-            var Cropper = jSuites.crop;
+            var Crop = require('@jsuites/cropper');
+        } else if (window.cropper) {
+            var Crop = window.cropper;
         }
     } else {
-         var Cropper = jSuites.crop;
-     }
+        var Crop = cropper;
+    }
 
     return (function() {
         var self = this;
@@ -65,7 +65,8 @@
                 width: '800px',
                 height: '680px',
                 title: 'Photo Upload',
-                padding: '0'
+                padding: '0',
+                icon: 'photo'
             });
         }
 
@@ -78,7 +79,7 @@
                 var a = [798, 360];
                 var c = [width, height];
             }
-            crop = Cropper(o, {
+            crop = Crop(o, {
                 area: a,
                 crop: c ,
                 allowResize: false,
@@ -104,16 +105,16 @@
         self.createControls = function(o) {
             var tabs = jSuites.tabs(o.children[0], {
                 data: [{
-                    title: 'Crop',
-                    icon: 'crop',
-                    width: '100px',
-                },
+                        title: 'Crop',
+                        icon: 'crop',
+                        width: '100px',
+                    },
                     {
                         title:'Adjusts',
                         icon: 'image',
                         width: '100px',
                     }],
-                padding:'20px',
+                padding:'10px',
                 animation: true,
                 position: 'bottom',
             });
@@ -286,7 +287,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class='row p20 form-group' style='border-top: 1px solid #aaa'>
+                        <div class='row p20' style='border-top: 1px solid #aaa'>
                             <div class='column p6 f1'>
                                 <input type='button' value='Save Photo' class='jbutton dark controls w100' style='min-width: 140px;' onclick='self.updatePhoto()' disabled='disabled'>
                             </div><div class='column p6'>
@@ -303,7 +304,8 @@
         var root = lemonade.element(template, self);
 
         // Onclick event
-        root.addEventListener('click',  function(e) {
+        root.addEventListener('mousedown',  function(e) {
+
             e = e || window.event;
             if (e.buttons) {
                 var mouseButton = e.buttons;

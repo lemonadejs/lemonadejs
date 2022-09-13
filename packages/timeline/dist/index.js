@@ -73,8 +73,6 @@
         var self = this;
         var date = new Date();
 
-        window.s = self;
-
         self.data = [];
         self.year = date.getFullYear();
         self.month = 1 + date.getMonth();
@@ -83,13 +81,23 @@
         self.container = null;
         self.months = [ 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec' ];
 
-        var getData = function() {   
+        var getData = function() {
+            self.el.classList.add('jtimeline-loading');
+
             jSuites.ajax({
                 url: self.url + '?year=' + self.year + '&month=' + self.month,
                 type: 'GET',
                 dataType:'json',
                 success: function(data) {
                     self.data = data;
+
+                    if (data && data.length) {
+                        self.message = '';
+                    } else {
+                        self.message = 'No records found';
+                    }
+
+                    self.el.classList.remove('jtimeline-loading');
                 }
             });
         };
@@ -104,7 +112,7 @@
         self.reload = function() {
             getData();
         }
-        
+
         self.update = function() {
             var day = '';
             var prevDay = '';
@@ -120,7 +128,7 @@
 
                 prevDay = day;
             }
-            
+
             // self.refresh('data');
         }
 
@@ -130,7 +138,7 @@
                 self.month = 1;
             } else {
                 self.month++;
-            } 
+            }
         }
 
         self.prev = function() {
@@ -139,7 +147,7 @@
                 self.month = 12;
             } else {
                 self.month--;
-            } 
+            }
         }
 
         self.onchange = function(prop) {
@@ -148,7 +156,7 @@
             } else if (prop == 'data') {
                 self.update();
             }
-        }   
+        }
 
         // self.update = function() {
         //     self.day = null;
@@ -156,9 +164,8 @@
         //     getData();
         // }
 
-        self.onload = function() {    
+        self.onload = function() {
             getData();
-            console.log('.')
 
             // Add global events
             self.root.addEventListener("swipeleft", function(e) {
@@ -166,7 +173,7 @@
                 e.preventDefault();
                 e.stopPropagation();
             });
-    
+
             self.root.addEventListener("swiperight", function(e) {
                 self.prev();
                 e.preventDefault();
@@ -207,9 +214,11 @@
                 <i class="material-icons" onclick="self.next()">keyboard_arrow_right</i>
             </div>
             </div>
-
             <div @ref="self.container" class="{{self.containerClass}}">
-                <Events @loop="self.data" edit={{self.edit}} @ref="self.event"/>
+                <div class="jtimeline-message">{{self.message}}</div>
+                <div>
+                    <Events @loop="self.data" edit={{self.edit}} @ref="self.event"/>
+                </div>
             </div>
         </div>`;
 

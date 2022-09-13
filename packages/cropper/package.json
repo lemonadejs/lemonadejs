@@ -19,5 +19,5 @@
         "@jsuites/cropper": "^1.6.0"
     },
     "main": "dist/cropper.js",
-    "version": "1.5.3"
+    "version": "1.6.2"
 }

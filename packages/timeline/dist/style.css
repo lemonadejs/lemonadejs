@@ -19,7 +19,6 @@
     padding:15px;
     border-top:1px solid #eee;
     border-bottom:1px solid #eee;
-    margin-top:-1px;
     margin-bottom:10px;
     background-color:#fff;
     z-index:1;
@@ -37,19 +36,27 @@
     top:6px;
 }
 
+.jtimeline-navigation {
+    text-align: center;
+}
+
 .jtimeline-navigation div {
-    display:inline-block;
-    padding-right:12px;
-    padding-left:12px;
-    margin-left:4px;
+    display: inline-block;
+    padding-right: 12px;
+    padding-left: 12px;
+    margin-left: 4px;
     text-align: center;
     cursor: pointer;
 }
 
 .jtimeline-navigation i {
     font-size: 1.5rem !important;
-    line-height:32px;
+    line-height: 32px;
     display:inline-block;
+    width: 32px;
+    height: 32px;
+    padding: 12px;
+    cursor: pointer;
 }
 
 .jtimeline-container {
@@ -71,6 +78,14 @@
     border-left:3px solid #aaa;
     width:100%;
 }
+
+.jtimeline-item:first-child .jtimeline-content {
+    padding-top: 20px;
+}
+.jtimeline-item:first-child .jtimeline-date {
+    padding-top: 20px;
+}
+
 
 .jtimeline-item:last-child .jtimeline-content {
     padding-bottom:0px;
@@ -131,7 +146,6 @@
     border:3px solid #00688B;
     display: inline-block;
     position:absolute;
-    top:4px;
     right:-10px;
     background-color:#fff;
 }
@@ -164,16 +178,42 @@
     font-size:0.7em;
 }
 
+
+.jtimeline-message:empty {
+    display: none;
+}
+
 .jtimeline-action {
     cursor: pointer;
+}
+
+.jtimeline-loading:before {
+    content: "";
+    display: block;
+    position: fixed;
+    left: 0px;
+    width: 200px;
+    height: 2px;
+    background-color: gray;
+    animation: loading 2s linear infinite;
+    z-index: 10;
 }
 
 @media only screen and (min-width: 992px) {
     .jtimeline-header {
         position: relative !important;
     }
-    
+
     .jtimeline-container {
         padding: 0px !important;
     }
+}
+
+@keyframes loading {
+    from { left: 0px; width: 25%; }
+    25%  { width: 25%; }
+    50%  { width: 50%; }
+    75%  { left:  75%; }
+    100% { left:  100%; }
+    to { left: 100%; }
 }
