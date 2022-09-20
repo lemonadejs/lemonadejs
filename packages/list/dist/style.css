@@ -29,3 +29,7 @@
 .list-header li[selected="true"] {
     font-weight: bold;
 }
+
+.list-header ul[page="0"] {
+    display: none;
+}

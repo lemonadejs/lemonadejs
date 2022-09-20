@@ -1,5 +1,5 @@
 /**
- * Lemonadejs v2.6.3
+ * Lemonadejs v2.7.0
  *
  * Website: https://lemonadejs.net
  * Description: Create amazing web based reusable components.
@@ -7,8 +7,8 @@
  * This software is distribute under MIT License
  *
  * Roadmap
- * - Add @bind to custom elements
  * - @bind dentro do drodpown jsuites nao seta o valor inicial se o bind tiver valor
+ *   class="test {{asdfsadsf}}"
  */
 
 ;(function (global, factory) {
@@ -129,7 +129,7 @@
                 if (e.value == v) {
                     e.checked = true;
                 }
-            } else if (e.getAttribute('contenteditable')) {
+            } else if (e.getAttribute && e.getAttribute('contenteditable')) {
                 if (e.innerHTML != v) {
                     e.innerHTML = v;
                 }
@@ -162,7 +162,7 @@
             // Loop all affected elements
             for (i = 0; i < t.length; i++) {
                 // Element
-                e = t[i].element
+                e = t[i].element;
                 // Parse value
                 v = run.call(self, t[i].v);
                 // Property
@@ -173,7 +173,10 @@
                 } else {
                     // Other properties
                     if (e.self) {
-                        e.self[p] = v;
+                        // Do not change the value if is already the same to avoid infinite dispatches
+                        if (e.self[p] !== v) {
+                            e.self[p] = v;
+                        }
                     } else {
                         setAttribute(e, v, p);
                     }
@@ -261,7 +264,8 @@
                 this.tracking[token].push({
                     element: e,
                     property: type,
-                    v: res.v
+                    v: res.v,
+                    s: res.o
                 });
 
                 // Create tracker
@@ -280,7 +284,7 @@
         var result = [];
         var index = 0;
         var r = function (a,b,c,d)  {
-            result.push({ p: c - index, v: b });
+            result.push({ p: c - index, v: b, o: d });
             index = index + a.length;
             return '';
         }
@@ -337,10 +341,12 @@
 
         // Mark custom handlers
         if (this.components) {
+            var k = Object.keys(this.components);
+            for (var i = 0; i < k.length; i++) {
+                this.components[k[i].toUpperCase()] = this.components[k[i]];
+            }
             // Method name
             var m = element.tagName;
-            // Custom capital letter first
-            m = m.charAt(0).toUpperCase() + m.slice(1).toLowerCase();
             // Expected function
             t = this.components[m];
             // Verify scope in the declared extensions
@@ -350,7 +356,7 @@
         }
 
         // Loop without a handler
-        if (element.getAttribute('@loop') && ! t) {
+        if ((element.getAttribute('@loop') || element.getAttribute('lm-loop')) && ! t) {
             t = true;
             element.parent = element;
         }
@@ -380,31 +386,36 @@
                     // Property name
                     var prop = attr[k[i]].replace('self.', '');
                     // Special properties
-                    if (k[i] == '@ready') {
+                    if (k[i] == '@ready' || k[i] == 'lm-ready') {
                         // Add this method to the queue
                         this.queue.push(Function('self', attr[k[i]]).bind(element, this.self));
                         // Remove attribute
                         element.removeAttribute(k[i]);
-                    } else if (k[i] == '@ref') {
+                    } else if (k[i] == '@ref' || k[i] == 'lm-ref') {
                         // Make it available to the self
                         this.self[prop] = element.self ? element.self : element;
                         // Remove attribute
                         element.removeAttribute(k[i]);
-                    } else if (k[i] == '@bind') {
-                        // Onchange event for the element
-                        element.oninput = function(a, b) {
-                            // Update val
-                            this.state[b] = getAttribute(a);
-                            // Refresh bound elements
-                            dispatch.call(this, b);
-                        }.bind(this, element, prop);
+                    } else if (k[i] == '@bind' || k[i] == 'lm-bind') {
+                        if (element.self) {
+                            // Change from the child to the parent
+                            this.queue.push(Function('self', 'prop', "this.self.el.lemon.tracking.value.push({ element: this.self.parent, property: prop, v: 'self.value'});").bind(element, this.self, prop));
+                        } else {
+                            // Onchange event for the element
+                            element.oninput = function(a, b) {
+                                // Update val
+                                this.state[b] = getAttribute(a);
+                                // Refresh bound elements
+                                dispatch.call(this, b);
+                            }.bind(this, element, prop);
+                        }
                         // Way back
                         create.call(this, element, { v:attr[k[i]] }, 'value');
                         // Keep reference to the original definition
                         element[k[i]] = prop;
                         // Remove attribute
                         element.removeAttribute(k[i]);
-                    } else if (k[i] == '@loop') {
+                    } else if (k[i] == '@loop' || k[i] == 'lm-loop') {
                         // Parse attributes
                         create.call(this, element, { v:attr[k[i]] }, '@loop');
                         element.loop = this.self[prop];

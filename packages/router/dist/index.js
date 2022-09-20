@@ -78,6 +78,9 @@
                 self.path = p;
                 set(c);
             }
+
+            // Return the page object
+            return c;
         }
 
         /**
@@ -123,7 +126,7 @@
             // Renderer
             var r = lemonade.render;
             // Create the self and make that available on the route configuration
-            var s = o.self = { parent: self.parent };
+            var s = o.self = { parent: self };
             // Create element container
             var e = div();
             e.classList.add('page');
