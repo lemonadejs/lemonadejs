@@ -9,6 +9,7 @@
  * Roadmap
  * - @bind dentro do drodpown jsuites nao seta o valor inicial se o bind tiver valor
  *   class="test {{asdfsadsf}}"
+ * - tags existentes
  */
 
 ;(function (global, factory) {
