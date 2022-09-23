@@ -1,5 +1,5 @@
 /**
- * Lemonadejs v2.7.0
+ * Lemonadejs v2.7.2
  *
  * Website: https://lemonadejs.net
  * Description: Create amazing web based reusable components.
@@ -8,8 +8,8 @@
  *
  * Roadmap
  * - @bind dentro do drodpown jsuites nao seta o valor inicial se o bind tiver valor
- *   class="test {{asdfsadsf}}"
- * - tags existentes
+ *   class="test {{anotherClass}}"
+ * - existing tags
  */
 
 ;(function (global, factory) {
@@ -175,11 +175,15 @@
                     // Other properties
                     if (e.self) {
                         // Do not change the value if is already the same to avoid infinite dispatches
-                        if (e.self[p] !== v) {
-                            e.self[p] = v;
-                        }
+                        e.self[p] = v;
                     } else {
                         setAttribute(e, v, p);
+                        // Update the parent bind property
+                        if (this.component && t[i].v == 'self.value' && this.component['@bind']) {
+                            if (this.self.parent[this.component['@bind']] !== v) {
+                                this.self.parent[this.component['@bind']] = v;
+                            }
+                        }
                     }
                 }
             }
@@ -265,8 +269,7 @@
                 this.tracking[token].push({
                     element: e,
                     property: type,
-                    v: res.v,
-                    s: res.o
+                    v: res.v
                 });
 
                 // Create tracker
@@ -285,7 +288,7 @@
         var result = [];
         var index = 0;
         var r = function (a,b,c,d)  {
-            result.push({ p: c - index, v: b, o: d });
+            result.push({ p: c - index, v: b });
             index = index + a.length;
             return '';
         }
@@ -398,18 +401,13 @@
                         // Remove attribute
                         element.removeAttribute(k[i]);
                     } else if (k[i] == '@bind' || k[i] == 'lm-bind') {
-                        if (element.self) {
-                            // Change from the child to the parent
-                            this.queue.push(Function('self', 'prop', "this.self.el.lemon.tracking.value.push({ element: this.self.parent, property: prop, v: 'self.value'});").bind(element, this.self, prop));
-                        } else {
-                            // Onchange event for the element
-                            element.oninput = function(a, b) {
-                                // Update val
-                                this.state[b] = getAttribute(a);
-                                // Refresh bound elements
-                                dispatch.call(this, b);
-                            }.bind(this, element, prop);
-                        }
+                        // Onchange event for the element
+                        element.oninput = function(a, b) {
+                            // Update val
+                            this.state[b] = getAttribute(a);
+                            // Refresh bound elements
+                            dispatch.call(this, b);
+                        }.bind(this, element, prop);
                         // Way back
                         create.call(this, element, { v:attr[k[i]] }, 'value');
                         // Keep reference to the original definition
@@ -591,6 +589,11 @@
 
         // Process ready queue
         queue(o, el);
+
+        // Reference tag name
+        if (ref) {
+            o.lemon.component = ref;
+        }
 
         return o;
     }
