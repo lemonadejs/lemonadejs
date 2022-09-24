@@ -104,32 +104,32 @@ export default function Component() {
 
 ```javascript
 <html>
-    <body>
-        <div id='root'></div>
+<body>
+<div id='root'></div>
 
-        <script src="https://cdn.jsdelivr.net/npm/lemonadejs/dist/lemonade.min.js"></script>
-        <script>
-        var Component = (function() {
-            // Create the self object
-            var self = {};
-            self.test = function(e) {
-                console.log(e);
-                e.preventDefault();
-            }
+<script src="https://cdn.jsdelivr.net/npm/lemonadejs/dist/lemonade.min.js"></script>
+<script>
+var Component = (function() {
+    // Create the self object
+    var self = {};
+    self.test = function(e) {
+        console.log(e);
+        e.preventDefault();
+    }
 
-            // The property call is added to the observable list when added to the DOM
-            var template = `<>
-                <input type="button" value="Click test" onclick="self.test(e);"/>
-                </>`;
+    // The property call is added to the observable list when added to the DOM
+    var template = `<>
+        <input type="button" value="Click test" onclick="self.test(e);"/>
+        </>`;
 
-            // Render the template and create the observation
-            return lemonade.element(template, self);
-        });
+    // Render the template and create the observation
+    return lemonade.element(template, self);
+});
 
-        // Render the LemonadeJS element into the DOM
-        lemonade.render(Component, document.getElementById('root'));
-        </script>
-    </body>
+// Render the LemonadeJS element into the DOM
+lemonade.render(Component, document.getElementById('root'));
+</script>
+</body>
 </html>
 ```
 
@@ -137,26 +137,26 @@ export default function Component() {
 
 ```javascript
 <html>
-    <body>
-        <div id='root'></div>
+<body>
+<div id='root'></div>
 
-        <script src="https://cdn.jsdelivr.net/npm/lemonadejs/dist/lemonade.min.js"></script>
-        <script>
-        var App = (function() {
-            let self = {};
-            self.disabled= false;
+<script src="https://cdn.jsdelivr.net/npm/lemonadejs/dist/lemonade.min.js"></script>
+<script>
+var App = (function() {
+    let self = {};
+    self.disabled= false;
 
-            let template = `<>
-                    <button onclick="self.disabled = !self.disabled">Toggle</button>
-                    <input type="text" disabled="{{self.disabled}}" />
-                    </>`;
+    let template = `<>
+            <button onclick="self.disabled = !self.disabled">Toggle</button>
+            <input type="text" disabled="{{self.disabled}}" />
+            </>`;
 
-            return lemonade.element(template, self);
-        });
+    return lemonade.element(template, self);
+});
 
-        lemonade.render(App, document.getElementById('root'));
-        </script>
-    </body>
+lemonade.render(App, document.getElementById('root'));
+</script>
+</body>
 </html>
 ```
 
@@ -170,9 +170,21 @@ export default function Component() {
 
 This software is free to use and it is distributed under the MIT license.
 
+<h2>Documentation</h2>
+
+<ul>
+<li><a href="/v2/docs/getting-started">Getting started</a></li>
+<li><a href="/v2/docs/attributes">Attributes</a></li>
+<li><a href="/v2/docs/two-way-binding">Two-way binding</a></li>
+<li><a href="/v2/docs/arrays">Arrays</a></li>
+<li><a href="/v2/docs/methods">Methods</a></li>
+<li><a href="/v2/docs/events">Events</a></li>
+<li><a href="/v2/docs/classes">Classes</a></li>
+<li><a href="/v2/docs/components">Components</a></li>
+</ul>
 
 <h2>Other tools</h2>
 
 https://jsuites.net<br>
-https://jspreadsheet.com<br>
+https://jspreadsheet.com/home<br>
 https://bossanova.uk/jspreadsheet<br>
