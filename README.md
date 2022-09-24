@@ -47,36 +47,30 @@ Simplicity to run in the browser without dependencies, servers, transpilers.<br>
 
 ```html
 <html>
-    <body>
-        <div id="root"></div>
+  <body>
+    <div id="root"></div>
+    <script src="https://cdn.jsdelivr.net/npm/lemonadejs/dist/lemonade.min.js"></script>
+    <script>
+      function Hello() {
+        let self = this;
+        let template = `<h1>{{self.title}}</h1>`;
+        return lemonade.element(template, self);
+      }
 
-        <script src="https://cdn.jsdelivr.net/npm/lemonadejs/dist/lemonade.min.js"></script>
-        <script>
+      function App() {
+        let self = {};
+        self.count = 1;
+        let template = `<>
+          <Hello title="your title" />
+          <p>You clicked {{self.count}} times</p>
+         	<button onclick="self.count++;">Click me</button>
+		      </>`;
 
-        function Hello() {
-            let self = this;
-            let template = `<h1>{{self.title}}</h1>`;
-
-            return lemonade.element(template, self);
-        }
-
-
-        function App() {
-            let self = {};
-            self.count = 1;
-
-            let template = `<>
-                    <Hello title="your title" />
-                    <p>You clicked {{self.count}} times</p>
-                    <button onclick="self.count++;">Click me</button>
-                </>`;
-
-            return lemonade.element(template, self, { Hello });
-        }
-
-        lemonade.render(App, document.getElementById('root'));
-        </script>
-    </body>
+        return lemonade.element(template, self, { Hello });
+      }
+      lemonade.render(App, document.getElementById('root'));
+    </script>
+  </body>undefined
 </html>
 ```
 
