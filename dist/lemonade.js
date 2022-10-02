@@ -1,5 +1,5 @@
 /**
- * Lemonadejs v2.7.2
+ * Lemonadejs v2.8.0
  *
  * Website: https://lemonadejs.net
  * Description: Create amazing web based reusable components.
@@ -179,9 +179,9 @@
                     } else {
                         setAttribute(e, v, p);
                         // Update the parent bind property
-                        if (this.component && t[i].v == 'self.value' && this.component['@bind']) {
-                            if (this.self.parent[this.component['@bind']] !== v) {
-                                this.self.parent[this.component['@bind']] = v;
+                        if (this.tag && t[i].v == 'self.value' && this.tag['@bind']) {
+                            if (this.self.parent[this.tag['@bind']] !== v) {
+                                this.self.parent[this.tag['@bind']] = v;
                             }
                         }
                     }
@@ -545,6 +545,9 @@
      * @param t - template when used used as a custom component
      */
     L.render = function(o, el, self, t, ref, ext) {
+        // Component
+        var component = o;
+
         // Root element but be a valid DOM element
         if (! isDOM(el)) {
             console.log('Not valid DOM')
@@ -572,7 +575,12 @@
 
         // Append element to the root
         if (o.tagName == 'ROOT') {
+            // Root
+            o.lemon.root = [];
             while (o.firstChild) {
+                // Keep reference
+                o.lemon.root.push(o.firstChild)
+                // Append to the correct DOM position
                 if (ref) {
                     el.insertBefore(o.firstChild, ref);
                 } else {
@@ -590,9 +598,12 @@
         // Process ready queue
         queue(o, el);
 
+        // Reference to the component
+        o.lemon.component = component;
+
         // Reference tag name
         if (ref) {
-            o.lemon.component = ref;
+            o.lemon.tag = ref;
         }
 
         return o;
@@ -650,12 +661,12 @@
         parse.call(lemon, el);
 
         // Refresh properties
-        register(lemon.self, 'refresh', function(prop) {
-            dispatch.call(lemon, prop);
+        register(self, 'refresh', function(prop) {
+            L.refresh.call(lemon, prop);
         });
 
         // Create the el bound to the self
-        register(lemon.self, 'el', el);
+        register(self, 'el', el);
 
         // Make lemon object available though the DOM is there a better way
         el.lemon = lemon;
@@ -666,6 +677,32 @@
     // Deprecated
     L.template = L.element;
 
+    /**
+     * Re-render a component
+     */
+    L.refresh = function(prop) {
+        if (prop !== undefined) {
+            dispatch.call(this, prop);
+        } else {
+            // Root element from the component
+            let r = this.self.el;
+            if (r.tagName == 'ROOT') {
+                // It is a fragment so get the root reference from the lemon object
+                r = this.root;
+                // Re-render on that root
+                L.render(this.component, r[0].parentNode, this.self, null, r[0]);
+                // Remove old DOM element
+                while (r[0]) {
+                    r.shift().remove();
+                }
+            } else {
+                // Re-render element
+                L.render(this.component, r.parentNode, this.self, null, r);
+                // Remove old element
+                r.parentNode.removeChild(r);
+            }
+        }
+    }
 
     /**
      * Mix all template, self
