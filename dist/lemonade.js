@@ -29,6 +29,8 @@
             queue: [],
             container: {}
         }
+    } else {
+        R = document.lemonadejs;
     }
 
     /**

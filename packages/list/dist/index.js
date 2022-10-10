@@ -23,12 +23,19 @@
         // Monitor the search
         self.onchange = function(prop) {
             if (prop === 'data' || prop == 'input') {
-                search(self.input)
+                search(self.input);
+
+                if (typeof(self.onsearch) == 'function') {
+                    self.onsearch(self);
+                }
             } else if (prop == 'page') {
                 // Change the page sending the element where the property page is associated
                 page();
-            }
 
+                if (typeof(self.onchangepage) == 'function') {
+                    self.onchangepage(self);
+                }
+            }
         }
 
         // Apply the paginatino after initialization

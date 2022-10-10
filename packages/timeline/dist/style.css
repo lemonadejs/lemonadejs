@@ -1,6 +1,6 @@
 .jtimeline {
     overflow: hidden;
-    min-height:calc(100vh - 90px);
+    height: 100%;
     min-width: 300px;
 }
 

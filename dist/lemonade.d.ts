@@ -3,21 +3,25 @@
  * https://lemonadejs.net
  */
 
-export declare namespace lemonade {
+declare function lemonade() : any;
+
+declare namespace lemonade {
     /**
      * Create a LemonadeJS
      * @param {string} template to create the element
      * @param {Object} self object to control the component
+     * @param {Object} components that would be used in the template
      * @return {HTMLElement} Result DOM element, ready to be append to the DOM
      */
-    function element(template: String, self: Object) : HTMLElement;
+    function element(template: String, self: Object, components?: Object) : HTMLElement;
 
     /**
      * Append a LemonadeJS rendered DOM element to the DOM.
      * @param {Function} LemonadeJS component
      * @param {HTMLElement} DOM element container
+     * @param {Object} inject a self object to the renderer
      */
-    function render(component: Function, root: HTMLElement) : void;
+    function render(component: Function, root: HTMLElement, self?: Object) : void;
 
     /**
      * Bind a self to an existing appended DOM element
@@ -48,3 +52,5 @@ export declare namespace lemonade {
      */
     function dispatch(alias: String, argument: Object) : void;
 }
+
+export = lemonade;
