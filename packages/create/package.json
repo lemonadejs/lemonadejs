@@ -1,0 +1,20 @@
+{
+    "name": "@lemonadejs/create",
+    "title": "LemonadeJS create basic project.",
+    "description": "LemonadeJS create a basic project.",
+    "author": {
+        "name": "Contact <contact@lemonadejs.net>",
+        "url": "https://lemonadejs.net"
+    },
+    "keywords": [
+        "reactive",
+        "two-way data binding"
+    ],
+    "dependencies": {
+        "git-clone": "0.2.0"
+    },
+    "bin": {
+        "create": "dist/index.js"
+    },
+    "version": "1.0.3"
+}
