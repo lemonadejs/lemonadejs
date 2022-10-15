@@ -813,7 +813,12 @@
     L.translate = function(o) {
         if (o.substr(0,3) == '^^[' && o.substr(-3) == ']^^') {
             o = o.replace('^^[','').replace(']^^','');
-            return document.dictionary[o] || o;
+        }
+
+        if (document.dictionary && document.dictionary[o]) {
+            return document.dictionary[o];
+        } else {
+            return o;
         }
     }
 

@@ -30,6 +30,6 @@
     font-weight: bold;
 }
 
-.list-header ul[page="0"] {
+.list-header ul:empty {
     display: none;
 }

@@ -1,0 +1,26 @@
+{
+    "name": "@lemonadejs/login",
+    "title": "LemonadeJS Login helper",
+    "description": "LemonadeJS helper plugin.",
+    "author": {
+        "name": "Contact <contact@lemonadejs.net>",
+        "url": "https://lemonadejs.net"
+    },
+    "keywords": [
+        "javascript two-way data binding",
+        "javascript reactive library",
+        "two-way data binding",
+        "reactive",
+        "lemonadejs plugins",
+        "js",
+        "library",
+        "javascript plugins",
+        "plugin"
+    ],
+    "dependencies": {
+        "jsuites": "^4.16.8",
+        "lemonadejs": "^2.8.3"
+    },
+    "main": "dist/index.js",
+    "version": "1.0.0"
+}

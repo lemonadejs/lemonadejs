@@ -27,8 +27,9 @@ declare namespace lemonade {
      * Bind a self to an existing appended DOM element
      * @param {HTMLElement} Existing DOM element
      * @param {Object} LemonadeJS self controller
+     * @param {Object} components that would be used in the template
      */
-    function apply(root: HTMLElement, self: Object) : void;
+    function apply(root: HTMLElement, self: Object, components?: Object) : void;
 
     /**
      * Get an artifact from LemonadeJS Sugar by its alias identification
