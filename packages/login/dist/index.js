@@ -13,6 +13,15 @@
         }
     }
 
+    // Load jSuites
+    if (typeof(sha512) == 'undefined') {
+        if (typeof(require) === 'function') {
+            var sha512 = require('@jsuites/sha512');
+        } else if (window.jSuites) {
+            var sha512 = window.sha512;
+        }
+    }
+
     // Load LemonadeJS
     if (typeof(lemonade) == 'undefined') {
         if (typeof(require) === 'function') {
@@ -105,19 +114,18 @@
                         jSuites.notification(result);
                     }
 
-                    // Callback
-                    if (callback && callback(result) === false) {
-                        return false;
-                    }
-
-                    // Action from the server
-                    if (result.action && result.action === 'resetPassword') {
-                        self.resetPassword(result.hash);
-                        return false;
-                    }
-
                     // App initialization
                     if (result.success == 1) {
+                        // Callback
+                        if (callback && callback(result) === false) {
+                            return false;
+                        }
+                        // Action from the server
+                        if (result.action && result.action === 'resetPassword') {
+                            self.resetPassword(result.hash);
+                            return false;
+                        }
+
                         if (typeof(self.onsuccess) == 'function') {
                             self.onsuccess.call(self, result, data);
                         } else if (result.url) {

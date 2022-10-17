@@ -19,8 +19,9 @@
     ],
     "dependencies": {
         "jsuites": "^4.16.8",
-        "lemonadejs": "^2.8.3"
+        "@jsuites/sha512": "^1.0.2",
+        "lemonadejs": "^2.8.4"
     },
     "main": "dist/index.js",
-    "version": "1.0.0"
+    "version": "1.0.2"
 }
