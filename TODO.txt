@@ -1,0 +1,2 @@
+<div @ref="self.containerLogo" class="jlogin-logo" data-visible="{{self.logo?true:false}}">
+</div>

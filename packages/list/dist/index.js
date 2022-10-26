@@ -43,6 +43,10 @@
             if (self.pagination > 0) {
                 self.page = 0;
             }
+
+            if (! self.message) {
+                self.message = 'No records found';
+            }
         }
 
         var find = function(o, query) {
@@ -60,6 +64,8 @@
             result = self.result = self.data.filter(function(item) {
                 return find(item, str);
             });
+
+            self.empty = !result.length;
 
             // Go back to page zero
             self.page = 0;
@@ -168,7 +174,7 @@
                         <Pagination @loop="self.pages"/>
                     </ul>
                 </div>
-                <div class="list-content" @ref="self.container">
+                <div class="list-content" @ref="self.container" data-message="{{self.message}}" data-empty="{{self.empty}}">
                     <Item @loop="self.result"/>
                 </div>
             </>`;

@@ -128,17 +128,23 @@
 
                         if (typeof(self.onsuccess) == 'function') {
                             self.onsuccess.call(self, result, data);
-                        } else if (result.url) {
+                        } else {
                             // Some time so the user can see the message before the redirect
                             if (result.message) {
                                 setTimeout(function() {
-                                    window.location.href = result.url;
-                                }, 2000);
+                                    if (result.url) {
+                                        window.location.href = result.url;
+                                    } else {
+                                        window.location.href = window.location.pathname;
+                                    }
+                                }, 3000);
                             } else {
-                                window.location.href = result.url;
+                                if (result.url) {
+                                    window.location.href = result.url;
+                                } else {
+                                    window.location.href = window.location.pathname;
+                                }
                             }
-                        } else {
-                            window.location.href = window.location.pathname;
                         }
                     } else {
                         // Event
@@ -422,6 +428,12 @@
             if (window.localStorage.getItem('username')) {
                 self.email = window.localStorage.getItem('username');
             }
+            // Logo
+            if (self.logo) {
+                var logo = document.createElement('img');
+                logo.src = self.logo;
+                self.containerLogo.appendChild(logo);
+            }
 
             // Focus on the email box
             self.emailInput.focus();
@@ -430,9 +442,7 @@
         var template = `
             <div class="jlogin">
                 <form @ref="self.container">
-                    <div @ref="self.containerLogo" class="jlogin-logo" data-visible="{{self.logo?true:false}}">
-                        <img src="${self.logo}" />
-                    </div>
+                    <div @ref="self.containerLogo" class="jlogin-logo" data-visible="{{self.logo?true:false}}"></div>
                     <div @ref="self.containerInstructions" class="jlogin-instructions">
                         <div>{{self.instructions}}</div>
                     </div>
@@ -447,7 +457,7 @@
                     </div>
                     <div @ref="self.containerName">
                         <label>Name</label>
-                        <input type="text" name="name">
+                        <input type="text" name="name" @bind="self.name">
                     </div>
                     <div @ref="self.containerUsername">
                         <label>Username</label>
@@ -493,7 +503,7 @@
         if (isDOM(a)) {
             lemonade.render(Component, a, b);
         } else {
-            return Component(a);
+            return Component.call(this, a);
         }
     }
 
