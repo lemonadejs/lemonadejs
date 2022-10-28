@@ -816,6 +816,8 @@
 
             if (document.dictionary[o]) {
                 return document.dictionary[o];
+            } else {
+                return o;
             }
         }
     }

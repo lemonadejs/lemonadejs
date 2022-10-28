@@ -434,6 +434,10 @@
                 logo.src = self.logo;
                 self.containerLogo.appendChild(logo);
             }
+            // Fullscreen
+            if (self.fullscreen) {
+                self.el.classList.add('jlogin-fullscreen"');
+            }
 
             // Focus on the email box
             self.emailInput.focus();
