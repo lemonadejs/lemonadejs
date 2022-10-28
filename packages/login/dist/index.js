@@ -436,7 +436,7 @@
             }
             // Fullscreen
             if (self.fullscreen) {
-                self.el.classList.add('jlogin-fullscreen"');
+                self.el.classList.add('jlogin-fullscreen');
             }
 
             // Focus on the email box

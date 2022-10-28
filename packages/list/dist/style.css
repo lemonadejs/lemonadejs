@@ -30,10 +30,6 @@
     font-weight: bold;
 }
 
-.list-header ul:empty {
-    display: none;
-}
-
 .list-content[data-empty=true]::before {
     content: attr(data-message);
     padding: 4px;

@@ -170,9 +170,7 @@
             <>
                 <div class="list-header" data="{{self.data}}">
                     <input type='text' @bind="self.input" search="{{self.search}}"/>
-                    <ul page="{{self.page}}">
-                        <Pagination @loop="self.pages"/>
-                    </ul>
+                    <ul page="{{self.page}}"><Pagination @loop="self.pages"/></ul>
                 </div>
                 <div class="list-content" @ref="self.container" data-message="{{self.message}}" data-empty="{{self.empty}}">
                     <Item @loop="self.result"/>
