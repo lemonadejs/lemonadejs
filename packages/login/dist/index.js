@@ -79,6 +79,13 @@
             self.action.onclick = action;
         }
 
+        self.enter = function(e) {
+            if (e.key == 'Enter') {
+                self.action.onclick();
+                e.preventDefault();
+            }
+        }
+
         /**
          * Perform the ajax call to the server
          */
@@ -359,6 +366,9 @@
             self.password = '';
             self.password2 = '';
 
+            // Instructions
+            self.instructions = 'Please choose a new password';
+
             // Action
             self.createAction('Reset my password', function() {
                 try {
@@ -416,14 +426,6 @@
         }
 
         self.onload = function() {
-            var params = new URLSearchParams(window.location.search);
-            var hash = null;
-            if (hash = params.get('h')) {
-                self.resetPassword(hash);
-            } else {
-                self.requestAccess();
-            }
-
             // Email persistence
             if (window.localStorage.getItem('username')) {
                 self.email = window.localStorage.getItem('username');
@@ -438,9 +440,24 @@
             if (self.fullscreen) {
                 self.el.classList.add('jlogin-fullscreen');
             }
+            // Initial action
+            var params = new URLSearchParams(window.location.search);
+            if (params.get('create') === null) {
+                var hash = null;
+                if (hash = params.get('h')) {
+                    self.resetPassword(hash);
+                } else {
+                    self.requestAccess();
+                }
 
-            // Focus on the email box
-            self.emailInput.focus();
+                // Focus on the email box
+                self.emailInput.focus();
+            } else {
+                self.createAccount();
+
+                // Focus on the email box
+                self.nameInput.focus();
+            }
         }
 
         var template = `
@@ -457,11 +474,11 @@
                     </div>
                     <div @ref="self.containerCode">
                         <label>Code</label>
-                        <input type="text" name="code" @bind="self.code">
+                        <input type="text" name="code" @bind="self.code" onkeypress="self.enter(e)">
                     </div>
                     <div @ref="self.containerName">
                         <label>Name</label>
-                        <input type="text" name="name" @bind="self.name">
+                        <input type="text" name="name" @bind="self.name" @ref="self.nameInput">
                     </div>
                     <div @ref="self.containerUsername">
                         <label>Username</label>
@@ -469,15 +486,15 @@
                     </div>
                     <div @ref="self.containerEmail">
                         <label>E-mail</label>
-                        <input type="text" name="email" autocomplete="new-username" @bind="self.email" @ref="self.emailInput">
+                        <input type="text" name="email" autocomplete="new-username" @bind="self.email" @ref="self.emailInput" onkeypress="self.enter(e)">
                     </div>
                     <div @ref="self.containerPassword">
                         <label>Password</label>
-                        <input type="password" name="password" autocomplete="new-password" @bind="self.password">
+                        <input type="password" name="password" autocomplete="new-password" @bind="self.password" onkeypress="self.enter(e)">
                     </div>
                     <div @ref="self.containerRepeat">
                         <label>Repeat the password</label>
-                        <input type="password" name="password2" autocomplete="new-password" @bind="self.password2">
+                        <input type="password" name="password2" autocomplete="new-password" @bind="self.password2" onkeypress="self.enter(e)">
                     </div>
                     <div @ref="self.containerAction">
                         <input type="button" value="Login" @ref="self.action">
