@@ -16,7 +16,6 @@
     return function(html) {
         // Lemonade element
         var self = this;
-
         // The current result
         var result = self.result = self.data;
 
@@ -64,9 +63,6 @@
             result = self.result = self.data.filter(function(item) {
                 return find(item, str);
             });
-
-            self.empty = !result.length;
-
             // Go back to page zero
             self.page = 0;
         }
@@ -172,9 +168,7 @@
                     <input type='text' @bind="self.input" search="{{self.search}}"/>
                     <ul page="{{self.page}}"><Pagination @loop="self.pages"/></ul>
                 </div>
-                <div class="list-content" @ref="self.container" data-message="{{self.message}}" data-empty="{{self.empty}}">
-                    <Item @loop="self.result"/>
-                </div>
+                <div class="list-content" @ref="self.container" data-message="{{self.message}}"><Item @loop="self.result"/></div>
             </>`;
 
 

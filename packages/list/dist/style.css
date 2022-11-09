@@ -30,7 +30,10 @@
     font-weight: bold;
 }
 
-.list-content[data-empty=true]::before {
+.list-content:empty {
+    padding: 8px;
+}
+
+.list-content:empty::before {
     content: attr(data-message);
-    padding: 4px;
 }

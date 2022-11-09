@@ -24,13 +24,16 @@
      * Global queue
      */
     var R = null;
-    if (typeof(document) !== "undefined" && ! document.lemonadejs) {
-        R = document.lemonadejs = {
-            queue: [],
-            container: {}
+
+    if (typeof(document) !== "undefined") {
+        if (! document.lemonadejs) {
+            R = document.lemonadejs = {
+                queue: [],
+                container: {}
+            }
+        } else {
+            R = document.lemonadejs;
         }
-    } else {
-        R = document.lemonadejs;
     }
 
     /**
@@ -420,6 +423,10 @@
                         // Parse attributes
                         create.call(this, element, { v:attr[k[i]] }, '@loop');
                         element.loop = this.self[prop];
+                        element.removeAttribute(k[i]);
+                    } else if (k[i] == '@src' || k[i] == 'lm-src') {
+                        // Parse attributes
+                        create.call(this, element, {v: attr[k[i]]}, 'src');
                         element.removeAttribute(k[i]);
                     } else {
                         // Parse attributes
