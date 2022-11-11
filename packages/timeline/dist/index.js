@@ -21,11 +21,7 @@
 
     var Tags = (function() {
         var self = this;
-        var template = `
-            <div class="jtimeline-tag" style="{{'background-color:' + self.color}}">
-                {{self.text}}
-            </div>
-        `;
+        var template = `<div class="jtimeline-tag" style="{{'background-color:' + self.color}}">{{self.text}}</div>`;
 
         return lemonade.element(template, self);
     });
@@ -37,34 +33,23 @@
             self.tags = [];
         }
 
-        // Avoid day repetition
-        // var day = self.date.substr(8, 9);
-        // console.log(self.date.substr(8,9), 'TESTE');
-
         var template = `
-        <div class="jtimeline-item">
-            <div class="jtimeline-date-container">
-                <div class="{{!self.day? 'jtimeline-date' : 'jtimeline-date jtimeline-date-bullet'}}">{{self.day}}</div>
-            </div>
-
-            <div class="jtimeline-content">
-                <div class="jtimeline-title-container">
-                    <div class="jtimeline-title">{{self.title || 'No title'}}</div>
-                    <div class="jtimeline-controls" style="{{!self.author? 'display:none;':'display:block;'}}">
-                        <i class='material-icons timeline-edit' onclick="self.parent.edit(self)">edit</i>
+            <div class="jtimeline-item">
+                <div class="jtimeline-date-container">
+                    <div class="{{!self.day? 'jtimeline-date' : 'jtimeline-date jtimeline-date-bullet'}}">{{self.day}}</div>
+                </div>
+                <div class="jtimeline-content">
+                    <div class="jtimeline-title-container">
+                        <div class="jtimeline-title">{{self.title || 'No title'}}</div>
+                        <div class="jtimeline-controls" style="{{!self.author? 'display:none;':'display:block;'}}">
+                            <i class='material-icons timeline-edit' onclick="self.parent.edit(self)">edit</i>
+                        </div>
                     </div>
+                    <div class="jtimeline-subtitle">{{self.subtitle || ''}}</div>
+                    <div class="jtimeline-text">{{self.text}}</div>
+                    <div class="jtimeline-tags"><Tags @loop="self.tags" /></div>
                 </div>
-
-                <div class="jtimeline-subtitle">{{self.subtitle || ''}}</div>
-
-                <div class="jtimeline-text">{{self.text}}</div>
-
-                <div class="jtimeline-tags">
-                   <Tags @loop="self.tags" />
-                </div>
-            </div>
-        </div>
-        `
+            </div>`;
 
         return lemonade.element(template, self, { Tags });
     });
@@ -90,12 +75,6 @@
                 dataType:'json',
                 success: function(data) {
                     self.data = data;
-
-                    if (data && data.length) {
-                        self.message = '';
-                    } else {
-                        self.message = 'No records found';
-                    }
 
                     self.el.classList.remove('jtimeline-loading');
                 }
@@ -158,12 +137,6 @@
             }
         }
 
-        // self.update = function() {
-        //     self.day = null;
-
-        //     getData();
-        // }
-
         self.onload = function() {
             getData();
 
@@ -183,9 +156,8 @@
 
         self.add = function(data) {
             // Save on the server
-
-            // Load
             [self.year, self.month] = data.date.split('-');
+            // Get the data
             getData();
         }
 
@@ -203,24 +175,25 @@
             }
         }
 
+        if (! self.message) {
+            self.message = 'No records found';
+        }
+
         var template = `<div class="jtimeline" @ref="self.root">
-            <div class="jtimeline-header">
-            <div class="jtimeline-label">
-                <div class="jtimeline-month">{{self.months[self.month - 1]}}</div>
-                <div class="jtimeline-year">{{self.year}}</div>
-            </div>
-            <div class="jtimeline-navigation">
-                <i class="material-icons" onclick="self.prev()">keyboard_arrow_left</i>
-                <i class="material-icons" onclick="self.next()">keyboard_arrow_right</i>
-            </div>
-            </div>
-            <div @ref="self.container" class="{{self.containerClass}}">
-                <div class="jtimeline-message">{{self.message}}</div>
-                <div>
-                    <Events @loop="self.data" edit={{self.edit}} @ref="self.event"/>
+                <div class="jtimeline-header">
+                <div class="jtimeline-label">
+                    <div class="jtimeline-month">{{self.months[self.month - 1]}}</div>
+                    <div class="jtimeline-year">{{self.year}}</div>
                 </div>
-            </div>
-        </div>`;
+                <div class="jtimeline-navigation">
+                    <i class="material-icons" onclick="self.prev()">keyboard_arrow_left</i>
+                    <i class="material-icons" onclick="self.next()">keyboard_arrow_right</i>
+                </div>
+                </div>
+                <div @ref="self.container" class="{{self.containerClass}}">
+                    <div class="jtimeline-data" data-message="{{self.message}}"><Events @loop="self.data" edit={{self.edit}} @ref="self.event" /></div>
+                </div>
+            </div>`;
 
         var root = lemonade.element(template, self, { Events, Tags });
 

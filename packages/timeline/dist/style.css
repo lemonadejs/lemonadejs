@@ -178,11 +178,6 @@
     font-size:0.7em;
 }
 
-
-.jtimeline-message:empty {
-    display: none;
-}
-
 .jtimeline-action {
     cursor: pointer;
 }
@@ -197,6 +192,18 @@
     background-color: gray;
     animation: loading 2s linear infinite;
     z-index: 10;
+}
+
+.jtimeline-data:empty:before {
+    content: attr(data-message);
+    font-size: 0.9em;
+    text-align: center;
+    position: absolute;
+    width: 100%;
+}
+
+.jtimeline-loading .jtimeline-data:empty:before {
+    content: 'Loading...';
 }
 
 @media only screen and (min-width: 992px) {
