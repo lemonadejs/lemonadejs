@@ -19,9 +19,28 @@
         }
     }
 
+    var isLight = function(color) {
+        if (color.match(/^rgb/)) {
+            color = color.match(/^rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*(\d+(?:\.\d+)?))?\)$/);
+            var r = color[1];
+            var g = color[2];
+            var b = color[3];
+        } else {
+            color = color.replace('#', '');
+            color = +("0x" + color.slice(1).replace(color.length < 5 && /./g, '$&$&'));
+            var r = color >> 16;
+            var g = color >> 8 & 255;
+            var b = color & 255;
+        }
+
+        // Using the HSP value, determine whether the color is light or dark
+        return Math.sqrt(0.299 * (r * r) + 0.587 * (g * g) + 0.114 * (b * b)) > 180;
+    }
+
     var Tags = (function() {
         var self = this;
-        var template = `<div class="jtimeline-tag" style="{{'background-color:' + self.color}}">{{self.text}}</div>`;
+        self.fontColor = isLight(self.color) ? '#000' : '#fff';
+        var template = `<div class="jtimeline-tag" style="{{'background-color:' + self.color + '; color:' + self.fontColor}}">{{self.text}}</div>`;
 
         return lemonade.element(template, self);
     });

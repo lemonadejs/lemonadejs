@@ -42,10 +42,6 @@
             if (self.pagination > 0) {
                 self.page = 0;
             }
-
-            if (! self.message) {
-                self.message = 'No records found';
-            }
         }
 
         var find = function(o, query) {

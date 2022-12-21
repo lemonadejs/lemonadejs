@@ -4,6 +4,9 @@
     global.forms = factory();
 }(this, (function () {
 
+    'use strict';
+
+    // Get or set a property from a JSON from a string.
     var path = function(str, val) {
         str = str.split('.');
         if (str.length) {
@@ -72,67 +75,81 @@
         return value;
     }
 
-    // Get form elements
-    var get = function() {
-        var data = {};
-        var name = null;
-        var e = el.querySelectorAll("input, select, textarea, div[name]");
-        for (var i = 0; i < e.length; i++) {
-            if (name = e[i].getAttribute('name')) {
-                data[name] = getValue(e[i]) || '';
-            }
-        }
-        return data;
-    }
+    // Create forms
+    return function(el, options) {
+        var Component = {};
 
-    // Get form elements
-    var set = function(data) {
-        var name = null;
-        var value = null;
-        var e = el.querySelectorAll("input, select, textarea, div[name]");
-        for (var i = 0; i < e.length; i++) {
-            // Attributes
-            var type = e[i].getAttribute('type');
-            if (name = e[i].getAttribute('name')) {
-                // Transform variable names in pathname
-                name = name.replace(new RegExp(/\[(.*?)\]/ig), '.$1');
-                value = '';
-                // Search for the data in the path
-                if (name.match(/\./)) {
-                    var tmp = jSuites.path.call(data, name) || '';
-                    if (typeof(tmp) !== 'undefined') {
-                        value = tmp;
-                    }
-                } else {
-                    if (typeof(data[name]) !== 'undefined') {
-                        value = data[name];
-                    }
+        // Load remote information
+        Component.load = function (url) {
+            fetch(url, {headers: {'X-Requested-With': 'http'}}).then(function (result) {
+                result.json().then(function (result) {
+                    Component.set(result);
+                })
+            })
+        }
+
+        // Get form elements
+        Component.get = function () {
+            var data = {};
+            var name = null;
+            var e = el.querySelectorAll("input, select, textarea, div[name]");
+            for (var i = 0; i < e.length; i++) {
+                if (name = e[i].getAttribute('name')) {
+                    data[name] = getValue(e[i]) || '';
                 }
-                // Set the values
-                if (type == 'checkbox' || type == 'radio') {
-                    e[i].checked = value ? true : false;
-                } else if (type == 'file') {
-                    // Do nothing
-                } else {
-                    if (typeof (e[i].val) == 'function') {
-                        e[i].val(value);
+            }
+            return data;
+        }
+
+        // Set form elements
+        Component.set = function (data) {
+            var tmp = null;
+            var name = null;
+            var value = null;
+            var e = el.querySelectorAll("input, select, textarea, div[name]");
+            for (var i = 0; i < e.length; i++) {
+                // Attributes
+                var type = e[i].getAttribute('type');
+                if (name = e[i].getAttribute('name')) {
+                    // Transform variable names in pathname
+                    name = name.replace(new RegExp(/\[(.*?)\]/ig), '.$1');
+                    value = '';
+                    // Search for the data in the path
+                    if (name.match(/\./)) {
+                        tmp = path.call(data, name) || '';
+                        if (typeof (tmp) !== 'undefined') {
+                            value = tmp;
+                        }
                     } else {
-                        e[i].value = value;
+                        if (typeof (data[name]) !== 'undefined') {
+                            value = data[name];
+                        }
+                    }
+                    // Set the values
+                    if (type === 'checkbox' || type === 'radio') {
+                        e[i].checked = value ? true : false;
+                    } else if (type == 'file') {
+                        // Do nothing
+                    } else {
+                        if (typeof (e[i].val) == 'function') {
+                            e[i].val(value);
+                        } else {
+                            e[i].value = value;
+                        }
                     }
                 }
             }
         }
-    }
 
-    return function(el) {
         // Integrate form
-        el.val = function(v) {
-            if (typeof(v) === 'undefined') {
-                return get();
+        el.val = function (v) {
+            if (typeof (v) === 'undefined') {
+                return Component.get();
             } else {
-                set(v)
+                Component.set(v)
             }
         }
-    }
 
+        return Component;
+    }
 })));

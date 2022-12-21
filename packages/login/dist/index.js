@@ -333,7 +333,7 @@
          */
         self.submitCode = function() {
             // Start with correct elements
-            self.appendChild(['Logo','Instructions','Code','Action','Cancel'], 'Please enter the code you by email or message');
+            self.appendChild(['Logo','Instructions','Code','Action','Cancel'], 'Please enter the code you have received by email or message');
 
             // Action
             self.createAction('Confirm code', function() {

@@ -1,10 +1,10 @@
 ;(function (global, factory) {
     typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
     typeof define === 'function' && define.amd ? define(factory) :
-    global.Dropdown = factory();
+    global.Color = factory();
 }(this, (function () {
 
-    // Load lemonadejs
+    // Load LemonadeJS
     if (typeof(lemonade) == 'undefined') {
         if (typeof(require) === 'function') {
             var lemonade = require('lemonadejs');
@@ -13,7 +13,7 @@
         }
     }
 
-    // Load lemonadejs
+    // Load LemonadeJS
     if (typeof(jSuites) == 'undefined') {
         if (typeof(require) === 'function') {
             var jSuites = require('jsuites');
@@ -25,22 +25,18 @@
     return function() {
         var self = this;
 
-        self.create = function(o) {
-            if (this.remotesearch === 'true') {
-                this.remoteSearch = true;
+        self.onchange = function(prop) {
+            if (self.instance && prop === 'value') {
+                self.instance.setValue(self.value);
             }
-            if (this.multiple === 'true') {
-                this.multiple = true;
-            }
-            if (this.autocomplete === 'true') {
-                this.autocomplete = true;
-            }
-            self.instance = jSuites.dropdown(o, this);
         }
 
-        var template = `<div @ready="self.create(this)" name="{{self.name}}"></div>`;
+        self.create = function(o) {
+            self.instance = jSuites.color(o, this);
+        }
+
+        var template = `<input @ready="self.create(this)" name="{{self.name}}" />`;
 
         return lemonade.element(template, self);
     }
-
 })));

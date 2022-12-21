@@ -1,5 +1,5 @@
 .jtimeline {
-    overflow: hidden;
+    overflow: auto;
     height: 100%;
     min-width: 300px;
 }
@@ -161,9 +161,9 @@
 }
 
 .jtimeline-tag {
-    padding:1px;
-    padding-right:10px;
-    padding-left:10px;
+    padding: 4px;
+    padding-right: 10px;
+    padding-left: 10px;
     background-color:red;
     color:#fff;
     display:inline-block;
@@ -204,6 +204,10 @@
 
 .jtimeline-loading .jtimeline-data:empty:before {
     content: 'Loading...';
+}
+
+.timeline-edit {
+    cursor: pointer;
 }
 
 @media only screen and (min-width: 992px) {

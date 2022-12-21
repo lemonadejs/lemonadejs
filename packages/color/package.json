@@ -1,0 +1,23 @@
+{
+    "name": "@lemonadejs/color",
+    "title": "LemonadeJS color",
+    "description": "LemonadeJS with jSuites color integration.",
+    "author": {
+        "name": "Contact <contact@lemonadejs.net>",
+        "url": "https://lemonadejs.net"
+    },
+    "keywords": [
+        "javascript calendar",
+        "lemonadejs plugins",
+        "js",
+        "library",
+        "javascript plugins",
+        "javascript color picker"
+    ],
+    "dependencies": {
+        "lemonadejs": "^2.6.3",
+        "jsuites": "^4.15.1"
+    },
+    "main": "dist/index.js",
+    "version": "1.0.0"
+}

@@ -37,3 +37,7 @@
 .list-content:empty::before {
     content: attr(data-message);
 }
+
+.lines .list-content:empty::before {
+    text-align: center;
+}

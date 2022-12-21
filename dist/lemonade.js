@@ -142,6 +142,13 @@
             } else {
                 e.value = v;
             }
+        } else if (t == '@src') {
+            if (! v) {
+                v = e.getAttribute('default');
+            }
+            if (v) {
+                e.src = v;
+            }
         } else if (typeof(e[t]) !== 'undefined' || typeof(v) == 'function' || typeof(v) == 'object') {
             e[t] = v;
         } else {
@@ -426,7 +433,7 @@
                         element.removeAttribute(k[i]);
                     } else if (k[i] == '@src' || k[i] == 'lm-src') {
                         // Parse attributes
-                        create.call(this, element, {v: attr[k[i]]}, 'src');
+                        create.call(this, element, {v: attr[k[i]]}, '@src');
                         element.removeAttribute(k[i]);
                     } else {
                         // Parse attributes
