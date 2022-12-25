@@ -140,7 +140,7 @@
                     e.innerHTML = v;
                 }
             } else {
-                e.value = v;
+                e.setAttribute(t, v);
             }
         } else if (t == '@src') {
             if (! v) {
