@@ -651,16 +651,7 @@
             // Parse fragment
             t = t.replace(/<>/gi, "<root>").replace(/<\/>/gi, "<\/root>").trim();
             // Create the root element
-            var el = document.createElement('template');
-            // Get the DOM content
-            el.innerHTML = t;
-            // Extract
-            if (el.content) {
-                el = el.content;
-            } else {
-                el = document.createElement('div');
-                el.innerHTML = t;
-            }
+            var el = document.createRange().createContextualFragment(t);
 
             // Already single DOM, do not need a container
             if (el.childNodes.length > 1) {
