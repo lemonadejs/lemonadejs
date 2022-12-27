@@ -208,7 +208,7 @@
     }
 
     /**
-     * Bind an property to one action and start tracking
+     * Bind a property to one action and start tracking
      */
     var bind = function(p) {
         // Lemon handler
@@ -588,7 +588,7 @@
             }
 
             if (! isDOM(o)) {
-                console.log('Component did not returned a valid DOM');
+                console.log('Component did not return a valid DOM');
                 return false;
             }
         }
