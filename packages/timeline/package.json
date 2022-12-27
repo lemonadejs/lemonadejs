@@ -7,8 +7,7 @@
         "url": "https://lemonadejs.net"
     },
     "keywords": [
-        "single page app router",
-        "javascript router",
+        "javascript timeline",
         "lemonadejs plugins",
         "js",
         "library",
@@ -18,5 +17,5 @@
         "lemonadejs": "^2.8.8"
     },
     "main": "dist/index.js",
-    "version": "1.2.2"
+    "version": "1.2.3"
 }

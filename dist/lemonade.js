@@ -578,6 +578,10 @@
         if (typeof(o) == 'function') {
             if (isClass(o)) {
                 o = new o(self);
+                // Necessary to fix the reference to the self
+                if (ref) {
+                    ref.self = o;
+                }
                 o = L.element(o.render(t, ext), o);
             } else {
                 o = o.call(self, t, ext);
@@ -647,7 +651,7 @@
 
         if (! isDOM(t)) {
             // Close any custom not fully closed component
-            t = t.replace(/(<([A-Z]{1}[a-zA-Z0-9_-]+)[^>]*)(\/|\/.{1})>/gm, "$1></$2>");
+            t = t.replace(/(<(([A-Z]{1}|[a-z]*-){1}[a-zA-Z0-9_-]+)[^>]*)(\/|\/.{1})>/gm, "$1></$2>");
             // Parse fragment
             t = t.replace(/<>/gi, "<root>").replace(/<\/>/gi, "<\/root>").trim();
             // Create the root element
@@ -837,7 +841,11 @@
     }
 
     L.component = class {
-        constructor() {
+        constructor(o) {
+            // Assign the initial values
+            if (o && typeof(o) == 'object') {
+                Object.assign(this, o);
+            }
         }
     }
 
