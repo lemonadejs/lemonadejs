@@ -173,14 +173,14 @@ This software is free to use and it is distributed under the MIT license.
 <h2>Documentation</h2>
 
 <ul>
-<li><a href="/v2/docs/getting-started">Getting started</a></li>
-<li><a href="/v2/docs/attributes">Attributes</a></li>
-<li><a href="/v2/docs/two-way-binding">Two-way binding</a></li>
-<li><a href="/v2/docs/arrays">Arrays</a></li>
-<li><a href="/v2/docs/methods">Methods</a></li>
-<li><a href="/v2/docs/events">Events</a></li>
-<li><a href="/v2/docs/classes">Classes</a></li>
-<li><a href="/v2/docs/components">Components</a></li>
+<li><a href="https://lemonadejs.net/v2/docs/getting-started">Getting started</a></li>
+<li><a href="https://lemonadejs.net/v2/docs/attributes">Attributes</a></li>
+<li><a href="https://lemonadejs.net/v2/docs/two-way-binding">Two-way binding</a></li>
+<li><a href="https://lemonadejs.net/v2/docs/arrays">Arrays</a></li>
+<li><a href="https://lemonadejs.net/v2/docs/methods">Methods</a></li>
+<li><a href="https://lemonadejs.net/v2/docs/events">Events</a></li>
+<li><a href="https://lemonadejs.net/v2/docs/classes">Classes</a></li>
+<li><a href="https://lemonadejs.net/v2/docs/components">Components</a></li>
 </ul>
 
 <h2>Other tools</h2>
