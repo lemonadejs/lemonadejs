@@ -9,7 +9,7 @@ https://lemonadejs.net
 
 `
 <html>
-<script src="https://lemonadejs.net/v2/lemonade.js"></script>
+<script src="https://lemonadejs.net/v3/lemonade.js"></script>
 <script src="dist/index.js"></script>
 
 <link rel="stylesheet" href="dist/style.css" type="text/css" />
