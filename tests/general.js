@@ -1,16 +1,4 @@
-const jsdom = require("jsdom");
-
-// In case document does not exists
-if (typeof(document) == 'undefined') {
-    const { JSDOM } = jsdom;
-    const dom = new JSDOM(`<body></body>`, { url: "http://localhost/" });
-    let k = Object.keys(dom.window);
-    for (let i = 0; i < k.length; i++) {
-        global = dom.window[k[i]];
-    }
-    console.log(dom)
-}
-
+const jsdom = require('global-jsdom/register')
 const tester = require('../dist/lemonade.tester')
 const lemonade = require('../dist/lemonade');
 
@@ -102,7 +90,7 @@ tester('Two-way binding for custom elements with @bind', function(render) {
         // Trigger click in the child element
         self.component.button.click();
         // Check for the title updates
-        return parseInt(self.title.innerText);
+        return parseInt(self.title.textContent);
     })
 });
 
@@ -110,23 +98,23 @@ tester('Custom element as a root element', function(render) {
     function Test() {
         // Get the attributes from the tag
         let self = this;
-        return  `<h1>{{self.value}}</h1>`;
+        return `<h1>{{self.value}}</h1>`;
     }
 
     function Component() {
         let self = this;
         self.test = 120;
-        return `<Test value="{{self.test}}" />`;
+        return `<Test value="{{self.test}}" @ref="self.component" />`;
     }
 
     // Register components
     lemonade.setComponents({ Test });
 
     // Render the component and assert the return
-    return render(Component).assert(121, function() {
+    return render(Component).assert('BODY', function() {
         let self = this;
 
-        console.log(this.el.parentNode.parentNode)
+        return self.component?.el.parentNode?.parentNode?.tagName;
     })
 });
 
@@ -149,7 +137,7 @@ tester('Custom element renders in the correct position', function(render) {
         </>`;
     }
 
-    // Register components
+    // Register as a global component.
     lemonade.setComponents({ Test });
 
     // Render the component and assert the return
@@ -184,7 +172,7 @@ tester('Update the first element inside a loop', function(render) {
     return render(Component).assert('New title', function() {
         let self = this;
         self.data[0].title = 'New title';
-        return self.root.children[0].innerText;
+        return self.root.children[0].textContent;
     })
 });
 
@@ -198,10 +186,8 @@ tester('Add a new item in the loop and refresh', function(render) {
             { title: 'angular'}
         ];
 
-        return `<>
-            <ul @loop="self.data" @ref="self.root">
-                <li>{{self.title}}</li>
-            </ul>
+        return `<ul @loop="self.data" @ref="self.root">
+            <li>{{self.title}}</li>
         </ul>`;
     }
 
@@ -210,8 +196,9 @@ tester('Add a new item in the loop and refresh', function(render) {
         let self = this;
         self.data.push({ title: '123' });
         self.refresh('data')
-
-        return self.root.lastChild.innerText;
+        return self.root.lastChild.textContent;
     })
 });
 
+// Run all tests. Change that later TODO:
+tester.run();

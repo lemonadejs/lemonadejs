@@ -845,7 +845,7 @@
             // Keep the flag
             R.container[name].storage = true;
             // Any existing values
-            let t = localStorage.getItem(name);
+            let t = window.localStorage.getItem(name);
             if (t) {
                 // Parse JSON
                 t = JSON.parse(t);
@@ -869,7 +869,7 @@
             h(data);
             // Save the data to the local storage
             if (h.storage === true) {
-                localStorage.setItem(name, JSON.stringify(data));
+                window.localStorage.setItem(name, JSON.stringify(data));
             }
         }
     }

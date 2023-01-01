@@ -7,7 +7,14 @@
  * This software is distribute under MIT License
  */
 
-const lemonade = require("./lemonade");
+// Load LemonadeJS
+if (typeof(lemonade) == 'undefined') {
+    if (typeof(require) === 'function') {
+        var lemonade = require('./lemonade');
+    } else if (window.lemonade) {
+        var lemonade = window.lemonade;
+    }
+}
 
 ;(function (global, factory) {
     typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
@@ -15,19 +22,26 @@ const lemonade = require("./lemonade");
     global.tester = factory();
 }(this, (function () {
 
+    // Test number
     let testIndex = 1;
+    // Expected value
+    let expectedValue = null;
+    // Actual result
+    let resultValue = null;
+    // Stats
+    let totals = [0,0];
+    // Tests
+    let tests = [];
+    // Files
+    let files = [];
 
-    return function(title, parser, options) {
+    const Run = function(title, parser) {
+        // Create a blank test
         let self = {};
         // Create root temporary element
         let root = document.createElement('div');
         // Append element to the DOM
-        if (options && options.browser) {
-            document.body.appendChild(root);
-        }
-        // Controls
-        let expectedValue = null;
-        let resultValue = null;
+        document.body.appendChild(root);
         // Parser
         let ret = parser(function(Component) {
             // Render LemonadeJS component
@@ -50,26 +64,37 @@ const lemonade = require("./lemonade");
         });
 
         // Remove temporary element from the dom
-        if (options && options.browser) {
-            root.remove();
-        }
+        root.remove();
 
-        // Overview
-        var overview = [0,0];
         // Test result
         if (ret === true) {
             console.log(testIndex + '. ' + title + ' has passed\n\n');
-            overview[0]++;
+            totals[0]++;
         } else {
             console.error(testIndex + '. ' + title + ' has not passed\n        Return {'+ resultValue + '} Expected {' + expectedValue + '}\n\n');
-            overview[1]++;
+            totals[1]++;
         }
-
-        console.log('Total number of tests: ' + testIndex);
-        console.log('       Passed: ' + overview[0] + ' Failed: ' + overview[1]);
 
         // Index control
         testIndex++;
     }
 
+    let Test = function(title, parser) {
+        tests.push([title, parser]);
+    };
+
+    Test.run = function() {
+        // Reset
+        totals = [0,0];
+        testIndex = 1;
+
+        let t = null;
+        while (t = tests.shift()) {
+            Run(t[0],t[1]);
+        }
+        console.log('Done! Total number of tests: ' + testIndex--);
+        console.log('    Passed: ' + totals[0] + ' Failed: ' + totals[1]);
+    }
+
+    return Test;
 })));
