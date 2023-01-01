@@ -1,18 +1,13 @@
 /**
- * Lemonadejs v2.8.0
+ * Lemonadejs tester v1.0.0
  *
  * Website: https://lemonadejs.net
  * Description: Create amazing web based reusable components.
  *
  * This software is distribute under MIT License
- *
- * Roadmap
- * - @bind dentro do drodpown jsuites nao seta o valor inicial se o bind tiver valor
- *   class="test {{anotherClass}}"
- * - existing tags
  */
 
-import lemonade from "./lemonade";
+const lemonade = require("./lemonade");
 
 ;(function (global, factory) {
     typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
@@ -20,13 +15,20 @@ import lemonade from "./lemonade";
     global.tester = factory();
 }(this, (function () {
 
-    let testIndex = 0;
+    let testIndex = 1;
 
-    return function(title, parser) {
+    return function(title, parser, options) {
         let self = {};
+        // Create root temporary element
         let root = document.createElement('div');
+        // Append element to the DOM
+        if (options && options.browser) {
+            document.body.appendChild(root);
+        }
+        // Controls
         let expectedValue = null;
         let resultValue = null;
+        // Parser
         let ret = parser(function(Component) {
             // Render LemonadeJS component
             lemonade.render(Component, root, self);
@@ -47,11 +49,26 @@ import lemonade from "./lemonade";
             }
         });
 
+        // Remove temporary element from the dom
+        if (options && options.browser) {
+            root.remove();
+        }
+
+        // Overview
+        var overview = [0,0];
+        // Test result
         if (ret === true) {
             console.log(testIndex + '. ' + title + ' has passed\n\n');
+            overview[0]++;
         } else {
-            console.error(testIndex + '. ' + title + ' has not passed. Return '+ resultValue + ' Expected ' + expectedValue + '\n\n');
+            console.error(testIndex + '. ' + title + ' has not passed\n        Return {'+ resultValue + '} Expected {' + expectedValue + '}\n\n');
+            overview[1]++;
         }
+
+        console.log('Total number of tests: ' + testIndex);
+        console.log('       Passed: ' + overview[0] + ' Failed: ' + overview[1]);
+
+        // Index control
         testIndex++;
     }
 
