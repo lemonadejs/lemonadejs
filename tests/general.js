@@ -1,5 +1,5 @@
 const jsdom = require('global-jsdom/register')
-const tester = require('../dist/lemonade.tester')
+const tester = require('../packages/tester/dist/index')
 const lemonade = require('../dist/lemonade');
 
 tester('Tracking sub-level object properties', function(render) {
@@ -55,7 +55,7 @@ tester('Reference for a custom component as a class', function(render) {
     }
 
     // Render the component and assert the return
-    return render(Component).assert('1000', function() {
+    return render(Component).assert(1000, function() {
         let self = this;
 
         return self.component?.value;
@@ -199,6 +199,31 @@ tester('Add a new item in the loop and refresh', function(render) {
         return self.root.lastChild.textContent;
     })
 });
+
+// Test related to pass variables as references
+
+tester('Passing variables and functions as references', function(render) {
+    function test() {
+        console.log(arguments)
+    }
+
+    function Component() {
+        let self = this;
+        self.value = 123;
+
+        return (template) => template`
+            <div test="${test}">${1+1}</div>
+        `;
+    }
+
+    // Render the component and assert the return
+    return render(Component).assert(true, function() {
+        let self = this;
+        return this.el.test === test;
+    })
+});
+
+
 
 // Run all tests. Change that later TODO:
 tester.run();

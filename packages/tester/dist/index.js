@@ -10,7 +10,7 @@
 // Load LemonadeJS
 if (typeof(lemonade) == 'undefined') {
     if (typeof(require) === 'function') {
-        var lemonade = require('./lemonade');
+        var lemonade = require('../../../dist/lemonade');
     } else if (window.lemonade) {
         var lemonade = window.lemonade;
     }
@@ -92,7 +92,7 @@ if (typeof(lemonade) == 'undefined') {
         while (t = tests.shift()) {
             Run(t[0],t[1]);
         }
-        console.log('Done! Total number of tests: ' + testIndex--);
+        console.log('Done! Total number of tests: ' + (--testIndex));
         console.log('    Passed: ' + totals[0] + ' Failed: ' + totals[1]);
     }
 

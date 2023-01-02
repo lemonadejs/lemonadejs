@@ -5,6 +5,10 @@
  * Description: Create amazing web based reusable components.
  *
  * This software is distribute under MIT License
+ *
+ * Roadmap
+ * - @bind dentro do drodpown jsuites nao seta o valor inicial se o bind tiver valor
+ * - setComponents precisa ter uma opcao de rodar componetes nao globais
  */
 
 ;(function (global, factory) {
@@ -37,7 +41,9 @@
     }
 
     // Script expression inside LemonadeJS templates
-    let expression = /{{(.*?)}}/g;
+    let isScript = /{{(.*?)}}/g;
+    // The script is a reference
+    let isReference = /^\s*{{(self.[\w\[\]]*)}}\s*$/gm;
 
     /**
      * Path string to object
@@ -276,6 +282,10 @@
         return Function('self', '"use strict";return (' + s + ')')(this);
     }
 
+    const removeMark = function(v) {
+        return v.replace(isScript, '$1');
+    }
+
     /**
      * Run a loop in the data for the element {e}
      * @param {object} o - tracking content object
@@ -283,18 +293,20 @@
     const loop = function(o) {
         let s = Path.call(o.s, o.v.replace('self.',''));
         if (s) {
+            let t;
+            let m;
             let d = [];
             let data = (s[0])[s[1]];
-            if (data.length) {
+            if (data && data.length) {
                 for (let i = 0; i < data.length; i++) {
                     let e = data[i].el;
                     if (! e) {
-                        let t = o.e.lemonade;
-                        let m = t.handler || Basic;
+                        t = o.e.lemonade;
+                        m = t.handler || Basic;
                         // Create reference to the element
                         register(data[i], 'parent', o.s);
                         // Create element
-                        L.render(m, o.e, data[i], t.template);
+                        e = L.render(m, o.e, data[i], t.template);
                     }
                     if (o.e.getAttribute('unique') === 'false') {
                         register(data[i], 'el', null);
@@ -302,20 +314,41 @@
                     d.push(e);
                 }
             }
+
+            // TODO: try to improve this process
+
+            // Remove all DOM
+            while (o.e.firstChild) {
+                o.e.firstChild.remove();
+            }
+            // Insert necessary DOM
+            while (t = d.shift()) {
+                o.e.appendChild(t);
+            }
         }
     }
 
     /**
      * Process the value of a content object
+     * @param {object} o - tracking content object
+     * @param {string} p - property that has changed
      */
-    const process = function(o) {
+    const process = function(o, p) {
         // Value
         if (o.a === '@loop') {
             loop(o);
         } else {
-            let v = o.v.replace(expression, function (a, b) {
-                return run.call(o.s, b);
-            });
+            let v;
+            // Verify if the value is a reference or a string
+            let s = o.v.match(isReference);
+            if (s) {
+                s = removeMark(o.v);
+                v = run.call(o.s, s)
+            } else {
+                v = o.v.replace(isScript, function (a, b) {
+                    return run.call(o.s, b);
+                });
+            }
 
             if (o.e.lemonade) {
                 if (o.e.lemonade.self[o.a] != v) {
@@ -324,6 +357,11 @@
             }
 
             setAttribute(o.e, v, o.a);
+        }
+
+        // A property has changed
+        if (p && typeof(o.s.onchange) === 'function') {
+            o.s.onchange.call(o.e, p, o, o.s);
         }
     }
 
@@ -340,7 +378,7 @@
                 // Process all registered elements
                 for (let i = 0; i < o.length; i++) {
                     // Element to be updated
-                    process(o[i]);
+                    process(o[i], property);
                 }
             }
         }
@@ -370,6 +408,10 @@
         // Lemon handler
         let s = this;
         let value = this[p];
+        // Do not allow undefined
+        if (value === undefined) {
+            value = '';
+        }
 
         // Create the observer
         Object.defineProperty(s, p, {
@@ -407,14 +449,17 @@
                     t = {};
                     R.tracking.set(p[0], t);
                 }
-                // Register the properties of the self
-                if (! t[p[1]]) {
-                    t[p[1]] = [];
+                // Do not include self.__ref in the tracking system
+                if (p[1] !== '__r') {
+                    // Register the properties of the self
+                    if (!t[p[1]]) {
+                        t[p[1]] = [];
+                    }
+                    // Save relationship between the self and the tag attributes. TODO: avoid double call when {{self.value*self.value}}
+                    t[p[1]].push(content);
+                    // Create the necessary observers for this property
+                    observers.call(p[0], p[1]);
                 }
-                // Save relationship between the self and the tag attributes. TODO: avoid double call when {{self.value*self.value}}
-                t[p[1]].push(content);
-                // Create the necessary observers for this property
-                observers.call(p[0], p[1]);
             }
         }
 
@@ -428,7 +473,7 @@
      */
     const parseExpression = function(content) {
         // Check if the content has script marks {{}}
-        if (content.v.match(expression)) {
+        if (content.v.match(isScript)) {
             // Get all self tokens in use
             parseTokens.call(this, content);
         }
@@ -457,7 +502,7 @@
         // Get the content of the property
         let text = e.textContent;
         // Check if the content has script marks {{}}
-        if (text.match(expression)) {
+        if (text.match(isScript)) {
             // Replace the entries
             let result = text.split(/({{.*?}})/g);
             // Reset element
@@ -527,15 +572,24 @@
         let k = Object.keys(attr);
         if (k.length) {
             for (let i = 0; i < k.length; i++) {
+                // Create input event to monitor changes in the HTML element
+                let prop = attr[k[i]].replace('self.', '');
                 // Parse events
                 if (! handler && k[i].substring(0,2) === 'on') {
-                    // Get event
-                    let event = k[i].toLowerCase();
-                    let value = attr[k[i]];
+                    // Naturally on attributes already expects scripts, so no marks is necessary. But this is just for make sure there is no marks.
+                    let value = removeMark(attr[k[i]]);
+                    // References
+                    if (value.indexOf('self.__r') === 0) {
+                        value = run.call(self, value);
+                    }
                     // Get action
-                    element.removeAttribute(event);
+                    element.removeAttribute(k[i]);
                     element.addEventListener(k[i].substring(2), function(e) {
-                        Function('self','e', value).call(this, self, e);
+                        if (typeof(value) == 'function') {
+                            value.call(this, e, self);
+                        } else {
+                            Function('self', 'e', value).call(this, self, e);
+                        }
                     });
                 } else {
                     // Check for special properties
@@ -545,8 +599,6 @@
                         let type = k[i].substr(1);
                         // Process
                         let q = { type };
-                        // Create input event to monitor changes in the HTML element
-                        let prop = attr[k[i]].replace('self.', '');
                         // Process types
                         if (type === 'ready') {
                             // Call this method when the element is ready and appended to the DOM
@@ -619,6 +671,20 @@
         }
     }
 
+    const dynamic = function() {
+        let index = 0;
+        // Replace the scripts for the self marks
+        let template = this.c.toString().split('`')[1].replace(/\${.*?}/gm, function (a, b) {
+            return '{{self.__r[' + (index++) + ']}}';
+        });
+        // Get all arguments but the first
+        let a = Array.from(arguments);
+        a.shift();
+        this.s.__r = a;
+        // Return the final template
+        return template;
+    }
+
     // Lemonadejs object
     const L = {};
 
@@ -652,7 +718,12 @@
                 o = L.element(o.render(template), self);
             } else {
                 o = o.call(self, template);
-                if (typeof(o) === 'string') {
+                if (typeof(o) === 'function') {
+                    o = L.element(o(dynamic.bind({ c: o, s: self })), self);
+                    if (self.__r) {
+                        delete self.__r;
+                    }
+                } else if (typeof(o) === 'string') {
                     o = L.element(o, self);
                 }
             }
