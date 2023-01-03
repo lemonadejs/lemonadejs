@@ -20,6 +20,9 @@
     "main": "dist/lemonade.js",
     "types": "dist/lemonade.d.ts",
     "version": "2.8.11",
+    "scripts": {
+        "test": "node tests/general.js"
+    },
     "devDependencies": {
         "jsdom": "^20.0.3",
         "global-jsdom": "^8.6.0"
