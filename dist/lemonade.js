@@ -150,10 +150,14 @@
         for (let i = 0; i < R.queue.length; i++) {
             q = R.queue[i];
             if (q.type === type) {
+                // Reset item in the queue
+                R.queue[i] = {};
+                // Execute method
                 f(q);
             }
         }
     }
+
     /**
      * Process all methods queued from the ready property
      * @param {HTMLElement} e - check if the element is already in the DOM
@@ -173,7 +177,7 @@
             unqueue('onload', function(q) {
                 q.method();
             });
-            // Reset queue
+            // Reset anything left in the queue
             R.queue = [];
         }
     }
@@ -230,8 +234,9 @@
                     e.innerHTML = v;
                 }
             } else {
-                e.setAttribute(t, v);
-
+                if (e.setAttribute) {
+                    e.setAttribute(t, v);
+                }
                 // Make sure apply that to the value
                 e.value = v;
             }
@@ -293,10 +298,15 @@
     const loop = function(o) {
         let s = Path.call(o.s, o.v.replace('self.',''));
         if (s) {
+            // Template for the render
             let t;
+            // Method handler for custom elements
             let m;
+            // Contains all new elements
             let d = [];
+            // Get the data from the self based on the property
             let data = (s[0])[s[1]];
+            // If data exists render each element of the array
             if (data && data.length) {
                 for (let i = 0; i < data.length; i++) {
                     let e = data[i].el;
@@ -305,8 +315,8 @@
                         m = t.handler || Basic;
                         // Create reference to the element
                         register(data[i], 'parent', o.s);
-                        // Create element
-                        e = L.render(m, o.e, data[i], t.template);
+                        // Create element#
+                        e = L.render(m, o.r, data[i], t.template);
                     }
                     if (o.e.getAttribute('unique') === 'false') {
                         register(data[i], 'el', null);
@@ -314,16 +324,15 @@
                     d.push(e);
                 }
             }
-
             // TODO: try to improve this process
 
             // Remove all DOM
-            while (o.e.firstChild) {
-                o.e.firstChild.remove();
+            while (o.r.firstChild) {
+                o.r.firstChild.remove();
             }
             // Insert necessary DOM
             while (t = d.shift()) {
-                o.e.appendChild(t);
+                o.r.appendChild(t);
             }
         }
     }
@@ -333,9 +342,17 @@
      * @param {object} o - tracking content object
      * @param {string} p - property that has changed
      */
-    const process = function(o, p) {
+    const process = function(o, p, force) {
+        // Attribute
+        let a;
+        if (o.bind) {
+            a = 'value';
+        } else {
+            a = o.a;
+        }
+
         // Value
-        if (o.a === '@loop') {
+        if (o.loop) {
             loop(o);
         } else {
             let v;
@@ -351,25 +368,26 @@
             }
 
             if (o.e.lemonade) {
-                if (o.e.lemonade.self[o.a] != v) {
-                    o.e.lemonade.self[o.a] = v;
+                if (o.e.lemonade.self[a] != v || force === true) {
+                    o.e.lemonade.self[a] = v;
                 }
             }
 
-            setAttribute(o.e, v, o.a);
+            setAttribute(o.e, v, a);
         }
 
         // A property has changed
         if (p && typeof(o.s.onchange) === 'function') {
-            o.s.onchange.call(o.e, p, o, o.s);
+            o.s.onchange.call(o.e, o.a, o, o.s);
         }
     }
 
     /**
      * Dispatch all updates for a property from the self
      * @param {string} property - property from the self
+     * @param {boolean} force - force the update
      */
-    const dispatch = function(property) {
+    const dispatch = function(property, force) {
         // Tracking object
         let o = R.tracking.get(this);
         if (o) {
@@ -378,7 +396,7 @@
                 // Process all registered elements
                 for (let i = 0; i < o.length; i++) {
                     // Element to be updated
-                    process(o[i], property);
+                    process(o[i], property, force);
                 }
             }
         }
@@ -416,10 +434,12 @@
         // Create the observer
         Object.defineProperty(s, p, {
             set: function(v) {
-                // Update val
-                value = v;
-                // Refresh bound elements
-                dispatch.call(this, p);
+                if (value !== v) {
+                    // Update val
+                    value = v;
+                    // Refresh bound elements
+                    dispatch.call(this, p);
+                }
             },
             get: function() {
                 // Get value
@@ -532,7 +552,7 @@
         let t;
         // Get attributes from the element
         let attr = getAttributes.call(element);
-        // Handler
+        /** @type {function|null} */
         let handler = null;
         // Custom elements
         let m = element.tagName;
@@ -552,16 +572,20 @@
         }
 
         // Is this a loop?
-        let loop = attr[':loop'] || attr['@loop'];
+        let isLoop = attr[':loop'] || attr['@loop'];
 
         // Special cases where the content is actually the template
-        if (handler || loop) {
+        if (handler || isLoop) {
             // Create the lemonade element controller
+            let s = {};
+            if (handler && isClass(handler)) {
+                s = new handler(s);
+            }
             element.lemonade = {
-                self: {},
+                self: s,
                 handler: handler,
                 template: element.innerHTML,
-                loop: loop,
+                loop: isLoop,
             };
 
             // Reset content
@@ -608,11 +632,13 @@
                             self[prop] = element.lemonade && element.lemonade.handler ? element.lemonade.self : element;
                         } else if (type === 'bind') {
                             // Register the value attribute to be tracked
-                            parseAttribute.call(self, element, 'value', '{{' + attr[k[i]] + '}}');
+                            parseTokens.call(self, { e: element, a: prop, v: '{{' + attr[k[i]] + '}}', s: self, bind: true })
+
                             // Register the value attribute to be tracked in the parent
-                            if (element.lemonade) {
+                            if (handler) {
                                 parseAttribute.call(element.lemonade.self, self, prop, '{{self.value}}');
                             } else {
+                                // Add event oninput for the two way binding
                                 // Add event oninput for the two way binding
                                 element.addEventListener('input', function () {
                                     // Get the reference to the object
@@ -622,8 +648,12 @@
                                 });
                             }
                         } else if (type === 'loop') {
+                            let r = element;
+                            if (element.lemonade.handler) {
+                                r = element.parentNode
+                            }
                             // Register the value attribute to be tracked
-                            parseTokens.call(self, { e: element, a: '@loop', v: attr[k[i]], s: self })
+                            parseTokens.call(self, { e: element, a: prop, v: attr[k[i]], s: self, r: r, loop: true })
                         }
 
                         // Sent to the queue
@@ -671,18 +701,22 @@
         }
     }
 
+    /**
+     * Extract variables from the dynamic and append to the self
+     * @return {string} t - converted template from ${} to {{self}}
+     */
     const dynamic = function() {
-        let index = 0;
+        let i = 0;
         // Replace the scripts for the self marks
-        let template = this.c.toString().split('`')[1].replace(/\${.*?}/gm, function (a, b) {
-            return '{{self.__r[' + (index++) + ']}}';
+        let t = this.c.toString().split('`')[1].replace(/\${.*?}/gm, function () {
+            return '{{self.__r[' + (i++) + ']}}';
         });
         // Get all arguments but the first
         let a = Array.from(arguments);
         a.shift();
         this.s.__r = a;
         // Return the final template
-        return template;
+        return t;
     }
 
     // Lemonadejs object
@@ -702,27 +736,28 @@
 
         // Root element but be a valid DOM element
         if (! isDOM(el)) {
-            console.log('Invalid DOM given')
+            console.log('Invalid DOM')
             return false;
-        }
-
-        // Self must be an object
-        if (! self) {
-            self = {};
         }
 
         // Flexible element (class or method)
         if (typeof(o) == 'function') {
             if (isClass(o)) {
-                o = new o(self);
-                o = L.element(o.render(template), self);
+                if (! self) {
+                    self = new o({});
+                }
+                o = L.element(self.render(template), self);
             } else {
+                if (! self) {
+                    self = {};
+                }
+                // Execute component
                 o = o.call(self, template);
+                // Process return
                 if (typeof(o) === 'function') {
                     o = L.element(o(dynamic.bind({ c: o, s: self })), self);
-                    if (self.__r) {
-                        delete self.__r;
-                    }
+                    // Remove dynamic references
+                    delete self.__r;
                 } else if (typeof(o) === 'string') {
                     o = L.element(o, self);
                 }
@@ -771,7 +806,7 @@
             } else {
                 let o = Path.call(self, p);
                 // Refresh a loop
-                dispatch.call(o[0], o[1]);
+                dispatch.call(o[0], o[1], true);
             }
         });
 
