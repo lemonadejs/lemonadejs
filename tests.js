@@ -18,5 +18,5 @@ files.forEach((file) => {
   script.runInThisContext();
 });
 
-// Run all tests. Change that later TODO:
+// Run all tests.
 tester.run();

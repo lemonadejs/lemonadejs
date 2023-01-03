@@ -1,3 +1,28 @@
+tester('Initial value in the custom component @bind property', function(render) {
+    function Test() {
+        // This will bring all properties defined in the tag
+        let self = this;
+        // Custom HTML components has the self.value as default
+        return `<b>{{self.value}}</b>`;
+    }
+
+    function Component() {
+        let self = this;
+        self.test = "Hello world";
+
+        return `<Test @bind="self.test" @ref="self.component"/>`;
+    }
+
+    // Register as a global component.
+    lemonade.setComponents({ Test });
+
+    // Render the component and assert the return
+    return render(Component).assert('Hello world', function() {
+        let self = this;
+        return self.component.el.textContent;
+    })
+});
+
 tester('@Bind on custom components as classes', function(render) {
     class Hello extends lemonade.component {
         constructor(s) {
@@ -31,43 +56,6 @@ tester('@Bind on custom components as classes', function(render) {
     })
 });
 
-tester('@Bind on custom components as classes', function(render) {
-    function FunctionComponent() {
-        let self = this;
-        let template = `<h1>{{self.value}}</h1>`;
-
-        return lemonade.element(template, self);
-    }
-
-    class ClassComponent extends lemonade.component {
-        constructor(self) {
-            super(self);
-        }
-        render() {
-            return `<h1>{{self.value}}</h1>`;
-        }
-    }
-
-    function MainView() {
-        let self = this;
-        self.value = 100;
-        return `<>
-            <ClassComponent value="{{self.value}}" @ref="self.class" />
-            <FunctionComponent value="{{self.value}}" @ref="self.function" />
-        </>`;
-    }
-
-    // Register as a global component.
-    lemonade.setComponents({ FunctionComponent, ClassComponent });
-
-    // Render the component and assert the return
-    return render(MainView).assert(true, function() {
-        let self = this;
-        self.value++;
-        return self.function.el.textContent === self.class.el.textContent;
-    })
-});
-
 tester('Testing @loop and @bind together.', function(render) {
     const Component = function() {
         let self = Object.assign(this, {
@@ -90,5 +78,37 @@ tester('Testing @loop and @bind together.', function(render) {
     return render(Component).assert(1, function() {
         let self = this;
         return self.select.selectedIndex;
+    })
+});
+
+tester('Two-way binding for custom elements with @bind', function(render) {
+    function Test() {
+        let self = this;
+        let template = `<div>
+            <input type="button" onclick="self.value++" @ref="self.button" />
+        </div>`;
+
+        return lemonade.element(template, self);
+    }
+
+    // Get the attributes from the tag
+    function Component() {
+        let self = this;
+        self.test = 120;
+        let template = `<div class="p10">
+            <h1 @ref="self.title">{{self.test}}</h1>
+            <Test @bind="self.test" @ref="self.component" />
+        </div>`;
+
+        return lemonade.element(template, self, { Test });
+    }
+
+    // Render the component and assert the return
+    return render(Component).assert(121, function() {
+        let self = this;
+        // Trigger click in the child element
+        self.component.button.click();
+        // Check for the title updates
+        return parseInt(self.title.textContent);
     })
 });
