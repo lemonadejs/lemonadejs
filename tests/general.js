@@ -1,6 +1,3 @@
-console.log(document)
-
-
 tester('Tracking sub-level object properties', function(render) {
     // Lemonade Component
     function Component () {

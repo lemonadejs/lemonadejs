@@ -21,7 +21,7 @@
     "types": "dist/lemonade.d.ts",
     "version": "2.8.11",
     "scripts": {
-        "test": "node tests/general.js"
+        "test": "node tests.js"
     },
     "devDependencies": {
         "jsdom": "^20.0.3",
