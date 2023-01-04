@@ -706,7 +706,7 @@
 
         // Root element but be a valid DOM element
         if (!isDOM(el)) {
-            console.log('Invalid DOM')
+            console.error('Invalid DOM')
             return false;
         }
 
@@ -734,7 +734,7 @@
             }
 
             if (!isDOM(o)) {
-                console.log('Invalid DOM return');
+                console.error('Invalid DOM return');
                 return false;
             }
         }

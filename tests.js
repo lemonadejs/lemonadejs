@@ -1,3 +1,5 @@
+#! /usr/bin/env node
+
 const jsdom = require('global-jsdom/register')
 const tester = require('./packages/tester/dist/index')
 const lemonade = require('./dist/lemonade');
