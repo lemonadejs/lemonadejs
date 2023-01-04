@@ -14,22 +14,23 @@
     }
 
     return function() {
-        var self = this;
+        let self = this;
+
         if (! self.number) {
             self.number = 5;
         }
         self.stars = [];
 
         // Event
-        var change = self.onchange;
+        let change = self.onchange;
 
         // Current self star
-        var current = null;
+        let current = null;
 
         /**
          * Update the number of stars
          */
-        var len = function() {
+        const len = function() {
             // Remove stars
             if (self.number < self.stars.length) {
                 self.stars.splice(self.number, self.stars.length);
@@ -47,20 +48,20 @@
             self.refresh('stars');
         }
 
-        var val = function() {
+        const val = function() {
             // Update value
             if (self.value > 0) {
-                var t = null;
-                if (t = self.stars[self.value-1]) {
+                let t = self.stars[self.value-1];
+                if (t) {
                     self.click(t);
                 }
             }
         }
 
         self.onchange = function(prop) {
-            if (prop == 'number') {
+            if (prop === 'number') {
                 len();
-            } else if (prop == 'value') {
+            } else if (prop === 'value') {
                 val();
             }
         }
@@ -74,27 +75,24 @@
             if (! s.selected) {
                 current = null;
             }
-            var index = self.stars.indexOf(s);
-            for (var i = 0; i < self.number; i++) {
-                if (i <= index && s !== current) {
-                    self.stars[i].selected = 1;
-                    self.stars[i].el.style.color = 'red';
-                } else {
-                    self.stars[i].selected = 0;
-                    self.stars[i].el.style.color = '';
-                }
+            let index = self.stars.indexOf(s);
+            for (let i = 0; i < self.number; i++) {
+                let selected = i <= index && s !== current ? 1 : 0;
+                self.stars[i].selected = selected;
+                self.stars[i].el.style.color = selected ? 'red' : '';
             }
             current = s;
+
             if (change) {
                 change(index+1, s);
             }
         }
 
-        var template = `<div @loop="self.stars" value="{{self.value}}" @ref="self.component" number="{{self.number}}" name="{{self.name}}" style="cursor: pointer">
+        let template = `<div value="{{self.value}}" number="{{self.number}}" name="{{self.name}}" style="cursor: pointer" @loop="self.stars" @ref="self.component">
             <i class="material-icons" onclick="self.parent.click(self)">{{self.selected?'star':'star_outline'}}</i>
         </div>`;
 
-        var root = lemonade.element(template, self);
+        let root = lemonade.element(template, self);
 
         root.val = function(v) {
             if (typeof(v) === 'undefined') {

@@ -25,10 +25,44 @@ tester('Testing node position after full refresh', function(render) {
     lemonade.setComponents({ Test });
 
     // Render the component and assert the return
-    return render(Component).assert(2, function() {
+    return render(Component).assert('2', function() {
         let self = this;
         self.reference.refresh();
-        return self.reference.parentNode.children[3].textContent;
+        return self.reference.el.parentNode.children[3].textContent;
+    })
+});
+
+tester('Testing node tagName a single item inside a loop refresh', function(render) {
+    function Test() {
+        var self = this;
+        if (self.status) {
+            return `<h1 onclick="self.status = 0; self.refresh()">{{self.title}}</h1>`;
+        } else {
+            return `<h2 onclick="self.status = 0; self.refresh()">{{self.title}}</h2>`;
+        }
+    }
+
+    function Component() {
+        var self = this;
+        self.rows = [
+            { title:'Google', description: 'The alpha search engine...', status: 1 },
+            { title:'Bind', description: 'The microsoft search engine...', status: 1 },
+            { title:'Duckduckgo', description: 'Privacy in the first place...', status: 1 },
+        ];
+
+        return `<><Test @loop="self.rows" /></>`;
+    }
+
+
+    // Register as a global component.
+    lemonade.setComponents({ Test });
+
+    // Render the component and assert the return
+    return render(Component).assert('H2', function() {
+        let self = this;
+        self.rows[1].status = 0;
+        self.rows[1].refresh();
+        return self.rows[1].el.parentNode.children[1].tagName;
     })
 });
 

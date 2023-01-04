@@ -91,42 +91,12 @@
     }
 
     /**
-     * Append element to the DOM
-     * @param {HTMLElement} e - element
-     * @param {HTMLElement} r - root element
-     */
-    const insert = function(e, r) {
-        r.parentNode.insertBefore(e, r);
-    }
-
-    /**
-     * Move all elements inside one node to another
-     * @param {HTMLElement} e - move all elements from this
-     * @param {HTMLElement} d - destination
-     * @param {HTMLElement?} r - reference inside destination
-     */
-    const moveElements = function(e, d, r) {
-        // Keep a reference of all elements before moving to another
-        e.root = [];
-        // Moving all elements inside here to the new root
-        while (e.firstChild) {
-            // Save the reference of the element before moving
-            e.root.push(e.firstChild);
-            // Move the element to the new root
-            d.insertBefore(e.firstChild, r);
-        }
-        if (r) {
-            r.remove();
-        }
-    }
-
-    /**
      * Check if the content {o} is a valid DOM Element
-     * @param {HTMLElement|object} o - is this a valid dom?
+     * @param {HTMLElement|DocumentFragment|object} o - is this a valid dom?
      * @return {boolean}
      */
     const isDOM = function(o) {
-        return (o instanceof Element || o instanceof HTMLDocument);
+        return (o instanceof Element || o instanceof HTMLDocument || o instanceof DocumentFragment);
     }
 
     /**
@@ -145,6 +115,12 @@
         return L.element(t, this);
     }
 
+    /**
+     * Execute pending tasks and remove from queue
+     * @param {string} type - task type
+     * @param {function} f - task
+     * @return {HTMLElement}
+     */
     const unqueue = function(type, f) {
         let q = null;
         for (let i = 0; i < R.queue.length; i++) {
@@ -165,10 +141,6 @@
     const queue = function(e) {
         // Un-queue
         if (document.body.contains(e)) {
-            // Move elements inside one element to the parent
-            unqueue('root', function(q) {
-                moveElements(q.e, q.e.parentNode, q.e)
-            });
             // Process ready elements
             unqueue('ready', function(q) {
                 q.method();
@@ -192,7 +164,7 @@
         } else {
             if (e.tagName === 'SELECT' && e.getAttribute('multiple')) {
                 v = [];
-                for (var i = 0; i < e.options.length; i++) {
+                for (let i = 0; i < e.options.length; i++) {
                     if (e.options[i].selected) {
                         v.push(e.options[i].value);
                     }
@@ -234,11 +206,12 @@
                     e.innerHTML = v;
                 }
             } else {
-                if (e.setAttribute) {
-                    e.setAttribute(t, v);
-                }
                 // Make sure apply that to the value
                 e.value = v;
+                // Update attribute if exists
+                if (e.getAttribute && e.getAttribute('value') !== null) {
+                    e.setAttribute('value', v);
+                }
             }
         } else if (t === '@src') {
             if (! v) {
@@ -315,7 +288,7 @@
                         m = t.handler || Basic;
                         // Create reference to the element
                         register(data[i], 'parent', o.s);
-                        // Create element#
+                        // Create element
                         e = L.render(m, o.r, data[i], t.template);
                     }
                     if (o.e.getAttribute('unique') === 'false') {
@@ -342,7 +315,7 @@
      * @param {object} o - tracking content object
      * @param {string} p - property that has changed
      */
-    const process = function(o, p, force) {
+    const process = function(o, p) {
         // Attribute
         let a;
         if (o.bind) {
@@ -350,7 +323,6 @@
         } else {
             a = o.a;
         }
-
         // Value
         if (o.loop) {
             loop(o);
@@ -366,10 +338,14 @@
                     return run.call(o.s, b);
                 });
             }
-
             if (o.e.lemonade) {
-                if (o.e.lemonade.self[a] != v || force === true) {
-                    o.e.lemonade.self[a] = v;
+                o.e.lemonade.self[a] = v;
+            }
+
+            if (o.protect) {
+                // Protect from loop
+                if (o.e[a] == v) {
+                    return;
                 }
             }
 
@@ -387,7 +363,7 @@
      * @param {string} property - property from the self
      * @param {boolean} force - force the update
      */
-    const dispatch = function(property, force) {
+    const dispatch = function(property) {
         // Tracking object
         let o = R.tracking.get(this);
         if (o) {
@@ -396,7 +372,7 @@
                 // Process all registered elements
                 for (let i = 0; i < o.length; i++) {
                     // Element to be updated
-                    process(o[i], property, force);
+                    process(o[i], property);
                 }
             }
         }
@@ -434,12 +410,10 @@
         // Create the observer
         Object.defineProperty(s, p, {
             set: function(v) {
-                if (value !== v) {
-                    // Update val
-                    value = v;
-                    // Refresh bound elements
-                    dispatch.call(this, p);
-                }
+                // Update val
+                value = v;
+                // Refresh bound elements
+                dispatch.call(this, p);
             },
             get: function() {
                 // Get value
@@ -636,9 +610,9 @@
 
                             // Register the value attribute to be tracked in the parent
                             if (handler) {
-                                parseAttribute.call(element.lemonade.self, self, prop, '{{self.value}}');
+                                let s = element.lemonade.self;
+                                parseTokens.call(s, { e: self, a: prop, v: '{{self.value}}', s: s, protect: true });
                             } else {
-                                // Add event oninput for the two way binding
                                 // Add event oninput for the two way binding
                                 element.addEventListener('input', function () {
                                     // Get the reference to the object
@@ -692,12 +666,7 @@
             // Reference to the element
             register(t.self, 'parent', self);
             // Create component
-            L.render(t.handler, element, t.self, t.template);
-            // Move the result to the parent when the DOM is ready
-            R.queue.push({
-                type: 'root',
-                e: element
-            });
+            L.render(t.handler, element, t.self, t.template, true);
         }
     }
 
@@ -728,20 +697,21 @@
      * @param {HTMLElement} el - root DOM element to receive the new HTML
      * @param {object?} self - self to be used
      * @param {string?} template - template to be used
+     * @param {boolean?} action - before (true), append (false)
      * @return {HTMLElement|boolean} o
      */
-    L.render = function(o, el, self, template) {
+    L.render = function(o, el, self, template, action) {
         // Component
-        let args = arguments;
+        let args = Array.from(arguments);
 
         // Root element but be a valid DOM element
-        if (! isDOM(el)) {
+        if (!isDOM(el)) {
             console.log('Invalid DOM')
             return false;
         }
 
         // Flexible element (class or method)
-        if (typeof(o) == 'function') {
+        if (typeof (o) == 'function') {
             if (isClass(o)) {
                 if (! self) {
                     self = new o({});
@@ -754,59 +724,70 @@
                 // Execute component
                 o = o.call(self, template);
                 // Process return
-                if (typeof(o) === 'function') {
-                    o = L.element(o(dynamic.bind({ c: o, s: self })), self);
+                if (typeof (o) === 'function') {
+                    o = L.element(o(dynamic.bind({c: o, s: self})), self);
                     // Remove dynamic references
                     delete self.__r;
-                } else if (typeof(o) === 'string') {
+                } else if (typeof (o) === 'string') {
                     o = L.element(o, self);
                 }
             }
 
-            if (! isDOM(o)) {
+            if (!isDOM(o)) {
                 console.log('Invalid DOM return');
                 return false;
             }
         }
 
+        // Process the first child
+        o = o.firstChild;
+
         // Keep reference to the root elements
         if (o.tagName === 'ROOT') {
-            // Move all elements from o to el
-            moveElements(o, el);
+            // Keep the references
+            o.root = Array.from(o.childNodes);
+            o.rootChild = o.children[0];
+            // Append
+            if (action === true) {
+                el.before(...o.childNodes);
+                el.remove();
+            } else {
+                el.append(...o.childNodes);
+            }
         } else {
-            el.appendChild(o);
+            // Reference
+            o.root = [o];
+            o.rootChild = o;
+            // Append
+            if (action === true) {
+                el.before(o);
+                el.remove();
+            } else {
+                el.append(o);
+            }
         }
 
         // Refresh property
-        register(self, 'refresh', function(p) {
+        register(self, 'refresh', function (p) {
             // Re-render the whole component
             if (p === undefined) {
-                // Make sure the self is correctly updated in the array of arguments
-                if (! el.parentNode) {
-                    let root;
-                    if (o.root) {
-                        insert(el, o.root[0]);
-                        root = o.root;
-                    } else {
-                        insert(el, o);
-                        if (el.root) {
-                            root = el.root;
-                        }
-                    }
-                    // Remove existing elements
-                    let t;
-                    while (t = root.shift()) {
-                        t.remove();
-                    }
-                } else {
-                    el.innerHTML = '';
-                }
+                // Reference to before
+                args[1] = o.rootChild;
+                // Self
+                args[2] = this;
+                // Action before
+                args[4] = true;
                 // Apply that to a new render
-                L.render.apply({}, args);
+                L.render.apply(null, args);
+                // Remove old items
+                let t;
+                while (t = o.root.shift()) {
+                    t.remove();
+                }
             } else {
-                let o = Path.call(self, p);
+                let s = Path.call(this, p);
                 // Refresh a loop
-                dispatch.call(o[0], o[1], true);
+                dispatch.call(s[0], s[1]);
             }
         });
 
@@ -826,6 +807,7 @@
     L.element = function(t, self, components) {
         // Element
         let el;
+        let root;
         // Lemonade handler
         if (! self) {
             self = {};
@@ -836,11 +818,12 @@
         // Parse a HTML template
         if (! isDOM(t)) {
             // Close any custom not fully closed component
-            t = t.replace(/(<(([A-Z]{1}|[a-z]*-){1}[a-zA-Z0-9_-]+)[^>]*)(\/|\/.{1})>/gm, "$1></$2>");
-            // Parse fragment
-            t = t.replace(/<>/gi, "<root>").replace(/<\/>/gi, "<\/root>").trim();
+            t = t.trim()
+                .replace(/(<(([A-Z]{1}|[a-z]*-){1}[a-zA-Z0-9_-]+)[^>]*)(\/|\/.{1})>/gm, "$1></$2>")
+                .replace(/<>/gi, "<root>").replace(/<\/>/gi, "<\/root>").trim();
             // Create the root element
             el = create('template', t);
+
             // Extract
             if (el.content) {
                 el = el.content;
@@ -853,10 +836,12 @@
                 console.error('Single root required');
                 return null;
             } else {
+                root = el;
                 el = el.firstChild;
             }
         } else {
             el = t;
+            root = el;
         }
 
         // Parse the content
@@ -873,7 +858,7 @@
             });
         }
 
-        return el;
+        return root;
     }
 
     /**

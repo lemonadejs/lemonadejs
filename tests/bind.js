@@ -112,3 +112,31 @@ tester('Two-way binding for custom elements with @bind', function(render) {
         return parseInt(self.title.textContent);
     })
 });
+
+tester('Two-way on custom elements (protection against loop)', function(render) {
+    function Test() {
+        // This will bring all properties defined in the tag
+        let self = this;
+        // Custom HTML components has the self.value as default
+        return `<b onclick="self.value++">{{self.value}}</b>`;
+    }
+
+    function Component() {
+        let self = this;
+        self.test = 1;
+        return `<Test @bind="self.test" @ref="self.component"/>`;
+    }
+
+    // Register as a global component.
+    lemonade.setComponents({ Test });
+
+    // Render the component and assert the return
+    return render(Component).assert(true, function() {
+        let self = this;
+        // Trigger update
+        self.test++;
+        // Check for the title updates
+        return self.component.value === self.test;
+    })
+});
+
