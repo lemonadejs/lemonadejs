@@ -16,8 +16,11 @@
         "javascript plugins"
     ],
     "main": "dist/index.js",
+    "bin": {
+        "tester": "dist/index.js"
+    },
     "version": "1.0.0",
-    "devDependencies": {
+    "dependencies": {
         "jsdom": "^20.0.3",
         "global-jsdom": "^8.6.0",
         "lemonadejs": "2.8.1"

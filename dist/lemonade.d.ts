@@ -57,7 +57,7 @@ declare namespace lemonade {
      * Add a custom component available across the whole application
      * @param {object} components
      */
-    function setComponents(components: String) : void;
+    function setComponents(components: Object) : void;
 }
 
 export = lemonade;
