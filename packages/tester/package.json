@@ -15,9 +15,11 @@
         "library",
         "javascript plugins"
     ],
-    "dependencies": {
-        "lemonadejs": "^3.0.0"
-    },
     "main": "dist/index.js",
-    "version": "1.0.0"
+    "version": "1.0.0",
+    "devDependencies": {
+        "jsdom": "^20.0.3",
+        "global-jsdom": "^8.6.0",
+        "lemonadejs": "2.8.1"
+    }
 }

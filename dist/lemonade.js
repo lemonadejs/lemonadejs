@@ -7,8 +7,9 @@
  * This software is distribute under MIT License
  *
  * Roadmap
- * - @bind dentro do drodpown jsuites nao seta o valor inicial se o bind tiver valor
- * - setComponents precisa ter uma opcao de rodar componetes nao globais
+ * - @bind jSuites.dropdown initial value is not set when properties has a value
+ * - setComponents for local variables
+ * - {{self.test*self.test}} - avoid duplication in the monitoring
  */
 
 ;(function (global, factory) {
@@ -42,8 +43,6 @@
 
     // Script expression inside LemonadeJS templates
     let isScript = /{{(.*?)}}/g;
-    // The script is a reference
-    let isReference = /^\s*{{(self.[\w\[\]]*)}}\s*$/gm;
 
     /**
      * Path string to object
@@ -313,9 +312,8 @@
     /**
      * Process the value of a content object
      * @param {object} o - tracking content object
-     * @param {string} p - property that has changed
      */
-    const process = function(o, p) {
+    const process = function(o) {
         // Attribute
         let a;
         if (o.bind) {
@@ -329,10 +327,10 @@
         } else {
             let v;
             // Verify if the value is a reference or a string
-            let s = o.v.match(isReference);
-            if (s) {
+            let s = o.v.split('}}')[0];
+            if (s.substr(0,2) === '{{' && s.length === o.v.length-2) {
                 s = removeMark(o.v);
-                v = run.call(o.s, s)
+                v = run.call(o.s, s);
             } else {
                 v = o.v.replace(isScript, function (a, b) {
                     return run.call(o.s, b);
@@ -351,11 +349,6 @@
 
             setAttribute(o.e, v, a);
         }
-
-        // A property has changed
-        if (p && typeof(o.s.onchange) === 'function') {
-            o.s.onchange.call(o.e, o.a, o, o.s);
-        }
     }
 
     /**
@@ -372,8 +365,13 @@
                 // Process all registered elements
                 for (let i = 0; i < o.length; i++) {
                     // Element to be updated
-                    process(o[i], property);
+                    process(o[i]);
                 }
+            }
+
+            // A property has changed
+            if (typeof(this.onchange) === 'function') {
+                this.onchange(property, o, this);
             }
         }
     }
@@ -429,12 +427,12 @@
      * @param {object} content - content tracking object
      */
     const parseTokens = function(content) {
-        // Get all self tokens in use
-        let tokens = content.v.match(/self\.(([a-zA-Z0-9_.]*)*)/g);
+        // Get all self tokens in use - TODO if self.test[1]
+        let tokens = content.v.match(/(?<=self.)(\.?\w+\b)+(?!\()/g);
         if (tokens) {
             for (let i = 0; i < tokens.length; i++) {
                 // Property found
-                let p = tokens[i].replace('self.', '');
+                let p = tokens[i];
                 // Get path to the object
                 p = Path.call(this, p);
                 // Register
@@ -482,7 +480,7 @@
     const parseAttribute = function(e, name, value) {
         // Get the content of the property
         if (value === undefined) {
-            value = e.getAttribute(name);
+            value = e.getAttribute(name).trim();
         }
         // Parse expression
         parseExpression.call(this, { e: e, a: name, v: value, s: this });
@@ -532,17 +530,20 @@
         let m = element.tagName;
         // Expected function
         t = R.components[m];
-        // Custom handlers
-        if (element instanceof HTMLUnknownElement) {
-            // Verify scope in the declared extensions
-            if (typeof(t) == 'function') {
-                handler = t;
-            } else if (m !== 'ROOT') {
-                console.error(m + ' is not found.');
+        // Verify scope in the declared extensions
+        if (typeof(t) == 'function') {
+            handler = t;
+        }
+
+        // A custom handler is conflicting with a VALID tag name
+        if (t) {
+            if (element instanceof HTMLUnknownElement) {
+                if (! handler && m !== 'ROOT') {
+                    console.error(m + ' is not found.');
+                }
+            } else {
+                console.error(m + ' conflicts with a valid tag name');
             }
-        } else if (t) {
-            // A custom handler is conflicting with a VALID tag name
-            console.error(m + ' conflicts with a valid tag name');
         }
 
         // Is this a loop?
@@ -614,13 +615,19 @@
                                 parseTokens.call(s, { e: self, a: prop, v: '{{self.value}}', s: s, protect: true });
                             } else {
                                 // Add event oninput for the two way binding
-                                element.addEventListener('input', function () {
+                                let h = function() {
                                     // Get the reference to the object
                                     let o = Path.call(self, prop);
                                     // Apply the new value
                                     (o[0])[o[1]] = getAttribute(this);
-                                });
+                                }
+                                // This will be implemented soon with jSuites 5
+                                //element.addEventListener('input', h);
+                                // Deprecated. Legacy purpose only
+                                element.oninput = h;
                             }
+                            // Deprecated. Legacy purpose only
+                            element[k[i]] = prop;
                         } else if (type === 'loop') {
                             let r = element;
                             if (element.lemonade.handler) {

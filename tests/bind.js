@@ -81,7 +81,7 @@ tester('Testing @loop and @bind together.', function(render) {
     })
 });
 
-tester('Two-way binding for custom elements with @bind', function(render) {
+tester('Two-way data binding for custom elements with @bind', function(render) {
     function Test() {
         let self = this;
         let template = `<div>
@@ -113,7 +113,7 @@ tester('Two-way binding for custom elements with @bind', function(render) {
     })
 });
 
-tester('Two-way on custom elements (protection against loop)', function(render) {
+tester('Two-way data binding on custom elements (protection against loop)', function(render) {
     function Test() {
         // This will bring all properties defined in the tag
         let self = this;
