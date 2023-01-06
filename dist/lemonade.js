@@ -428,11 +428,11 @@
      */
     const parseTokens = function(content) {
         // Get all self tokens in use - TODO if self.test[1]
-        let tokens = content.v.match(/(?<=self.)(\.?\w+\b)+(?!\()/g);
+        let tokens = content.v.match(/(?:self.)(\.?\w+\b)+(?!\()/gm);
         if (tokens) {
             for (let i = 0; i < tokens.length; i++) {
                 // Property found
-                let p = tokens[i];
+                let p = tokens[i].replace('self.', '');
                 // Get path to the object
                 p = Path.call(this, p);
                 // Register
@@ -989,9 +989,13 @@
 
     L.component = class {
         constructor(s) {
-            Object.assign(this, s);
+            if (s) {
+                Object.assign(this, s);
+            }
         }
     }
 
     return L;
 })));
+
+

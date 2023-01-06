@@ -7,12 +7,7 @@
  * This software is distribute under MIT License
  */
 
-;(function (global, factory) {
-    typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
-    typeof define === 'function' && define.amd ? define(factory) :
-    global.tester = factory();
-}(this, (function () {
-
+function Tester() {
     // Test number
     let testIndex = 1;
     // Expected value
@@ -86,4 +81,6 @@
     }
 
     return Test;
-})));
+}
+
+export default Tester();

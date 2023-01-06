@@ -1,25 +1,30 @@
 #! /usr/bin/env node
 
-const jsdom = require('global-jsdom/register')
-const tester = require('./tester')
-const lemonade = require('lemonadejs');
+import 'global-jsdom/register'
+import tester from './tester.js';
+import lemonade from 'lemonadejs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import fs from "fs";
 
-const vm = require("vm");
-const fs = require("fs");
-
-// Define global across the application
 global.lemonade = lemonade;
 global.tester = tester;
 
-const directory = "./tests";
+const args = process.argv.slice(2);
 
-const files = fs.readdirSync(directory);
+const directory = args[0] || "tests";
 
-files.forEach((file) => {
-    const data = fs.readFileSync(directory + "/" + file);
-    const script = new vm.Script(data);
-    script.runInThisContext();
-});
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const __pathname = path.relative(__dirname, process.cwd()).replace(/\\/g, '/');
+
+const files = fs.readdirSync('./' + directory);
+for (let i = 0; i < files.length; i++) {
+    await import(__pathname + '/' + directory + '/' + files[i]);
+}
 
 // Run all tests.
 tester.run();
+
+// Close process
+process.exit(0);
