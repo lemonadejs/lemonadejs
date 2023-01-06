@@ -1,17 +1,11 @@
 /**
- * Lemonadejs v3.0.0
+ * Lemonadejs v3.0.0 (ESM build)
  *
  * Website: https://lemonadejs.net
  * Description: Create amazing web based reusable components.
  *
  * This software is distribute under MIT License
- *
- * Roadmap
- * - @bind jSuites.dropdown initial value is not set when properties has a value
- * - setComponents for local variables
- * - {{self.test*self.test}} - avoid duplication in the monitoring
  */
-
 function Lemonade() {
 
     'use strict';
