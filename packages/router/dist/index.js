@@ -23,24 +23,35 @@
     }
 
     return function(html, ext) {
-        var self = this;
-        var config = [];
-        var current = null;
+        let self = this;
+        let config = [];
+        let current = null;
 
         if (! ext) {
             ext = {};
         }
 
-        var change = this.onchange;
+        let change = this.onchange;
 
+        const getComponent = function(o) {
+            if (o) {
+                let t;
+                if (t = document.lemonadejs.components[o.toUpperCase()]) {
+                    return t;
+                } else if (t = ext[o]) {
+                    return t;
+                }
+            }
+            return Base;
+        }
         /**
          * Get route
          * @param {string} p - pathname
          */
-        var getConfig = function(p) {
-            var c = config;
-            for (var i = 0; i < c.length; i++) {
-                if (p==c[i].path || p.match(new RegExp('^'+c[i].path+'$', 'gi'))) {
+        const getConfig = function(p) {
+            let c = config;
+            for (let i = 0; i < c.length; i++) {
+                if (p === c[i].path || p.match(new RegExp('^'+c[i].path+'$', 'gi'))) {
                     return c[i];
                 }
             }
@@ -48,17 +59,17 @@
         }
 
         self.onload = function() {
-            var a = window.location;
+            let a = window.location;
             self.setPath(a.pathname + a.search, true);
         }
 
         self.setPath = function(p, ignore) {
             // Get the configuration based on the path
-            var c = getConfig(p);
+            let c = getConfig(p);
 
             // Configuration
             if (typeof(self.onbeforechange) === 'function') {
-                var r = self.onbeforechange.call(config, p, c);
+                let r = self.onbeforechange.call(config, p, c);
                 if (r === false) {
                     return;
                 } else if (r) {
@@ -86,30 +97,30 @@
         /**
          * Create a DIV container
          */
-        var div = function() {
+        const div = function() {
             return document.createElement('div');
         }
 
         /**
          * Extract configuration
          */
-        var extract = function() {
+        const extract = function() {
             // Extract config from the template definitions
-            var d = div();
+            let d = div();
             d.innerHTML = html;
-            var o,t = null;
-            var c = d.children;
-            for (var i = 0; i < c.length; i++) {
+            let o,t = null;
+            let c = d.children;
+            for (let i = 0; i < c.length; i++) {
                 o = {};
                 // Push to the configuration
                 config.push(o);
                 // Load attributes
                 t = c[i].attributes;
-                for (var j = 0; j < t.length; j++) {
+                for (let j = 0; j < t.length; j++) {
                     o[t[j].name] = t[j].value;
                 }
                 // Controller
-                o.controller = ext[o.controller];
+                o.controller = getComponent(o.controller);
                 // Preload
                 if (o.preload) {
                     create(o);
@@ -120,31 +131,31 @@
         /**
          * Create new page
          */
-        var create = function(o, cb) {
+        const create = function(o, cb) {
             // Controller
-            var c = o.controller || Base;
+            let c = o.controller;
             // Renderer
-            var r = lemonade.render;
+            let r = lemonade.render;
             // Create the self and make that available on the route configuration
-            var s = o.self = { parent: self };
+            let s = o.self = { parent: self };
             // Create element container
-            var e = div();
+            let e = div();
             e.classList.add('page');
             // Hide that
             e.style.display = 'none';
             // Add the element to the configuration
             o.element = e;
             // Temp
-            var t = null;
+            let t = null;
             // Make sure the order is correct
-            for (var i = 0; i < config.length; i++) {
+            for (let i = 0; i < config.length; i++) {
                 if (t = config[i].element) {
-                    root.appendChild(t);
+                    self.el.appendChild(t);
                 }
             }
             if (o.url) {
                 // Fetch a remote view
-                var u = o.url;
+                let u = o.url;
                 if (u.indexOf('?') == -1) {
                     u += '?dt='
                 } else {
@@ -178,7 +189,7 @@
             }
         }
 
-        var hide = function(c) {
+        const hide = function(c) {
             // Hide previous
             if (current) {
                 current.element.style.display = 'none';
@@ -200,8 +211,8 @@
         /**
          * Set route
          */
-        var set = function(c) {
-            var load = function() {
+        const set = function(c) {
+            let load = function() {
                 // Hide old element
                 if (self.animation === 'true' && current && c.element !== current.element) {
                     // Show element for the animation
@@ -212,7 +223,6 @@
                     hide(c);
                 }
             }
-
             if (! c.element) {
                 create(c, load);
             } else {
@@ -220,10 +230,10 @@
             }
         }
 
-        var animation = function(c) {
+        const animation = function(c) {
             // Correct class
-            var e = root.classList;
-            var d = 'slide-left-' + (config.indexOf(c) < config.indexOf(current)?'in':'out');
+            let e = self.el.classList;
+            let d = 'slide-left-' + (config.indexOf(c) < config.indexOf(current)?'in':'out');
             e.add(d);
             setTimeout(function() {
                 e.remove(d);
@@ -231,12 +241,12 @@
             }, 400);
         }
 
-        var template = `<div class="pages" path="{{self.path}}"></div>`;
+        let template = `<div class="pages" path="{{self.path}}"></div>`;
 
         // Intercept click
         document.onclick = function(e) {
-            var a = e.target.closest('a');
-            if (a && a.tagName == 'A' && a.pathname && ! a.getAttribute('target')) {
+            let a = e.target.closest('a');
+            if (a && a.tagName === 'A' && a.pathname && ! a.getAttribute('target')) {
                 self.setPath(a.pathname + a.search);
                 e.preventDefault();
             }
@@ -244,12 +254,12 @@
 
         // Events
         window.onpopstate = function(e) {
-            var a = window.location;
+            let a = window.location;
             self.setPath(a.pathname + a.search, true);
         }
 
         // Create lemonade component
-        var root = lemonade.element(template, self, ext);
+        let root = lemonade.element(template, self, ext);
 
         // Extra the configuration
         extract();
