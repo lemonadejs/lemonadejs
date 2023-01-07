@@ -1,12 +1,12 @@
-<h1>LemonadeJS: Reactive micro library</h1>
+<h1>LemonadeJS v3: Reactive micro library</h1>
 
-<h2>Create amazing web-based interfaces with LemonadeJS v2</h2>
+<h2>Create amazing web-based interfaces with LemonadeJS</h2>
 
 <img src='https://lemonadejs.net/templates/default/img/home.png' align="right" width="50%">
 
-LemonadeJS is a super lightweight reactive vanilla javascript micro-library (7 KBytes). It aims to help the integration between the JavaScript (controllers) and the HTML (view). It supports two-way binding and integrates natively with jSuites to help to create amazing interfaces quicker.<br><br>
+LemonadeJS is a super lightweight reactive vanilla javascript micro-library (7 KBytes). It helps to integrate the JavaScript (controllers) and the HTML (view). It supports two-way data binding and integrates natively with jSuites to help to create amazing interfaces more quicker.<br><br>
 
-It would help you deliver reusable components and does not require transpilers, babel, or hundreds of other dependencies. It works just fine in any javascript dev environment. LemonadeJS has a quick learning curve and keeps coding fun and very close to native JS.
+It would help you deliver reusable components and does not require transpilers, babel, or hundreds of other dependencies. It works just fine in any javascript dev environment. LemonadeJS has a quick learning curve, keeps coding fun, and is very close to native JS.
 
 - Make rich and user-friendly web interfaces and applications
 - Handle complicated data inputs with ease and convenience
@@ -28,16 +28,13 @@ import lemonade from "lemonadejs";
 import Hello from "./Hello";
 
 export default function App() {
-  let self = {};
+  let self = this;
   self.count = 1;
-
-  let template = `<div>
+  return `<div>
         <div><Hello /></div>
         <p>You clicked {{self.count}} times</p>
         <button onclick="self.count++;">Click me</button>
     </div>`;
-
-  return lemonade.element(template, self, { Hello });
 }
 ```
 
@@ -53,19 +50,17 @@ Simplicity to run in the browser without dependencies, servers, transpilers.<br>
 <script>
 function Hello() {
     let self = this;
-    let template = `<h1>{{self.title}}</h1>`;
-    return lemonade.element(template, self);
+    return `<h1>{{self.title}}</h1>`;
 }
 
 function App() {
-    let self = {};
+    let self = this;
     self.count = 1;
-    let template = `<>
+    return `<>
       <Hello title="your title" />
       <p>You clicked {{self.count}} times</p>
-        <button onclick="self.count++;">Click me</button>
-      </>`;
-    return lemonade.element(template, self, { Hello });
+      <button onclick="self.count++;">Click me</button>
+    </>`;
 }
 lemonade.render(App, document.getElementById('root'));
 </script>
@@ -79,7 +74,7 @@ lemonade.render(App, document.getElementById('root'));
 import lemonade from "lemonadejs";
 
 export default function Component() {
-    let self = {};
+    let self = this;
 
     self.rows = [
         { title:'Google', description: 'The alpha search engine...' },
@@ -88,14 +83,12 @@ export default function Component() {
     ];
 
     // Custom components such as List should always be unique inside a real tag.
-    let template = `<table cellpadding="6">
-            <thead><tr><th>Title</th><th>Description</th></th></thead>
-            <tbody @loop="self.rows">
-                <tr><td>{{self.title}}</td><td>{{self.description}}</td></tr>
-            </tbody>
-        </table>`;
-
-    return lemonade.element(template, self);
+    return `<table cellpadding="6">
+        <thead><tr><th>Title</th><th>Description</th></th></thead>
+        <tbody @loop="self.rows">
+            <tr><td>{{self.title}}</td><td>{{self.description}}</td></tr>
+        </tbody>
+    </table>`;
 }
 ```
 
@@ -109,22 +102,16 @@ export default function Component() {
 
 <script src="https://cdn.jsdelivr.net/npm/lemonadejs/dist/lemonade.min.js"></script>
 <script>
-var Component = (function() {
+function Component() {
     // Create the self object
-    var self = {};
+    let self = this;
     self.test = function(e) {
         console.log(e);
         e.preventDefault();
     }
-
     // The property call is added to the observable list when added to the DOM
-    var template = `<>
-        <input type="button" value="Click test" onclick="self.test(e);"/>
-        </>`;
-
-    // Render the template and create the observation
-    return lemonade.element(template, self);
-});
+    return `<input type="button" value="Click test" onclick="self.test(e);"/>`;
+}
 
 // Render the LemonadeJS element into the DOM
 lemonade.render(Component, document.getElementById('root'));
@@ -142,18 +129,14 @@ lemonade.render(Component, document.getElementById('root'));
 
 <script src="https://cdn.jsdelivr.net/npm/lemonadejs/dist/lemonade.min.js"></script>
 <script>
-var App = (function() {
-    let self = {};
-    self.disabled= false;
-
-    let template = `<>
-            <button onclick="self.disabled = !self.disabled">Toggle</button>
-            <input type="text" disabled="{{self.disabled}}" />
-            </>`;
-
-    return lemonade.element(template, self);
-});
-
+function App() {
+    let self = this;
+    self.disabled = false;
+    return `<>
+      <button onclick="self.disabled = !self.disabled">Toggle</button>
+      <input type="text" disabled="{{self.disabled}}" />
+    </>`;
+}
 lemonade.render(App, document.getElementById('root'));
 </script>
 </body>
