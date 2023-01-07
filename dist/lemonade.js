@@ -1,5 +1,5 @@
 /**
- * Lemonadejs v2.8.0
+ * Lemonadejs v3.0.0
  *
  * Website: https://lemonadejs.net
  * Description: Create amazing web based reusable components.
@@ -7,9 +7,9 @@
  * This software is distribute under MIT License
  *
  * Roadmap
- * - @bind dentro do drodpown jsuites nao seta o valor inicial se o bind tiver valor
- *   class="test {{anotherClass}}"
- * - existing tags
+ * - @bind jSuites.dropdown initial value is not set when properties has a value
+ * - setComponents for local variables
+ * - {{self.test*self.test}} - avoid duplication in the monitoring
  */
 
 ;(function (global, factory) {
@@ -21,89 +21,154 @@
     'use strict';
 
     /**
-     * Global queue
+     * Global control element
      */
-    var R = null;
+    let R = null;
 
+    // Global LemonadeJS controllers
     if (typeof(document) !== "undefined") {
         if (! document.lemonadejs) {
-            R = document.lemonadejs = {
+            R = {
                 queue: [],
-                container: {}
+                container: {},
+                tracking: new Map,
+                components: {},
             }
+
+            document.lemonadejs = R;
         } else {
             R = document.lemonadejs;
         }
     }
 
+    // Script expression inside LemonadeJS templates
+    let isScript = /{{(.*?)}}/g;
+
     /**
-     * The element passed is a DOM element
+     * Path string to object
+     * @param {string} str - path to the value as a string
+     * @return {array|boolean} - return the object and the property
      */
-    var isDOM = function(o) {
-        return (o instanceof Element || o instanceof HTMLDocument);
+    let Path = function(str) {
+        let t = str.split('.');
+        if (t.length) {
+            // Object
+            let o = this;
+            // Property
+            let p = null;
+            while (t.length > 1) {
+                // Get the property
+                p = t.shift();
+                // Check if the property exists
+                if (o.hasOwnProperty(p)) {
+                    o = o[p];
+                } else {
+                    return undefined;
+                }
+            }
+            // Get the property
+            p = t.shift();
+            // Return the value
+            if (o) {
+                return [o,p];
+            }
+        }
+        // Something went wrong
+        return false;
+    }
+
+    /**
+     * Create a new HTML element
+     * @param {string} type - create a new HTML element as a type
+     * @param {string} html - initial content
+     * @return {HTMLElement} e - new HTML element
+     */
+    const create = function(type, html) {
+        let e = document.createElement(type);
+        e.innerHTML = html;
+        return e;
+    }
+
+    /**
+     * Check if the content {o} is a valid DOM Element
+     * @param {HTMLElement|DocumentFragment|object} o - is this a valid dom?
+     * @return {boolean}
+     */
+    const isDOM = function(o) {
+        return (o instanceof Element || o instanceof HTMLDocument || o instanceof DocumentFragment);
     }
 
     /**
      * Is a class
      */
-    var isClass = function(f) {
+    const isClass = function(f) {
         return typeof f === 'function' && /^class\s/.test(Function.prototype.toString.call(f));
     }
 
     /**
      * Basic handler
-     * @param h - HTML
-     * @param e - Extensions
-     * @returns lemonade.element
+     * @param {string} t - HTML template
+     * @return {HTMLElement}
      */
-    var Basic = function(h, e) {
-        return L.element(h, this, e)
+    const Basic = function(t) {
+        return L.element(t, this);
+    }
+
+    /**
+     * Execute pending tasks and remove from queue
+     * @param {string} type - task type
+     * @param {function} f - task
+     * @return {HTMLElement}
+     */
+    const unqueue = function(type, f) {
+        let q = null;
+        for (let i = 0; i < R.queue.length; i++) {
+            q = R.queue[i];
+            if (q.type === type) {
+                // Reset item in the queue
+                R.queue[i] = {};
+                // Execute method
+                f(q);
+            }
+        }
     }
 
     /**
      * Process all methods queued from the ready property
+     * @param {HTMLElement} e - check if the element is already in the DOM
      */
-    var queue = function(e, el) {
-        var q = null;
-        var o = null;
-        if (o = e.lemon) {
-            // Verify any pending ready
-            if (o.queue) {
-                while (q = o.queue.shift()) {
-                    R.queue.push(q);
-                }
-            }
-
-            // Onload events
-            if (typeof (o.self.onload) == 'function') {
-                R.queue.push(o.self.onload.bind(o.self, e));
-            }
-        }
-
-        // Unqueue
-        if (document.body.contains(el) && R && R.queue && R.queue.length) {
-            while (q = R.queue.shift()) {
-                q();
-            }
+    const queue = function(e) {
+        // Un-queue
+        if (document.body.contains(e)) {
+            // Process ready elements
+            unqueue('ready', function(q) {
+                q.method();
+            });
+            // Process ready elements
+            unqueue('onload', function(q) {
+                q.method();
+            });
+            // Reset anything left in the queue
+            R.queue = [];
         }
     }
 
     /**
      * Get the attribute helper
      */
-    var getAttribute = function(e) {
-        var v = null;
+    const getAttribute = function(e) {
+        let v;
         if (typeof(e.val) === 'function') {
             v = e.val();
         } else {
-            if (e.tagName == 'SELECT' && e.getAttribute('multiple')) {
+            if (e.tagName === 'SELECT' && e.getAttribute('multiple')) {
                 v = [];
-                for (var i = 0; i < e.options.length; i++) {
+                for (let i = 0; i < e.options.length; i++) {
                     if (e.options[i].selected) {
                         v.push(e.options[i].value);
                     }
                 }
-            } else if (e.type == 'checkbox') {
+            } else if (e.type === 'checkbox') {
                 v = e.checked && e.getAttribute('value') ? e.value : e.checked;
             } else if (e.getAttribute('contenteditable')) {
                 v = e.innerHTML;
@@ -117,20 +182,20 @@
     /**
      * Set attribute value helper
      */
-    var setAttribute = function(e, v, t) {
+    const setAttribute = function(e, v, t) {
         if (t === 'value') {
             // Update HTML form element
             if (typeof(e.val) === 'function') {
                 if (e.val() != v) {
                     e.val(v);
                 }
-            } else if (e.tagName == 'SELECT' && e.getAttribute('multiple')) {
-                for (var j = 0; j < e.children.length; j++) {
+            } else if (e.tagName === 'SELECT' && e.getAttribute('multiple')) {
+                for (let j = 0; j < e.children.length; j++) {
                     e.children[j].selected = v.indexOf(e.children[j].value) >= 0;
                 }
-            } else if (e.type == 'checkbox') {
-                e.checked = ! v || v === '0' || v === 'false' ? false : true;
-            } else if (e.type == 'radio') {
+            } else if (e.type === 'checkbox') {
+                e.checked = ! (! v || v === '0' || v === 'false');
+            } else if (e.type === 'radio') {
                 e.checked = false;
                 if (e.value == v) {
                     e.checked = true;
@@ -140,14 +205,19 @@
                     e.innerHTML = v;
                 }
             } else {
+                // Make sure apply that to the value
                 e.value = v;
+                // Update attribute if exists
+                if (e.getAttribute && e.getAttribute('value') !== null) {
+                    e.setAttribute('value', v);
+                }
             }
-        } else if (t == '@src') {
+        } else if (t === '@src') {
             if (! v) {
                 v = e.getAttribute('default');
             }
             if (v) {
-                e.src = v;
+                e.setAttribute(t, v);
             }
         } else if (typeof(e[t]) !== 'undefined' || typeof(v) == 'function' || typeof(v) == 'object') {
             e[t] = v;
@@ -157,185 +227,20 @@
     }
 
     /**
-     * Parse javascript
-     */
-    var run = function(s) {
-        return Function('self', '"use strict";return (' + s + ')')(this);
-    }
-
-    /**
-     * Dispatch changes in the self properties
-     */
-    var dispatch = function(property, first) {
-        var self,t,v,e,p,i = null;
-        // Tracking
-        if (t = this.tracking[property]) {
-            // Make sure self is visible during eval
-            self = this.self;
-            // Loop all affected elements
-            for (i = 0; i < t.length; i++) {
-                // Element
-                e = t[i].element;
-                // Parse value
-                v = run.call(self, t[i].v);
-                // Property
-                p = t[i].property;
-                // If the property is the value
-                if (p == '@loop') {
-                    generate.call(e, v, self, this.components)
-                } else {
-                    // Other properties
-                    if (e.self) {
-                        // Do not change the value if is already the same to avoid infinite dispatches
-                        e.self[p] = v;
-                    } else {
-                        setAttribute(e, v, p);
-                        // Update the parent bind property
-                        if (this.tag && t[i].v == 'self.value' && this.tag['@bind']) {
-                            if (this.self.parent[this.tag['@bind']] !== v) {
-                                this.self.parent[this.tag['@bind']] = v;
-                            }
-                        }
-                    }
-                }
-            }
-
-            // Onchange // DOCS update
-            if (! first && typeof(self.onchange) == 'function') {
-                self.onchange.call(e, property, t, self);
-            }
-        }
-    }
-
-    /**
-     * Bind a property to one action and start tracking
-     */
-    var bind = function(p) {
-        // Lemon handler
-        var lemon = this;
-        // First call
-        var first = true;
-        // Create the observer
-        Object.defineProperty(this.self, p, {
-            set: function(v) {
-                // Update val
-                lemon.state[p] = v;
-                // Refresh bound elements
-                dispatch.call(lemon, p, first);
-                // First call
-                first = false;
-            },
-            get: function() {
-                // Get value
-                return lemon.state[p];
-            },
-            configurable: true, // For JSON export
-            enumerable: true  // For JSON export
-        });
-    }
-
-    var create = function(element, res, type) {
-        var self = this.self;
-        // Value
-        var value = run.call(self, res.v);
-        if (typeof(value) === 'undefined') {
-            value = '';
-        }
-        // Create text node
-        if (type == 'textContent') {
-            var e = document.createTextNode(value);
-            if (element.childNodes[0]) {
-                element.insertBefore(e, element.childNodes[0].splitText(res.p));
-            } else {
-                element.appendChild(e);
-            }
-        } else if (type == '@loop') {
-            var e = element;
-        } else {
-            var e = element;
-            setAttribute(element, value, type);
-        }
-
-        var tokens = res.v.match(/self\.([a-zA-Z0-9_].*?)*/g);
-        if (tokens && tokens.length) {
-            for (var i = 0; i < tokens.length; i++) {
-                // Get property name
-                var token = tokens[i].replace('self.', '');
-
-                // Current value of token
-                var b = false;
-                var v = this.self[token];
-                if (typeof(v) === 'undefined') {
-                    v = '';
-                }
-
-                // Create tracking
-                if (! this.tracking[token]) {
-                    // Create tracking container for the property
-                    this.tracking[token] = [];
-                    // Bind
-                    b = true;
-                }
-
-                // Add to the tracking
-                this.tracking[token].push({
-                    element: e,
-                    property: type,
-                    v: res.v
-                });
-
-                // Create tracker
-                if (b) {
-                    bind.call(this, token);
-                }
-
-                // Initial value
-                this.self[token] = v;
-            }
-        }
-    }
-
-    var attributes = function(e, type) {
-        // Content
-        var result = [];
-        var index = 0;
-        var r = function (a,b,c,d)  {
-            result.push({ p: c - index, v: b });
-            index = index + a.length;
-            return '';
-        }
-
-        if (e.getAttribute && e.getAttribute(type)) {
-            e.setAttribute(type, e.getAttribute(type).replace(/{{(.*?)}}/g, r));
-        } else {
-            if (typeof(e[type]) == 'string' && e[type]) {
-                e[type] = e[type].replace(/{{(.*?)}}/g, r);
-            }
-        }
-
-        if (result.length) {
-            if (result.length == 1 && type == 'textContent' && ! e.innerText) {
-                type = 'innerHTML';
-            }
-            for (var i = result.length - 1; i >= 0; i--) {
-                create.call(this, e, result[i], type);
-            }
-        }
-    }
-
-    /**
      * Get attributes as an object
-     * @param {boolean} props Get all properties from the property of the element or the property string
+     * @param {boolean} props - all attributes that are not undefined
      * @return {object}
      */
-    var getAttributes = function(props) {
-        var o = {};
-        var k = null;
-        var a = this.attributes;
+    const getAttributes = function(props) {
+        let o = {};
+        let k = null;
+        let a = this.attributes;
+        let f = null;
         if (a && a.length) {
-            for (var i = 0; i < a.length; i++) {
+            for (let i = 0; i < a.length; i++) {
                 k = a[i].name;
-                if (props == true && typeof(this[k]) !== 'undefined') {
+                f = k.substr(0,1);
+                if (props && typeof(this[k]) !== 'undefined') {
                     o[k] = this[k];
                 } else {
                     o[k] = a[i].value;
@@ -346,104 +251,399 @@
     }
 
     /**
+     * Parse javascript
+     * @param {string} s - string
+     * @return {any}
+     */
+    const run = function(s) {
+        return Function('self', '"use strict";return (' + s + ')')(this);
+    }
+
+    const removeMark = function(v) {
+        return v.replace(isScript, '$1');
+    }
+
+    /**
+     * Run a loop in the data for the element {e}
+     * @param {object} o - tracking content object
+     */
+    const loop = function(o) {
+        let s = Path.call(o.s, o.v.replace('self.',''));
+        if (s) {
+            // Template for the render
+            let t;
+            // Method handler for custom elements
+            let m;
+            // Contains all new elements
+            let d = [];
+            // Get the data from the self based on the property
+            let data = (s[0])[s[1]];
+            // If data exists render each element of the array
+            if (data && data.length) {
+                for (let i = 0; i < data.length; i++) {
+                    let e = data[i].el;
+                    if (! e) {
+                        t = o.e.lemonade;
+                        m = t.handler || Basic;
+                        // Create reference to the element
+                        register(data[i], 'parent', o.s);
+                        // Create element
+                        e = L.render(m, o.r, data[i], t.template);
+                    }
+                    if (o.e.getAttribute('unique') === 'false') {
+                        register(data[i], 'el', null);
+                    }
+                    d.push(e);
+                }
+            }
+            // TODO: try to improve this process
+
+            // Remove all DOM
+            while (o.r.firstChild) {
+                o.r.firstChild.remove();
+            }
+            // Insert necessary DOM
+            while (t = d.shift()) {
+                o.r.appendChild(t);
+            }
+        }
+    }
+
+    /**
+     * Process the value of a content object
+     * @param {object} o - tracking content object
+     */
+    const process = function(o) {
+        // Attribute
+        let a;
+        if (o.bind) {
+            a = 'value';
+        } else {
+            a = o.a;
+        }
+        // Value
+        if (o.loop) {
+            loop(o);
+        } else {
+            let v;
+            // Verify if the value is a reference or a string
+            let s = o.v.split('}}')[0];
+            if (s.substr(0,2) === '{{' && s.length === o.v.length-2) {
+                s = removeMark(o.v);
+                v = run.call(o.s, s);
+            } else {
+                v = o.v.replace(isScript, function (a, b) {
+                    return run.call(o.s, b);
+                });
+            }
+            if (o.e.lemonade) {
+                o.e.lemonade.self[a] = v;
+            }
+
+            if (o.protect) {
+                // Protect from loop
+                if (o.e[a] == v) {
+                    return;
+                }
+            }
+
+            setAttribute(o.e, v, a);
+        }
+    }
+
+    /**
+     * Dispatch all updates for a property from the self
+     * @param {string} property - property from the self
+     * @param {boolean} force - force the update
+     */
+    const dispatch = function(property) {
+        // Tracking object
+        let o = R.tracking.get(this);
+        if (o) {
+            o = o[property];
+            if (o) {
+                // Process all registered elements
+                for (let i = 0; i < o.length; i++) {
+                    // Element to be updated
+                    process(o[i]);
+                }
+            }
+
+            // A property has changed
+            if (typeof(this.onchange) === 'function') {
+                this.onchange(property, o, this);
+            }
+        }
+    }
+
+    /**
+     * Register a getter without setter for a self object
+     * @param {object} s - self object
+     * @param {string} p - self property
+     * @param {string|object|number} v - value
+     */
+    const register = function(s, p, v) {
+        Object.defineProperty(s, p, {
+            enumerable: false,
+            configurable: true,
+            get: function() {
+                return v;
+            }
+        });
+    }
+
+    /**
+     * Bind an property to one action and start tracking
+     * @param {string} p - property to be tracked
+     */
+    const observers = function(p) {
+        // Lemon handler
+        let s = this;
+        let value = this[p];
+        // Do not allow undefined
+        if (value === undefined) {
+            value = '';
+        }
+
+        // Create the observer
+        Object.defineProperty(s, p, {
+            set: function(v) {
+                // Update val
+                value = v;
+                // Refresh bound elements
+                dispatch.call(this, p);
+            },
+            get: function() {
+                // Get value
+                return value;
+            },
+            configurable: true,
+            enumerable: true,
+        });
+    }
+
+    /**
+     * Parse the tokens from a content object to start tracking the self
+     * @param {object} content - content tracking object
+     */
+    const parseTokens = function(content) {
+        // Get all self tokens in use - TODO if self.test[1]
+        let tokens = content.v.match(/(?:self.)(\.?\w+\b)+(?!\()/gm);
+        if (tokens) {
+            for (let i = 0; i < tokens.length; i++) {
+                // Property found
+                let p = tokens[i].replace('self.', '');
+                // Get path to the object
+                p = Path.call(this, p);
+                // Register
+                let t = R.tracking.get(p[0]);
+                if (! t) {
+                    t = {};
+                    R.tracking.set(p[0], t);
+                }
+                // Do not include self.__ref in the tracking system
+                if (p[1] !== '__r') {
+                    // Register the properties of the self
+                    if (!t[p[1]]) {
+                        t[p[1]] = [];
+                    }
+                    // Save relationship between the self and the tag attributes. TODO: avoid double call when {{self.value*self.value}}
+                    t[p[1]].push(content);
+                    // Create the necessary observers for this property
+                    observers.call(p[0], p[1]);
+                }
+            }
+        }
+
+        // Render the value from the element attribute
+        process(content);
+    }
+
+    /**
+     * Parse the content object to see if is necessary to start tracking
+     * @param {object} content: content tracking object
+     */
+    const parseExpression = function(content) {
+        // Check if the content has script marks {{}}
+        if (content.v.match(isScript)) {
+            // Get all self tokens in use
+            parseTokens.call(this, content);
+        }
+    }
+
+    /**
+     * Read a attribute from an element to see if there is any script associated
+     * @param {HTMLElement} e
+     * @param {string} name - attribute name
+     * @param {string|number} value? - value to be attributed
+     */
+    const parseAttribute = function(e, name, value) {
+        // Get the content of the property
+        if (value === undefined) {
+            value = e.getAttribute(name).trim();
+        }
+        // Parse expression
+        parseExpression.call(this, { e: e, a: name, v: value, s: this });
+    }
+
+    /**
+     * Read a textContent from an element to see if there is any script associated
+     * @param {HTMLElement} e - element
+     */
+    const parseContent = function(e) {
+        // Get the content of the property
+        let text = e.textContent;
+        // Check if the content has script marks {{}}
+        if (text.match(isScript)) {
+            // Replace the entries
+            let result = text.split(/({{.*?}})/g);
+            // Reset element
+            e.textContent = '';
+            // Recreate content
+            for (let j = 0; j < result.length; j++) {
+                // Text node
+                text = result[j];
+                // Create text node
+                let node = document.createTextNode(text);
+                // Append text node back to the element
+                e.appendChild(node);
+                // Parse expression
+                parseExpression.call(this, { e: node, a: 'textContent', v: text, s: this })
+            }
+        }
+    }
+
+    /**
      * Parse all attributes from one element
      * @param {HTMLElement} element
      */
-    var parse = function(element) {
-        var lemon = this;
-        // Attributes
-        var t = null;
-        var attr = getAttributes.call(element);
-
-        // Mark custom handlers
-        if (this.components) {
-            var k = Object.keys(this.components);
-            for (var i = 0; i < k.length; i++) {
-                this.components[k[i].toUpperCase()] = this.components[k[i]];
-            }
-            // Method name
-            var m = element.tagName;
-            // Expected function
-            t = this.components[m];
-            // Verify scope in the declared extensions
-            if (typeof(t) == 'function') {
-                element.handler = t;
-            }
+    const parse = function(element) {
+        // Self for this parser
+        let self = this;
+        // Helpers
+        let t;
+        // Get attributes from the element
+        let attr = getAttributes.call(element);
+        /** @type {function|null} */
+        let handler = null;
+        // Custom elements
+        let m = element.tagName;
+        // Expected function
+        t = R.components[m];
+        // Verify scope in the declared extensions
+        if (typeof(t) == 'function') {
+            handler = t;
         }
 
-        // Loop without a handler
-        if ((element.getAttribute('@loop') || element.getAttribute('lm-loop')) && ! t) {
-            t = true;
-            element.parent = element;
-        }
-
-        // Bind properties
+        // A custom handler is conflicting with a VALID tag name
         if (t) {
-            element.self = {};
-            element.template = element.innerHTML;
+            if (element instanceof HTMLUnknownElement) {
+                if (! handler && m !== 'ROOT') {
+                    console.error(m + ' is not found.');
+                }
+            } else {
+                console.error(m + ' conflicts with a valid tag name');
+            }
+        }
+
+        // Is this a loop?
+        let isLoop = attr[':loop'] || attr['@loop'];
+
+        // Special cases where the content is actually the template
+        if (handler || isLoop) {
+            // Create the lemonade element controller
+            let s = {};
+            if (handler && isClass(handler)) {
+                s = new handler(s);
+            }
+            element.lemonade = {
+                self: s,
+                handler: handler,
+                template: element.innerHTML,
+                loop: isLoop,
+            };
+
+            // Reset content
             element.innerHTML = '';
         }
 
         // Keys
-        var k = Object.keys(attr);
+        let k = Object.keys(attr);
         if (k.length) {
-            for (var i = 0; i < k.length; i++) {
+            for (let i = 0; i < k.length; i++) {
+                // Create input event to monitor changes in the HTML element
+                let prop = attr[k[i]].replace('self.', '');
                 // Parse events
-                if (! element.handler && k[i].substring(0,2) == 'on') {
-                    // Get event
-                    let event = k[i].toLowerCase();
-                    let value = attr[k[i]];
+                if (! handler && k[i].substring(0,2) === 'on') {
+                    // Naturally on attributes already expects scripts, so no marks is necessary. But this is just for make sure there is no marks.
+                    let value = removeMark(attr[k[i]]);
+                    // References
+                    if (value.indexOf('self.__r') === 0) {
+                        value = run.call(self, value);
+                    }
                     // Get action
-                    element.removeAttribute(event);
+                    element.removeAttribute(k[i]);
                     element.addEventListener(k[i].substring(2), function(e) {
-                        Function('self','e', value).call(this, lemon.self, e);
+                        if (typeof(value) == 'function') {
+                            value.call(this, e, self);
+                        } else {
+                            Function('self', 'e', value).call(this, self, e);
+                        }
                     });
                 } else {
-                    // Property name
-                    var prop = attr[k[i]].replace('self.', '');
-                    // Special properties
-                    if (k[i] == '@ready' || k[i] == 'lm-ready') {
-                        // Add this method to the queue
-                        this.queue.push(Function('self', attr[k[i]]).bind(element, this.self));
-                        // Remove attribute
-                        element.removeAttribute(k[i]);
-                    } else if (k[i] == '@ref' || k[i] == 'lm-ref') {
-                        // Make it available to the self
-                        this.self[prop] = element.self ? element.self : element;
-                        // Remove attribute
-                        element.removeAttribute(k[i]);
-                    } else if (k[i] == '@bind' || k[i] == 'lm-bind') {
-                        // Onchange event for the element
-                        element.oninput = function(a, b) {
-                            // Update val
-                            this.state[b] = getAttribute(a);
-                            // Refresh bound elements
-                            dispatch.call(this, b);
-                        }.bind(this, element, prop);
-                        // Way back
-                        create.call(this, element, { v:attr[k[i]] }, 'value');
-                        // Keep reference to the original definition
-                        element[k[i]] = prop;
-                        // Remove attribute
-                        element.removeAttribute(k[i]);
-                    } else if (k[i] == '@loop' || k[i] == 'lm-loop') {
-                        // Parse attributes
-                        create.call(this, element, { v:attr[k[i]] }, '@loop');
-                        element.loop = this.self[prop];
-                        element.removeAttribute(k[i]);
-                    } else if (k[i] == '@src' || k[i] == 'lm-src') {
-                        // Parse attributes
-                        create.call(this, element, {v: attr[k[i]]}, '@src');
+                    // Check for special properties
+                    let first = k[i].substr(0,1);
+                    if (first === '@' || first === ':') {
+                        // Type
+                        let type = k[i].substr(1);
+                        // Process
+                        let q = { type };
+                        // Process types
+                        if (type === 'ready') {
+                            // Call this method when the element is ready and appended to the DOM
+                            q.method = Function('self', attr[k[i]]).bind(element, self);
+                        } else if (type === 'ref') {
+                            // Create a reference to the HTML element or to the self of the custom element
+                            self[prop] = element.lemonade && element.lemonade.handler ? element.lemonade.self : element;
+                        } else if (type === 'bind') {
+                            // Register the value attribute to be tracked
+                            parseTokens.call(self, { e: element, a: prop, v: '{{' + attr[k[i]] + '}}', s: self, bind: true })
+
+                            // Register the value attribute to be tracked in the parent
+                            if (handler) {
+                                let s = element.lemonade.self;
+                                parseTokens.call(s, { e: self, a: prop, v: '{{self.value}}', s: s, protect: true });
+                            } else {
+                                // Add event oninput for the two way binding
+                                let h = function() {
+                                    // Get the reference to the object
+                                    let o = Path.call(self, prop);
+                                    // Apply the new value
+                                    (o[0])[o[1]] = getAttribute(this);
+                                }
+                                // This will be implemented soon with jSuites 5
+                                //element.addEventListener('input', h);
+                                // Deprecated. Legacy purpose only
+                                element.oninput = h;
+                            }
+                            // Deprecated. Legacy purpose only
+                            element[k[i]] = prop;
+                        } else if (type === 'loop') {
+                            let r = element;
+                            if (element.lemonade.handler) {
+                                r = element.parentNode
+                            }
+                            // Register the value attribute to be tracked
+                            parseTokens.call(self, { e: element, a: prop, v: attr[k[i]], s: self, r: r, loop: true })
+                        }
+
+                        // Sent to the queue
+                        R.queue.push(q);
+                        // Remove special attribute from the tag
                         element.removeAttribute(k[i]);
                     } else {
                         // Parse attributes
-                        attributes.call(this, element, k[i]);
-                        // Lemonade translation helper
-                        if (document.dictionary) {
-                            if (t = L.translate(attr[k[i]])) {
-                                element.setAttribute(k[i], t);
-                            }
-                        }
+                        parseAttribute.call(self, element, k[i]);
                     }
                 }
             }
@@ -451,352 +651,299 @@
 
         // Check the children
         if (element.children.length) {
-            var t = [];
-            for (var i = 0; i < element.children.length; i++) {
+            t = [];
+            for (let i = 0; i < element.children.length; i++) {
                 t.push(element.children[i]);
             }
-            for (var i = 0; i < t.length; i++) {
-                parse.call(this, t[i]);
+            for (let i = 0; i < t.length; i++) {
+                parse.call(self, t[i]);
             }
         } else {
             if (element.textContent) {
                 // Parse textual content
-                attributes.call(this, element, 'textContent');
-                // Lemonade translation helper
-                if (document.dictionary) {
-                    if (t = L.translate(element.innerText)) {
-                        element.innerText = t;
-                    }
-                }
+                parseContent.call(self, element);
             }
         }
 
-        // Process the custom handler
-        var h = element.handler;
-
-        // Root for custom is the parent
-        if (typeof(h) === 'function') {
-            // Component type
-            if (typeof(element.loop) == 'undefined') {
-                // Root
-                var r = element.parentNode;
-                // Make sure the self goes as a reference
-                var s = L.setProperties.call(element.self, getAttributes.call(element, true), true);
-                // Reference to the element
-                register(s, 'parent', this.self);
-                // Create component
-                L.render(h, r, s, element.template, element, lemon.components);
-            }
-            // Remove component container
-            element.remove();
+        // Render component
+        t = element.lemonade;
+        if (t && t.handler && ! t.loop) {
+            // Make sure the self goes as a reference
+            L.setProperties.call(t.self, getAttributes.call(element, true), true);
+            // Reference to the element
+            register(t.self, 'parent', self);
+            // Create component
+            L.render(t.handler, element, t.self, t.template, true);
         }
     }
 
     /**
-     * Register element
+     * Extract variables from the dynamic and append to the self
+     * @return {string} t - converted template from ${} to {{self}}
      */
-    var register = function(o, p, r) {
-        Object.defineProperty(o, p, {
-            enumerable: false,
-            configurable: true,
-            get: function() {
-                return r;
-            }
+    const dynamic = function() {
+        let i = 0;
+        // Replace the scripts for the self marks
+        let t = this.c.toString().split('`')[1].replace(/\${.*?}/gm, function () {
+            return '{{self.__r[' + (i++) + ']}}';
         });
-    }
-
-    /**
-     * Append custom components to the DOM
-     * @param {object} data - self for each element in the array
-     * @param {HTMLElement} - parentNode or root for the children
-     * @param {object} ext - components declared in the lemonade.element
-     */
-    var generate = function(data, parent, ext) {
-        var t = null;
-        // Root parent
-        if (! this.parent) {
-            this.parent = this.parentNode;
-        }
-        var r = this.parent;
-        // Function handler
-        var f = this.handler || Basic;
-        // Template
-        var t = this.template;
-        // DOM element that need to go to the root
-        var d = [];
-        if (data.length) {
-            for (let i = 0; i < data.length; i++) {
-                let o = data[i].el;
-                if (! o) {
-                    // Create reference to the element
-                    register(data[i], 'parent', parent);
-                    // Create element
-                    o = L.render(f, r, data[i], t, null, ext);
-                }
-                if (r.getAttribute('unique') === 'false') {
-                    register(data[i], 'el', null);
-                }
-                d.push(o);
-            }
-        }
-
-        // Remove all DOM
-        while (r.children[0]) {
-            r.children[0].remove();
-        }
-        // Insert necessary DOM
-        while (t = d.shift()) {
-            r.appendChild(t);
-        }
+        // Get all arguments but the first
+        let a = Array.from(arguments);
+        a.shift();
+        this.s.__r = a;
+        // Return the final template
+        return t;
     }
 
     // Lemonadejs object
-    var L = {};
+    const L = {};
 
     /**
      * Render a lemonade DOM element, method or class into a root DOM element
-     * @param o - Lemonade DOM created from a template
-     * @param el - DOM Element to append the lemonade element
-     * @param self - existing self
-     * @param t - template when used used as a custom component
+     * @param {function|HTMLElement} o - LemonadeJS component or DOM created
+     * @param {HTMLElement} el - root DOM element to receive the new HTML
+     * @param {object?} self - self to be used
+     * @param {string?} template - template to be used
+     * @param {boolean?} action - before (true), append (false)
+     * @return {HTMLElement|boolean} o
      */
-    L.render = function(o, el, self, t, ref, ext) {
+    L.render = function(o, el, self, template, action) {
         // Component
-        var component = o;
+        let args = Array.from(arguments);
 
         // Root element but be a valid DOM element
-        if (! isDOM(el)) {
-            console.log('Not valid DOM')
+        if (!isDOM(el)) {
+            console.error('Invalid DOM')
             return false;
         }
 
-        if (! self) {
-            self = {};
-        }
-
         // Flexible element (class or method)
-        if (typeof(o) == 'function') {
+        if (typeof (o) == 'function') {
             if (isClass(o)) {
-                o = new o(self);
-                // Necessary to fix the reference to the self
-                if (ref) {
-                    ref.self = o;
+                if (! self) {
+                    self = new o({});
                 }
-                o = L.element(o.render(t, ext), o);
+                o = L.element(self.render(template), self);
             } else {
-                o = o.call(self, t, ext);
+                if (! self) {
+                    self = {};
+                }
+                // Execute component
+                o = o.call(self, template);
+                // Process return
+                if (typeof (o) === 'function') {
+                    o = L.element(o(dynamic.bind({c: o, s: self})), self);
+                    // Remove dynamic references
+                    delete self.__r;
+                } else if (typeof (o) === 'string') {
+                    o = L.element(o, self);
+                }
             }
 
-            if (! isDOM(o)) {
-                console.log('Component did not return a valid DOM');
+            if (!isDOM(o)) {
+                console.error('Invalid DOM return');
                 return false;
             }
         }
 
-        // Append element to the root
-        if (o.tagName == 'ROOT') {
-            // Root
-            o.lemon.root = [];
-            while (o.firstChild) {
-                // Keep reference
-                o.lemon.root.push(o.firstChild)
-                // Append to the correct DOM position
-                if (ref) {
-                    el.insertBefore(o.firstChild, ref);
-                } else {
-                    el.appendChild(o.firstChild);
-                }
+        // Process the first child
+        o = o.firstChild;
+
+        // Keep reference to the root elements
+        if (o.tagName === 'ROOT') {
+            // Keep the references
+            o.root = Array.from(o.childNodes);
+            o.rootChild = o.children[0];
+            // Append
+            if (action === true) {
+                el.before(...o.childNodes);
+                el.remove();
+            } else {
+                el.append(...o.childNodes);
             }
         } else {
-            if (ref) {
-                el.insertBefore(o, ref);
+            // Reference
+            o.root = [o];
+            o.rootChild = o;
+            // Append
+            if (action === true) {
+                el.before(o);
+                el.remove();
             } else {
-                el.appendChild(o);
+                el.append(o);
             }
         }
 
+        // Refresh property
+        register(self, 'refresh', function (p) {
+            // Re-render the whole component
+            if (p === undefined) {
+                // Reference to before
+                args[1] = o.rootChild;
+                // Self
+                args[2] = this;
+                // Action before
+                args[4] = true;
+                // Apply that to a new render
+                L.render.apply(null, args);
+                // Remove old items
+                let t;
+                while (t = o.root.shift()) {
+                    t.remove();
+                }
+            } else {
+                let s = Path.call(this, p);
+                // Refresh a loop
+                dispatch.call(s[0], s[1]);
+            }
+        });
+
         // Process ready queue
-        queue(o, el);
-
-        // Reference to the component
-        o.lemon.component = component;
-
-        // Reference tag name
-        if (ref) {
-            o.lemon.tag = ref;
-        }
+        queue(el);
 
         return o;
     }
 
     /**
      * Create a new component
-     * @param mixed - DOM/template
-     * @param s - self component object
-     * @param components - related objects
+     * @param {string|HTMLElement} t - HTML template to be parsed or a existing DOM element
+     * @param {object} self - The default self object
+     * @param {object?} components - all custom components references
+     * @return {HTMLElement|null} el - result of the DOM parse
      */
-    L.element = function(t, self, ext) {
+    L.element = function(t, self, components) {
+        // Element
+        let el;
+        let root;
         // Lemonade handler
-        var lemon = {
-            self: self||{},
-            state: {},
-            tracking: {},
-            queue: [],
+        if (! self) {
+            self = {};
         }
+        // Extended components legacy mode
+        L.setComponents(components);
 
-        // Extended components
-        if (ext) {
-            lemon.components = ext;
-        }
-
+        // Parse a HTML template
         if (! isDOM(t)) {
             // Close any custom not fully closed component
-            t = t.replace(/(<(([A-Z]{1}|[a-z]*-){1}[a-zA-Z0-9_-]+)[^>]*)(\/|\/.{1})>/gm, "$1></$2>");
-            // Parse fragment
-            t = t.replace(/<>/gi, "<root>").replace(/<\/>/gi, "<\/root>").trim();
+            t = t.trim()
+                .replace(/(<(([A-Z]{1}|[a-z]*-){1}[a-zA-Z0-9_-]+)[^>]*)(\/|\/.{1})>/gm, "$1></$2>")
+                .replace(/<>/gi, "<root>").replace(/<\/>/gi, "<\/root>").trim();
             // Create the root element
-            var el = document.createElement('template');
-            // Get the DOM content
-            el.innerHTML = t;
+            el = create('template', t);
+
             // Extract
             if (el.content) {
                 el = el.content;
             } else {
-                el = document.createElement('div');
-                el.innerHTML = t;
+                el = create('div', t);
             }
 
             // Already single DOM, do not need a container
             if (el.childNodes.length > 1) {
                 console.error('Single root required');
-                return;
+                return null;
             } else {
+                root = el;
                 el = el.firstChild;
             }
         } else {
-            var el = t;
+            el = t;
+            root = el;
         }
 
         // Parse the content
-        parse.call(lemon, el);
-
-        // Refresh properties
-        register(self, 'refresh', function(prop) {
-            L.refresh.call(lemon, prop);
-        });
+        parse.call(self, el);
 
         // Create the el bound to the self
         register(self, 'el', el);
 
-        // Make lemon object available though the DOM is there a better way
-        el.lemon = lemon;
-
-        return el;
-    }
-
-    // Deprecated
-    L.template = L.element;
-
-    /**
-     * Re-render a component
-     */
-    L.refresh = function(prop) {
-        if (prop !== undefined) {
-            dispatch.call(this, prop);
-        } else {
-            // Root element from the component
-            let r = this.self.el;
-            if (r.tagName == 'ROOT') {
-                // It is a fragment so get the root reference from the lemon object
-                r = this.root;
-                // Re-render on that root
-                L.render(this.component, r[0].parentNode, this.self, null, r[0]);
-                // Remove old DOM element
-                while (r[0]) {
-                    r.shift().remove();
-                }
-            } else {
-                // Re-render element
-                L.render(this.component, r.parentNode, this.self, null, r);
-                // Remove old element
-                r.parentNode.removeChild(r);
-            }
+        // Onload event
+        if (typeof(self.onload) == 'function') {
+            R.queue.push({
+                type: 'onload',
+                method: self.onload.bind(self, el),
+            });
         }
-    }
 
-    /**
-     * Mix all template, self
-     */
-    L.blender = function(t, s, el) {
-        return L.render(L.element(t, s), el, s);
+        return root;
     }
 
     /**
      * Apply self to an existing appended DOM element
+     * @param {HTMLElement} el - element root
+     * @param {object} s - self to associate to the template
+     * @param {object?} components - object with component declarations
      */
-    L.apply = function(el, s, ext) {
-        L.element(el, s, ext);
+    L.apply = function(el, s, components) {
+        // Generate the element
+        L.element(el, s, components);
         // Process whatever we have in the queue
-        queue(el, el);
+        queue(el);
     }
 
     /**
-     * Get only the properties described on v
+     * Get all properties existing in {o} and create a new object with the values from {this};
+     * @param {object} o - reference object with the properties relevant to the new object
+     * @return {object} n - the new object with all new values
      */
-    L.getProperties = function(v) {
-        var o = {};
-        for (var property in v) {
-            o[property] = this[property];
+    L.getProperties = function(o) {
+        // The new object with all properties found in {o} with values from {this}
+        let n = {};
+        for (let p in o) {
+            n[p] = this[p];
         }
-        return o;
+        return n;
     }
 
     /**
-     * Set the values described on v
+     * Set the values from {o} to {this}
+     * @param {object} o: set the values of {this} when the this[property] is found in {o}, or when flag force is true
+     * @param {boolean} f: create a new property when that does not exists yet, but is found in {o}
+     * @return {object} - this is redundant since object {this} is a reference and is already available in the caller
      */
-    L.setProperties = function(v, c) {
-        for (var p in v) {
-            if (this.hasOwnProperty(p) || c) {
-                this[p] = v[p];
+    L.setProperties = function(o, f) {
+        for (let p in o) {
+            if (this.hasOwnProperty(p) || f) {
+                this[p] = o[p];
             }
         }
         return this;
     }
 
     /**
-     * Reset the values described on v
+     * Reset the values of any common property name between this and a given object
+     * @param {object} o - all properties names in the object {o} found in {this} will be reset.
      */
-    L.resetProperties = function(v) {
-        for (var p in v) {
+    L.resetProperties = function(o) {
+        for (let p in o) {
             this[p] = '';
         }
     }
 
     /**
      * Lemonade CC (common container) helps you share a self or function through the whole application
-     * @param String - alias for your declared object(self) or function
-     * @returns Object | Function
+     * @param {string} name: alias for your declared object(self) or function
+     * @returns {Object | Function} - registered element
      */
-    L.get = function(a) {
-        return R.container[a];
+    L.get = function(name) {
+        return R.container[name];
     }
 
     /**
      * Register something to the Lemonade CC (common container)
-     * @param a: String - alias for your declared object(self) or function
-     * @param e: Object | Function - the element to be added to the common container. Can be an object(self) or function.
-     * @param p?: Boolean - the persistence flag. Only applicable for functions.
-     * @returns Object | Function
+     * @param {string} name - alias for your declared object(self) or function
+     * @param {object|function} e - the element to be added to the common container. Can be an object(self) or function.
+     * @param {boolean} persistence - optional the persistence flag. Only applicable for functions.
      */
-    L.set = function(a, e, p) {
+    L.set = function(name, e, persistence) {
         // Add to the common container
-        R.container[a] = e;
+        R.container[name] = e;
         // Applicable only when the o is a function
-        if (typeof(e) === 'function' && p === true) {
+        if (typeof(e) === 'function' && persistence === true) {
             // Keep the flag
-            R.container[a].storage = true;
+            R.container[name].storage = true;
             // Any existing values
-            var t = window.localStorage.getItem(a);
+            let t = window.localStorage.getItem(name);
             if (t) {
                 // Parse JSON
                 t = JSON.parse(t);
@@ -808,46 +955,47 @@
 
     /**
      * Dispatch the new values to the function
-     * @param a: String - alias to the element saved on the Lemonade CC (common container)
-     * @param d: Object - data to be dispatched
+     * @param {string} name - alias to the element saved on the Lemonade CC (common container)
+     * @param {object} data - data to be dispatched
      */
-    L.dispatch = function(a, d) {
+    L.dispatch = function(name, data) {
         // Get from the container
-        var h = R.container[a];
+        let h = R.container[name];
         // Confirm that the alias is a function
         if (typeof(h) === 'function') {
             // Dispatch the data to the function
-            h(d);
+            h(data);
             // Save the data to the local storage
             if (h.storage === true) {
-                window.localStorage.setItem(a, JSON.stringify(d));
+                window.localStorage.setItem(name, JSON.stringify(data));
             }
         }
     }
 
     /**
-     * Translate
+     * Register components
+     * @param {object} components - register components
      */
-    L.translate = function(o) {
-        if (o.substr(0,3) == '^^[' && o.substr(-3) == ']^^') {
-            o = o.replace('^^[','').replace(']^^','');
-
-            if (document.dictionary[o]) {
-                return document.dictionary[o];
-            } else {
-                return o;
+    L.setComponents = function(components) {
+        if (typeof(components) === 'object') {
+            // Component names
+            let k = Object.keys(components);
+            // Make sure they follow the standard
+            for (let i = 0; i < k.length; i++) {
+                R.components[k[i].toUpperCase()] = components[k[i]];
             }
         }
     }
 
     L.component = class {
-        constructor(o) {
-            // Assign the initial values
-            if (o && typeof(o) == 'object') {
-                Object.assign(this, o);
+        constructor(s) {
+            if (s) {
+                Object.assign(this, s);
             }
         }
     }
 
     return L;
 })));
+
+

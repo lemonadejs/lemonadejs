@@ -15,19 +15,19 @@
 
     return function(html) {
         // Lemonade element
-        var self = this;
+        let self = this;
         // The current result
-        var result = self.result = self.data;
+        let result = self.result = self.data;
 
         // Monitor the search
         self.onchange = function(prop) {
-            if (prop === 'data' || prop == 'input') {
+            if (prop === 'data' || prop === 'input') {
                 search(self.input);
 
                 if (typeof(self.onsearch) == 'function') {
                     self.onsearch(self);
                 }
-            } else if (prop == 'page') {
+            } else if (prop === 'page') {
                 // Change the page sending the element where the property page is associated
                 page();
 
@@ -37,16 +37,16 @@
             }
         }
 
-        // Apply the paginatino after initialization
+        // Apply the pagination after initialization
         self.onload = function() {
             if (self.pagination > 0) {
                 self.page = 0;
             }
         }
 
-        var find = function(o, query) {
-            for (var key in o) {
-                var value = o[key];
+        const find = function(o, query) {
+            for (let key in o) {
+                let value = o[key];
                 if ((''+value).toLowerCase().search(query) >= 0) {
                     return true;
                 }
@@ -54,7 +54,7 @@
             return false;
         }
 
-        var search = function(str) {
+        const search = function(str) {
             // Filter the data
             result = self.result = self.data.filter(function(item) {
                 return find(item, str);
@@ -66,25 +66,27 @@
         /**
          * Change the page when pagination is defined
          */
-        var page = function() {
+        const page = function() {
             // Pagination
-            var p = parseInt(self.pagination);
+            let p = parseInt(self.pagination);
+            let s;
+            let f;
             // Define the range for this pagination configuration
             if (p && result.length > p) {
-                var s = (p * self.page);
-                var f = (p * self.page) + p;
+                s = (p * self.page);
+                f = (p * self.page) + p;
 
                 if (result.length < f) {
-                    var f = result.length;
+                    f = result.length;
                 }
             } else {
-                var s = 0;
-                var f = result.length;
+                s = 0;
+                f = result.length;
             }
 
             // Change the page
             p = [];
-            for (var i = s; i < f; i++) {
+            for (let i = s; i < f; i++) {
                 p.push(result[i]);
             }
 
@@ -95,26 +97,28 @@
             pagination();
         }
 
-        var pagination = function() {
-            var pages = [];
+        const pagination = function() {
+            let pages = [];
             // Update pagination
             if (self.pagination > 0) {
                 // Get the number of the pages based on the data
-                var n = Math.ceil(result.length / self.pagination);
+                let n = Math.ceil(result.length / self.pagination);
                 if (n > 1) {
+                    let s;
+                    let f;
                     // Controllers
                     if (self.page < 6) {
-                        var s = 0;
-                        var f = n < 10 ? n : 10;
+                        s = 0;
+                        f = n < 10 ? n : 10;
                     } else if (n - self.page < 5) {
-                        var s = n - 9;
-                        var f = n;
+                        s = n - 9;
+                        f = n;
                         if (s < 0) {
                             s = 0;
                         }
                     } else {
-                        var s = parseInt(self.page) - 4;
-                        var f = parseInt(self.page) + 5;
+                        s = parseInt(self.page) - 4;
+                        f = parseInt(self.page) + 5;
                     }
 
                     // First page
@@ -126,7 +130,8 @@
                     }
 
                     // Link to each page
-                    for (var i = s; i < f; i++) {
+                    let i;
+                    for (i = s; i < f; i++) {
                         pages.push({
                             title: i,
                             value: i+1,
@@ -147,25 +152,23 @@
             self.pages = pages;
         }
 
-        var Item = function() {
+        const Item = function() {
             return lemonade.element(html, this);
         }
 
-        var Pagination = function() {
+        const Pagination = function() {
             // Pagination
-            var self = this;
-            var template = `<li onclick="self.parent.page = this.title;" title="{{self.title}}" selected="{{self.selected}}">{{self.value}}</li>`;
-            return lemonade.element(template, self);
+            let template = `<li onclick="self.parent.page = this.title;" title="{{self.title}}" selected="{{self.selected}}">{{self.value}}</li>`;
+            return lemonade.element(template, this);
         }
 
-        var template = `
-            <>
-                <div class="list-header" data="{{self.data}}">
-                    <input type='text' @bind="self.input" search="{{self.search}}"/>
-                    <ul page="{{self.page}}"><Pagination @loop="self.pages"/></ul>
-                </div>
-                <div class="list-content" @ref="self.container" data-message="{{self.message}}"><Item @loop="self.result"/></div>
-            </>`;
+        let template = `<>
+            <div class="list-header" data="{{self.data}}">
+                <input type='text' @bind="self.input" search="{{self.search}}"/>
+                <ul page="{{self.page}}"><Pagination @loop="self.pages"/></ul>
+            </div>
+            <div class="list-content" @ref="self.container" data-message="{{self.message}}"><Item @loop="self.result"/></div>
+        </>`;
 
 
         return lemonade.element(template, self, { Item, Pagination });

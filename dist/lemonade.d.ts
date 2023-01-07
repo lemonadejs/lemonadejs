@@ -52,6 +52,12 @@ declare namespace lemonade {
      * @param {object} Object as an argument for the method.
      */
     function dispatch(alias: String, argument: Object) : void;
+
+    /**
+     * Add a custom component available across the whole application
+     * @param {object} components
+     */
+    function setComponents(components: Object) : void;
 }
 
 export = lemonade;

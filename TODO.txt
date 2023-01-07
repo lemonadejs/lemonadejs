@@ -1,7 +1,3 @@
-<div @ref="self.containerLogo" class="jlogin-logo" data-visible="{{self.logo?true:false}}">
-
-</div>
-
 https://codebase.show/projects/realworld?category=frontend&language=javascript
 
 https://news.ycombinator.com/item?id=28196849
