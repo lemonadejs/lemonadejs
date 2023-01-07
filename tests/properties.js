@@ -1,4 +1,4 @@
-tester('Tracking sub-level object properties', function(render) {
+test('Tracking sub-level object properties', function(render) {
     // Lemonade Component
     function Component () {
         let self = this;
@@ -24,7 +24,7 @@ tester('Tracking sub-level object properties', function(render) {
     })
 });
 
-tester('Reactive properties in class or method components', function(render) {
+test('Reactive properties in class or method components', function(render) {
     function FunctionComponent() {
         let self = this;
         let template = `<h1>{{self.value}}</h1>`;
@@ -61,7 +61,7 @@ tester('Reactive properties in class or method components', function(render) {
     })
 });
 
-tester('Property with a boolean value', function(render) {
+test('Property with a boolean value', function(render) {
     function Component() {
         let self = this;
         self.disabled = true;
@@ -77,7 +77,7 @@ tester('Property with a boolean value', function(render) {
     })
 });
 
-tester('Conditional background-color based on a value of an element', function(render) {
+test('Conditional background-color based on a value of an element', function(render) {
     function Component() {
         let self = this;
         self.value = '1000';
@@ -94,7 +94,7 @@ tester('Conditional background-color based on a value of an element', function(r
     })
 });
 
-tester('Property with an array value', function(render) {
+test('Property with an array value', function(render) {
     function Component() {
         let self = this;
         self.value = [1,2,3,4];
@@ -112,7 +112,7 @@ tester('Property with an array value', function(render) {
     })
 });
 
-tester('Relative properties with formulas', function(render) {
+test('Relative properties with formulas', function(render) {
     function Component() {
         let self = this;
         self.test = 5.22;

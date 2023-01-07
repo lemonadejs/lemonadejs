@@ -1,4 +1,4 @@
-tester('Updating a property from the onchange', function(render) {
+test('Updating a property from the onchange', function(render) {
     function Component() {
         let self = this;
         self.value = null;
@@ -19,7 +19,7 @@ tester('Updating a property from the onchange', function(render) {
     })
 });
 
-tester('Onload event', function(render) {
+test('Onload event', function(render) {
     function Component() {
         let self = this;
         self.value = null;

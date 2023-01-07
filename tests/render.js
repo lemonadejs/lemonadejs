@@ -1,4 +1,4 @@
-tester('Custom element as a root element', function(render) {
+test('Custom element as a root element', function(render) {
     function Test() {
         // Get the attributes from the tag
         let self = this;
@@ -22,7 +22,7 @@ tester('Custom element as a root element', function(render) {
     })
 });
 
-tester('Custom element renders in the correct position', function(render) {
+test('Custom element renders in the correct position', function(render) {
     function Test() {
         // Get the attributes from the tag
         let self = this;

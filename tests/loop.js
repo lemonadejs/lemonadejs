@@ -1,4 +1,4 @@
-tester('Update the first element inside a loop', function(render) {
+test('Update the first element inside a loop', function(render) {
     // Get the attributes from the tag
     function Component() {
         let self = this;
@@ -23,7 +23,7 @@ tester('Update the first element inside a loop', function(render) {
     })
 });
 
-tester('Add a new item in the loop and refresh', function(render) {
+test('Add a new item in the loop and refresh', function(render) {
     // Get the attributes from the tag
     function Component() {
         let self = this;

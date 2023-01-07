@@ -1,4 +1,4 @@
-tester('Initial value in the custom component @bind property', function(render) {
+test('Initial value in the custom component @bind property', function(render) {
     function Test() {
         // This will bring all properties defined in the tag
         let self = this;
@@ -23,7 +23,7 @@ tester('Initial value in the custom component @bind property', function(render) 
     })
 });
 
-tester('@Bind on custom components as classes', function(render) {
+test('@Bind on custom components as classes', function(render) {
     class Hello extends lemonade.component {
         constructor(s) {
             super(s);
@@ -56,7 +56,7 @@ tester('@Bind on custom components as classes', function(render) {
     })
 });
 
-tester('Testing @loop and @bind together.', function(render) {
+test('Testing @loop and @bind together.', function(render) {
     const Component = function() {
         let self = Object.assign(this, {
             value: 2,
@@ -81,7 +81,7 @@ tester('Testing @loop and @bind together.', function(render) {
     })
 });
 
-tester('Two-way data binding for custom elements with @bind', function(render) {
+test('Two-way data binding for custom elements with @bind', function(render) {
     function Test() {
         let self = this;
         let template = `<div>
@@ -113,7 +113,7 @@ tester('Two-way data binding for custom elements with @bind', function(render) {
     })
 });
 
-tester('Two-way data binding on custom elements (protection against loop)', function(render) {
+test('Two-way data binding on custom elements (protection against loop)', function(render) {
     function Test() {
         // This will bring all properties defined in the tag
         let self = this;

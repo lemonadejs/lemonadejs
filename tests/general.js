@@ -1,4 +1,4 @@
-tester('Reference for a custom component as a class', function(render) {
+test('Reference for a custom component as a class', function(render) {
     class Hello extends lemonade.component {
         constructor(o) {
             super(o);
@@ -32,7 +32,7 @@ tester('Reference for a custom component as a class', function(render) {
     })
 });
 
-tester('Passing variables and functions as references', function(render) {
+test('Passing variables and functions as references', function(render) {
     function test() {
         console.log(arguments)
     }
@@ -54,7 +54,7 @@ tester('Passing variables and functions as references', function(render) {
 });
 
 
-tester('Integrating LemonadeJS with web-components', function(render) {
+test('Integrating LemonadeJS with web-components', function(render) {
     class HelloElement extends HTMLElement {
 
         constructor() {

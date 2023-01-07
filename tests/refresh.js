@@ -1,4 +1,4 @@
-tester('Testing node position after full refresh', function(render) {
+test('Testing node position after full refresh', function(render) {
     function Test() {
         let self = this;
         let template = `<div>{{self.value}}</div>`;
@@ -32,7 +32,7 @@ tester('Testing node position after full refresh', function(render) {
     })
 });
 
-tester('Testing node tagName a single item inside a loop refresh', function(render) {
+test('Testing node tagName a single item inside a loop refresh', function(render) {
     function Test() {
         var self = this;
         if (self.status) {
