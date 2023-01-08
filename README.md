@@ -22,17 +22,14 @@ It would help you deliver reusable components and does not require transpilers, 
 % npm install lemonadejs
 
 <h3>Using from CDN</h3>
-
+```html
+<script src="https://cdn.jsdelivr.net/npm/lemonadejs/dist/lemonade.min.js"></script>
+```
 <h3>Create a LemonadeJS sample app</h3>
 
 % npx @lemonadejs/create myApp<br>
 % cd myApp<br>
 % npm run start<br>
-
-
-```html
-<script src="https://cdn.jsdelivr.net/npm/lemonadejs/dist/lemonade.min.js"></script>
-```
 
 <br><br>
 
