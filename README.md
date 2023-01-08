@@ -16,16 +16,22 @@ It would help you deliver reusable components and does not require transpilers, 
 - Lightweight and simple to use
 
 <br>
-
 <h2>Installation</h2>
 
+<h3>NPM package</h3>
 % npm install lemonadejs
 
-<h3>Create LemonadeJS App</h3>
+<h3>Create a LemonadeJS sample app</h3>
 
-% npx @lemonadejs/create myApp
-% cd myApp
-% npm run start
+% npx @lemonadejs/create myApp<br>
+% cd myApp<br>
+% npm run start<br>
+
+<h3>Using from CDN</h3>
+
+```html
+<script src="https://cdn.jsdelivr.net/npm/lemonadejs/dist/lemonade.min.js"></script>
+```
 
 <br><br>
 
@@ -109,11 +115,10 @@ export default function Component() {
 
 <h3>The event object</h3>
 
-```javascript
+```html
 <html>
 <body>
 <div id='root'></div>
-
 <script src="https://cdn.jsdelivr.net/npm/lemonadejs/dist/lemonade.min.js"></script>
 <script>
 function Component() {
@@ -136,11 +141,10 @@ lemonade.render(Component, document.getElementById('root'));
 
 <h3>Enable/disable HTML elements</h3>
 
-```javascript
+```html
 <html>
 <body>
 <div id='root'></div>
-
 <script src="https://cdn.jsdelivr.net/npm/lemonadejs/dist/lemonade.min.js"></script>
 <script>
 function App() {
@@ -156,6 +160,36 @@ lemonade.render(App, document.getElementById('root'));
 </body>
 </html>
 ```
+
+<h3>Reactive Webcomponents</h3>
+
+```html
+<hello-element title="Hello world" />
+```
+
+```javascript
+class HelloElement extends HTMLElement {
+    constructor() {
+        super();
+    }
+ 
+    render() {
+        let self = this;
+        return `<>
+            <h1>{{self.title}}</h1>
+            <input type="button" value="setTitle()"
+                onclick="self.title = 'Test'" />
+        </>`;
+    }
+ 
+    connectedCallback() {
+        lemonade.render(this.render, this, this);
+    }
+}
+ 
+window.customElements.define('hello-element', HelloElement);
+```
+
 
 <h2>License</h2>
 
