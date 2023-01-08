@@ -10,6 +10,7 @@
  * - @bind jSuites.dropdown initial value is not set when properties has a value
  * - setComponents for local variables
  * - {{self.test*self.test}} - avoid duplication in the monitoring
+ * - Classes are not detect with https://codesandbox.io/s/lemonadejs-examples-sebfeo
  */
 
 ;(function (global, factory) {

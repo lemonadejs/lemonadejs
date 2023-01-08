@@ -304,7 +304,7 @@
         var root = lemonade.element(template, self);
 
         // Onclick event
-        root.addEventListener('mousedown',  function(e) {
+        self.el.addEventListener('mousedown',  function(e) {
 
             e = e || window.event;
             if (e.buttons) {
@@ -324,7 +324,7 @@
             }
         });
 
-        root.addEventListener('contextmenu', function(e) {
+        self.el.addEventListener('contextmenu', function(e) {
             if (e.target.tagName == 'IMG') {
                 menu.open(e, [
                     {
@@ -347,13 +347,13 @@
             }
         });
 
-        root.addEventListener('onkeydown', function(e) {
+        self.el.addEventListener('onkeydown', function(e) {
             if (e.key == 'Delete' && e.target.tagName == 'IMG') {
                 self.deletePhoto();
             }
         })
 
-        root.val = function(v) {
+        self.el.val = function(v) {
             if (v === undefined) {
                 return self.getValue();
             } else {

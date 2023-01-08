@@ -14,10 +14,10 @@
         "javascript plugins"
     ],
     "dependencies": {
-        "lemonadejs": "^2.2.6",
-        "jsuites": "^4.10.1",
-        "@jsuites/cropper": "^1.6.0"
+        "lemonadejs": "^3.0.0",
+        "jsuites": "^4.17.7",
+        "@jsuites/cropper": "^1.6.2"
     },
     "main": "dist/cropper.js",
-    "version": "1.6.2"
+    "version": "2.0.0"
 }
