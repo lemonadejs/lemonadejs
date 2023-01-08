@@ -15,6 +15,20 @@ It would help you deliver reusable components and does not require transpilers, 
 - Highly flexible and customizable
 - Lightweight and simple to use
 
+<br>
+
+<h2>Installation</h2>
+
+% npm install lemonadejs
+
+<h3>Create LemonadeJS App</h3>
+
+% npx @lemonadejs/create myApp
+% cd myApp
+% npm run start
+
+<br><br>
+
 <h2>Examples</h2>
 
 <h3>Node</h3>
@@ -142,12 +156,6 @@ lemonade.render(App, document.getElementById('root'));
 </body>
 </html>
 ```
-
-
-<h2>Installation</h2>
-
-% npm install lemonadejs
-
 
 <h2>License</h2>
 
