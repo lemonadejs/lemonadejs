@@ -1,0 +1,21 @@
+{
+    "name": "@lemonadejs/test",
+    "title": "LemonadeJS unit testing",
+    "description": "This extension helps creating automated testing for LemonadeJS components.",
+    "author": {
+        "name": "Contact <contact@lemonadejs.net>",
+        "url": "https://lemonadejs.net"
+    },
+    "keywords": [
+        "unit testing",
+        "tests",
+        "testing",
+        "lemonadejs plugins",
+        "js",
+        "library",
+        "javascript plugins"
+    ],
+    "type": "module",
+    "main": "dist/index.js",
+    "version": "1.0.2"
+}
