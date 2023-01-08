@@ -1,5 +1,5 @@
 /**
- * Lemonadejs v3.0.0 (ESM build)
+ * Lemonadejs v3.0.2 (ESM build)
  *
  * Website: https://lemonadejs.net
  * Description: Create amazing web based reusable components.
@@ -202,7 +202,7 @@ function Lemonade() {
                     e.setAttribute('value', v);
                 }
             }
-        } else if (t === '@src') {
+        } else if (t === 'src') {
             if (! v) {
                 v = e.getAttribute('default');
             }
@@ -625,6 +625,9 @@ function Lemonade() {
                             }
                             // Register the value attribute to be tracked
                             parseTokens.call(self, { e: element, a: prop, v: attr[k[i]], s: self, r: r, loop: true })
+                        } else if (type === 'src') {
+                            // Parse attributes
+                            parseTokens.call(self, { e: element, a: 'src', v: attr[k[i]], s: self })
                         }
 
                         // Sent to the queue
