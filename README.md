@@ -21,7 +21,7 @@ It would help you deliver reusable components and does not require transpilers, 
 
 Build modern applications with lemonadeJS and node.
 
- <a href='https://codesandbox.io/s/lemonadejs-reactive-app-no2dl'>See this example on codesandbox</a>
+ <a href='https://codesandbox.io/s/reactive-micro-library-ny99bk'>See this example on codesandbox</a>
 
 ```javascript
 import lemonade from "lemonadejs";
@@ -34,7 +34,7 @@ export default function App() {
         <div><Hello /></div>
         <p>You clicked {{self.count}} times</p>
         <button onclick="self.count++;">Click me</button>
-    </div>`;
+  </div>`;
 }
 ```
 
