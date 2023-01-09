@@ -7,9 +7,9 @@
     // Load LemonadeJS
     if (typeof(lemonade) == 'undefined') {
         if (typeof(require) === 'function') {
-            const lemonade = require('lemonadejs');
+            var lemonade = require('lemonadejs');
         } else if (window.lemonade) {
-            const lemonade = window.lemonade;
+            var lemonade = window.lemonade;
         }
     }
 

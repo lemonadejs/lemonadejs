@@ -23,7 +23,7 @@
     }
 
     return function() {
-        var self = this;
+        const self = this;
 
         self.onchange = function(prop) {
             if (self.instance && prop === 'value') {
@@ -40,9 +40,9 @@
         }
 
         if (self.type == 'input') {
-            var template = `<input type="text" @ready="self.create(this)" name="{{self.name}}" value="{{self.value}}" />`;
+            const template = `<input type="text" @ready="self.create(this)" name="{{self.name}}" value="{{self.value}}" />`;
         } else {
-            var template = `<div @ready="self.create(this)" name="{{self.name}}"  value="{{self.value}}"></div>`;
+            const template = `<div @ready="self.create(this)" name="{{self.name}}"  value="{{self.value}}"></div>`;
         }
 
         return lemonade.element(template, self);

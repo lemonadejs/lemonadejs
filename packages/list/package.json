@@ -15,8 +15,8 @@
         "javascript plugins"
     ],
     "dependencies": {
-        "lemonadejs": "^2.8.11"
+        "lemonadejs": "^3.0.3"
     },
     "main": "dist/index.js",
-    "version": "1.4.0"
+    "version": "2.0.0"
 }

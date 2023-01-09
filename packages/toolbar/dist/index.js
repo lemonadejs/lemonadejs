@@ -7,9 +7,9 @@
     // Load LemondeJS
     if (typeof(lemonade) == 'undefined') {
         if (typeof(require) === 'function') {
-            const lemonade = require('lemonadejs');
+            var lemonade = require('lemonadejs');
         } else if (window.lemonade) {
-            const lemonade = window.lemonade;
+            var lemonade = window.lemonade;
         }
     }
 
@@ -35,7 +35,7 @@
     }
 
     return function(html) {
-        let self = this;
+        const self = this;
 
         if (! self.data) {
             self.data = [];

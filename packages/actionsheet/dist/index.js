@@ -7,13 +7,13 @@
     // Load lemonadejs
     if (typeof(lemonade) == 'undefined') {
         if (typeof(require) === 'function') {
-            const lemonade = require('lemonadejs');
+            var lemonade = require('lemonadejs');
         } else if (window.lemonade) {
-            const lemonade = window.lemonade;
+            var lemonade = window.lemonade;
         }
     }
 
-    let Groupoptions = (function() {
+    const Groupoptions = function() {
         const self = this;
             
         return `<div>
@@ -25,9 +25,9 @@
                     style="{{self.action == 'cancel' ? 'color:red;' : ''}}"
                 />
             </div>`;
-    });
+    }
 
-    let Actiongroup = (function() {
+    const Actiongroup = function() {
         const self = this;
 
         if (! Array.isArray(self.options)) {
@@ -39,7 +39,7 @@
         </div>`;
 
         return lemonade.element(template, self, { Groupoptions });
-    });
+    }
 
     return function() {
         const self = this;
@@ -71,9 +71,9 @@
             }
         }
 
-        let template = `<div class="jactionsheet" style="{{!self.visible? 'display: none;':'display:flex;'}}">
+        let template = `<div class="jactionsheet" style="display: {{self.visible?'flex':'none'}}">
                 <div @ref="self.container" class="{{self.className}}">
-                    <Actiongroup @loop="self.actions" close={{self.close}}/>
+                    <Actiongroup @loop="self.actions" close="{{self.close}}" />
                 </div>
             </div>`;
 

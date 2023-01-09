@@ -740,7 +740,7 @@
                     self = {};
                 }
                 // Execute component
-                o = o.call(self, template);
+                o = o.call(self, template, components);
                 // Process return
                 if (typeof (o) === 'function') {
                     o = L.element(o(dynamic.bind({c: o, s: self})), self, components);
@@ -831,8 +831,20 @@
             self = {};
         }
 
+        // Make sure all uppercase
+        if (typeof(components) === 'object') {
+            let k = Object.keys(components);
+            // Make sure they follow the standard
+            for (let i = 0; i < k.length; i++) {
+                components[k[i].toUpperCase()] = components[k[i]];
+            }
+        }
+
         // Parse a HTML template
         if (! isDOM(t)) {
+            if (! t) {
+                t = '';
+            }
             // Close any custom not fully closed component
             t = t.trim()
                 .replace(/(<(([A-Z]{1}|[a-z]*-){1}[a-zA-Z0-9_-]+)[^>]*)(\/|\/.{1})>/gm, "$1></$2>")

@@ -704,6 +704,7 @@ function Lemonade() {
      * @param {object?} self - self to be used
      * @param {string?} template - template to be used
      * @param {boolean?} action - before (true), append (false)
+     * @param {object} components - running with components
      * @return {HTMLElement|boolean} o
      */
     L.render = function(o, el, self, template, action, components) {
@@ -728,7 +729,7 @@ function Lemonade() {
                     self = {};
                 }
                 // Execute component
-                o = o.call(self, template);
+                o = o.call(self, template, components);
                 // Process return
                 if (typeof (o) === 'function') {
                     o = L.element(o(dynamic.bind({c: o, s: self})), self, components);
@@ -819,8 +820,20 @@ function Lemonade() {
             self = {};
         }
 
+        // Make sure all uppercase
+        if (typeof(components) === 'object') {
+            let k = Object.keys(components);
+            // Make sure they follow the standard
+            for (let i = 0; i < k.length; i++) {
+                components[k[i].toUpperCase()] = components[k[i]];
+            }
+        }
+
         // Parse a HTML template
         if (! isDOM(t)) {
+            if (! t) {
+                t = '';
+            }
             // Close any custom not fully closed component
             t = t.trim()
                 .replace(/(<(([A-Z]{1}|[a-z]*-){1}[a-zA-Z0-9_-]+)[^>]*)(\/|\/.{1})>/gm, "$1></$2>")
