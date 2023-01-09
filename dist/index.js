@@ -506,8 +506,9 @@ function Lemonade() {
     /**
      * Parse all attributes from one element
      * @param {HTMLElement} element
+     * @param {object} components
      */
-    const parse = function(element) {
+    const parse = function(element, components) {
         // Self for this parser
         let self = this;
         // Helpers
@@ -519,7 +520,12 @@ function Lemonade() {
         // Custom elements
         let m = element.tagName;
         // Expected function
-        t = R.components[m];
+        if (components) {
+            t = components[m];
+        }
+        if (! t) {
+            t = R.components[m];
+        }
         // Verify scope in the declared extensions
         if (typeof(t) == 'function') {
             handler = t;
@@ -649,7 +655,7 @@ function Lemonade() {
                 t.push(element.children[i]);
             }
             for (let i = 0; i < t.length; i++) {
-                parse.call(self, t[i]);
+                parse.call(self, t[i], components);
             }
         } else {
             if (element.textContent) {
@@ -666,7 +672,7 @@ function Lemonade() {
             // Reference to the element
             register(t.self, 'parent', self);
             // Create component
-            L.render(t.handler, element, t.self, t.template, true);
+            L.render(t.handler, element, t.self, t.template, true, components);
         }
     }
 
@@ -700,7 +706,7 @@ function Lemonade() {
      * @param {boolean?} action - before (true), append (false)
      * @return {HTMLElement|boolean} o
      */
-    L.render = function(o, el, self, template, action) {
+    L.render = function(o, el, self, template, action, components) {
         // Component
         let args = Array.from(arguments);
 
@@ -716,7 +722,7 @@ function Lemonade() {
                 if (! self) {
                     self = new o({});
                 }
-                o = L.element(self.render(template), self);
+                o = L.element(self.render(template), self, components);
             } else {
                 if (! self) {
                     self = {};
@@ -725,11 +731,11 @@ function Lemonade() {
                 o = o.call(self, template);
                 // Process return
                 if (typeof (o) === 'function') {
-                    o = L.element(o(dynamic.bind({c: o, s: self})), self);
+                    o = L.element(o(dynamic.bind({c: o, s: self})), self, components);
                     // Remove dynamic references
                     delete self.__r;
                 } else if (typeof (o) === 'string') {
-                    o = L.element(o, self);
+                    o = L.element(o, self, components);
                 }
             }
 
@@ -812,8 +818,6 @@ function Lemonade() {
         if (! self) {
             self = {};
         }
-        // Extended components legacy mode
-        L.setComponents(components);
 
         // Parse a HTML template
         if (! isDOM(t)) {
@@ -845,7 +849,7 @@ function Lemonade() {
         }
 
         // Parse the content
-        parse.call(self, el);
+        parse.call(self, el, components);
 
         // Create the el bound to the self
         register(self, 'el', el);
@@ -860,6 +864,9 @@ function Lemonade() {
 
         return root;
     }
+
+    // Deprecated
+    L.template = L.element;
 
     /**
      * Apply self to an existing appended DOM element

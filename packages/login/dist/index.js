@@ -517,7 +517,7 @@
                 </form>
             </div>`;
 
-        return lemonade.template(template, self)
+        return lemonade.element(template, self)
     }
 
     return function(a, b) {

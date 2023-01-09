@@ -7,17 +7,16 @@
     // Load lemonadejs
     if (typeof(lemonade) == 'undefined') {
         if (typeof(require) === 'function') {
-            var lemonade = require('lemonadejs');
+            const lemonade = require('lemonadejs');
         } else if (window.lemonade) {
-            var lemonade = window.lemonade;
+            const lemonade = window.lemonade;
         }
     }
 
-    var Groupoptions = (function() {
-        var self = this;
+    let Groupoptions = (function() {
+        const self = this;
             
-        var template = `
-            <div>
+        return `<div>
                 <input 
                     type="button" 
                     class="{{self.className || ''}}" 
@@ -25,30 +24,25 @@
                     onclick="self.onclick(self)"
                     style="{{self.action == 'cancel' ? 'color:red;' : ''}}"
                 />
-            </div>
-        `;
-
-        return lemonade.element(template, self);
+            </div>`;
     });
 
-    var Actiongroup = (function() {
-        var self = this;
+    let Actiongroup = (function() {
+        const self = this;
 
         if (! Array.isArray(self.options)) {
             self.options = [];
         }
 
-        var template = `
-            <div class="jactionsheet-group">
-                <Groupoptions @loop="self.options" />
-            </div>
-        `;
+        var template = `<div class="jactionsheet-group">
+            <Groupoptions @loop="self.options" />
+        </div>`;
 
         return lemonade.element(template, self, { Groupoptions });
     });
 
     return function() {
-        var self = this;
+        const self = this;
 
         self.visible = false;
         self.actions = []
@@ -77,13 +71,11 @@
             }
         }
 
-        var template = `
-            <div class="jactionsheet" style="{{!self.visible? 'display: none;':'display:flex;'}}">
+        let template = `<div class="jactionsheet" style="{{!self.visible? 'display: none;':'display:flex;'}}">
                 <div @ref="self.container" class="{{self.className}}">
                     <Actiongroup @loop="self.actions" close={{self.close}}/>
                 </div>
-            </div>
-        `;
+            </div>`;
 
         return lemonade.element(template, self, { Actiongroup, Groupoptions });
     }

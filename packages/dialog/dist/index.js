@@ -7,14 +7,14 @@
     // Load lemonadejs
     if (typeof(lemonade) == 'undefined') {
         if (typeof(require) === 'function') {
-            var lemonade = require('lemonadejs');
+            const lemonade = require('lemonadejs');
         } else if (window.lemonade) {
-            var lemonade = window.lemonade;
+            const lemonade = window.lemonade;
         }
     }
 
     return function() {
-        var self = this;
+        const self = this;
 
         self.rootClass = 'jdialog'
         self.title = '';
@@ -70,8 +70,8 @@
                 }
             }
         }
-        var template = `
-        <div tabindex="901" class="{{self.rootClass}}" @ref="self.container">
+
+        return `<div tabindex="901" class="{{self.rootClass}}" @ref="self.container">
             <div class="jdialog-container">
             <div class="jdialog-header">
                 <div class="jdialog-title">{{self.title}}</div>
@@ -93,10 +93,7 @@
                 </div>
             </div>
             </div>
-        </div>
-        `;
-
-        return lemonade.element(template, self);
+        </div>`;
     }
 
 })));
