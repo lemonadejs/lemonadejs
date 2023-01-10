@@ -23,7 +23,7 @@
     }
 
     return function() {
-        var self = this;
+        const self = this;
 
         self.create = function(o) {
             if (this.remotesearch === 'true') {
@@ -38,9 +38,7 @@
             self.instance = jSuites.dropdown(o, this);
         }
 
-        var template = `<div @ready="self.create(this)" name="{{self.name}}"></div>`;
-
-        return lemonade.element(template, self);
+        return `<div @ready="self.create(this)" name="{{self.name}}"></div>`;
     }
 
 })));
