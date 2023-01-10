@@ -3,18 +3,12 @@
     typeof define === 'function' && define.amd ? define(factory) :
     global.test = factory();
 }(this, (function () {
-    // Test number
-    let testIndex = 1;
-    // Expected value
-    let expectedValue = null;
-    // Actual result
-    let resultValue = null;
-    // Stats
-    let totals = [0,0];
     // Tests
     let tests = [];
 
-    const Run = function(title, parser) {
+    const Run = function(definition) {
+        let title = definition[0];
+        let parser = definition[1];
         // Create a blank test
         let self = {};
         // Create root temporary element
@@ -30,13 +24,13 @@
                 assert: function(result, validation) {
                     try {
                         // Expected result
-                        expectedValue = result;
+                        definition[2] = result;
                         // Final result
-                        resultValue = validation.call(self);
+                        definition[3] = validation.call(self);
                         // Assert
-                        return resultValue === expectedValue;
+                        return definition[2] === definition[3];
                     } catch (e) {
-                        resultValue = e;
+                        definition[3] = e;
                     }
                 }
             }
@@ -45,34 +39,44 @@
         // Remove temporary element from the dom
         root.remove();
 
-        // Test result
-        if (ret === true) {
-            console.log(testIndex + '. ' + title + ' has passed\n\n');
-            totals[0]++;
-        } else {
-            console.error(testIndex + '. ' + title + ' has not passed\n        Return {'+ resultValue + '} Expected {' + expectedValue + '}\n\n');
-            totals[1]++;
-        }
-
-        // Index control
-        testIndex++;
+        return ret;
     }
 
     let Component = function(title, parser) {
-        tests.push([title, parser]);
+        tests.push([title, parser, null, null]);
     };
 
     Component.run = function() {
         // Reset
-        totals = [0,0];
-        testIndex = 1;
+        let totals = [0,0];
+        let testIndex = 0;
 
-        let t = null;
-        while (t = tests.shift()) {
-            Run(t[0],t[1]);
+        try {
+            // Temporary
+            let t = null;
+            // Return
+            let r = null;
+            while (t = tests.shift()) {
+                // Index control
+                testIndex++;
+                // Which test is this
+                console.log(testIndex + '. ' + t[0]);
+                // Execute test
+                r = Run(t);
+                // Result
+                if (r === true) {
+                    console.log(' has passed\n\n');
+                    totals[0]++;
+                } else {
+                    console.error(' has not passed. Return {'+ definition[2] + '} Expected {' + definition[3] + '}\n\n');
+                    totals[1]++;
+                }
+            }
+            console.log('Done! Total number of tests: ' + (--testIndex));
+            console.log('    Passed: ' + totals[0] + ' Failed: ' + totals[1]);
+        } catch(e) {
+            console.log('Something weng wrong with the test.\n\n', e);
         }
-        console.log('Done! Total number of tests: ' + (--testIndex));
-        console.log('    Passed: ' + totals[0] + ' Failed: ' + totals[1]);
     }
 
     return Component;
