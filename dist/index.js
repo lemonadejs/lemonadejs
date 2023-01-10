@@ -1,5 +1,5 @@
 /**
- * Lemonadejs v3.0.2 (ESM build)
+ * Lemonadejs v3.0.7 (ESM build)
  *
  * Website: https://lemonadejs.net
  * Description: Create amazing web based reusable components.
@@ -37,9 +37,10 @@ function Lemonade() {
     /**
      * Path string to object
      * @param {string} str - path to the value as a string
+     * @param {boolean} onlyObject - get the last valid object in the nested object
      * @return {array|boolean} - return the object and the property
      */
-    let Path = function(str) {
+    const Path = function(str, onlyObject) {
         let t = str.split('.');
         if (t.length) {
             // Object
@@ -51,7 +52,11 @@ function Lemonade() {
                 p = t.shift();
                 // Check if the property exists
                 if (o.hasOwnProperty(p)) {
-                    o = o[p];
+                    if (! onlyObject || typeof(o[p]) === 'object' && ! Array.isArray(o[p])) {
+                        o = o[p];
+                    } else {
+                        return [o,p];
+                    }
                 } else {
                     return undefined;
                 }
@@ -417,14 +422,14 @@ function Lemonade() {
      * @param {object} content - content tracking object
      */
     const parseTokens = function(content) {
-        // Get all self tokens in use - TODO if self.test[1]
-        let tokens = content.v.match(/(?:self.)(\.?\w+\b)+(?!\()/gm);
+        // Get all self tokens in use
+        let tokens = content.v.match(/self.([.a-zA-Z1-9_]+)*/gm);
         if (tokens) {
             for (let i = 0; i < tokens.length; i++) {
                 // Property found
                 let p = tokens[i].replace('self.', '');
                 // Get path to the object
-                p = Path.call(this, p);
+                p = Path.call(this, p, true);
                 // Register
                 let t = R.tracking.get(p[0]);
                 if (! t) {
@@ -538,7 +543,7 @@ function Lemonade() {
                     console.error(m + ' is not found.');
                 }
             } else {
-                console.error(m + ' conflicts with a valid tag name');
+                console.log(m + ' conflicts with a valid tag name');
             }
         }
 
@@ -633,7 +638,7 @@ function Lemonade() {
                             parseTokens.call(self, { e: element, a: prop, v: attr[k[i]], s: self, r: r, loop: true })
                         } else if (type === 'src') {
                             // Parse attributes
-                            parseTokens.call(self, { e: element, a: 'src', v: attr[k[i]], s: self })
+                            parseTokens.call(self, { e: element, a: 'src', v: '{{' + attr[k[i]] + '}}', s: self })
                         }
 
                         // Sent to the queue
