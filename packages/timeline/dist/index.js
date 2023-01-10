@@ -198,6 +198,14 @@
             self.message = 'No records found';
         }
 
+        self.el.val = function(v) {
+            if (typeof(v) === 'undefined') {
+                return self.value;
+            } else {
+                self.value = v;
+            }
+        }
+
         var template = `<div class="jtimeline" @ref="self.root">
                 <div class="jtimeline-header">
                 <div class="jtimeline-label">
@@ -210,21 +218,11 @@
                 </div>
                 </div>
                 <div @ref="self.container" class="{{self.containerClass}}">
-                    <div class="jtimeline-data" data-message="{{self.message}}"><Events @loop="self.data" edit={{self.edit}} @ref="self.event" /></div>
+                    <div class="jtimeline-data" data-message="{{self.message}}"><Events @loop="self.data" edit="{{self.edit}}" @ref="self.event" /></div>
                 </div>
             </div>`;
 
-        var root = lemonade.element(template, self, { Events, Tags });
-
-        root.val = function(v) {
-            if (typeof(v) === 'undefined') {
-                return self.value;
-            } else {
-                self.value = v;
-            }
-        }
-
-        return root;
+        return lemonade.element(template, self, { Events, Tags });
     }
 
 })));
