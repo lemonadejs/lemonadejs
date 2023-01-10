@@ -24,6 +24,24 @@ test('Tracking sub-level object properties', function(render) {
     })
 });
 
+test('Detect correct property to be observed inside nested properties and actions', function(render) {
+    function Component() {
+        const self = this;
+        self.test = {
+            name: 'test',
+            scope: ['login','email'],
+        }
+        return `<div>{{self.test.name.includes('es')}} {{self.test.scope.length}}</div>`;
+    }
+
+    // Render the component and assert the return
+    return render(Component).assert('true 2', function() {
+        let self = this;
+        // Return the value
+        return self.el.textContent;
+    })
+});
+
 test('Reactive properties in class or method components', function(render) {
     function FunctionComponent() {
         let self = this;
