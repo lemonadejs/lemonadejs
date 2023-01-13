@@ -7,6 +7,8 @@
  * This software is distribute under MIT License
  */
 
+import chalk from 'chalk';
+
 function Test() {
     // Tests
     let tests = [];
@@ -27,16 +29,12 @@ function Test() {
 
             return {
                 assert: function(result, validation) {
-                    try {
-                        // Expected result
-                        definition[2] = result;
-                        // Final result
-                        definition[3] = validation.call(self);
-                        // Assert
-                        return definition[2] === definition[3];
-                    } catch (e) {
-                        definition[3] = e;
-                    }
+                    // Expected result
+                    definition[2] = result;
+                    // Final result
+                    definition[3] = validation.call(self);
+                    // Assert
+                    return definition[2] === definition[3];
                 }
             }
         });
@@ -70,17 +68,24 @@ function Test() {
                 r = Run(t);
                 // Result
                 if (r === true) {
-                    console.log(' has passed\n\n');
+                    console.log(chalk.green.bold(' has passed\n'));
                     totals[0]++;
                 } else {
-                    console.error(' has not passed. Return {'+ definition[2] + '} Expected {' + definition[3] + '}\n\n');
+                    console.log(chalk.red.bold('has not passed'));
+                    console.log('        ' + chalk.red('Return') + ' {'+ t[2] + '} ' + chalk.green('Expected') + ' {' + t[3] + '}\n');
                     totals[1]++;
                 }
             }
-            console.log('Done! Total number of tests: ' + (--testIndex));
-            console.log('    Passed: ' + totals[0] + ' Failed: ' + totals[1]);
+
+            console.log('\nDone! Total number of tests: ' + (testIndex));
+            console.log('    ' + chalk.green.bold('Passed: ' + totals[0]) + '   ' + chalk.red.bold('Failed: ' + totals[1]));
         } catch(e) {
-            console.log('Something weng wrong with the test.\n\n', e);
+            console.log('');
+            console.error(
+                chalk.bgRed.bold(" ERROR "),
+                chalk.red.bold('Something weng wrong with the test.\n\n'),
+                e
+            );
         }
     }
 
