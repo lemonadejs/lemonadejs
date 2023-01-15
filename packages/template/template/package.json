@@ -1,0 +1,13 @@
+{
+  "name": "@lemonadejs/sample",
+  "version": "0.0.0",
+  "private": true,
+  "dependencies": {
+    "lemonadejs": "^3.0.7"
+  },
+  "scripts": {
+    "tests": "npx @lemonadejs/tester",
+    "build": "npx webpack --config webpack.config.js",
+    "start": "npx webpack serve --history-api-fallback"
+  }
+}
