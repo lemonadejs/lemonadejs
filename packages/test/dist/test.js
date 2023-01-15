@@ -22,16 +22,12 @@
 
             return {
                 assert: function(result, validation) {
-                    try {
-                        // Expected result
-                        definition[2] = result;
-                        // Final result
-                        definition[3] = validation.call(self);
-                        // Assert
-                        return definition[2] === definition[3];
-                    } catch (e) {
-                        definition[3] = e;
-                    }
+                    // Expected result
+                    definition[2] = result;
+                    // Final result
+                    definition[3] = validation.call(self);
+                    // Assert
+                    return definition[2] === definition[3];
                 }
             }
         });
@@ -68,14 +64,17 @@
                     console.log(' has passed\n\n');
                     totals[0]++;
                 } else {
-                    console.error(' has not passed. Return {'+ definition[2] + '} Expected {' + definition[3] + '}\n\n');
+                    console.error(' has not passed. Return {'+ t[2] + '} Expected {' + t[3] + '}\n\n');
                     totals[1]++;
                 }
             }
-            console.log('Done! Total number of tests: ' + (--testIndex));
+            console.log('Done! Total number of tests: ' + (testIndex));
             console.log('    Passed: ' + totals[0] + ' Failed: ' + totals[1]);
         } catch(e) {
-            console.log('Something weng wrong with the test.\n\n', e);
+            console.log('');
+            console.error('ERROR');
+            console.error('Something weng wrong with the test.\n\n');
+            console.error(e);
         }
     }
 
