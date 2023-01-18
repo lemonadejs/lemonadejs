@@ -46,7 +46,7 @@ test('Testing node tagName a single item inside a loop refresh', function(render
         var self = this;
         self.rows = [
             { title:'Google', description: 'The alpha search engine...', status: 1 },
-            { title:'Bind', description: 'The microsoft search engine...', status: 1 },
+            { title:'Bing', description: 'The microsoft search engine...', status: 1 },
             { title:'Duckduckgo', description: 'Privacy in the first place...', status: 1 },
         ];
 
