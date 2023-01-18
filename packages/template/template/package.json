@@ -7,7 +7,17 @@
   },
   "scripts": {
     "tests": "npx @lemonadejs/tester",
-    "build": "npx webpack --config webpack.config.js",
-    "start": "npx webpack serve --history-api-fallback"
+    "build": "npx webpack --mode=production --config webpack.config.js",
+    "start": "npx webpack serve --history-api-fallback --mode=development"
+  },
+  "devDependencies": {
+    "copy-webpack-plugin": "^11.0.0",
+    "css-loader": "^6.7.3",
+    "html-replace-webpack-plugin": "^2.6.0",
+    "html-webpack-plugin": "^5.5.0",
+    "mini-css-extract-plugin": "^2.7.2",
+    "style-loader": "^3.3.1",
+    "webpack-cli": "^5.0.1",
+    "webpack-dev-server": "^4.11.1"
   }
 }
