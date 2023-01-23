@@ -60,7 +60,7 @@ test('Add a new item in the loop and refresh', function(render) {
 
         self.rows = [
             { title:'Google', description: 'The alpha search engine...' },
-            { title:'Bind', description: 'The microsoft search engine...' },
+            { title:'Bing', description: 'The microsoft search engine...' },
             { title:'Yahoo', description: 'The old stuff...' },
         ];
 

@@ -1,0 +1,18 @@
+{
+    "name": "@lemonadejs/template",
+    "title": "LemonadeJS base template",
+    "description": "LemonadeJS base template",
+    "author": {
+        "name": "Contact <contact@lemonadejs.net>",
+        "url": "https://lemonadejs.net"
+    },
+    "keywords": [
+        "base template",
+        "lemonadejs utilities"
+    ],
+    "dependencies": {
+        "lemonadejs": "^3.0.7"
+    },
+    "main": "dist/index.js",
+    "version": "1.0.1"
+}
