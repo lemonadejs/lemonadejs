@@ -15,8 +15,9 @@
     },
     "version": "1.1.0",
     "dependencies": {
-        "adm-zip": "^0.5.10",
-        "superagent": "^8.0.6",
-        "child_process": "^1.0.2"
+        "chalk": "^4.1.2",
+        "commander": "^10.0.0",
+        "cross-spawn": "^7.0.3",
+        "validate-npm-package-name": "^5.0.0"
     }
 }
