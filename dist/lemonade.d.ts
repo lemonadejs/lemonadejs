@@ -6,6 +6,10 @@
 declare function lemonade() : any;
 
 declare namespace lemonade {
+    class component {
+        constructor(s?: Record<string, any>);
+    }
+
     /**
      * Create a LemonadeJS
      * @param {string} template to create the element
