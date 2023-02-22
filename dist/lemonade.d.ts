@@ -25,7 +25,7 @@ declare namespace lemonade {
      * @param {HTMLElement} DOM element container
      * @param {Object} inject a self object to the renderer
      */
-    function render(component: Function, root: HTMLElement, self?: Object) : void;
+    function render(component: Function, root: HTMLElement, self?: Object) : false | Element | Document | DocumentFragment;
 
     /**
      * Bind a self to an existing appended DOM element
