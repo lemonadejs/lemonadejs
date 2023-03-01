@@ -6,8 +6,36 @@
 declare function lemonade() : any;
 
 declare namespace lemonade {
+    type OnloadFunction = (component: HTMLElement) => void;
+
+    type OnchangeFunction = (property: string, affectedElements: object) => void;
+
+    interface ComponentEvents {
+        onload?: OnloadFunction;
+
+        onchange?: OnchangeFunction;
+    }
+
+    type FunctionComponent = (this: {
+        el: HTMLElement;
+
+        parent: FunctionComponent;
+
+        refresh: (target?: string) => void
+
+        [key: string]: any;
+    } & ComponentEvents) => void
+
     class component {
         constructor(s?: Record<string, any>);
+
+        el: HTMLElement;
+
+        parent: FunctionComponent;
+
+        refresh: (target?: string) => void
+
+        [key: string]: any;
     }
 
     /**
