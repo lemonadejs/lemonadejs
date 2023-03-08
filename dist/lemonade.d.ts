@@ -6,6 +6,38 @@
 declare function lemonade() : any;
 
 declare namespace lemonade {
+    type OnloadFunction = (component: HTMLElement) => void;
+
+    type OnchangeFunction = (property: string, affectedElements: object) => void;
+
+    interface ComponentEvents {
+        onload?: OnloadFunction;
+
+        onchange?: OnchangeFunction;
+    }
+
+    type FunctionComponent = (this: {
+        el: HTMLElement;
+
+        parent: FunctionComponent;
+
+        refresh: (target?: string) => void
+
+        [key: string]: any;
+    } & ComponentEvents) => void
+
+    class component {
+        constructor(s?: Record<string, any>);
+
+        el: HTMLElement;
+
+        parent: FunctionComponent;
+
+        refresh: (target?: string) => void
+
+        [key: string]: any;
+    }
+
     /**
      * Create a LemonadeJS
      * @param {string} template to create the element
@@ -21,7 +53,7 @@ declare namespace lemonade {
      * @param {HTMLElement} root DOM element container
      * @param {Object} self inject a self object to the renderer
      */
-    function render(component: Function, root: HTMLElement, self?: Object) : void;
+    function render(component: Function, root: HTMLElement, self?: Object) : false | Element | Document | DocumentFragment;
 
     /**
      * Bind a self to an existing appended DOM element
