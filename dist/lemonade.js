@@ -1,5 +1,5 @@
 /**
- * Lemonadejs v3.0.7
+ * Lemonadejs v3.0.8
  *
  * Website: https://lemonadejs.net
  * Description: Create amazing web based reusable components.
@@ -24,18 +24,16 @@
     /**
      * Global control element
      */
-    let R = null;
+    let R = {
+        queue: [],
+        container: {},
+        tracking: new Map,
+        components: {},
+    };
 
     // Global LemonadeJS controllers
     if (typeof(document) !== "undefined") {
         if (! document.lemonadejs) {
-            R = {
-                queue: [],
-                container: {},
-                tracking: new Map,
-                components: {},
-            }
-
             document.lemonadejs = R;
         } else {
             R = document.lemonadejs;
@@ -105,7 +103,9 @@
     }
 
     /**
-     * Is a class
+     * Check if the method is a method or a class
+     * @param {function} f
+     * @return {boolean}
      */
     const isClass = function(f) {
         return typeof f === 'function' && /^class\s/.test(Function.prototype.toString.call(f));
@@ -161,8 +161,10 @@
 
     /**
      * Get the attribute helper
+     * @param {object} e - element
      */
     const getAttribute = function(e) {
+        // Final value
         let v;
         if (typeof(e.val) === 'function') {
             v = e.val();
@@ -360,7 +362,6 @@
     /**
      * Dispatch all updates for a property from the self
      * @param {string} property - property from the self
-     * @param {boolean} force - force the update
      */
     const dispatch = function(property) {
         // Tracking object
