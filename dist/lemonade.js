@@ -1,5 +1,5 @@
 /**
- * Lemonadejs v3.0.8
+ * Lemonadejs v3.2.0
  *
  * Website: https://lemonadejs.net
  * Description: Create amazing web based reusable components.
@@ -651,6 +651,14 @@
                         } else if (type === 'src') {
                             // Parse attributes
                             parseTokens.call(self, { e: element, a: 'src', v: '{{' + attr[k[i]] + '}}', s: self })
+                        } else {
+                            // Parse attributes
+                            let value = run.call(self, attr[k[i]]);
+                            if (element.lemonade) {
+                                self[type] = value
+                            } else {
+                                element[type] = value;
+                            }
                         }
 
                         // Sent to the queue
@@ -817,6 +825,10 @@
 
         // Process ready queue
         queue(el);
+
+        o.rootChild.lemon = {
+            self: self
+        }
 
         return o;
     }
