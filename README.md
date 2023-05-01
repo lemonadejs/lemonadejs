@@ -206,7 +206,7 @@ This software is free to use and it is distributed under the MIT license.
     <li><a href="https://lemonadejs.net/v3/docs/getting-started">Getting started</a></li>
     <li><a href="https://lemonadejs.net/v3/docs/benchmark" style="display: none">Benchmark</a></li>
     <li><a href="https://lemonadejs.net/v3/docs/attributes">Attributes</a></li>
-    <li><a href="https://lemonadejs.net/v3/docs/two-way-binding">Two-way binding</a></li>
+    <li><a href="https://lemonadejs.net/v3/docs/two-way-binding">Two-way data binding</a></li>
     <li><a href="https://lemonadejs.net/v3/docs/arrays">Arrays</a></li>
     <li><a href="https://lemonadejs.net/v3/docs/methods">Methods</a></li>
     <li><a href="https://lemonadejs.net/v3/docs/events">Events</a></li>
