@@ -234,6 +234,6 @@ This software is free to use and it is distributed under the MIT license.
 
 <h2>Other tools</h2>
 
-https://jsuites.net<br>
-https://jspreadsheet.com/<br>
-https://bossanova.uk/jspreadsheet<br>
+https://jsuites.net/v4/<br>
+https://jspreadsheet.com/v9/<br>
+https://bossanova.uk/jspreadsheet/v4/<br>
