@@ -203,32 +203,32 @@ This software is free to use and it is distributed under the MIT license.
 
 <h3>Documentation</h3>
 <ul>
-    <li><a href="https://lemonadejs.net/v3/docs/getting-started">Getting started</a></li>
-    <li><a href="https://lemonadejs.net/v3/docs/benchmark" style="display: none">Benchmark</a></li>
-    <li><a href="https://lemonadejs.net/v3/docs/attributes">Attributes</a></li>
-    <li><a href="https://lemonadejs.net/v3/docs/two-way-binding">Two-way data binding</a></li>
-    <li><a href="https://lemonadejs.net/v3/docs/arrays">Arrays</a></li>
-    <li><a href="https://lemonadejs.net/v3/docs/methods">Methods</a></li>
-    <li><a href="https://lemonadejs.net/v3/docs/events">Events</a></li>
-    <li><a href="https://lemonadejs.net/v3/docs/components">Components</a></li>
-    <li><a href="https://lemonadejs.net/v3/docs/classes">Classes</a></li>
-    <li><a href="https://lemonadejs.net/v3/docs/web-components">Webcomponents</a></li>
+    <li><a href="https://lemonadejs.net/docs/getting-started">Getting started</a></li>
+    <li><a href="https://lemonadejs.net/docs/benchmark" style="display: none">Benchmark</a></li>
+    <li><a href="https://lemonadejs.net/docs/attributes">Attributes</a></li>
+    <li><a href="https://lemonadejs.net/docs/two-way-binding">Two-way binding</a></li>
+    <li><a href="https://lemonadejs.net/docs/arrays">Arrays</a></li>
+    <li><a href="https://lemonadejs.net/docs/methods">Methods</a></li>
+    <li><a href="https://lemonadejs.net/docs/events">Events</a></li>
+    <li><a href="https://lemonadejs.net/docs/components">Components</a></li>
+    <li><a href="https://lemonadejs.net/docs/classes">Classes</a></li>
+    <li><a href="https://lemonadejs.net/docs/web-components">Webcomponents</a></li>
 </ul>
 
 <h3>Utilities</h3>
 <ul>
-    <li><a href="https://lemonadejs.net/v3/docs/awesome">Awesome</a></li>
-    <li><a href="https://lemonadejs.net/v3/docs/sugar">Sugar</a></li>
-    <li><a href="https://lemonadejs.net/v3/docs/tests">Testing</a></li>
-    <li><a href="https://lemonadejs.net/v3/libraries">Libraries</a></li>
-    <li><a href="https://lemonadejs.net/v3/docs/module">Module (ESM)</a></li>
+    <li><a href="https://lemonadejs.net/docs/awesome">Awesome</a></li>
+    <li><a href="https://lemonadejs.net/docs/sugar">Sugar</a></li>
+    <li><a href="https://lemonadejs.net/docs/tests">Testing</a></li>
+    <li><a href="https://lemonadejs.net/libraries">Libraries</a></li>
+    <li><a href="https://lemonadejs.net/docs/module">Module (ESM)</a></li>
 </ul>
 
 <h3>Useful</h3>
 <ul>
-    <li><a href="https://lemonadejs.net/v3/docs/quick-reference">Quick reference</a></li>
-    <li><a href="https://lemonadejs.net/v3/docs/debugging">Debugging</a></li>
-    <li><a href="https://lemonadejs.net/v3/docs/contributions">Contributing</a></li>
+    <li><a href="https://lemonadejs.net/docs/quick-reference">Quick reference</a></li>
+    <li><a href="https://lemonadejs.net/docs/debugging">Debugging</a></li>
+    <li><a href="https://lemonadejs.net/docs/contributions">Contributing</a></li>
 </ul>
 
 
