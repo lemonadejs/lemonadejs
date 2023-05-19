@@ -1,35 +1,23 @@
+// Load jSuites
+if (! jSuites && typeof(require) === 'function') {
+    var jSuites = require('jsuites');
+}
+
+// Load jSuites
+if (! sha512 && typeof(require) === 'function') {
+    var sha512 = require('@jsuites/sha512');
+}
+
+// Load LemonadeJS
+if (! lemonade && typeof(require) === 'function') {
+    var lemonade = require('lemonadejs');
+}
+
 ;(function (global, factory) {
     typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
     typeof define === 'function' && define.amd ? define(factory) :
     global.Login = factory();
 }(this, (function () {
-
-    // Load jSuites
-    if (typeof(jSuites) == 'undefined') {
-        if (typeof(require) === 'function') {
-            var jSuites = require('jsuites');
-        } else if (window.jSuites) {
-            var jSuites = window.jSuites;
-        }
-    }
-
-    // Load jSuites
-    if (typeof(sha512) == 'undefined') {
-        if (typeof(require) === 'function') {
-            var sha512 = require('@jsuites/sha512');
-        } else if (window.jSuites) {
-            var sha512 = window.sha512;
-        }
-    }
-
-    // Load LemonadeJS
-    if (typeof(lemonade) == 'undefined') {
-        if (typeof(require) === 'function') {
-            var lemonade = require('lemonadejs');
-        } else if (window.lemonade) {
-            var lemonade = window.lemonade;
-        }
-    }
 
     const T = jSuites.translate;
 
@@ -40,7 +28,7 @@
         return (o instanceof Element || o instanceof HTMLDocument);
     }
 
-    const Component = function() {
+    const Component = function(template) {
         let self = this;
 
         // Url
@@ -59,7 +47,7 @@
 
             for (let i = 0; i < elements.length; i++) {
                 let element = self['container'+elements[i]];
-                if (element.getAttribute('data-visible') !== 'false') {
+                if (element && element.getAttribute('data-visible') !== 'false') {
                     self.container.appendChild(element);
                 }
             }
@@ -72,16 +60,36 @@
          * Setup the action button with the necessary steps
          */
         self.createAction = function(text, action) {
+            // Message
+            self.alert = '';
             // Show the text for the button action
             self.action.value = T(text);
             // Bind the onclick action
             self.action.onclick = action;
+            // Update title
+            self.title = T(text);
+            // Other adjustments
+            if (typeof(self.onupdate) === 'function') {
+                self.onupdate(self, text);
+            }
         }
 
         self.enter = function(e) {
             if (e.key === 'Enter') {
                 self.action.onclick();
                 e.preventDefault();
+            }
+        }
+
+        self.blur = function(element) {
+            // Validation
+            let validation = element.getAttribute('data-validation');
+            if (validation) {
+                if (!jSuites.validations[validation](element.value)) {
+                    element.classList.add('error')
+                } else {
+                    element.classList.remove('error')
+                }
             }
         }
 
@@ -157,6 +165,8 @@
                         if (typeof(self.onerror) == 'function') {
                             self.onerror(result);
                         }
+
+                        self.alert = result.message;
                     }
 
                     // Catcha
@@ -172,9 +182,7 @@
                     self.el.classList.remove('jlogin-loading');
 
                     // Message
-                    if (result.message) {
-                        jSuites.notification(result);
-                    }
+                    self.error(result.message);
 
                     // Event
                     if (typeof(self.onerror) == 'function') {
@@ -209,34 +217,44 @@
             } else if (! self['google-client-id']) {
                 alert('Google Client ID not defined');
             } else {
-                google.accounts.id.initialize({
-                    client_id: self['google-client-id'],
-                    auto_select: true,
-                    callback: function (response) {
-                        self.request({
-                            social: 'google',
-                            token: response.credential
-                        }, function (result) {
-                            if (result.action === 'bindSocialAccount') {
-                                self.bindSocialAccount();
-                                return false;
-                            }
-                        });
+                try {
+                    if (self.action.value === T('Create a new account')) {
+                        if (typeof (self.onbeforecreate) === 'function') {
+                            self.onbeforecreate(self);
+                        }
                     }
-                });
 
-                google.accounts.id.prompt(function (notification) {
-                    if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-                        google.accounts.id.renderButton(
-                            self.containerGoogle, {
-                                theme: "outline",
-                                size: "large",
-                                width: self.containerGoogle.offsetWidth,
-                                text: 'signin_with',
-                            }
-                        );
-                    }
-                });
+                    google.accounts.id.initialize({
+                        client_id: self['google-client-id'],
+                        auto_select: true,
+                        callback: function (response) {
+                            self.request({
+                                social: 'google',
+                                token: response.credential
+                            }, function (result) {
+                                if (result.action === 'bindSocialAccount') {
+                                    self.bindSocialAccount();
+                                    return false;
+                                }
+                            });
+                        }
+                    });
+
+                    google.accounts.id.prompt(function (notification) {
+                        if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+                            google.accounts.id.renderButton(
+                                self.containerGoogle, {
+                                    theme: "outline",
+                                    size: "large",
+                                    width: self.containerGoogle.offsetWidth,
+                                    text: 'signin_with',
+                                }
+                            );
+                        }
+                    });
+                } catch (e) {
+                    self.error(e);
+                }
             }
         }
 
@@ -337,7 +355,7 @@
             // Action
             self.createAction('Confirm code', function() {
                 try {
-                    if (self.code.length != 6) {
+                    if (self.code.length !== 6) {
                         throw('The code should has 6 digits');
                     }
 
@@ -374,7 +392,7 @@
                     if (! self.password) {
                         throw('You need to choose a new password');
                     }
-                    if (self.password != self.password2) {
+                    if (self.password !== self.password2) {
                         throw('The passwords must match');
                     }
 
@@ -393,11 +411,14 @@
          */
         self.createAccount = function() {
             // Start with correct elements
-            self.appendChild(['Logo','Instructions','Name','Username','Email','Action','Cancel']);
+            self.appendChild(['Logo','Instructions','Name','Username','Email','Action','Google','Terms','Cancel']);
 
             // Action
             self.createAction('Create a new account', function() {
                 try {
+                    if (typeof(self.onbeforecreate) === 'function') {
+                        self.onbeforecreate(self);
+                    }
                     if (! jSuites.validations.email(self.email)) {
                         throw('Invalid e-mail address');
                     }
@@ -409,6 +430,7 @@
                         name: self.name,
                         login: self.username,
                         username: self.email,
+                        terms: self.terms,
                     });
                 } catch (e) {
                     self.error(e);
@@ -417,6 +439,7 @@
         }
 
         self.error = function(message) {
+            self.alert = message;
             jSuites.notification({ error: 1, message: message });
         }
 
@@ -460,6 +483,8 @@
         }
 
         return `<div class="jlogin">
+            <h1>{{self.title}}</h1>
+            <div class="alert">{{self.alert}}</div>
             <form @ref="self.container">
                 <div @ref="self.containerLogo" class="jlogin-logo" data-visible="{{self.logo?true:false}}"></div>
                 <div @ref="self.containerInstructions" class="jlogin-instructions">
@@ -484,7 +509,7 @@
                 </div>
                 <div @ref="self.containerEmail">
                     <label>E-mail</label>
-                    <input type="text" name="email" autocomplete="new-username" @bind="self.email" @ref="self.emailInput" onkeypress="self.enter(e)">
+                    <input type="text" name="email" data-validation="email" autocomplete="new-username" @bind="self.email" @ref="self.emailInput" onkeypress="self.enter(e)" onblur="self.blur(this)">
                 </div>
                 <div @ref="self.containerPassword">
                     <label>Password</label>
@@ -512,6 +537,7 @@
                 <div @ref="self.containerProfile" class="jlogin-button" data-visible="{{self.profile}}">
                     <span onclick="self.createAccount()">Create a new profile</span>
                 </div>
+                ${template}
             </form>
         </div>`;
     }

@@ -126,8 +126,8 @@
     content: "";
     display: block;
     position: fixed;
-    top: 0px;
-    left: 0px;
+    top: 0;
+    left: 0;
     width: 200px;
     height: 2px;
     background-color: var(--button-color);
@@ -135,7 +135,7 @@
 }
 
 @keyframes loading {
-    from { left: 0px; width: 25%; }
+    from { left: 0; width: 25%; }
     25%  { width: 25%; }
     50%  { width: 50%; }
     75%  { left:  75%; }
