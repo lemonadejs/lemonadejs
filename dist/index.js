@@ -1,5 +1,5 @@
 /**
- * Lemonadejs v3.0.8 (ESM build)
+ * Lemonadejs v3.2.1 (ESM build)
  *
  * Website: https://lemonadejs.net
  * Description: Create amazing web based reusable components.
@@ -640,6 +640,14 @@ function Lemonade() {
                         } else if (type === 'src') {
                             // Parse attributes
                             parseTokens.call(self, { e: element, a: 'src', v: '{{' + attr[k[i]] + '}}', s: self })
+                        } else {
+                            // Parse attributes
+                            let value = run.call(self, attr[k[i]]);
+                            if (element.lemonade) {
+                                element.lemonade.self[type] = value
+                            } else {
+                                element[type] = value;
+                            }
                         }
 
                         // Sent to the queue
@@ -806,6 +814,10 @@ function Lemonade() {
 
         // Process ready queue
         queue(el);
+
+        o.rootChild.lemon = {
+            self: self
+        }
 
         return o;
     }

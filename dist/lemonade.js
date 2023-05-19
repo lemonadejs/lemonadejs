@@ -1,5 +1,5 @@
 /**
- * Lemonadejs v3.2.0
+ * Lemonadejs v3.2.1
  *
  * Website: https://lemonadejs.net
  * Description: Create amazing web based reusable components.
@@ -655,7 +655,7 @@
                             // Parse attributes
                             let value = run.call(self, attr[k[i]]);
                             if (element.lemonade) {
-                                self[type] = value
+                                element.lemonade.self[type] = value
                             } else {
                                 element[type] = value;
                             }

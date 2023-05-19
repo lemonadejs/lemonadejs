@@ -31,20 +31,20 @@
         }
     }
 
-    var T = jSuites.translate;
+    const T = jSuites.translate;
 
     /**
      * The element passed is a DOM element
      */
-    var isDOM = function(o) {
+    const isDOM = function(o) {
         return (o instanceof Element || o instanceof HTMLDocument);
     }
 
-    var Component = function(template) {
-        var self = this;
+    const Component = function() {
+        let self = this;
 
         // Url
-        var url = self.url || window.location.pathname;
+        let url = self.url || window.location.pathname;
 
         // Device token
         if (self.device) {
@@ -57,9 +57,8 @@
         self.appendChild = function(elements, instructions) {
             self.container.innerHTML = '';
 
-            var element = null;
-            for (var i = 0; i < elements.length; i++) {
-                element = self['container'+elements[i]];
+            for (let i = 0; i < elements.length; i++) {
+                let element = self['container'+elements[i]];
                 if (element.getAttribute('data-visible') !== 'false') {
                     self.container.appendChild(element);
                 }
@@ -80,7 +79,7 @@
         }
 
         self.enter = function(e) {
-            if (e.key == 'Enter') {
+            if (e.key === 'Enter') {
                 self.action.onclick();
                 e.preventDefault();
             }
@@ -432,7 +431,7 @@
             }
             // Logo
             if (self.logo) {
-                var logo = document.createElement('img');
+                let logo = document.createElement('img');
                 logo.src = self.logo;
                 self.containerLogo.appendChild(logo);
             }
@@ -441,10 +440,10 @@
                 self.el.classList.add('jlogin-fullscreen');
             }
             // Initial action
-            var params = new URLSearchParams(window.location.search);
+            let params = new URLSearchParams(window.location.search);
             if (params.get('create') === null) {
-                var hash = null;
-                if (hash = params.get('h')) {
+                let hash = params.get('h');
+                if (hash) {
                     self.resetPassword(hash);
                 } else {
                     self.requestAccess();
@@ -460,64 +459,61 @@
             }
         }
 
-        var template = `
-            <div class="jlogin">
-                <form @ref="self.container">
-                    <div @ref="self.containerLogo" class="jlogin-logo" data-visible="{{self.logo?true:false}}"></div>
-                    <div @ref="self.containerInstructions" class="jlogin-instructions">
-                        <div>{{self.instructions}}</div>
-                    </div>
-                    <div @ref="self.containerCaptcha" class="jlogin-captcha">
-                        <label>Security code</label>
-                        <input type="text" name="captcha" @bind="self.captcha">
-                        <img @ref="self.captchaImage" />
-                    </div>
-                    <div @ref="self.containerCode">
-                        <label>Code</label>
-                        <input type="text" name="code" @bind="self.code" onkeypress="self.enter(e)">
-                    </div>
-                    <div @ref="self.containerName">
-                        <label>Name</label>
-                        <input type="text" name="name" @bind="self.name" @ref="self.nameInput">
-                    </div>
-                    <div @ref="self.containerUsername">
-                        <label>Username</label>
-                        <input type="text" name="username" autocomplete="new-username" @bind="self.username">
-                    </div>
-                    <div @ref="self.containerEmail">
-                        <label>E-mail</label>
-                        <input type="text" name="email" autocomplete="new-username" @bind="self.email" @ref="self.emailInput" onkeypress="self.enter(e)">
-                    </div>
-                    <div @ref="self.containerPassword">
-                        <label>Password</label>
-                        <input type="password" name="password" autocomplete="new-password" @bind="self.password" onkeypress="self.enter(e)">
-                    </div>
-                    <div @ref="self.containerRepeat">
-                        <label>Repeat the password</label>
-                        <input type="password" name="password2" autocomplete="new-password" @bind="self.password2" onkeypress="self.enter(e)">
-                    </div>
-                    <div @ref="self.containerAction">
-                        <input type="button" value="Login" @ref="self.action">
-                    </div>
-                    <div @ref="self.containerCancel" class="jlogin-button">
-                        <span onclick="self.cancel()">Cancel</span>
-                    </div>
-                    <div @ref="self.containerGoogle" data-visible="{{self.google}}">
-                        <input type="button" value="Login with Google" class="googleButton" onclick="self.loginWithGoogle()">
-                    </div>
-                    <div @ref="self.containerFacebook" data-visible="{{self.facebook}}">
-                        <input type="button" value="Login with Facebook" class="facebookButton" onclick="self.loginWithFacebook()">
-                    </div>
-                    <div @ref="self.containerRequest" class="jlogin-button">
-                        <span onclick="self.requestPassword()">Request a new password</span>
-                    </div>
-                    <div @ref="self.containerProfile" class="jlogin-button" data-visible="{{self.profile}}">
-                        <span onclick="self.createAccount()">Create a new profile</span>
-                    </div>
-                </form>
-            </div>`;
-
-        return lemonade.element(template, self)
+        return `<div class="jlogin">
+            <form @ref="self.container">
+                <div @ref="self.containerLogo" class="jlogin-logo" data-visible="{{self.logo?true:false}}"></div>
+                <div @ref="self.containerInstructions" class="jlogin-instructions">
+                    <div>{{self.instructions}}</div>
+                </div>
+                <div @ref="self.containerCaptcha" class="jlogin-captcha">
+                    <label>Security code</label>
+                    <input type="text" name="captcha" @bind="self.captcha">
+                    <img @ref="self.captchaImage" />
+                </div>
+                <div @ref="self.containerCode">
+                    <label>Code</label>
+                    <input type="text" name="code" @bind="self.code" onkeypress="self.enter(e)">
+                </div>
+                <div @ref="self.containerName">
+                    <label>Name</label>
+                    <input type="text" name="name" @bind="self.name" @ref="self.nameInput">
+                </div>
+                <div @ref="self.containerUsername">
+                    <label>Username</label>
+                    <input type="text" name="username" autocomplete="new-username" @bind="self.username">
+                </div>
+                <div @ref="self.containerEmail">
+                    <label>E-mail</label>
+                    <input type="text" name="email" autocomplete="new-username" @bind="self.email" @ref="self.emailInput" onkeypress="self.enter(e)">
+                </div>
+                <div @ref="self.containerPassword">
+                    <label>Password</label>
+                    <input type="password" name="password" autocomplete="new-password" @bind="self.password" onkeypress="self.enter(e)">
+                </div>
+                <div @ref="self.containerRepeat">
+                    <label>Repeat the password</label>
+                    <input type="password" name="password2" autocomplete="new-password" @bind="self.password2" onkeypress="self.enter(e)">
+                </div>
+                <div @ref="self.containerAction">
+                    <input type="button" value="Login" @ref="self.action">
+                </div>
+                <div @ref="self.containerCancel" class="jlogin-button">
+                    <span onclick="self.cancel()">Cancel</span>
+                </div>
+                <div @ref="self.containerGoogle" data-visible="{{self.google}}">
+                    <input type="button" value="Login with Google" class="googleButton" onclick="self.loginWithGoogle()">
+                </div>
+                <div @ref="self.containerFacebook" data-visible="{{self.facebook}}">
+                    <input type="button" value="Login with Facebook" class="facebookButton" onclick="self.loginWithFacebook()">
+                </div>
+                <div @ref="self.containerRequest" class="jlogin-button">
+                    <span onclick="self.requestPassword()">Request a new password</span>
+                </div>
+                <div @ref="self.containerProfile" class="jlogin-button" data-visible="{{self.profile}}">
+                    <span onclick="self.createAccount()">Create a new profile</span>
+                </div>
+            </form>
+        </div>`;
     }
 
     return function(a, b) {
