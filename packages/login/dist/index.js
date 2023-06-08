@@ -230,7 +230,8 @@ if (! lemonade && typeof(require) === 'function') {
                         callback: function (response) {
                             self.request({
                                 social: 'google',
-                                token: response.credential
+                                token: response.credential,
+                                terms: self.terms
                             }, function (result) {
                                 if (result.action === 'bindSocialAccount') {
                                     self.bindSocialAccount();
@@ -268,7 +269,8 @@ if (! lemonade && typeof(require) === 'function') {
                 var Request = function(response) {
                     self.request({
                         social: 'facebook',
-                        token: response.authResponse
+                        token: response.authResponse,
+                        terms: self.terms
                     }, function (result) {
                         if (result.action === 'bindSocialAccount') {
                             self.bindSocialAccount();
