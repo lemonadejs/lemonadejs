@@ -1,17 +1,17 @@
+// Load lemonadejs
+if (typeof(lemonade) == 'undefined') {
+    if (typeof(require) === 'function') {
+        var lemonade = require('lemonadejs');
+    } else if (window.lemonade) {
+        var lemonade = window.lemonade;
+    }
+}
+
 ;(function (global, factory) {
     typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
     typeof define === 'function' && define.amd ? define(factory) :
     global.List = factory();
 }(this, (function () {
-
-    // Load lemonadejs
-    if (typeof(lemonade) == 'undefined') {
-        if (typeof(require) === 'function') {
-            var lemonade = require('lemonadejs');
-        } else if (window.lemonade) {
-            var lemonade = window.lemonade;
-        }
-    }
 
     return function(html) {
         // Lemonade element
@@ -56,9 +56,14 @@
 
         const search = function(str) {
             // Filter the data
-            result = self.result = self.data.filter(function(item) {
-                return find(item, str);
-            });
+            let t = [];
+            if (Array.isArray(self.data)) {
+                t = self.data.filter(function (item) {
+                    return find(item, str);
+                });
+            }
+            // Result
+            result = self.result = t;
             // Go back to page zero
             self.page = 0;
         }
@@ -157,9 +162,7 @@
         }
 
         const Pagination = function() {
-            // Pagination
-            let template = `<li onclick="self.parent.page = this.title;" title="{{self.title}}" selected="{{self.selected}}">{{self.value}}</li>`;
-            return lemonade.element(template, this);
+            return `<li onclick="self.parent.page = this.title;" title="{{self.title}}" selected="{{self.selected}}">{{self.value}}</li>`;
         }
 
         let template = `<>
@@ -167,7 +170,7 @@
                 <input type='text' @bind="self.input" search="{{self.search}}"/>
                 <ul page="{{self.page}}"><Pagination @loop="self.pages"/></ul>
             </div>
-            <div class="list-content" @ref="self.container" data-message="{{self.message}}"><Item @loop="self.result"/></div>
+            <div class="list-content" :ref="self.container" data-message="{{self.message}}"><Item @loop="self.result"/></div>
         </>`;
 
 
