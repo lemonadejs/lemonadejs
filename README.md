@@ -35,7 +35,7 @@ It would help you deliver reusable components and does not require transpilers, 
 
 <h3>Running tests</h3>
 
-% npm run tests<br>
+% npm run test<br>
 
 <br><br>
 
@@ -197,14 +197,13 @@ window.customElements.define('hello-element', HelloElement);
 
 <h2>License</h2>
 
-This software is free to use and it is distributed under the MIT license.
+This software is free to use, and it is distributed under the MIT license.
 
 <h2>Learning LemonadeJS</h2>
 
 <h3>Documentation</h3>
 <ul>
     <li><a href="https://lemonadejs.net/docs/getting-started">Getting started</a></li>
-    <li><a href="https://lemonadejs.net/docs/benchmark" style="display: none">Benchmark</a></li>
     <li><a href="https://lemonadejs.net/docs/attributes">Attributes</a></li>
     <li><a href="https://lemonadejs.net/docs/two-way-binding">Two-way binding</a></li>
     <li><a href="https://lemonadejs.net/docs/arrays">Arrays</a></li>
@@ -212,7 +211,7 @@ This software is free to use and it is distributed under the MIT license.
     <li><a href="https://lemonadejs.net/docs/events">Events</a></li>
     <li><a href="https://lemonadejs.net/docs/components">Components</a></li>
     <li><a href="https://lemonadejs.net/docs/classes">Classes</a></li>
-    <li><a href="https://lemonadejs.net/docs/web-components">Webcomponents</a></li>
+    <li><a href="https://lemonadejs.net/docs/web-components">Web components</a></li>
 </ul>
 
 <h3>Utilities</h3>
@@ -234,6 +233,6 @@ This software is free to use and it is distributed under the MIT license.
 
 <h2>Other tools</h2>
 
-https://jsuites.net/v4/<br>
-https://jspreadsheet.com/v9/<br>
-https://bossanova.uk/jspreadsheet/v4/<br>
+- [JavaScript Components](https://jsuites.net/v4/)
+- [JavaScript Data Grid with Spreadsheet-like Controls](https://jspreadsheet.com/)
+- [Free JavaScript Data Grid](https://bossanova.uk/jspreadsheet/v4/)
