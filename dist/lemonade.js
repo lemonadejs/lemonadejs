@@ -486,7 +486,7 @@
      */
     const parseAttribute = function(e, name, value) {
         // Get the content of the property
-        if (value === undefined) {
+        if (typeof(value) === 'undefined') {
             value = e.getAttribute(name).trim();
         }
         // Parse expression
@@ -655,7 +655,8 @@
                             // Parse attributes
                             let value = run.call(self, attr[k[i]]);
                             if (element.lemonade) {
-                                element.lemonade.self[type] = value
+                                //element.lemonade.self[type] = value;
+                                parseTokens.call(self, { e: element, a: type, v: '{{' + attr[k[i]] + '}}', s: self })
                             } else {
                                 element[type] = value;
                             }
@@ -802,7 +803,7 @@
         // Refresh property
         register(self, 'refresh', function (p) {
             // Re-render the whole component
-            if (p === undefined) {
+            if (typeof(p) === 'undefined') {
                 // Reference to before
                 args[1] = o.rootChild;
                 // Self
@@ -1039,5 +1040,3 @@
 
     return L;
 })));
-
-
