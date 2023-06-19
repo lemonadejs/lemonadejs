@@ -3,3 +3,5 @@ https://codebase.show/projects/realworld?category=frontend&language=javascript
 https://news.ycombinator.com/item?id=28196849
 
 Review using template render to pass expressions as a reference to attributes with ":" or functions to real dom attributes.
+
+self.onload => this can add track('data') to track things not in the template?
