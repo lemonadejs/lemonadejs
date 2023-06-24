@@ -197,13 +197,14 @@ if (! lemonade && typeof(require) === 'function') {
          */
         self.requestAccess = function() {
             // Start with correct elements
-            self.appendChild(['Logo','Instructions','Email','Password','Action','Google','Facebook','Request','Profile']);
+            self.appendChild(['Logo','Instructions','Email','Password','Action','Google','Facebook','Remember','Request','Profile']);
 
             // Action
             self.createAction('Login', function() {
                 self.request({
                     username: self.email,
                     password: sha512(self.password),
+                    remember: self.remember,
                 })
             });
         }
@@ -538,6 +539,9 @@ if (! lemonade && typeof(require) === 'function') {
                 </div>
                 <div @ref="self.containerProfile" class="jlogin-button" data-visible="{{self.profile}}">
                     <span onclick="self.createAccount()">Create a new profile</span>
+                </div>
+                <div @ref="self.containerRemember" class="p10" data-visible="{{self.remember}}">
+                    <label><input type="checkbox" value="1" @bind="self.remember" style="float: none"> <span>Remember me on this device</span></label>
                 </div>
                 ${template}
             </form>

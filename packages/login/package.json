@@ -18,10 +18,10 @@
         "plugin"
     ],
     "dependencies": {
-        "jsuites": "^5.0.17",
+        "jsuites": "^5.0.24",
         "@jsuites/sha512": "^1.0.2",
-        "lemonadejs": "^3.2.1"
+        "lemonadejs": "^3.2.2"
     },
     "main": "dist/index.js",
-    "version": "2.0.3"
+    "version": "2.0.4"
 }
