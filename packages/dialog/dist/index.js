@@ -84,12 +84,8 @@
                 <div>
                     <input type="button" value="OK" @ref="self.confirmButton">
                 </div>
-                <div style="{{self.cancel || !(self.type == 'alert' || self.type == 'input')? 'display: block;' : 'display: none;'}}">
-                    <input 
-                        @ref="self.cancelButton" 
-                        type="button" 
-                        value="{{self.cancelLabel}}"
-                    />
+                <div style="{{self.cancel || !(self.type == 'alert' || self.type == 'input') ? 'display: block;' : 'display: none;'}}">
+                    <input :ref="self.cancelButton" type="button" value="{{self.cancelLabel}}" />
                 </div>
             </div>
             </div>

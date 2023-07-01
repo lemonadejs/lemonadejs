@@ -19,63 +19,58 @@
         }
     }
 
-    var isLight = function(color) {
+    const isLight = function(color) {
+        let r,g,b;
         if (color.match(/^rgb/)) {
             color = color.match(/^rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*(\d+(?:\.\d+)?))?\)$/);
-            var r = color[1];
-            var g = color[2];
-            var b = color[3];
+            r = color[1];
+            g = color[2];
+            b = color[3];
         } else {
             color = color.replace('#', '');
             color = +("0x" + color.slice(1).replace(color.length < 5 && /./g, '$&$&'));
-            var r = color >> 16;
-            var g = color >> 8 & 255;
-            var b = color & 255;
+            r = color >> 16;
+            g = color >> 8 & 255;
+            b = color & 255;
         }
-
         // Using the HSP value, determine whether the color is light or dark
         return Math.sqrt(0.299 * (r * r) + 0.587 * (g * g) + 0.114 * (b * b)) > 180;
     }
 
-    var Tags = (function() {
-        var self = this;
+    const Tags = (function() {
+        let self = this;
         self.fontColor = isLight(self.color) ? '#000' : '#fff';
-        var template = `<div class="jtimeline-tag" style="{{'background-color:' + self.color + '; color:' + self.fontColor}}">{{self.text}}</div>`;
-
-        return lemonade.element(template, self);
+        return `<div class="jtimeline-tag" style="{{'background-color:' + self.color + '; color:' + self.fontColor}}">{{self.text}}</div>`;
     });
 
-    var Events = (function() {
-        var self = this;
+    const Events = (function() {
+        let self = this;
 
         if (! Array.isArray(self.tags)) {
             self.tags = [];
         }
 
-        var template = `
-            <div class="jtimeline-item">
-                <div class="jtimeline-date-container">
-                    <div class="{{!self.day? 'jtimeline-date' : 'jtimeline-date jtimeline-date-bullet'}}">{{self.day}}</div>
-                </div>
-                <div class="jtimeline-content">
-                    <div class="jtimeline-title-container">
-                        <div class="jtimeline-title">{{self.title || 'No title'}}</div>
-                        <div class="jtimeline-controls" style="{{!self.author? 'display:none;':'display:block;'}}">
-                            <i class='material-icons timeline-edit' onclick="self.parent.edit(self)">edit</i>
-                        </div>
+        return `<div class="jtimeline-item">
+            <div class="jtimeline-date-container">
+                <div class="{{!self.day? 'jtimeline-date' : 'jtimeline-date jtimeline-date-bullet'}}">{{self.day}}</div>
+            </div>
+            <div class="jtimeline-content">
+                <div class="jtimeline-title-container">
+                    <div class="jtimeline-title">{{self.title || 'No title'}}</div>
+                    <div class="jtimeline-controls" style="{{!self.author? 'display:none;':'display:block;'}}">
+                        <i class='material-icons timeline-edit' onclick="self.parent.edit(self)">edit</i>
                     </div>
-                    <div class="jtimeline-subtitle">{{self.subtitle || ''}}</div>
-                    <div class="jtimeline-text">{{self.text}}</div>
-                    <div class="jtimeline-tags"><Tags @loop="self.tags" /></div>
                 </div>
-            </div>`;
-
-        return lemonade.element(template, self, { Tags });
+                <div class="jtimeline-subtitle">{{self.subtitle || ''}}</div>
+                <div class="jtimeline-text">{{self.text}}</div>
+                <div class="jtimeline-tags"><Tags @loop="self.tags" /></div>
+            </div>
+        </div>`;
     });
 
     return function() {
-        var self = this;
-        var date = new Date();
+        let self = this;
+        let date = new Date();
 
         self.data = [];
         self.year = date.getFullYear();
@@ -85,7 +80,7 @@
         self.container = null;
         self.months = [ 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec' ];
 
-        var getData = function() {
+        const getData = function() {
             self.el.classList.add('jtimeline-loading');
 
             jSuites.ajax({
@@ -100,7 +95,7 @@
             });
         };
 
-        var animate = function(sufix) {
+        const animate = function(sufix) {
             self.containerClass += ' slide-left-' + sufix;
             self.container.onanimationend = function() {
                 self.containerClass = 'jtimeline-container';
@@ -112,8 +107,8 @@
         }
 
         self.update = function() {
-            var day = '';
-            var prevDay = '';
+            let day = '';
+            let prevDay = '';
 
             for (let i = 0; i < self.data.length; i ++) {
                 day = self.data[i].date.substr(8,9);
@@ -131,7 +126,7 @@
         }
 
         self.next = function() {
-            if (self.month == 12) {
+            if (self.month === 12) {
                 self.year++;
                 self.month = 1;
             } else {
@@ -140,7 +135,7 @@
         }
 
         self.prev = function() {
-            if (self.month == 1) {
+            if (self.month === 1) {
                 self.year--;
                 self.month = 12;
             } else {
@@ -149,9 +144,9 @@
         }
 
         self.onchange = function(prop) {
-            if (prop == 'month') {
+            if (prop === 'month') {
                 getData();
-            } else if (prop == 'data') {
+            } else if (prop === 'data') {
                 self.update();
             }
         }
@@ -206,7 +201,7 @@
             }
         }
 
-        var template = `<div class="jtimeline" @ref="self.root">
+        let template = `<div class="jtimeline" @ref="self.root">
                 <div class="jtimeline-header">
                 <div class="jtimeline-label">
                     <div class="jtimeline-month">{{self.months[self.month - 1]}}</div>

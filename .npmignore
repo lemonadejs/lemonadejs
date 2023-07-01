@@ -5,5 +5,5 @@
 .npmignore
 src
 packages
-tests/*
+test
 TODO.txt
