@@ -1,0 +1,115 @@
+.lm-data-grid-card {
+    display: inline-block;
+    border-radius: 5px;
+    background-color: white;
+    font-family: sans-serif;
+}
+
+.lm-data-grid-search-section {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+.lm-data-grid-search-section[search='false'] {
+    display: none;
+}
+
+.lm-data-grid-search-section input {
+    height: 28px;
+    margin-left: 5px;
+    padding: 5px;
+}
+
+.lm-data-grid-pagination-section {
+    display: flex;
+    justify-content: flex-end;
+    user-select: none;
+}
+
+.lm-data-grid-pagination-section ul {
+    display: flex;
+    list-style-type: none;
+    padding-left: 0;
+    margin-left: 0;
+}
+
+.lm-data-grid-pagination-section ul li {
+    margin-left: 2px;
+    padding: 0.3em 0.8em;
+    border: 1px solid transparent;
+    cursor: pointer;
+}
+
+.lm-data-grid-pagination-section ul li[selected='false']:hover {
+    color: #fff;
+    border: 1px solid #111;
+    background: linear-gradient(to bottom, #111122 0%, #000 100%);
+}
+
+.lm-data-grid-pagination-section ul li[selected='true'] {
+    border: 1px solid rgba(0, 0, 0, 0.3);
+    background: linear-gradient(to bottom, rgba(100, 100, 100, 0.1) 0%, rgba(0, 0, 0, 0.1) 100%);
+}
+
+.lm-data-grid-table {
+    border-collapse: collapse;
+    table-layout: fixed;
+    white-space: nowrap;
+    empty-cells: show;
+    width: 0;
+}
+
+.lm-data-grid-table .lm-data-grid-selected {
+    outline: solid 1px #00000011;
+}
+
+.lm-data-grid-table tbody tr:nth-child(even) {
+    box-shadow: inset 0 0 0 9999px rgba(0, 0, 0, 0.01);
+}
+
+.lm-data-grid-table tbody tr:nth-child(odd) {
+    box-shadow: inset 0 0 0 9999px rgba(0, 0, 0, 0.03);
+}
+
+.lm-data-grid-table td,
+.lm-data-grid-table th {
+    padding: 9px 10px;
+    margin: 0;
+    border: solid 1px transparent;
+}
+
+.lm-data-grid-table th {
+    border-bottom-color: #757575;
+    user-select: none;
+}
+
+.lm-data-grid-table thead tr {
+    height: 37px;
+}
+
+.lm-data-grid-table tbody td {
+    font-size: 14px;
+    height: 1px;
+    box-sizing: border-box;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: clip;
+}
+
+.lm-data-grid-table .edit-mode {
+    text-overflow: inherit !important;
+    outline: solid 1px #000000;
+}
+
+table:hover {
+    cursor: pointer;
+}
+
+.lm-data-grid-table .sort-arrow::after {
+    content: '\2191';
+}
+
+.lm-data-grid-table .sort-descending::after {
+    content: '\2193';
+}
