@@ -43,4 +43,4 @@ interface instance {
     setValue: (x: number | string, y: number, value: string) => void;
 }
 
-export declare function Datagrid(mixed: string | options, options?: options): instance;
+export declare function Datagrid(el: HTMLElement, options?: options): instance;

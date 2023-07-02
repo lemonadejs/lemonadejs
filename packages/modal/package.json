@@ -1,7 +1,7 @@
 {
     "name": "@lemonadejs/modal",
-    "title": "LemonadeJS modal",
-    "description": "LemonadeJS modal integration.",
+    "title": "JavaScript Modal",
+    "description": "LemonadeJS modal is a JavaScript component to create floating modals.",
     "author": {
         "name": "Contact <contact@lemonadejs.net>",
         "url": "https://lemonadejs.net"
@@ -13,8 +13,8 @@
         "modal js"
     ],
     "dependencies": {
-        "lemonadejs": "^3.3.0"
+        "lemonadejs": "^3.3.1"
     },
     "main": "dist/index.js",
-    "version": "2.0.0"
+    "version": "2.0.1"
 }

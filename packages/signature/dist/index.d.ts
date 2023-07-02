@@ -26,4 +26,4 @@ interface instance {
     getImage: () => string;
 }
 
-export declare function Signature(mixed: string | options, options?: options): instance
+export declare function Signature(el: HTMLElement, options?: options): instance;
