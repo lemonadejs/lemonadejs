@@ -1,20 +1,20 @@
-;(function(global,factory){
-typeofexports==='object'&&typeofmodule!=='undefined'?module.exports=factory():
-typeofdefine==='function'&&define.amd?define(factory):
-global.Actionsheet=factory();
-}(this,(function(){
+;(function (global, factory) {
+    typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
+    typeof define === 'function' && define.amd ? define(factory) :
+    global.Actionsheet = factory();
+}(this, (function () {
 
-//Loadlemonadejs
-if(typeof(lemonade)=='undefined'){
-if(typeof(require)==='function'){
-varlemonade=require('lemonadejs');
-}elseif(window.lemonade){
-varlemonade=window.lemonade;
-}
-}
+    // Load lemonadejs
+    if (typeof(lemonade) == 'undefined') {
+        if (typeof(require) === 'function') {
+            var lemonade = require('lemonadejs');
+        } else if (window.lemonade) {
+            var lemonade = window.lemonade;
+        }
+    }
 
-constGroupoptions=function(){
-constself=this;
+    const Groupoptions = function() {
+        const self = this;
 
         return `<div>
                 <input 
