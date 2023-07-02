@@ -4,7 +4,7 @@
 
 Compatible with Vanilla JavaScript, LemonadeJS, React, Vue or Angular.
 
-The LemonadeJS JavaScript Signature Pad is a versatile and responsive component that simplifies signature capture in web applications. It is compatible with Vanilla JavaScript, React, Vue, and Angular frameworks, allowing users to capture signatures using either mouse or touch input. With convenient methods for loading and retrieving signatures, developers can easily create solutions that empower users to sign documents and securely store their signatures.
+The LemonadeJS JavaScript Signature Pad is a responsive component that simplifies signature capture in web applications. It is compatible with Vanilla JavaScript, React, Vue, and Angular frameworks, allowing users to capture signatures using either mouse or touch input. With convenient methods for loading and retrieving signatures, developers can easily create solutions that empower users to sign documents and securely store their signatures.
 
 ## Features
 

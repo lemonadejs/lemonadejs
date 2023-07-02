@@ -8,15 +8,13 @@
     },
     "keywords": [
         "javascript modal",
-        "lemonadejs plugins",
-        "js",
-        "library",
-        "javascript plugins"
+        "lemonadejs modal",
+        "js modal",
+        "modal js"
     ],
     "dependencies": {
-        "lemonadejs": "^2.6.3",
-        "jsuites": "^4.15.1"
+        "lemonadejs": "^3.3.0"
     },
     "main": "dist/index.js",
-    "version": "1.2.0"
+    "version": "2.0.0"
 }

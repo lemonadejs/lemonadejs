@@ -1,10 +1,7 @@
 {
-    "name": "@lemonadejs/datagrid",
+    "name": "@lemonadejs/data-grid",
     "title": "JavaScript data grid component using LemonadeJS",
     "description": "The JavaScript data grid component using LemonadeJS is a lightweight and flexible tool that allows developers to create dynamic and interactive tables on web pages. The component supports dynamic data loading, sorting, filtering, and pagination, making it easy for users to find the information they need quickly. It is highly customizable, allowing developers to configure the appearance and behavior of the table to suit their needs. LemonadeJS data grid component is easy to integrate into existing web applications and is compatible with all major web browsers.",
-    "version": "1.0.14",
-    "main": "dist/index.js",
-    "types": "./dist/index.d.ts",
     "author": {
         "name": "Contact <contact@lemonadejs.net>",
         "url": "https://lemonadejs.net"
@@ -21,5 +18,8 @@
     ],
     "dependencies": {
         "lemonadejs": "^3.3.0"
-    }
+    },
+    "main": "dist/index.js",
+    "types": "./dist/index.d.ts",
+    "version": "1.0.15"
 }

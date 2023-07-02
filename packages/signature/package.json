@@ -1,7 +1,7 @@
 {
     "name": "@lemonadejs/signature",
-    "title": "LemonadeJS signature pad extension",
-    "description": "LemonadeJS list extension. A useful 1.4 kBytes signature pad library.",
+    "title": "JavaScript Signature Pad",
+    "description": "The LemonadeJS JavaScript Signature Pad is a responsive component that simplifies signature capture in web applications. It is compatible with Vanilla JavaScript, React, Vue, and Angular frameworks, allowing users to capture signatures using either mouse or touch input. With convenient methods for loading and retrieving signatures, developers can easily create solutions that empower users to sign documents and securely store their signatures.",
     "author": {
         "name": "Contact <contact@lemonadejs.net>",
         "url": "https://lemonadejs.net"
@@ -17,5 +17,5 @@
     },
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
-    "version": "2.0.2"
+    "version": "2.0.3"
 }
