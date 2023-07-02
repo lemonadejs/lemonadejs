@@ -637,17 +637,9 @@ function Lemonade() {
                             }
                             // Register the value attribute to be tracked
                             parseTokens.call(self, { e: element, a: prop, v: attr[k[i]], s: self, r: r, loop: true })
-                        } else if (type === 'src') {
-                            // Parse attributes
-                            parseTokens.call(self, { e: element, a: 'src', v: '{{' + attr[k[i]] + '}}', s: self })
                         } else {
                             // Parse attributes
-                            let value = run.call(self, attr[k[i]]);
-                            if (element.lemonade) {
-                                element.lemonade.self[type] = value;
-                            } else {
-                                element[type] = value;
-                            }
+                            parseTokens.call(self, { e: element, a: type, v: '{{' + attr[k[i]] + '}}', s: self })
                         }
 
                         // Sent to the queue
@@ -681,8 +673,11 @@ function Lemonade() {
         // Render component
         t = element.lemonade;
         if (t && t.handler && ! t.loop) {
+            let s = getAttributes.call(element, true);
+            // Make sure we have the attributes with the most recent values
+            L.setProperties.call(s, t.self);
             // Make sure the self goes as a reference
-            L.setProperties.call(t.self, getAttributes.call(element, true), true);
+            L.setProperties.call(t.self, s, true);
             // Reference to the element
             register(t.self, 'parent', self);
             // Create component
