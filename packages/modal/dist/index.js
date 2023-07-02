@@ -255,9 +255,8 @@ if (! lemonade && typeof(require) === 'function') {
             }
         }
 
-        return `<div class="lm-modal" title="{{self.title}}" :closed="self.closed" :closable="self.closable" style="width: {{self.width}}px; height: {{self.height}}px; top: {{self.top}}px; left: {{self.left}}px;" onmousedown="self.mousedown(e)" tabindex="-1">${template}</div>`
+        return `<div class="lm-modal" title="{{self.title}}" closed="{{self.closed}}" :closable="self.closable" style="width: {{self.width}}px; height: {{self.height}}px; top: {{self.top}}px; left: {{self.left}}px;" onmousedown="self.mousedown(e)" tabindex="-1">${template}</div>`
     }
-
 
     lemonade.setComponents({ Modal: Modal });
 

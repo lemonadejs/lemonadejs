@@ -1,0 +1,20 @@
+{
+    "name": "@lemonadejs/tabs",
+    "title": "JavaScript Tabs",
+    "description": "LemonadeJS tabs is a JavaScript component to create tabs.",
+    "author": {
+        "name": "Contact <contact@lemonadejs.net>",
+        "url": "https://lemonadejs.net"
+    },
+    "keywords": [
+        "javascript tabs",
+        "lemonadejs tabs",
+        "js tabs",
+        "tabs js"
+    ],
+    "dependencies": {
+        "lemonadejs": "^3.3.1"
+    },
+    "main": "dist/index.js",
+    "version": "1.0.0"
+}
