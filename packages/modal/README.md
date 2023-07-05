@@ -31,25 +31,78 @@ To use data grid via a CDN, include the following script tags in your HTML file:
 ```html
 <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lemonadejs/dist/lemonade.min.js"></script>
 <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@lemonadejs/modal/dist/index.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@lemonadejs/modal/dist/style.min.css" />
 ```
 
-### Configuration
+### Usage
 
-Quick example
+Declarative - Quick example with Lemonade
 
 ```javascript
-import Signature from "@lemonadejs/modal";
+import Modal from "@lemonadejs/modal";
+import "@lemonadejs/modal/dist/style.css"
 
 export default function Component() {
     const self = this;
     self.width = 400;
     self.height = 200;
 
-    return `<Modal width="{{self.width}}" height="{{self.height}}" title="My windowmodal">
-        <h1>Teste</h1>
+    return `<Modal width="{{self.width}}" height="{{self.height}}" title="My window modal">
+        <h1>Quick example!</h1>
     </Modal>`;
 }
 ```
+
+Programmatical - Quick example with Javascript 
+
+```html
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lemonadejs/dist/lemonade.min.js"></script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@lemonadejs/modal/dist/index.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@lemonadejs/modal/dist/style.min.css" />
+
+<div id="root">
+    <h1>Quick example!</h1>
+</div>
+
+<script>
+// Get root element to be the modal target
+const root = document.getElementById("root")
+
+// Call modal with the target and the options object
+Modal(root, {
+    width: 400,
+    height: 200,
+    title: "My window modal",
+})
+</script>
+```
+
+### Configuration
+
+You can configure things such as position, size, and functionalities.
+
+#### Modal Properties
+
+| Property | Type | Description |
+| -------- | ---- | ----------- |
+| title? | string | The header title of the modal |
+| height? | number | The height of the modal in pixels |
+| width? | number | The width of the modal in pixels |
+| top? | number | The vertical position of the modal within its container in pixels |
+| left? | number | The horizontal position of the modal within its container in pixels |
+| draggable? | boolean | Determines if the modal can be dragged |
+| resizable? | boolean | Determines if the modal can be resized |
+| closed? | boolean | Controls the open and close state of the modal |
+| closable? | boolean | Disables the ability to close the modal |
+| center? | boolean | Enables rendering the modal in the center of its parent container |
+| url? | string | The URL from which to fetch and render content |
+
+#### Modal Events
+
+| Event | Trigger |
+| ----- | ------- |
+| onclose | Called when modal closes |
+| onopen | Called when modal opens |
 
 ## License
 

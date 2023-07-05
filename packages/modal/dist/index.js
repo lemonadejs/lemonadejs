@@ -262,7 +262,10 @@ if (! lemonade && typeof(require) === 'function') {
 
     return function (root, options) {
         if (typeof(root) === 'object') {
-            lemonade.render(Modal, root, options)
+            let template = root.innerHTML;
+            root.innerHTML = '';
+
+            lemonade.render(Modal, root, options, template)
             return options;
         } else {
             return Modal.call(this, root)
