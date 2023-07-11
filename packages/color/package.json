@@ -1,7 +1,7 @@
 {
     "name": "@lemonadejs/color",
     "title": "LemonadeJS color",
-    "description": "LemonadeJS with jSuites color integration.",
+    "description": "LemonadeJS Color picker component.",
     "author": {
         "name": "Contact <contact@lemonadejs.net>",
         "url": "https://lemonadejs.net"
@@ -14,10 +14,20 @@
         "javascript plugins",
         "javascript color picker"
     ],
+    "scripts": {
+        "build": "webpack --config webpack.config.js"
+    },
     "dependencies": {
-        "lemonadejs": "^3.0.3",
-        "jsuites": "^4.17.7"
+        "lemonadejs": "^3.3.0"
     },
     "main": "dist/index.js",
-    "version": "2.0.0"
+    "version": "3.0.2",
+    "devDependencies": {
+        "@lemonadejs/modal": "^2.0.4",
+        "@lemonadejs/tabs": "^1.0.2",
+        "css-loader": "^6.8.1",
+        "mini-css-extract-plugin": "^2.7.6",
+        "webpack": "^5.88.1",
+        "webpack-cli": "^5.1.4"
+    }
 }

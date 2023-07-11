@@ -1,4 +1,4 @@
-# Javascript Modal
+# LemonadeJS Modal
 
 [Official website and documentation is here](https://lemonadejs.net/components/modal)
 
@@ -26,7 +26,7 @@ $ npm install @lemonadejs/modal
 
 ### CDN
 
-To use data grid via a CDN, include the following script tags in your HTML file:
+To use modal via a CDN, include the following script tags in your HTML file:
 
 ```html
 <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lemonadejs/dist/lemonade.min.js"></script>

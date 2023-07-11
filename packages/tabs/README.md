@@ -1,4 +1,4 @@
-# Javascript Modal
+# LemonadeJS Tabs
 
 [Official website and documentation is here](https://lemonadejs.net/components/tabs)
 
@@ -8,8 +8,7 @@ The LemonadeJS JavaScript Tabs is a responsive and reactive component that creat
 
 ## Features
 
--   Lightweight: The JavaScript Modal is only about 2 KBytes;
--   Reactive: Any changes to the underlying data are automatically applied to the HTML, making it easy to keep your grid up-to-date;
+-   Lightweight: The JavaScript Tabs is only about 2 KBytes;
 -   Integration: It can be used as a standalone library or integrated with any modern framework;
 
 ## Getting Started
@@ -26,16 +25,49 @@ $ npm install @lemonadejs/tabs
 
 ### CDN
 
-To use data grid via a CDN, include the following script tags in your HTML file:
+To use tabs via a CDN, include the following script tags in your HTML file:
 
 ```html
 <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lemonadejs/dist/lemonade.min.js"></script>
 <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@lemonadejs/tabs/dist/index.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@lemonadejs/tabs/dist/style.min.css" />
 ```
+
+### Usage
+
+Quick example with Lemonade
+
+```javascript
+import Tabs from "@lemonadejs/tabs";
+import "@lemonadejs/tabs/dist/style.css"
+
+export default function Component() {
+    const self = this;
+
+    return `<Tabs>
+        <div title="Tab 1">Content of the first tab</div>
+        <div title="Tab 2">Content of the second tab</div>
+    </Tabs>`;
+}
+```
+
+[You can find more examples here in the official documentation.](https://lemonadejs.net/components/tabs)
+
+### Configuration
+
+You can configure things such as tabs titles, tabs contents and selected tab.
+
+#### Tabs Properties
+
+| Property | Type | Description |
+| -------- | ---- | ----------- |
+| data? | array | An optional alternative method to provide the title and content that will serve as the basis for rendering the tabs. |
+| selected? | number | The index of the initially selected tab. Starts from 0. |
+| position? | string | The position of the tabs bar within the parent element. Use 'center' to center-align the tabs. |
 
 ## License
 
-The [LemonadeJS](https://lemonadejs.net) tabs is released under the MIT.
+The [LemonadeJS](https://lemonadejs.net) Tabs is released under the MIT.
 
 ## Other Tools
 
