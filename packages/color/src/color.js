@@ -145,7 +145,7 @@ if (!Tabs && typeof (require) === 'function') {
         }
 
         return `<div class="lm-color-hsl">
-            <canvas width="238" height="160" :ref="self.canvas" onmousedown="self.update(e)" onmousemove="self.update(e)" ontouchmove="self.update(e)"></canvas>
+            <canvas :ref="self.canvas" onmousedown="self.update(e)" onmousemove="self.update(e)" ontouchmove="self.update(e)"></canvas>
             <div class="lm-color-point" :ref="self.point"></div>
         </div>`;
     }

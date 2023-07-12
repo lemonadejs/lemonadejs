@@ -518,7 +518,7 @@ if (!Tabs && "function" === 'function') {
         }
 
         return `<div class="lm-color-hsl">
-            <canvas width="238" height="160" :ref="self.canvas" onmousedown="self.update(e)" onmousemove="self.update(e)" ontouchmove="self.update(e)"></canvas>
+            <canvas :ref="self.canvas" onmousedown="self.update(e)" onmousemove="self.update(e)" ontouchmove="self.update(e)"></canvas>
             <div class="lm-color-point" :ref="self.point"></div>
         </div>`;
     }
@@ -655,6 +655,8 @@ var __webpack_exports__ = {};
 "use strict";
 /* harmony import */ var _color_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(857);
 /* harmony import */ var _color_js__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_color_js__WEBPACK_IMPORTED_MODULE_0__);
+
+
 
 
 
