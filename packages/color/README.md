@@ -58,7 +58,6 @@ You can configure things such as color palette, toggle button type, and event ma
 | -------- | ---- | ----------- |
 | palette? | array | A matrix containing hexadecimal color values. There is a default palette. |
 | closed? | boolean | Controls the open and close state of the modal. |
-| name? | string |  |
 | type? | string | The type of element that will toggle the color picker modal. Options: 'input', 'box' or empty.  |
 | value? | string | The value of the color that is currently selected. |
 

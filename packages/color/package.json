@@ -21,10 +21,10 @@
         "lemonadejs": "^3.3.0"
     },
     "main": "dist/index.js",
-    "version": "3.0.3",
+    "version": "3.0.5",
     "devDependencies": {
         "@lemonadejs/modal": "^2.0.4",
-        "@lemonadejs/tabs": "^1.0.2",
+        "@lemonadejs/tabs": "^1.0.4",
         "css-loader": "^6.8.1",
         "mini-css-extract-plugin": "^2.7.6",
         "webpack": "^5.88.1",

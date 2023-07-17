@@ -359,7 +359,12 @@ if (!lemonade && "function" === 'function') {
 
     return function (root, options) {
         if (typeof (root) === 'object') {
-            lemonade.render(Tabs, root, options)
+            // Get HTML inside the wrapper element then empty it
+            const template = root.innerHTML
+            root.innerHTML = ''
+
+            // Send Template as a parameter for the Lemonade component
+            lemonade.render(Tabs, root, options, template)
             return options;
         } else {
             return Tabs.call(this, root)
