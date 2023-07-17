@@ -1,0 +1,16 @@
+<script src="https://cdn.jsdelivr.net/npm/lemonadejs@3.3.1/dist/lemonade.min.js"></script>
+<script src="../dist/index.js"></script>
+<link rel="stylesheet" href="../dist/style.css" />
+
+<div id="tabs">
+    <div title="Tab 1">Content of the first tab</div>
+    <div title="Tab 2">Content of the second tab</div>
+</div>
+
+<script>
+const root = document.getElementById("tabs");
+ 
+Tabs(root, {
+  selected: 0
+});
+</script>
