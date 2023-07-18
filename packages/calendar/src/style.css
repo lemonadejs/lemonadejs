@@ -1,0 +1,58 @@
+.lm-calendar .lm-modal {
+    display: flex;
+    flex-direction: column;
+}
+
+.lm-calendar-controllers {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0px;
+}
+
+.lm-calendar-controllers button {
+    all: unset;
+}
+
+.lm-calendar-controllers > div {
+    padding: 0px 15px;
+    display: flex;
+    justify-content: space-evenly;
+}
+
+.lm-calendar-controllers > div > div {
+    text-align: center;
+}
+
+.lm-calendar-controllers > div:nth-child(1) > div {
+    width: 40px;
+}
+
+.lm-calendar-controllers > div:nth-child(2) > div {
+    width: 90px;
+}
+
+.lm-calendar-table-wrapper {
+    flex-grow: 1;
+}
+
+.lm-calendar table {
+    height: 100%;
+    width: 100%;
+}
+
+.lm-calendar td {
+    text-align: center;
+}
+
+.lm-calendar td:not([value=""]):hover {
+    background-color: blue;
+    cursor: pointer;
+}
+
+.lm-calendar td:not([value=""]) {
+    border-radius: 5px;
+}
+
+.lm-calendar td.selected {
+    background-color: aqua !important;
+}
