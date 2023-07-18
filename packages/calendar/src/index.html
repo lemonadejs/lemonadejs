@@ -6,10 +6,16 @@
 <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@lemonadejs/modal/dist/index.min.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@lemonadejs/modal/dist/style.min.css" />
 
+<button onclick="calendar.currentYear = 2009">Go To 2009</button>
+<button onclick="calendar.currentMonth = 11">Go To December</button>
 <div id="root"></div>
 
 <script>
 const root = document.getElementById("root")
 
-Calendar(root, {})
+const calendar = Calendar(root, {
+    onupdate: function(v) {
+        console.log('mudou para ', v)
+    }
+})
 </script>

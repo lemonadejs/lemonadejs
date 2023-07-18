@@ -1,7 +1,7 @@
 {
     "name": "@lemonadejs/calendar",
     "title": "LemonadeJS calendar",
-    "description": "LemonadeJS calendar integration.",
+    "description": "LemonadeJS Calendar Component.",
     "author": {
         "name": "Contact <contact@lemonadejs.net>",
         "url": "https://lemonadejs.net"
@@ -13,12 +13,19 @@
         "library",
         "javascript plugins"
     ],
+    "scripts": {
+        "build": "webpack --config webpack.config.js"
+    },
     "dependencies": {
-        "lemonadejs": "^3.0.3"
+        "lemonadejs": "^3.3.1"
     },
     "main": "dist/index.js",
     "version": "3.0.0",
     "devDependencies": {
-        "@lemonadejs/modal": "^2.0.4"
+        "@lemonadejs/modal": "^2.0.4",
+        "css-loader": "^6.8.1",
+        "mini-css-extract-plugin": "^2.7.6",
+        "webpack": "^5.88.2",
+        "webpack-cli": "^5.1.4"
     }
 }

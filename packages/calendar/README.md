@@ -4,11 +4,11 @@
 
 Compatible with Vanilla JavaScript, LemonadeJS, React, Vue or Angular.
 
-The LemonadeJS JavaScript Calendar is ...
+The LemonadeJS Calendar Component is a lightweight and agile calendar solution that empowers developers with efficient date management capabilities. With seamless navigation between months and years, intuitive day selection, and the ability to attach values and events, this highly customizable component provides a versatile foundation for scheduling applications, booking systems, and more. Its optimized codebase ensures fast performance, while its responsive design guarantees a consistent user experience across devices. Streamline your date management with the LemonadeJS Calendar Component and unlock enhanced productivity for your users.
 
 ## Features
 
--   Lightweight: The JavaScript Tabs is only about 2 KBytes;
+-   Lightweight: The JavaScript Calendar is only about 2 KBytes;
 -   Integration: It can be used as a standalone library or integrated with any modern framework;
 
 ## Getting Started
@@ -44,13 +44,13 @@ import "@lemonadejs/calendar/dist/style.css"
 export default function App() {
     const self = this;
 
-    return `<Calendar/>`;
+    return `<Calendar />`;
 }
 ```
 
 ### Configuration
 
-You can configure things such as calendar ...
+You can configure things such as calendar starting date, calendar events, and customize functions.
 
 #### Calendar Properties
 

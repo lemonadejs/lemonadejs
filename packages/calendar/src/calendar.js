@@ -15,7 +15,7 @@ if (!Modal && typeof (require) === 'function') {
     const controller = {}
 
     const makeMatrix = function (month, year) {
-        let quantityOfDays = daysInMonth[month]
+        let quantityOfDays = month === 1 ? getDaysInFebruary(year) : daysInMonth[month]
 
         // First day position on the first week array
         let firstDay = getFirstDayOfMonth(month, year)
@@ -58,6 +58,29 @@ if (!Modal && typeof (require) === 'function') {
         return m
     };
 
+    const getDaysInFebruary = function (year) {
+        // Check if the year is divisible by 4
+        if (year % 4 !== 0) {
+          return 28; // Not a leap year, February has 28 days
+        }
+      
+        // Check if the year is divisible by 100
+        if (year % 100 === 0) {
+          // If divisible by 100, also check if it's divisible by 400
+          if (year % 400 === 0) {
+            return 29; // Leap year, February has 29 days
+          } else {
+            return 28; // Not a leap year, February has 28 days
+          }
+        }
+      
+        return 29; // Leap year (divisible by 4 but not by 100), February has 29 days
+    }
+    
+    const getFirstDayOfMonth = function (month, year) {
+        return new Date(year, month, 1).getDay()
+    }
+
     const daysInMonth = {
         0: 31,
         1: 28,
@@ -74,45 +97,52 @@ if (!Modal && typeof (require) === 'function') {
     };
 
 
-    const getFirstDayOfMonth = function (month, year) {
-        return new Date(year, month, 1).getDay()
-    }
-
     function Calendar() {
         let self = this;
 
         self.months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
+        if (!self.value) {
+            self.value = new Date()
+        }
 
-        self.currentMonth = new Date().getMonth();
-        self.currentYear = new Date().getFullYear();
+        self.month = self.value.getMonth();
+        self.year = self.value.getFullYear();
+        self.day = self.value.getDate();
 
         self.onload = function () {
             self.makeTable()
         }
 
         self.onchange = function (prop) {
-            if (prop === "currentMonth" || prop === "currentYear") {
+            if (prop === "month" || prop === "year") {
                 self.makeTable()
+            } else if (prop === "value") {
+                if (typeof (self.onupdate) === 'function') {
+                    self.onupdate(self.value)
+                }
             }
         }
 
         self.select = function (td) {
-            if (td.getAttribute('value') == '') {
-                return null
+            const v = td.getAttribute('value')
+            if (v == '') {
+                return
             }
 
             if (controller.selected) {
                 controller.selected.classList.remove('selected')
             }
             td.classList.add('selected')
+            self.value = new Date(self.year, self.month, v)
+            self.day = v
 
             controller.selected = td
         }
 
         self.makeTable = function () {
             // Get the matrix to build the HTML table based on
-            const m = makeMatrix(self.currentMonth, self.currentYear)
+            const m = makeMatrix(self.month, self.year)
 
             let html = ''
 
@@ -128,28 +158,28 @@ if (!Modal && typeof (require) === 'function') {
         }
 
         self.addMonth = function () {
-            if (self.currentMonth === 11) {
-                self.currentMonth = 0
-                self.currentYear += 1
+            if (self.month === 11) {
+                self.month = 0
+                self.year += 1
             } else {
-                self.currentMonth += 1
+                self.month += 1
             }
         }
 
         self.subMonth = function () {
-            if (self.currentMonth === 0) {
-                self.currentMonth = 11
-                self.currentYear -= 1
+            if (self.month === 0) {
+                self.month = 11
+                self.year -= 1
             } else {
-                self.currentMonth -= 1
+                self.month -= 1
             }
         }
 
-        let template = `<div class="lm-calendar">
+        let template = `<div class="lm-calendar" date="{{self.value}}">
             <Modal closed="{{self.closed}}" width="400" height="260" :onopen="self.onopen" :onclose="self.onclose" :ref="self.component">
                 <div class="lm-calendar-controllers">
-                    <div><button onclick="self.parent.currentYear -= 1"><</button><div>{{self.parent.currentYear}}</div><button onclick="self.parent.currentYear += 1">></button></div>
-                    <div><button onclick="self.parent.subMonth()"><</button><div>{{self.parent.months[self.parent.currentMonth]}}</div><button onclick="self.parent.addMonth()">></button></div>
+                    <div><button onclick="self.parent.year -= 1"><</button><div>{{self.parent.year}}</div><button onclick="self.parent.year += 1">></button></div>
+                    <div><button onclick="self.parent.subMonth()"><</button><div>{{self.parent.months[self.parent.month]}}</div><button onclick="self.parent.addMonth()">></button></div>
                 </div>
                 <div class="lm-calendar-table-wrapper">
                     <table>

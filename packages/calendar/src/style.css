@@ -6,11 +6,22 @@
 .lm-calendar-controllers {
     display: flex;
     justify-content: space-between;
+    font-size: 1.3em;
     padding: 10px 0px;
 }
 
 .lm-calendar-controllers button {
     all: unset;
+    background-color: #E5E5E5;
+    border-radius: 5px;
+    width: 30px;
+    text-align: center;
+    font-weight: bold;
+}
+
+.lm-calendar-controllers button:hover {
+    background-color: #C5C5C5;
+    cursor: pointer;
 }
 
 .lm-calendar-controllers > div {
@@ -24,15 +35,17 @@
 }
 
 .lm-calendar-controllers > div:nth-child(1) > div {
-    width: 40px;
+    width: 50px;
 }
 
 .lm-calendar-controllers > div:nth-child(2) > div {
-    width: 90px;
+    width: 100px;
 }
 
 .lm-calendar-table-wrapper {
     flex-grow: 1;
+    padding: 5px 10px;
+    padding-bottom: 30px;
 }
 
 .lm-calendar table {
@@ -45,14 +58,15 @@
 }
 
 .lm-calendar td:not([value=""]):hover {
-    background-color: blue;
+    background-color: #E5E5E5;
     cursor: pointer;
 }
 
 .lm-calendar td:not([value=""]) {
     border-radius: 5px;
+    font-size: 1.3em;
 }
 
 .lm-calendar td.selected {
-    background-color: aqua !important;
+    background-color: #C5C5C5 !important;
 }

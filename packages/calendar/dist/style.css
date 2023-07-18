@@ -1,0 +1,144 @@
+.lm-calendar .lm-modal {
+    display: flex;
+    flex-direction: column;
+}
+
+.lm-calendar-controllers {
+    display: flex;
+    justify-content: space-between;
+    font-size: 1.3em;
+    padding: 10px 0px;
+}
+
+.lm-calendar-controllers button {
+    all: unset;
+}
+
+.lm-calendar-controllers > div {
+    padding: 0px 15px;
+    display: flex;
+    justify-content: space-evenly;
+}
+
+.lm-calendar-controllers > div > div {
+    text-align: center;
+}
+
+.lm-calendar-controllers > div:nth-child(1) > div {
+    width: 50px;
+}
+
+.lm-calendar-controllers > div:nth-child(2) > div {
+    width: 90px;
+}
+
+.lm-calendar-table-wrapper {
+    flex-grow: 1;
+}
+
+.lm-calendar table {
+    height: 100%;
+    width: 100%;
+}
+
+.lm-calendar td {
+    text-align: center;
+}
+
+.lm-calendar td:not([value=""]):hover {
+    background-color: #E5E5E5;
+    cursor: pointer;
+}
+
+.lm-calendar td:not([value=""]) {
+    border-radius: 5px;
+    font-size: 1.3em;
+}
+
+.lm-calendar td.selected {
+    background-color: #C5C5C5 !important;
+}
+.lm-modal {
+    position: absolute;
+    min-width: 150px;
+    min-height: 120px;
+    width: 300px;
+    height: 260px;
+    border-radius: 4px;
+    z-index: 9;
+    background-color: #fff;
+    border: 1px solid #ccc;
+    box-sizing: border-box;
+    box-shadow: 0 0 4px 3px rgba(80,80,80,.1);
+}
+
+@media only screen and (max-width : 800px) {
+    .lm-modal {
+        width: 100% !important;
+        bottom: 0;
+        left: 0;
+        border: 0;
+        border-radius: 0;
+        transform: none;
+        animation: slide-bottom-in 0.4s forwards;
+    }
+
+    .lm-modal.fullscreen {
+        top: 0;
+        height: 100% !important;
+    }
+}
+
+.lm-modal-picker {
+    width: 100% !important;
+    height: 260px !important;
+    left: 0;
+    bottom: 0;
+    border: 0;
+    border-radius: 0;
+    transform: none;
+}
+
+.lm-modal-center {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.lm-modal[title]::before {
+    content: attr(title);
+    display: block;
+    position: relative;
+    width: 100%;
+    border-bottom: 1px solid #ccc;
+    padding: 10px;
+    box-sizing: border-box;
+    font-size: 1.2em;
+    line-height: 24px;
+}
+
+.lm-modal[closable="true"]::after {
+    content: 'close';
+    font-family: 'Material Icons';
+    display: block;
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    font-size: 24px;
+    cursor: pointer;
+}
+
+
+.lm-modal[title=""]::before {
+    display: none;
+}
+
+.lm-modal[closed="true"] {
+    display: none !important;
+}
+
+@keyframes slide-bottom-in {
+    0% { transform: translateY(100%); }
+    100% { transform: translateY(0%); }
+}
+
