@@ -12,6 +12,8 @@ interface Modal {
 interface options {
     closed?: boolean;
     closable?: boolean;
+    minimized?: boolean;
+    minimizable?: boolean;
     resizable?: boolean;
     draggable?: boolean;
     center?: boolean;

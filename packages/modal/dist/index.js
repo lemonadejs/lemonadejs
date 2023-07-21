@@ -29,7 +29,9 @@ if (! lemonade && typeof(require) === 'function') {
                 y = e.clientY;
             }
 
-            if (item.self.closable === true && rect.width - (x - rect.left) < 40 && (y - rect.top) < 40) {
+            if (item.self.minimizable === true && (rect.width - (x - rect.left) < 40 && (y - rect.top) < 40) || item.self.minimized === true) {
+                item.self.minimized = !item.self.minimized;
+            } else if (item.self.closable === true && rect.width - (x - rect.left) < 40 && (y - rect.top) < 40) {
                 item.self.closed = true;
             } else {
                 editorAction = {
@@ -198,6 +200,12 @@ if (! lemonade && typeof(require) === 'function') {
         if (typeof(self.title) === 'undefined') {
             self.title = '';
         }
+        if (typeof(self.minimized) === 'undefined') {
+            self.minimized = false;
+        }
+        if (typeof(self.minimizable) === 'undefined') {
+            self.minimizable = false;
+        }
         if (typeof(self.closed) === 'undefined') {
             self.closed = false;
         }
@@ -255,7 +263,7 @@ if (! lemonade && typeof(require) === 'function') {
             }
         }
 
-        return `<div class="lm-modal" title="{{self.title}}" closed="{{self.closed}}" :closable="self.closable" style="width: {{self.width}}px; height: {{self.height}}px; top: {{self.top}}px; left: {{self.left}}px;" onmousedown="self.mousedown(e)" tabindex="-1">${template}</div>`
+        return `<div class="lm-modal" title="{{self.title}}" closed="{{self.closed}}" :closable="self.closable" :minimized="self.minimized" :minimizable="self.minimizable" style="width: {{self.width}}px; height: {{self.height}}px; top: {{self.top}}px; left: {{self.left}}px;" onmousedown="self.mousedown(e)" tabindex="-1">${template}</div>`
     }
 
     lemonade.setComponents({ Modal: Modal });

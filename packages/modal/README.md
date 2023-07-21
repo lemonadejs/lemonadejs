@@ -93,7 +93,9 @@ You can configure things such as position, size, and functionalities.
 | draggable? | boolean | Determines if the modal can be dragged |
 | resizable? | boolean | Determines if the modal can be resized |
 | closed? | boolean | Controls the open and close state of the modal |
-| closable? | boolean | Disables the ability to close the modal |
+| closable? | boolean | Enables the close button |
+| minimized? | boolean | Controls the minimized state of the modal |
+| minimizable? | boolean | Enables the minimize button |
 | center? | boolean | Enables rendering the modal in the center of its parent container |
 | url? | string | The URL from which to fetch and render content |
 

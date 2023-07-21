@@ -57,15 +57,27 @@
     line-height: 24px;
 }
 
-.lm-modal[closable="true"]::after {
-    content: 'close';
+.lm-modal::after {
     font-family: 'Material Icons';
+    cursor: pointer;
+}
+
+.lm-modal[closable="true"]::after {
+    content: '\128469';
     display: block;
     position: absolute;
     top: 10px;
     right: 10px;
     font-size: 24px;
-    cursor: pointer;
+}
+
+.lm-modal[minimizable="true"]::after {
+    content: '\2500';
+    display: block;
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    font-size: 24px;
 }
 
 
@@ -75,6 +87,21 @@
 
 .lm-modal[closed="true"] {
     display: none !important;
+}
+
+.lm-modal[minimized="true"] {
+    bottom: 0;
+    min-height: 0px;
+    height: 45px;
+}
+
+.lm-modal[minimized="true"]::before {
+    height: 100%;
+    cursor: pointer;
+}
+
+.lm-modal[minimized="true"]::after {
+    content: '';
 }
 
 @keyframes slide-bottom-in {
