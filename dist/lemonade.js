@@ -1,5 +1,5 @@
 /**
- * Lemonadejs v3.3.0
+ * LemonadeJS v3.3.2
  *
  * Website: https://lemonadejs.net
  * Description: Create amazing web based reusable components.
@@ -140,12 +140,36 @@
     }
 
     /**
+     * Check if a element is appended to the DOM or a shadowRoot
+     * @param {HTMLElement} node
+     * @return {boolean}
+     */
+    const contains = function(node) {
+        while (node) {
+            if (node === document.body) {
+                return true; // Node is in main document
+            }
+
+            if (node.parentNode === null) {
+                if (node.host) {
+                    node = node.host; // Traverse up through ShadowRoot
+                } else {
+                    return false; // Detached node
+                }
+            } else {
+                node = node.parentNode; // Traverse up through parentNode
+            }
+        }
+        return false;
+    }
+
+    /**
      * Process all methods queued from the ready property
      * @param {HTMLElement} e - check if the element is already in the DOM
      */
     const queue = function(e) {
         // Un-queue
-        if (document.body.contains(e)) {
+        if (contains(e)) {
             // Process ready elements
             unqueue('ready', function(q) {
                 q.method();
