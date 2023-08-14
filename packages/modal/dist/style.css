@@ -92,7 +92,7 @@
 .lm-modal[minimized="true"] {
     bottom: 0;
     min-height: 0px;
-    height: 45px;
+    height: 45px !important;
 }
 
 .lm-modal[minimized="true"]::before {

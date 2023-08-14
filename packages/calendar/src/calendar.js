@@ -48,7 +48,7 @@ if (!Modal && typeof (require) === 'function') {
         for (let i = 0; i < 7; i++) {
             if (i < firstDay) {
                 let day = quantityOfDaysLastMonth + (i - firstDay + 1)
-                m[0][i] = { value: day, type: isDateInRange(new Date(year, month, day), validRange[0], validRange[1]) ? 'previous' : 'disabled' }
+                m[0][i] = { value: day, type: isDateInRange(new Date(year, month - 1, day), validRange[0], validRange[1]) ? 'previous' : 'disabled' }
             }
         }
 
@@ -293,7 +293,7 @@ if (!Modal && typeof (require) === 'function') {
             self.header = [{ title: 'S' }, { title: 'M' }, { title: 'T' }, { title: 'W' }, { title: 'T' }, { title: 'F' }, { title: 'S' }];
 
             // Get the matrix to build the HTML table based on
-            const m = makeDaysMatrix(self.month, self.year, self.validRange);
+            const m = makeDaysMatrix(self.month, self.year, self.range);
 
             let html = '';
 

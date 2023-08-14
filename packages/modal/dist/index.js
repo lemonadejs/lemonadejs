@@ -29,10 +29,10 @@ if (! lemonade && typeof(require) === 'function') {
                 y = e.clientY;
             }
 
-            if (item.self.minimizable === true && (rect.width - (x - rect.left) < 40 && (y - rect.top) < 40) || item.self.minimized === true) {
-                item.self.minimized = !item.self.minimized;
-            } else if (item.self.closable === true && rect.width - (x - rect.left) < 40 && (y - rect.top) < 40) {
-                item.self.closed = true;
+            if (item.lemon.self.minimizable === true && (rect.width - (x - rect.left) < 40 && (y - rect.top) < 40) || item.lemon.self.minimized === true) {
+                item.lemon.self.minimized = !item.lemon.self.minimized;
+            } else if (item.lemon.self.closable === true && rect.width - (x - rect.left) < 40 && (y - rect.top) < 40) {
+                item.lemon.self.closed = true;
             } else {
                 editorAction = {
                     e: item,
@@ -43,7 +43,7 @@ if (! lemonade && typeof(require) === 'function') {
                     d: item.style.cursor,
                     resizing: !!item.style.cursor,
                     actioned: false,
-                    s: item.self,
+                    s: item.lemon.self,
                 }
 
                 // Make sure width and height styling is OK
@@ -170,9 +170,17 @@ if (! lemonade && typeof(require) === 'function') {
                 }
             }
         } else {
-            let item = e.target.closest('.lm-modal');
+            
+            let item;
+
+            if (e.target.shadowRoot) {
+                item = e.target.shadowRoot.querySelector('.lm-modal')
+            } else {
+                item = e.target.closest('.lm-modal')
+            }
+
             if (item !== null) {
-                if (item.self && item.self.resizable === true) {
+                if (item.lemon.self && item.lemon.self.resizable === true) {
                     let rect = item.getBoundingClientRect();
                     if (rect.height - (e.clientY - rect.top) < cornerSize) {
                         if (rect.width - (e.clientX - rect.left) < cornerSize) {
