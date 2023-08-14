@@ -1,6 +1,11 @@
 .lm-calendar .lm-modal {
     display: flex;
     flex-direction: column;
+    font-size: 13px;
+}
+
+.lm-calendar td {
+    font-size: 14px !important;
 }
 
 .lm-calendar-controllers {
@@ -12,16 +17,6 @@
 
 .lm-calendar-controllers button {
     all: unset;
-    background-color: #E5E5E5;
-    border-radius: 5px;
-    width: 30px;
-    text-align: center;
-    font-weight: bold;
-}
-
-.lm-calendar-controllers button:hover {
-    background-color: #C5C5C5;
-    cursor: pointer;
 }
 
 .lm-calendar-controllers > div {
@@ -30,22 +25,93 @@
     justify-content: space-evenly;
 }
 
-.lm-calendar-controllers > div > div {
+.lm-calendar-controllers button {
+    cursor: pointer;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.lm-calendar-controllers > div:nth-child(1) button {
+    padding: 0px 4px;
+}
+
+.lm-calendar-controllers > div:nth-child(2) button {
+    width: 30px;
     text-align: center;
+    font-weight: bold;
 }
 
-.lm-calendar-controllers > div:nth-child(1) > div {
-    width: 50px;
+.lm-calendar-controllers > div button:hover {
+    color: #858585;
 }
 
-.lm-calendar-controllers > div:nth-child(2) > div {
-    width: 100px;
+.lm-calendar-controllers > div:nth-child(1) > button {
+    display: none;
 }
 
-.lm-calendar-table-wrapper {
+.lm-calendar-controllers > div > button.visible {
+    display: block;
+}
+
+.lm-calendar-controllers[mode="time"] {
+    display: none;
+} 
+
+.lm-calendar-content-wrapper {
     flex-grow: 1;
-    padding: 5px 10px;
-    padding-bottom: 30px;
+    padding: 5px 5px 10px 5px;
+}
+
+.lm-calendar-content-wrapper table[mode="time"] {
+    display: none;
+}
+
+.lm-calendar-content-wrapper > div {
+    display: none;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+}
+
+.lm-calendar-content-wrapper .options {
+    height: 210px;
+    overflow-y: scroll;
+    border: 1px solid rgba(0,0,0, 0.1);
+}
+
+.lm-calendar-content-wrapper .options div {
+    text-align: center;
+    width: 50px;
+    height: 30px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+}
+
+.lm-calendar-content-wrapper .options .selected {
+    background-color: #E5E5E5;
+}
+
+.lm-calendar-content-wrapper > div[mode="time"] {
+    display: flex;
+}
+
+.lm-calendar-content-wrapper > div > button {
+    all: unset;
+    border: solid 1px rgba(0,0,0, 0.1);
+    border-radius: 5px;
+    text-align: center;
+    width: 90px;
+    height: 30px;
+    margin-left: 20px;
+}
+
+
+.lm-calendar-content-wrapper > div > button:hover {
+    cursor: pointer;
+    background-color: #F5F5F5;
 }
 
 .lm-calendar table {
@@ -58,15 +124,66 @@
 }
 
 .lm-calendar td:not([value=""]):hover {
-    background-color: #E5E5E5;
+    outline: solid 2px black;
     cursor: pointer;
 }
 
 .lm-calendar td:not([value=""]) {
-    border-radius: 5px;
-    font-size: 1.3em;
+    font-size: 1.1em;
 }
 
 .lm-calendar td.selected {
-    background-color: #C5C5C5 !important;
+    outline: solid 2px #959595 !important;
+}
+
+.lm-calendar td:not([type="current"]) {
+    color: #A5A5A5;
+}
+
+.lm-calendar ::-webkit-scrollbar {
+    width: 10px;
+}
+  
+.lm-calendar ::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+  
+.lm-calendar ::-webkit-scrollbar-thumb {
+    background: #888;
+}
+  
+.lm-calendar ::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+.disabled-cell {
+    color: #E5E5E5 !important;
+}
+
+.disabled-cell:hover {
+    outline: none !important;
+    cursor: default !important;
+}
+
+@media only screen and (max-width : 800px) {
+    .lm-calendar {
+        font-size: 1.3rem !important;
+    }
+
+    .lm-calendar td, th {
+        font-size: 1.3rem !important;
+    }
+
+    .lm-calendar-content-wrapper .options {
+        height: 240px;
+    }
+    
+    .lm-calendar-content-wrapper .options div {
+        width: 20vw;
+        height: 40px;
+    }
+
+    .lm-calendar ::-webkit-scrollbar {
+        width: 3vw;
+    }
 }

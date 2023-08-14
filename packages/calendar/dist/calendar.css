@@ -1,11 +1,6 @@
 .lm-calendar .lm-modal {
     display: flex;
     flex-direction: column;
-    font-size: 13px;
-}
-
-.lm-calendar td {
-    font-size: 14px !important;
 }
 
 .lm-calendar-controllers {
@@ -27,9 +22,6 @@
 
 .lm-calendar-controllers button {
     cursor: pointer;
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
 }
 
 .lm-calendar-controllers > div:nth-child(1) button {
@@ -37,7 +29,7 @@
 }
 
 .lm-calendar-controllers > div:nth-child(2) button {
-    width: 30px;
+    width: 20px;
     text-align: center;
     font-weight: bold;
 }
@@ -46,8 +38,12 @@
     color: #858585;
 }
 
-.lm-calendar-controllers > div:nth-child(1) > button {
-    display: none;
+.lm-calendar-controllers > div > div {
+    text-align: center;
+}
+
+.lm-calendar-controllers > div {
+    background-color: red;
 }
 
 .lm-calendar-controllers > div > button.visible {

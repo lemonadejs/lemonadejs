@@ -56,7 +56,10 @@ You can configure things such as calendar starting date, calendar events, and cu
 
 | Property | Type | Description |
 | -------- | ---- | ----------- |
-| ? |  | . |
+| value | date | The value currently attached to the calendar. |
+| validRange | array |  |
+| closed | boolean | Control when the calendar modal is open or closed. |
+| time | boolean | Enables time selection into the calendar. |
 
 ### Calendar Events
 
@@ -65,6 +68,7 @@ You can configure things such as calendar starting date, calendar events, and cu
 | onopen? | () => void | Called when modal opens. |
 | onclose? | () => void | Called when modal closes. |
 | onupdate? | (instance.value) => void | Called when value updates. |
+| onchange? | (instance.value) => void | Called when some state inside the component changes. |
 
 ## License
 

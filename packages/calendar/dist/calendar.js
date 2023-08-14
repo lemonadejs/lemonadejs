@@ -458,12 +458,20 @@ if (!Modal && "function" === 'function') {
     function ControllerDisplay() {
         let self = this
 
-        let template = `<div>
-            <button :class="self.mode === 'date' ? 'visible' : ''" onclick="self.parent.parent.mode = 'month'">{{self.month}}</button>
-            <button :class="self.mode === 'date' || self.mode === 'month' ? 'visible' : ''" onclick="self.parent.parent.mode = 'year'">{{self.year}}</button>
-            <button :class="self.mode === 'date' ? 'visible' : ''" onclick="self.parent.parent.mode = 'time'">{{self.hours}}:{{self.minutes}} {{self.ampm}}</button>
-            <button :class="self.mode === 'year' ? 'visible' : ''">{{self.year-4}}-{{self.year+11}}</button>
-        </div>`
+        let template = '<div >'
+
+        if (self.parent.parent.mode === 'date') {
+            template += `<button onclick="self.parent.parent.mode = 'month'">{{self.month}}</button><button onclick="self.parent.parent.mode = 'year'">{{self.year}}</button>`
+            if (self.time) {
+                template += `<button onclick="self.parent.parent.mode = 'time'"">{{self.hours}}:{{self.minutes}} {{self.ampm}}</button>`
+            }
+        } else if (self.parent.parent.mode === 'month') {
+            template += `<button onclick="self.parent.parent.mode = 'year'">{{self.year}}</button>`
+        } else if (self.parent.parent.mode === 'year') {
+            template += `<button>{{self.year-4}}-{{self.year+11}}</button>`
+        }
+
+        template += '</div>'
 
         return lemonade.element(template, self)
     }
@@ -481,14 +489,16 @@ if (!Modal && "function" === 'function') {
         
         self.mode = "date"
 
-        function setFormatTime() {
+        
+
+        setFormatTime = function () {
             let h = self.value.getHours();
             self.minutes = self.value.getMinutes();
             self.ampm = h >= 12 ? 'PM' : 'AM';
             h = h % 12;
-            h = h ? h : 12;
-            self.hours = ('0' + h).slice(-2);
-            self.minutes = ('0' + self.minutes).slice(-2);
+            h = h ? h : 12
+            self.hours = ('0' + h).slice(-2)
+            self.minutes = ('0' + self.minutes).slice(-2)
         }
 
         self.month = self.value.getMonth();
@@ -496,28 +506,30 @@ if (!Modal && "function" === 'function') {
         self.day = self.value.getDate();
         setFormatTime();
 
-        self.onload = function() {
+        self.onload = function () {
+            
+
             if (self.mode === "date") {
-                self.makeDaysTable();
+                self.makeDaysTable()
             } else if (self.mode === "month") {
-                self.makeMonthsTable();
+                self.makeMonthsTable()
             } else if (self.mode === "year") {
-                self.makeYearsTable();
+                self.makeYearsTable()
             }
         }
 
-        self.onchange = function(prop) {
+        self.onchange = function (prop) {
             if (prop === "month" || prop === "year" || prop === "mode") {
                 if (self.mode === "date") {
-                    self.makeDaysTable();
+                    self.makeDaysTable()
                 } else if (self.mode === "month") {
-                    self.makeMonthsTable();
+                    self.makeMonthsTable()
                 } else if (self.mode === "year") {
-                    self.makeYearsTable();
+                    self.makeYearsTable()
                 }
             } else if (prop === "value") {
                 if (typeof (self.onupdate) === 'function') {
-                    self.onupdate(self.value);
+                    self.onupdate(self.value)
                 }
             }
         }
@@ -533,10 +545,10 @@ if (!Modal && "function" === 'function') {
 
             if (y > (dimensions[self.mode][1] - 1)) {
                 self.handleRight();
-                y = 0;
+                y = 0
             } else if (y < 0) {
                 self.handleLeft();
-                y = 5;
+                y = 5
             }
 
             const td = v ? self.el.querySelector(`td[value="${v}"]`) : self.el.querySelector(`td[x="${x}"][y="${y}"]`);
@@ -555,7 +567,7 @@ if (!Modal && "function" === 'function') {
 
             td.classList.add('selected');
             controller.selectedPos = [x, y];
-            controller.selected = td;
+            controller.selected = td
 
             let day = self.day;
             let month = self.month;
@@ -563,7 +575,7 @@ if (!Modal && "function" === 'function') {
 
             if (self.mode === 'date') {
                 day = value;
-                self.day = value;
+                self.day = value
 
                 if (type === 'previous') {
                     month--;
@@ -572,116 +584,112 @@ if (!Modal && "function" === 'function') {
                 }
             } else if (self.mode === 'month') {
                 month = self.months.indexOf(value);
-                self.month = month;
+                self.month = month
                 self.mode = "date";
             } else if (self.mode === 'year') {
                 year = value;
-                self.year = Number(year);
+                self.year = Number(year)
                 self.mode = "month";
             }
 
-            self.value = new Date(year, month, day, self.hours, self.minutes);
+            self.value = new Date(year, month, day, self.hours, self.minutes)
         }
 
         self.makeDaysTable = function () {
-            self.header = [{ title: 'S' }, { title: 'M' }, { title: 'T' }, { title: 'W' }, { title: 'T' }, { title: 'F' }, { title: 'S' }];
+            self.header = [{ title: 'S' }, { title: 'M' }, { title: 'T' }, { title: 'W' }, { title: 'T' }, { title: 'F' }, { title: 'S' }]
 
             // Get the matrix to build the HTML table based on
-            const m = makeDaysMatrix(self.month, self.year, self.validRange);
+            const m = makeDaysMatrix(self.month, self.year, self.validRange)
 
-            let html = '';
+            let html = ''
 
             for (let i = 0; i < m.length; i++) {
-                html += '<tr>';
+                html += '<tr>'
                 for (let j = 0; j < m[i].length; j++) {
-                    html += `<td `;
+                    html += `<td `
                     
                     if (m[i][j].type === 'disabled') {
-                        html += 'class="disabled-cell"';
+                        html += 'class="disabled-cell"'
                     }
                     
-                    html += `x="${j}" y="${i}" value="${m[i][j].value || ''}" type="${m[i][j].type}" onclick="this.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode.lemon.self.select(${j}, ${i})">${m[i][j].value || ''}</td>`;
+                    html += `x="${j}" y="${i}" value="${m[i][j].value || ''}" type="${m[i][j].type}" onclick="this.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode.lemon.self.select(${j}, ${i})">${m[i][j].value || ''}</td>`
                 }
-                html += '</tr>';
+                html += '</tr>'
             }
 
-            self.component.tbody.innerHTML = html;
+            self.component.tbody.innerHTML = html
             if (!controller.selected) {
-                self.select(0, 0, self.day);
+                self.select(0, 0, self.day)
             }
         }
 
         self.makeMonthsTable = function () {
-            self.header = [];
+            self.header = []
 
             // Get the matrix to build the HTML table based on
-            const m = makeMonthsMatrix(self.months);
+            const m = makeMonthsMatrix(self.months)
 
-            let html = '';
+            let html = ''
 
             for (let i = 0; i < m.length; i++) {
-                html += '<tr>';
+                html += '<tr>'
                 for (let j = 0; j < m[i].length; j++) {
-                    html += `<td x="${j}" y="${i}" value="${m[i][j].value || ''}" type="${m[i][j].type}" onclick="this.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode.lemon.self.select(${j}, ${i})">${m[i][j].value || ''}</td>`;
+                    html += `<td x="${j}" y="${i}" value="${m[i][j].value || ''}" type="${m[i][j].type}" onclick="this.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode.lemon.self.select(${j}, ${i})">${m[i][j].value || ''}</td>`
                 }
-                html += '</tr>';
+                html += '</tr>'
             }
 
-            self.component.tbody.innerHTML = html;
-            controller.selected = null;
+            self.component.tbody.innerHTML = html
+            controller.selected = null
         }
 
         self.makeYearsTable = function () {
-            self.header = [];
+            self.header = []
 
             // Get the matrix to build the HTML table based on
-            const m = makeYearsMatrix(self.year);
+            const m = makeYearsMatrix(self.year)
 
-            let html = '';
+            let html = ''
 
             for (let i = 0; i < m.length; i++) {
-                html += '<tr>';
+                html += '<tr>'
                 for (let j = 0; j < m[i].length; j++) {
-                    html += `<td x="${j}" y="${i}" value="${m[i][j].value || ''}" type="${m[i][j].type}" onclick="this.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode.lemon.self.select(${j}, ${i})">${m[i][j].value || ''}</td>`;
+                    html += `<td x="${j}" y="${i}" value="${m[i][j].value || ''}" type="${m[i][j].type}" onclick="this.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode.lemon.self.select(${j}, ${i})">${m[i][j].value || ''}</td>`
                 }
-                html += '</tr>';
+                html += '</tr>'
             }
 
-            self.component.tbody.innerHTML = html;
+            self.component.tbody.innerHTML = html
         }
 
         self.handleRight = function () {
             if (self.mode === "date") {
                 if (self.month === 11) {
-                    self.month = 0;
-                    self.year += 1;
+                    self.month = 0
+                    self.year += 1
                 } else {
-                    self.month += 1;
+                    self.month += 1
                 }
             } else if (self.mode === "month") {
-                self.year += 1;
+                self.year += 1
             } else if (self.mode === "year") {
-                self.year += 16;
+                self.year += 16
             }
-
-            self.select(0, 0);
         }
 
         self.handleLeft = function () {
             if (self.mode === "date") {
                 if (self.month === 0) {
-                    self.month = 11;
-                    self.year -= 1;
+                    self.month = 11
+                    self.year -= 1
                 } else {
-                    self.month -= 1;
+                    self.month -= 1
                 }
             } else if (self.mode === "month") {
-                self.year -= 1;
+                self.year -= 1
             } else if (self.mode === "year") {
-                self.year -= 16;
+                self.year -= 16
             }
-
-            self.select(6, 5);
         }
 
         self.selectTime = function (target, type) {
@@ -719,7 +727,7 @@ if (!Modal && "function" === 'function') {
             <Modal closed="{{self.closed}}" width="350" height="260" :onopen="self.onopen" :onclose="self.onclose" :ref="self.component">
                 <div class="lm-calendar-controllers" mode="{{self.parent.mode}}">
                     <ControllerDisplay
-                        mode="{{self.parent.mode}}" day="{{self.parent.day}}" month="{{self.parent.months[self.parent.month]}}" year="{{self.parent.year}}"
+                        day="{{self.parent.day}}" month="{{self.parent.months[self.parent.month]}}" year="{{self.parent.year}}"
                         time="{{self.parent.time}}" hours="{{self.parent.hours}}" minutes="{{self.parent.minutes}}" ampm="{{self.parent.ampm}}"
                     />
                     <div><button onclick="self.parent.handleLeft()"><</button><button onclick="self.parent.handleRight()">></button></div>
