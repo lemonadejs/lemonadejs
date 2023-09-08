@@ -126,7 +126,7 @@ if (! lemonade && typeof(require) === 'function') {
 
     function handleKeyboard(e) {
         if (e.key === 'Enter') {
-            if (controllers.onEdition) {
+            if (controllers.onEdition && controllers.onEdition[0] && typeof(controllers.onEdition[0]['blur']) === 'function') {
                 controllers.onEdition[0].blur();
             }
         }
