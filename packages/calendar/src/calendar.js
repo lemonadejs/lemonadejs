@@ -136,25 +136,28 @@ if (!Modal && typeof (require) === 'function') {
 
         switch (event.key) {
             case 'ArrowRight':
-                calendar.select(controller.selectedPos[0] + 1, controller.selectedPos[1])
+                calendar.hover(controller.hoverPos[0] + 1, controller.hoverPos[1], null, true)
                 break;
             case 'ArrowLeft':
-                calendar.select(controller.selectedPos[0] - 1, controller.selectedPos[1])
+                calendar.hover(controller.hoverPos[0] - 1, controller.hoverPos[1], null, true)
                 break;
             case 'ArrowUp':
-                calendar.select(controller.selectedPos[0], controller.selectedPos[1] - 1)
+                calendar.hover(controller.hoverPos[0], controller.hoverPos[1] - 1, null, true)
                 break;
             case 'ArrowDown':
-                calendar.select(controller.selectedPos[0], controller.selectedPos[1] + 1)
+                calendar.hover(controller.hoverPos[0], controller.hoverPos[1] + 1, null, true)
                 break;
             case 'n':
-                calendar.select(controller.selectedPos[0], 999)
+                calendar.hover(controller.hoverPos[0], 999, null, true)
                 break;
             case 'p':
-                calendar.select(controller.selectedPos[0], -1)
+                calendar.hover(controller.hoverPos[0], -1, null, true)
                 break;
             case 't':
                 calendar.time ? calendar.mode = 'time' : null
+                break;
+            case 'Enter':
+                calendar.select(controller.hoverPos[0], controller.hoverPos[1])
                 break;
         }
     }
@@ -184,8 +187,16 @@ if (!Modal && typeof (require) === 'function') {
         if (!self.value) {
             self.value = new Date();
         }
+
+        if (!self.selected) {
+            self.selected = new Date();
+        }
+
+        if (!self.type) {
+            self.type = "default";
+        }
         
-        self.mode = "date"
+        self.mode = self.type === "year-month" ? "year" : "date";
 
         function setFormatTime() {
             let h = self.value.getHours();
@@ -228,12 +239,36 @@ if (!Modal && typeof (require) === 'function') {
             }
         }
 
-        self.select = function (x, y, v) {
+        self.reset = function() {
+            const now = new Date()
+
+            self.value = now
+            self.month = now.getMonth()
+            self.day = now.getDate()
+            self.year = now.getFullYear()
+            self.hours = now.getHours()
+            self.minutes = now.getMinutes()
+            self.selected = now
+
+            setFormatTime()
+
+            self.mode = "date"
+            self.select(null, null, self.day)
+            self.hover(null, null, self.day)
+        }
+
+        self.hover = function (x, y, v, isMouse = false) {
+            if (self.mode === "date" && isMouse && controller.hoverType === "current" && !isDateInRange(self.selected, new Date(self.year, self.month, 1), new Date(self.year, self.month, daysInMonth[self.month] + 1))) {
+                self.month = self.selected.getMonth()
+                self.year = self.selected.getFullYear()
+                return;
+            }
+
             if (x > (dimensions[self.mode][0] - 1)) {
                 x = 0;
                 y++;
             } else if (x < 0) {
-                x = 6;
+                x = dimensions[self.mode][0] - 1;
                 y--;
             }
 
@@ -242,10 +277,54 @@ if (!Modal && typeof (require) === 'function') {
                 y = 0;
             } else if (y < 0) {
                 self.handleLeft();
-                y = 5;
+                y = dimensions[self.mode][1] - 1;
             }
 
-            const td = v ? self.el.querySelector(`td[value="${v}"]`) : self.el.querySelector(`td[x="${x}"][y="${y}"]`);
+
+            const td = v ? self.el.querySelector(`td[value="${v}"][type="current"]`) : self.el.querySelector(`td[x="${x}"][y="${y}"]`);
+            
+            const type = td.getAttribute('type');
+            
+            controller.hoverPos = [x || Number(td.getAttribute('x')), y || Number(td.getAttribute('y'))];
+            controller.hoverType = type
+
+            if (type === 'disabled') {
+                return;
+            }
+
+            const tdvalue = td.getAttribute('value');
+
+            if (controller.hover) {
+                controller.hover.classList.remove('hover');
+            }
+
+            td.classList.add('hover');
+            controller.hover = td;
+
+            let day = self.day;
+            let month = self.month;
+            let year = self.year;
+
+            if (self.mode === 'date') {
+                day = tdvalue;
+                self.day = tdvalue;
+
+                if (type === 'previous') {
+                    month--;
+                } else if (type === 'next') {
+                    month++;
+                }
+            } if (self.mode === 'month') {
+                month = self.months.indexOf(tdvalue)
+            } if (self.mode === 'year') {
+                year = tdvalue
+            }
+
+            self.selected = new Date(year, month, day, self.hours, self.minutes);
+        }
+
+        self.select = function (x, y, v) {
+            const td = v ? self.el.querySelector(`td[value="${v}"][type="current"]`) : self.el.querySelector(`td[x="${x}"][y="${y}"]`);
 
             const type = td.getAttribute('type');
 
@@ -260,7 +339,6 @@ if (!Modal && typeof (require) === 'function') {
             }
 
             td.classList.add('selected');
-            controller.selectedPos = [x, y];
             controller.selected = td;
 
             let day = self.day;
@@ -278,18 +356,22 @@ if (!Modal && typeof (require) === 'function') {
                 }
             } else if (self.mode === 'month') {
                 month = self.months.indexOf(value);
-                self.month = month;
-                self.mode = "date";
+                
+                if (self.type === "default") {
+                    self.month = month;
+                    self.mode = "date";
+                }
             } else if (self.mode === 'year') {
                 year = value;
-                self.year = Number(year);
                 self.mode = "month";
+                self.year = Number(year);
             }
 
             self.value = new Date(year, month, day, self.hours, self.minutes);
         }
 
         self.makeDaysTable = function () {
+
             self.header = [{ title: 'S' }, { title: 'M' }, { title: 'T' }, { title: 'W' }, { title: 'T' }, { title: 'F' }, { title: 'S' }];
 
             // Get the matrix to build the HTML table based on
@@ -306,14 +388,21 @@ if (!Modal && typeof (require) === 'function') {
                         html += 'class="disabled-cell"';
                     }
                     
-                    html += `x="${j}" y="${i}" value="${m[i][j].value || ''}" type="${m[i][j].type}" onclick="this.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode.lemon.self.select(${j}, ${i})">${m[i][j].value || ''}</td>`;
+                    html += `x="${j}" y="${i}" value="${m[i][j].value || ''}" type="${m[i][j].type}"
+                    ondblclick="this.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode.lemon.self.select(${j}, ${i})"
+                    onclick="this.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode.lemon.self.hover(${j}, ${i})">${m[i][j].value || ''}</td>`;
                 }
                 html += '</tr>';
             }
-
+            
             self.component.tbody.innerHTML = html;
-            if (!controller.selected) {
-                self.select(0, 0, self.day);
+
+            if (isDateInRange(self.selected, new Date(self.year, self.month, 1), new Date(self.year, self.month, daysInMonth[self.month] + 1))) {
+                self.hover(null, null, self.selected.getDate())
+            }
+
+            if (isDateInRange(self.value, new Date(self.year, self.month, 1), new Date(self.year, self.month, daysInMonth[self.month] + 1))) {
+                self.select(null, null, self.value.getDate())
             }
         }
 
@@ -328,13 +417,22 @@ if (!Modal && typeof (require) === 'function') {
             for (let i = 0; i < m.length; i++) {
                 html += '<tr>';
                 for (let j = 0; j < m[i].length; j++) {
-                    html += `<td x="${j}" y="${i}" value="${m[i][j].value || ''}" type="${m[i][j].type}" onclick="this.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode.lemon.self.select(${j}, ${i})">${m[i][j].value || ''}</td>`;
+                    html += `<td x="${j}" y="${i}" value="${m[i][j].value || ''}" type="${m[i][j].type}"
+                    ondblclick="this.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode.lemon.self.select(${j}, ${i})"
+                    onclick="this.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode.lemon.self.hover(${j}, ${i})">${m[i][j].value || ''}</td>`;
                 }
                 html += '</tr>';
             }
 
             self.component.tbody.innerHTML = html;
-            controller.selected = null;
+
+            if (isDateInRange(self.selected, new Date(self.year, 1, 1), new Date(self.year + 1, 1, 1)) && self.mode === "month") {
+                self.hover(null, null, self.months[self.selected.getMonth()])
+            }
+
+            if (isDateInRange(self.value, new Date(self.year, 1, 1), new Date(self.year + 1, 1, 1)) && self.type === "year-month") {
+                self.select(null, null, self.months[self.value.getMonth()])
+            }
         }
 
         self.makeYearsTable = function () {
@@ -348,12 +446,18 @@ if (!Modal && typeof (require) === 'function') {
             for (let i = 0; i < m.length; i++) {
                 html += '<tr>';
                 for (let j = 0; j < m[i].length; j++) {
-                    html += `<td x="${j}" y="${i}" value="${m[i][j].value || ''}" type="${m[i][j].type}" onclick="this.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode.lemon.self.select(${j}, ${i})">${m[i][j].value || ''}</td>`;
+                    html += `<td x="${j}" y="${i}" value="${m[i][j].value || ''}" type="${m[i][j].type}"
+                    ondblclick="this.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode.lemon.self.select(${j}, ${i})"
+                    onclick="this.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode.lemon.self.hover(${j}, ${i})">${m[i][j].value || ''}</td>`;
                 }
                 html += '</tr>';
             }
 
             self.component.tbody.innerHTML = html;
+
+            if (isDateInRange(self.selected, new Date(self.year - 4, 1, 1), new Date(self.year + 12, 1, 1))) {
+                self.hover(null, null, self.selected.getFullYear())
+            }
         }
 
         self.handleRight = function () {
@@ -369,8 +473,6 @@ if (!Modal && typeof (require) === 'function') {
             } else if (self.mode === "year") {
                 self.year += 16;
             }
-
-            self.select(0, 0);
         }
 
         self.handleLeft = function () {
@@ -386,8 +488,6 @@ if (!Modal && typeof (require) === 'function') {
             } else if (self.mode === "year") {
                 self.year -= 16;
             }
-
-            self.select(6, 5);
         }
 
         self.selectTime = function (target, type) {
@@ -417,12 +517,15 @@ if (!Modal && typeof (require) === 'function') {
 
             setFormatTime();
 
-            controller.selected = null;
             controller[ts] = target;
         }
 
         let template = `<div class="lm-calendar" date="{{self.value}}">
-            <Modal closed="{{self.closed}}" width="350" height="260" :onopen="self.onopen" :onclose="self.onclose" :ref="self.component">
+            <Modal closed="{{self.closed}}" width="350" height="300" :onopen="self.onopen" :onclose="self.onclose" :ref="self.component">
+                <div class="lm-calendar-options">
+                    <button onclick="self.parent.reset()">Reset</button>
+                    <button onclick="self.parent.closed = true;">Done</button>
+                </div>
                 <div class="lm-calendar-controllers" mode="{{self.parent.mode}}">
                     <ControllerDisplay
                         mode="{{self.parent.mode}}" day="{{self.parent.day}}" month="{{self.parent.months[self.parent.month]}}" year="{{self.parent.year}}"

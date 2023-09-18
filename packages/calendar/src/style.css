@@ -124,7 +124,6 @@
 }
 
 .lm-calendar td:not([value=""]):hover {
-    outline: solid 2px black;
     cursor: pointer;
 }
 
@@ -133,7 +132,13 @@
 }
 
 .lm-calendar td.selected {
-    outline: solid 2px #959595 !important;
+    outline: solid 2px black;
+    background-color: black;
+    color: white;
+}
+
+.lm-calendar td.hover {
+    outline: solid 2px #959595;
 }
 
 .lm-calendar td:not([type="current"]) {
@@ -184,6 +189,29 @@
     }
 
     .lm-calendar ::-webkit-scrollbar {
-        width: 3vw;
+        width: 10px;
     }
+}
+
+.lm-calendar-options {
+    box-sizing: border-box;
+    padding: 10px 20px;
+    display: flex;
+    justify-content: space-between;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    margin-bottom: 4px;
+}
+  
+.lm-calendar-options button {
+    background: none;
+    border: none;
+    padding: 0;
+    font: inherit;
+    cursor: pointer;
+    outline: inherit;
+    font-size: 1.1em;
+}
+
+.lm-calendar table[mode="month"] td {
+    width: 30%;
 }

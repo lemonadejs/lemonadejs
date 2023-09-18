@@ -6,8 +6,9 @@
 <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@lemonadejs/modal/dist/index.min.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@lemonadejs/modal/dist/style.min.css" />
 
+<div></div>
 <div id="root"></div>
-<div id="root2" style="margin-left: 500px;"></div>
+<!-- <div id="root2" style="margin-left: 500px;"></div> -->
 
 
 <script>
@@ -16,11 +17,12 @@ const aux = document.getElementById("aux")
 
 const calendar = Calendar(root, {
     time: true,
-    // validRange: ['2023-08-05', '2023-10-12'],
+    // type: "year-month"
+    // range: ['2023-08-05', '2023-10-12'],
 })
 
-const calendar2 = Calendar(root2, {
-    time: true,
-    // validRange: ['2023-08-05', '2023-10-12'],
-})
+// const calendar2 = Calendar(root2, {
+//     time: true,
+//     // validRange: ['2023-08-05', '2023-10-12'],
+// })
 </script>

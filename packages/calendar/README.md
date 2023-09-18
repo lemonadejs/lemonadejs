@@ -57,7 +57,7 @@ You can configure things such as calendar starting date, calendar events, and cu
 | Property | Type | Description |
 | -------- | ---- | ----------- |
 | value | date | The value currently attached to the calendar. |
-| validRange | array |  |
+| range | array | Defines a restricted range of selectable dates within the calendar. Example: ['2023-06-20', '2023-06-25']. |
 | closed | boolean | Control when the calendar modal is open or closed. |
 | time | boolean | Enables time selection into the calendar. |
 
