@@ -1,7 +1,73 @@
-.lm-topmenu {
+.lm-topmenu-options {
     display: flex;
 }
 
-.lm-topmenu > div {
+.lm-topmenu-options > div {
     padding: 10px;
+}
+
+.lm-topmenu .lm-modal {
+    color: #555;
+    font-size: 11px;
+    user-select: none;
+    box-shadow: 2px 2px 2px 0 rgba(143, 144, 145, 1);
+    width: initial;
+    height: initial;
+    min-height: initial;
+}
+
+.lm-topmenu-menu > div {
+    box-sizing: border-box;
+    display: flex;
+    padding: 8px 8px 8px 32px;
+    width: 250px;
+    position: relative;
+    cursor: default;
+    font-size: 11px;
+    font-family:sans-serif;
+    text-align: left;
+    -webkit-box-align: center;
+    align-items: center;
+}
+
+.lm-topmenu-menu > div[data-submenu="true"]::after {
+    content: '\25B6'
+}
+
+.lm-topmenu-menu > div::before {
+    content: attr(data-icon);
+    font-family: 'Material Icons';
+    font-size: 15px;
+    position: absolute;
+    left: 9px;
+    line-height: 24px;
+}
+
+.lm-topmenu-menu.symbols > div::before {
+    font-family: 'Material Symbols Outlined';
+}
+
+.lm-topmenu-menu > div a {
+    text-decoration: none;
+    flex: 1;
+    cursor: pointer;
+}
+
+.lm-topmenu-menu > div span {
+    margin-right: 10px;
+}
+
+.lm-topmenu-menu > div.disabled {
+    color: #ccc;
+}
+
+.lm-topmenu-menu > div:hover {
+    background: #ebebeb;
+}
+
+.lm-topmenu-menu hr {
+    border: 1px solid #e9e9e9;
+    border-bottom: 0;
+    margin-top:5px;
+    margin-bottom:5px;
 }

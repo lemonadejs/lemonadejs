@@ -14,6 +14,12 @@ const options = [
             {
                 title: T('New Spreadsheet'),
                 icon: 'add_box',
+                submenu: [{
+                    title: 'Test',
+                    submenu: [{
+                        title: 'Aloura'
+                    }]
+                }],
                 onclick: function() {
                 },
             },
