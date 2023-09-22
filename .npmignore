@@ -4,6 +4,8 @@
 .gitignore
 .npmignore
 src
+public
 packages
+webpack.config.js
 test
 TODO.txt

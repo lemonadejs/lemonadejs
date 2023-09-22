@@ -1,0 +1,29 @@
+{
+    "name": "@lemonadejs/topmenu",
+    "title": "LemonadeJS topmenu",
+    "description": "LemonadeJS Calendar Component.",
+    "author": {
+        "name": "Contact <contact@lemonadejs.net>",
+        "url": "https://lemonadejs.net"
+    },
+    "keywords": [
+        "topmenu"
+    ],
+    "scripts": {
+        "start": "webpack serve --history-api-fallback",
+        "build": "webpack --config webpack.config.js"
+    },
+    "dependencies": {
+        "lemonadejs": "^3.3.2",
+        "@lemonadejs/modal": "^2.0.4"
+    },
+    "main": "dist/index.js",
+    "version": "1.0.0",
+    "devDependencies": {
+        "css-loader": "^6.8.1",
+        "style-loader": "^3.3.1",
+        "mini-css-extract-plugin": "^2.7.6",
+        "webpack": "^5.88.2",
+        "webpack-cli": "^5.1.4"
+    }
+}
