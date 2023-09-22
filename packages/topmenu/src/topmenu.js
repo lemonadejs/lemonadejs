@@ -107,7 +107,13 @@ if (!Modal && typeof (require) === 'function') {
             })
         }
 
-        return `<div class="lm-topmenu">
+        self.onload = function() {
+            self.el.addEventListener("focusout", (e) => {
+                self.close(0);
+            });
+        }
+
+        return `<div class="lm-topmenu" tabindex="0">
             <div class="lm-topmenu-options" :loop="self.options">
                 <div class="lm-topmenu-title" onmouseover="self.parent.open(e, self)" onclick="self.parent.open(e, self)">{{self.title}}</div>
             </div>
