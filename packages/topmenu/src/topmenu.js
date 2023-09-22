@@ -14,22 +14,35 @@ if (!Modal && typeof (require) === 'function') {
 
     const Items = function() {
         let self = this;
-        return `<div>1</div>`;
+        
+
+        return `<div :loop="self.options"><div >{{self.title}}</div></div>`;
+    }
+
+    const Menu = function() {
+        let self = this;
+
+        console.log(self)
+
+        return '<Modal :closed="false"><Items :options="self.parent.submenu" /></Modal>'
     }
 
     const Topmenu = function() {
         let self = this;
 
-        self.open = function(s) {
+        self.open = function(s, el) {
+            console.log(el.childNodes.length)
             let d = document.createElement('div');
-            self.el.appendChild(d);
+            el.appendChild(d);
             lemonade.render(Menu, d, s);
         }
 
+        // <Modal :closed="true"><Items :options="self.parent.submenu" /></Modal>
+
+
         return `<div class="lm-topmenu" :loop="self.options">
-            <div onclick="self.parent.open(self)">
+            <div onclick="self.parent.open(self, this)">
                 <div class="lm-topmenu-title">{{self.title}}</div>
-                <Modal closed><Items :options="self.submenu" /></Modal>
             </div>
         </div>`
     }

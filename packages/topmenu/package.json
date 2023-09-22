@@ -14,16 +14,17 @@
         "build": "webpack --config webpack.config.js"
     },
     "dependencies": {
-        "lemonadejs": "^3.3.2",
-        "@lemonadejs/modal": "^2.0.4"
+        "@lemonadejs/modal": "^2.0.4",
+        "lemonadejs": "^3.3.2"
     },
     "main": "dist/index.js",
     "version": "1.0.0",
     "devDependencies": {
         "css-loader": "^6.8.1",
-        "style-loader": "^3.3.1",
         "mini-css-extract-plugin": "^2.7.6",
+        "style-loader": "^3.3.1",
         "webpack": "^5.88.2",
-        "webpack-cli": "^5.1.4"
+        "webpack-cli": "^5.1.4",
+        "webpack-dev-server": "^4.15.1"
     }
 }
