@@ -30,7 +30,7 @@ if (!Modal && typeof (require) === 'function') {
 
         self.open = function(e, s) {
             if (s.submenu) {
-                let item = self.parent.modals[self.index + 1];
+                let item = self.parent.modals[self.index+1];
                 if (! item) {
                     item = self.parent.create();
                 }
@@ -42,11 +42,11 @@ if (!Modal && typeof (require) === 'function') {
                     modal.left = parent.left + 250;
                     modal.options = s.submenu;
                     // Close modals with higher level
-                    self.parent.close(self.index);
+                    self.parent.close(self.index+1);
                 }
             } else {
                 // Close modals with higher level
-                self.parent.close(self.index);
+                self.parent.close(self.index+1);
             }
         }
 
@@ -95,13 +95,13 @@ if (!Modal && typeof (require) === 'function') {
                 // Refresh content
                 modal.options = s.submenu;
                 // Close modals with higher level
-                self.close(0);
+                self.close(1);
             }
         }
 
         self.close = function(level) {
             self.modals.forEach(function(value, k) {
-                if (k > level) {
+                if (k >= level) {
                     value.modal.closed = true;
                 }
             })
