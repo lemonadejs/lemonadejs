@@ -1,14 +1,7 @@
-.lm-topmenu-options {
-    display: flex;
-}
+/** Contextmenu */
 
-.lm-topmenu-options > div {
-    padding: 10px;
-}
-
-.lm-topmenu .lm-modal {
+.lm-menu .lm-modal {
     color: #555;
-    font-size: 11px;
     user-select: none;
     border: 1px solid transparent;
     border-radius: 4px;
@@ -21,7 +14,7 @@
     min-height: initial;
 }
 
-.lm-topmenu-menu > div {
+.lm-menu-submenu > div {
     box-sizing: border-box;
     display: flex;
     padding: 8px 8px 8px 32px;
@@ -35,11 +28,11 @@
     align-items: center;
 }
 
-.lm-topmenu-menu > div[data-submenu="true"]::after {
+.lm-menu-submenu > div[data-submenu="true"]::after {
     content: '\25B6'
 }
 
-.lm-topmenu-menu > div::before {
+.lm-menu-submenu > div::before {
     content: attr(data-icon);
     font-family: 'Material Icons';
     font-size: 15px;
@@ -48,31 +41,51 @@
     line-height: 24px;
 }
 
-.lm-topmenu-menu.symbols > div::before {
+.lm-menu-submenu.symbols > div::before {
     font-family: 'Material Symbols Outlined';
 }
 
-.lm-topmenu-menu > div a {
+.lm-menu-submenu > div a {
     text-decoration: none;
     flex: 1;
     cursor: pointer;
 }
 
-.lm-topmenu-menu > div span {
+.lm-menu-submenu > div span {
     margin-right: 10px;
 }
 
-.lm-topmenu-menu > div.disabled {
+.lm-menu-submenu > div.disabled {
     color: #ccc;
 }
 
-.lm-topmenu-menu > div:hover {
+.lm-menu-submenu > div:hover {
     background: #ebebeb;
 }
 
-.lm-topmenu-menu hr {
+.lm-menu-submenu hr {
     border: 1px solid #e9e9e9;
     border-bottom: 0;
     margin-top:5px;
     margin-bottom:5px;
 }
+
+
+/** Topmenu */
+
+
+
+.lm-topmenu-options {
+    display: flex;
+}
+
+.lm-topmenu-options > div {
+    padding: 10px;
+}
+
+
+
+
+
+
+
