@@ -12,6 +12,22 @@ if (!Modal && typeof (require) === 'function') {
     global.Contextmenu = factory();
 }(this, (function () {
 
+    // Get the coordinates of the action
+    const getCoords = function(e) {
+        let x;
+        let y;
+
+        if (e.changedTouches && e.changedTouches[0]) {
+            x = e.changedTouches[0].clientX;
+            y = e.changedTouches[0].clientY;
+        } else {
+            x = e.clientX;
+            y = e.clientY;
+        }
+
+        return [x,y];
+    }
+
     const Item = function() {
         if (this.type === 'line') {
             return `<hr />`;
@@ -79,25 +95,33 @@ if (!Modal && typeof (require) === 'function') {
             return s;
         }
 
-        self.open = function(e, options) {
+        self.open = function(e, options, x, y) {
+            // Get the main modal
             let modal = self.modals[0].modal;
             // Click on the top level menu toggle the state of the menu
-            if (e.type == 'contextmenu') {
+            if (e.type == 'click') {
+                // Toggle state
                 modal.closed = !modal.closed;
             }
-            if (! options) {
-                options = self.options;
+            if (e.type == 'contextmenu') {
+                modal.closed = false;
+            }
+
+            if (typeof(x) === 'undefined') {
+                [x,y] = getCoords(e);
             }
 
             // If the modal is open and the content is different from what is shown
-            if (modal.closed === false && modal.options !== options) {
+            if (modal.closed === false) {
                 // Close modals with higher level
                 self.close(1);
                 // Define new position
-                modal.top = e.target.offsetTop + e.target.offsetHeight;
-                modal.left = e.target.offsetLeft;
-                // Refresh content
-                modal.options = options;
+                modal.top = y;
+                modal.left = x;
+                if (modal.options !== options) {
+                    // Refresh content
+                    modal.options = options;
+                }
             }
         }
 
@@ -110,20 +134,26 @@ if (!Modal && typeof (require) === 'function') {
         }
 
         self.onload = function() {
+            if (! self.root) {
+                self.root = self.el.parentNode;
+            }
             // Create event for focus out
-            self.el.addEventListener("focusout", (e) => {
+            self.root.addEventListener("focusout", (e) => {
                 self.close(0);
             });
             // Parent
-            self.el.parentNode.addEventListener("contextmenu", function(e) {
-                self.open(e);
+            self.root.addEventListener("contextmenu", function(e) {
+                // Open the context menu
+                self.open(e, self.options);
                 e.preventDefault();
+                e.stopImmediatePropagation();
             });
+            self.root.setAttribute('tabindex', 0);
             // Create first menu
             self.create();
         }
 
-        return `<div class="lm-menu" tabindex="-1">123</div>`;
+        return `<div class="lm-menu"></div>`;
     }
 
     lemonade.setComponents({ Contextmenu: Contextmenu });

@@ -1,5 +1,5 @@
 if (! lemonade && typeof(require) === 'function') {
-    var lemonade = require('lemonadejs');
+    var lemonade = require('../../../dist/lemonade');
 }
 
 ;(function (global, factory) {
@@ -7,192 +7,112 @@ if (! lemonade && typeof(require) === 'function') {
     typeof define === 'function' && define.amd ? define(factory) :
     global.Modal = factory();
 }(this, (function () {
+
+    // State of the resize and move modal
     let state = {};
-    let editorAction;
+    // Internal controls of the action of resize and move
+    let controls = {};
     // Width of the border
     let cornerSize = 10;
 
-    // Events
-    const mouseDown = function(e) {
-        let item = e.target.closest('.lm-modal');
-        if (item !== null) {
-            // Keep the tracking information
-            let x;
-            let y;
-            let rect = item.getBoundingClientRect();
+    // Get the coordinates of the action
+    const getCoords = function(e) {
+        let x;
+        let y;
 
-            if (e.changedTouches && e.changedTouches[0]) {
-                x = e.changedTouches[0].clientX;
-                y = e.changedTouches[0].clientY;
-            } else {
-                x = e.clientX;
-                y = e.clientY;
-            }
+        if (e.changedTouches && e.changedTouches[0]) {
+            x = e.changedTouches[0].clientX;
+            y = e.changedTouches[0].clientY;
+        } else {
+            x = e.clientX;
+            y = e.clientY;
+        }
 
-            if (item.lemon.self.minimizable === true && (rect.width - (x - rect.left) < 40 && (y - rect.top) < 40) || item.lemon.self.minimized === true) {
-                item.lemon.self.minimized = !item.lemon.self.minimized;
-            } else if (item.lemon.self.closable === true && rect.width - (x - rect.left) < 40 && (y - rect.top) < 40) {
-                item.lemon.self.closed = true;
-            } else {
-                editorAction = {
-                    e: item,
-                    x: x,
-                    y: y,
-                    w: rect.width,
-                    h: rect.height,
-                    d: item.style.cursor,
-                    resizing: !!item.style.cursor,
-                    actioned: false,
-                    s: item.lemon.self,
-                }
+        return [x,y];
+    }
 
-                // Make sure width and height styling is OK
-                if (!e.target.style.width) {
-                    item.style.width = rect.width + 'px';
-                }
-
-                if (!item.style.height) {
-                    item.style.height = rect.height + 'px';
-                }
-
-                // Remove any selection from the page
-                let s = window.getSelection();
-                if (s.rangeCount) {
-                    for (let i = 0; i < s.rangeCount; i++) {
-                        s.removeRange(s.getRangeAt(i));
-                    }
-                }
-
-                e.preventDefault();
-                e.stopPropagation();
-            }
+    // Get the button status
+    const getButton = function(e) {
+        e = e || window.event;
+        if (e.buttons) {
+            return e.buttons;
+        } else if (e.button) {
+            return e.button;
+        } else {
+            return e.which;
         }
     }
 
+    // Finalize any potential action
     const mouseUp = function(e) {
-        if (editorAction && editorAction.e) {
-            // Element
-            if (editorAction.resizing) {
-                let w = parseInt(editorAction.e.style.width);
-                let h = parseInt(editorAction.e.style.height)
-                editorAction.s.width = w;
-                editorAction.s.height = h;
-            } else {
-                let t = parseInt(editorAction.e.style.top);
-                let l = parseInt(editorAction.e.style.left)
-                editorAction.s.top = t;
-                editorAction.s.left = l;
-            }
-
-            if (typeof(editorAction.e.refresh) == 'function') {
-                state.actioned = true;
-                editorAction.e.refresh.call(editorAction.s);
-            }
-
-            editorAction.e.style.cursor = '';
+        // Finalize all actions
+        if (typeof(controls.action) === 'function') {
+            controls.action();
         }
-
-        // Reset
+        // Reset controls
+        controls = {};
+        // Reset state controls
         state = {
             x: null,
             y: null,
         }
-
-        editorAction = false;
     }
 
     const mouseMove = function(e) {
-        if (editorAction) {
-            let x = e.clientX || e.pageX;
-            let y = e.clientY || e.pageY;
+        if (! getButton(e)) {
+            return false;
+        }
+        // Get mouse coordinates
+        let [x,y] = getCoords(e);
 
-            // Action on going
-            if (! editorAction.resizing && editorAction.s.draggable === true) {
-                if (state && state.x == null && state.y == null) {
-                    state.x = x;
-                    state.y = y;
-                }
-
-                let dx = x - state.x;
-                let dy = y - state.y;
-                let top = editorAction.e.offsetTop + dy;
-                let left = editorAction.e.offsetLeft + dx;
-
-                // Update position
-                editorAction.top = top
-                editorAction.left = left
-                editorAction.e.style.top = top + 'px';
-                editorAction.e.style.left = left + 'px';
-                editorAction.e.style.cursor = "move";
-
-
+        // Move modal
+        if (controls.type === 'move') {
+            if (state && state.x == null && state.y == null) {
                 state.x = x;
                 state.y = y;
-                state.top = top
-                state.left = left
-
-                // Update element
-                if (typeof(editorAction.e.refresh) == 'function') {
-                    state.actioned = true;
-                    editorAction.e.refresh.call(editorAction.s, 'position', top, left);
-                }
-            } else {
-                let width = null;
-                let height = null;
-                let newHeight = null;
-
-                if (editorAction.d === 'e-resize' || editorAction.d === 'ne-resize' || editorAction.d === 'se-resize') {
-                    // Update width
-                    width = editorAction.w + (x - editorAction.x);
-                    editorAction.e.style.width = width + 'px';
-
-                    // Update Height
-                    if (e.shiftKey) {
-                        newHeight = (x - editorAction.x) * (editorAction.h / editorAction.w);
-                        height = editorAction.h + newHeight;
-                        editorAction.e.style.height = height + 'px';
-                    } else {
-                        newHeight = false;
-                    }
-                }
-
-                if (! newHeight) {
-                    if (editorAction.d === 's-resize' || editorAction.d === 'se-resize' || editorAction.d === 'sw-resize') {
-                        height = editorAction.h + (y - editorAction.y);
-                        editorAction.e.style.height = height + 'px';
-                    }
-                }
-
-                // Update element
-                if (typeof(editorAction.e.refresh) == 'function') {
-                    state.actioned = true;
-                    editorAction.e.refresh.call(editorAction.s, 'dimensions', width, height);
-                }
-            }
-        } else {
-            
-            let item;
-
-            if (e.target.shadowRoot) {
-                item = e.target.shadowRoot.querySelector('.lm-modal')
-            } else {
-                item = e.target.closest('.lm-modal')
             }
 
-            if (item !== null) {
-                if (item.lemon.self && item.lemon.self.resizable === true) {
-                    let rect = item.getBoundingClientRect();
-                    if (rect.height - (e.clientY - rect.top) < cornerSize) {
-                        if (rect.width - (e.clientX - rect.left) < cornerSize) {
-                            item.style.cursor = 'se-resize';
-                        } else {
-                            item.style.cursor = 's-resize';
-                        }
-                    } else if (rect.width - (e.clientX - rect.left) < cornerSize) {
-                        item.style.cursor = 'e-resize';
-                    } else {
-                        item.style.cursor = '';
-                    }
+            let dx = x - state.x;
+            let dy = y - state.y;
+            let top = controls.e.offsetTop + dy;
+            let left = controls.e.offsetLeft + dx;
+
+            // Update position
+            controls.top = top
+            controls.left = left
+            controls.e.style.top = top + 'px';
+            controls.e.style.left = left + 'px';
+            controls.e.style.cursor = "move";
+
+
+            state.x = x;
+            state.y = y;
+            state.top = top
+            state.left = left
+        } else if (controls.type === 'resize') {
+            let width = null;
+            let height = null;
+            let newHeight = null;
+
+            if (controls.d === 'e-resize' || controls.d === 'ne-resize' || controls.d === 'se-resize') {
+                // Update width
+                width = controls.w + (x - controls.x);
+                controls.e.style.width = width + 'px';
+
+                // Update Height
+                if (e.shiftKey) {
+                    newHeight = (x - controls.x) * (controls.h / controls.w);
+                    height = controls.h + newHeight;
+                    controls.e.style.height = height + 'px';
+                } else {
+                    newHeight = false;
+                }
+            }
+
+            if (! newHeight) {
+                if (controls.d === 's-resize' || controls.d === 'se-resize' || controls.d === 'sw-resize') {
+                    height = controls.h + (y - controls.y);
+                    controls.e.style.height = height + 'px';
                 }
             }
         }
@@ -201,34 +121,18 @@ if (! lemonade && typeof(require) === 'function') {
     document.addEventListener('mouseup', mouseUp);
     document.addEventListener('mousemove', mouseMove);
 
+    // Dispatcher
+    const Dispatch = function(type, option){
+        if (typeof this[type] === 'function') {
+            this[type](this, option)
+        }
+    }
+
     const Modal = function (template) {
         let self = this;
 
-        // Default values
-        if (typeof(self.title) === 'undefined') {
-            self.title = '';
-        }
-        if (typeof(self.minimized) === 'undefined') {
-            self.minimized = false;
-        }
-        if (typeof(self.minimizable) === 'undefined') {
-            self.minimizable = false;
-        }
-        if (typeof(self.closed) === 'undefined') {
-            self.closed = false;
-        }
-        if (typeof(self.closable) === 'undefined') {
-            self.closable = false;
-        }
-
-        // Dispatcher
-        const Dispatch = (type, option) => {
-            if (typeof self[type] === 'function') {
-                self[type](self, option)
-            }
-        }
-
-        self.mousedown = mouseDown;
+        // Make sure keep the state as boolean
+        self.closed = !!self.closed;
 
         self.onload = function() {
             if (self.url) {
@@ -249,29 +153,116 @@ if (! lemonade && typeof(require) === 'function') {
                 self.left = (window.innerWidth - self.width) / 2;
             }
 
-            // Make sure the instance of the self is available via the DOM element
-            self.el.self = self;
-
-            // Close
-            document.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape' && self.closed === false) {
-                    self.closed = true;
-                }
-            });
-
             // Full screen
             if (self.height > 260) {
                 self.el.classList.add('fullscreen');
             }
+
+            // Close and stop propagation
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && self.closed === false) {
+                    self.closed = true;
+                    e.preventDefault();
+                    e.stopImmediatePropagation();
+                }
+            });
         }
 
         self.onchange = function(property) {
             if (property === 'closed') {
-                self.closed ? Dispatch('onclose') : Dispatch('onopen');
+                self.closed ? Dispatch.call(self,'onclose') : Dispatch.call(self,'onopen');
+            } else if (property === 'top' || property === 'left' || property === 'width' || property === 'height') {
+                self.el.style[property] = self[property] + 'px';
             }
         }
 
-        return `<div class="lm-modal" title="{{self.title}}" closed="{{self.closed}}" :closable="self.closable" :minimized="self.minimized" :minimizable="self.minimizable" style="width: {{self.width}}px; height: {{self.height}}px; top: {{self.top}}px; left: {{self.left}}px;" onmousedown="self.mousedown(e)" tabindex="-1">${template}</div>`
+        self.mousemove = function(e) {
+            if (getButton(e)) {
+                return;
+            }
+
+            // Root element of the component
+            let item = self.el;
+            // Get the position and dimensions
+            let rect = item.getBoundingClientRect();
+
+            controls = {
+                type: null,
+                e: item,
+                w: rect.width,
+                h: rect.height,
+            }
+
+            // When resizable
+            if (self.resizable === true) {
+                if (rect.height - (e.clientY - rect.top) < cornerSize) {
+                    if (rect.width - (e.clientX - rect.left) < cornerSize) {
+                        item.style.cursor = 'se-resize';
+                    } else {
+                        item.style.cursor = 's-resize';
+                    }
+                } else if (rect.width - (e.clientX - rect.left) < cornerSize) {
+                    item.style.cursor = 'e-resize';
+                } else {
+                    item.style.cursor = '';
+                }
+
+                if (item.style.cursor) {
+                    controls.type = 'resize';
+                    controls.d = item.style.cursor;
+                } else {
+                    controls.type = null;
+                    controls.d = null;
+                }
+            }
+        }
+
+        self.mousedown = function(e) {
+            // Get mouse coordinates
+            let [x,y] = getCoords(e);
+            controls.x = x;
+            controls.y = y;
+            // Root element of the component
+            let item = self.el;
+            // Get the position and dimensions
+            let rect = item.getBoundingClientRect();
+
+            if (rect.width - (x - rect.left) < 40 && (y - rect.top) < 40) {
+                if (self.minimizable === true) {
+                    self.minimized = ! item.lemon.self.minimized;
+                } else if (self.closabled === true) {
+                    self.closed = true;
+                }
+            } else {
+                if (controls.type === 'resize') {
+                    // This will be the callback when finalize the resize
+                    controls.action = function() {
+                        self.width = parseInt(item.style.width);
+                        self.height = parseInt(item.style.height);
+                    }
+                    // Make sure the width and height is defined for the modal
+                    if (!item.style.width) {
+                        item.style.width = controls.w + 'px';
+                    }
+                    if (!item.style.height) {
+                        item.style.height = controls.h + 'px';
+                    }
+                } else {
+                    // Modal is draggable by the title
+                    if (self.draggable === true && self.title && y - rect.top < 40) {
+                        // Action
+                        controls.type = 'move';
+                        // Callback
+                        controls.action = function() {
+                            self.top = parseInt(item.style.top);
+                            self.left = parseInt(item.style.left);
+                        }
+                    }
+                }
+            }
+        }
+
+        return `<div class="lm-modal" title="{{self.title}}" closed="{{self.closed}}" :closable="self.closable" :minimized="self.minimized" :minimizable="self.minimizable" :top="self.top" :left="self.left" :width="self.width" :height="self.height" onmousedown="self.mousedown(e)" onmousemove="self.mousemove(e)" tabindex="-1">${template}</div>`
     }
 
     lemonade.setComponents({ Modal: Modal });
