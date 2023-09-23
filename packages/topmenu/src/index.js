@@ -1,5 +1,5 @@
 import lemonade from '../../../dist/lemonade'
-import Contextmenu from './contextmenu.js';
+import Topmenu from './topmenu.js';
 import './style.css';
 import '../../modal/dist/style.css'
 
@@ -574,11 +574,9 @@ const options = [
 function Test() {
     let self = this;
 
-    self.options = options[0].submenu;
+    self.options = options;
 
-    console.log(self.options)
-
-    return `<Contextmenu :options="self.options" />`
+    return `<Topmenu :options="self.options" />`
 }
 
 lemonade.render(Test, root);

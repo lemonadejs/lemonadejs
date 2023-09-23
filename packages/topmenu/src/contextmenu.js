@@ -46,20 +46,29 @@ if (!Modal && typeof (require) === 'function') {
 
         self.open = function(e, s) {
             if (s.submenu) {
+                // Get the modal in the container of modals
                 let item = self.parent.modals[self.index+1];
                 if (! item) {
+                    // Modal need to be created
                     item = self.parent.create();
                 }
+                // Get the parent from this one
                 let parent = self.parent.modals[self.index].modal;
+                // Get the self of the modal
                 let modal = item.modal;
-                modal.closed = false;
+
                 if (modal.options !== s.submenu) {
-                    modal.top = parent.top + e.target.offsetTop;
-                    modal.left = parent.left + 250;
-                    modal.options = s.submenu;
                     // Close modals with higher level
+                    modal.options = s.submenu;
+                    // Close other modals
                     self.parent.close(self.index+1);
                 }
+
+                // Open modal
+                modal.closed = false;
+                // Define the position
+                modal.top = parent.top + e.target.offsetTop + 2;
+                modal.left = parent.left + 248;
             } else {
                 // Close modals with higher level
                 self.parent.close(self.index+1);
@@ -100,15 +109,9 @@ if (!Modal && typeof (require) === 'function') {
             let modal = self.modals[0].modal;
             // Click on the top level menu toggle the state of the menu
             if (e.type == 'click') {
-                // Toggle state
-                modal.closed = !modal.closed;
-            }
-            if (e.type == 'contextmenu') {
+                modal.closed = ! modal.closed;
+            } else if (e.type == 'contextmenu') {
                 modal.closed = false;
-            }
-
-            if (typeof(x) === 'undefined') {
-                [x,y] = getCoords(e);
             }
 
             // If the modal is open and the content is different from what is shown
@@ -143,12 +146,13 @@ if (!Modal && typeof (require) === 'function') {
             });
             // Parent
             self.root.addEventListener("contextmenu", function(e) {
+                let [x,y] = getCoords(e);
                 // Open the context menu
-                self.open(e, self.options);
+                self.open(e, self.options, x, y);
                 e.preventDefault();
                 e.stopImmediatePropagation();
             });
-            self.root.setAttribute('tabindex', 0);
+            self.root.setAttribute('tabindex', -1);
             // Create first menu
             self.create();
         }

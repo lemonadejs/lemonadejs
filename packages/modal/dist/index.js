@@ -226,13 +226,12 @@ if (! lemonade && typeof(require) === 'function') {
             let item = self.el;
             // Get the position and dimensions
             let rect = item.getBoundingClientRect();
+            let corner = rect.width - (x - rect.left) < 40 && (y - rect.top) < 40 ? true : false;
 
-            if (rect.width - (x - rect.left) < 40 && (y - rect.top) < 40) {
-                if (self.minimizable === true) {
-                    self.minimized = ! item.lemon.self.minimized;
-                } else if (self.closabled === true) {
-                    self.closed = true;
-                }
+            if (self.closabled === true && corner === true) {
+                self.closed = true;
+            } else if (self.minimizable === true && corner === true) {
+                self.minimized = ! item.lemon.self.minimized;
             } else {
                 if (controls.type === 'resize') {
                     // This will be the callback when finalize the resize

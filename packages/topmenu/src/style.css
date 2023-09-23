@@ -14,18 +14,31 @@
     min-height: initial;
 }
 
+.lm-menu-submenu {
+    padding-top: 1px;
+    padding-bottom: 1px;
+}
+
 .lm-menu-submenu > div {
     box-sizing: border-box;
     display: flex;
-    padding: 8px 8px 8px 32px;
+    padding: 0 12px 0 32px;
     width: 250px;
-    position: relative;
-    cursor: default;
     font-size: 11px;
     font-family:sans-serif;
     text-align: left;
-    -webkit-box-align: center;
     align-items: center;
+}
+
+.lm-menu-submenu > div a {
+    text-decoration: none;
+    flex: 1;
+    cursor: pointer;
+    line-height: 28px;
+}
+
+.lm-menu-submenu > div span {
+    margin-right: 10px;
 }
 
 .lm-menu-submenu > div[data-submenu="true"]::after {
@@ -43,16 +56,6 @@
 
 .lm-menu-submenu.symbols > div::before {
     font-family: 'Material Symbols Outlined';
-}
-
-.lm-menu-submenu > div a {
-    text-decoration: none;
-    flex: 1;
-    cursor: pointer;
-}
-
-.lm-menu-submenu > div span {
-    margin-right: 10px;
 }
 
 .lm-menu-submenu > div.disabled {
