@@ -1,6 +1,6 @@
 import lemonade from '../../../dist/lemonade'
-import Topmenu from './topmenu.js';
-import './style.css';
+import Modal from '../../modal/dist/index';
+import '../dist/style.css';
 import '../../modal/dist/style.css'
 
 function T(t) {
@@ -574,9 +574,7 @@ const options = [
 function Test() {
     let self = this;
 
-    self.options = options;
-
-    return `<Topmenu :options="self.options" />`
+    return `<Modal title="test" :draggable="true" :closable="false" :resizable="true">123</Modal>`
 }
 
 lemonade.render(Test, root);

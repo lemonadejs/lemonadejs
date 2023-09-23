@@ -1,0 +1,7 @@
+.gitignore
+.npmignore
+src
+public
+node_modules
+webpack.config.js
+test

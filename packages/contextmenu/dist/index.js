@@ -3,7 +3,7 @@ if (!lemonade && typeof (require) === 'function') {
 }
 
 if (!Modal && typeof (require) === 'function') {
-    var Modal = require('../../modal/dist/index');
+    var Modal = require('@lemonadejs/modal');
 }
 
 ; (function (global, factory) {
@@ -11,6 +11,9 @@ if (!Modal && typeof (require) === 'function') {
     typeof define === 'function' && define.amd ? define(factory) :
     global.Contextmenu = factory();
 }(this, (function () {
+
+    // Level
+    let index = 0;
 
     // Get the coordinates of the action
     const getCoords = function(e) {
@@ -37,9 +40,6 @@ if (!Modal && typeof (require) === 'function') {
             </div>`;
         }
     }
-
-    // Level
-    let index = 0;
 
     const Create = function() {
         let self = this;

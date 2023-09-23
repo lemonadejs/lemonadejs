@@ -1,0 +1,7 @@
+.lm-topmenu-options {
+    display: flex;
+}
+
+.lm-topmenu-options > div {
+    padding: 10px;
+}
