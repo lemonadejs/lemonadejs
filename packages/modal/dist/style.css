@@ -65,7 +65,7 @@
 }
 
 .lm-modal[closable="true"]::after {
-    content: '\128469';
+    content: 'close';
     display: block;
     position: absolute;
     top: 10px;

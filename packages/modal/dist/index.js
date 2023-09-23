@@ -226,9 +226,9 @@ if (! lemonade && typeof(require) === 'function') {
             let item = self.el;
             // Get the position and dimensions
             let rect = item.getBoundingClientRect();
-            let corner = rect.width - (x - rect.left) < 40 && (y - rect.top) < 40 ? true : false;
+            let corner = rect.width - (x - rect.left) < 40 && (y - rect.top) < 40;
 
-            if (self.closabled === true && corner === true) {
+            if (self.closable === true && corner === true) {
                 self.closed = true;
             } else if (self.minimizable === true && corner === true) {
                 self.minimized = ! item.lemon.self.minimized;
