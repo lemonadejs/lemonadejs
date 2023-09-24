@@ -13,8 +13,8 @@
         "modal js"
     ],
     "dependencies": {
-        "lemonadejs": "^3.3.2"
+        "lemonadejs": "^3.4.0"
     },
     "main": "dist/index.js",
-    "version": "2.1.2"
+    "version": "2.2.0"
 }

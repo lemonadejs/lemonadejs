@@ -1,5 +1,5 @@
 if (! lemonade && typeof(require) === 'function') {
-    var lemonade = require('../../../dist/lemonade');
+    var lemonade = require('lemonadejs');
 }
 
 ;(function (global, factory) {
