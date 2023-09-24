@@ -10,6 +10,9 @@
         "reactive",
         "two-way binding",
         "two-way data binding",
+        "javascript two-way data binding",
+        "reactive micro library",
+        "reactive javascript library",
         "hooks",
         "javascript",
         "micro library",
@@ -36,5 +39,5 @@
     },
     "main": "dist/lemonade.js",
     "types": "dist/lemonade.d.ts",
-    "version": "3.3.2"
+    "version": "3.4.0"
 }

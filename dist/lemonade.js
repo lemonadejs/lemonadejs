@@ -1,5 +1,5 @@
 /**
- * LemonadeJS v3.3.2
+ * LemonadeJS v3.4.0
  *
  * Website: https://lemonadejs.net
  * Description: Create amazing web based reusable components.
@@ -359,15 +359,20 @@
         } else {
             let v;
             // Verify if the value is a reference or a string
-            let s = o.v.split('}}')[0];
-            if (s.substr(0,2) === '{{' && s.length === o.v.length-2) {
-                s = removeMark(o.v);
-                v = run.call(o.s, s);
+            if (o.reference) {
+                v = run.call(o.s, o.v);
             } else {
-                v = o.v.replace(isScript, function (a, b) {
-                    return run.call(o.s, b);
-                });
+                let s = o.v.split('}}')[0];
+                if (s.substr(0, 2) === '{{' && s.length === o.v.length - 2) {
+                    s = removeMark(o.v);
+                    v = run.call(o.s, s);
+                } else {
+                    v = o.v.replace(isScript, function (a, b) {
+                        return run.call(o.s, b);
+                    });
+                }
             }
+
             if (o.e.lemonade) {
                 o.e.lemonade.self[a] = v;
             }
@@ -379,7 +384,11 @@
                 }
             }
 
-            setAttribute(o.e, v, a);
+            if (o.reference) {
+                o.e[a] = v;
+            } else {
+                setAttribute(o.e, v, a);
+            }
         }
     }
 
@@ -674,7 +683,7 @@
                             parseTokens.call(self, { e: element, a: prop, v: attr[k[i]], s: self, r: r, loop: true })
                         } else {
                             // Parse attributes
-                            parseTokens.call(self, { e: element, a: type, v: '{{' + attr[k[i]] + '}}', s: self })
+                            parseTokens.call(self, { e: element, a: type, v: attr[k[i]], s: self, reference: true })
                         }
 
                         // Sent to the queue

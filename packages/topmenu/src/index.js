@@ -574,7 +574,11 @@ const options = [
 function Test() {
     let self = this;
 
-    return `<Modal title="test" :draggable="true" :closable="false" :resizable="true">123</Modal>`
+    window.test = self;
+
+    self.image = 'https://jspreadsheet.com/templates/default/img/logo.svg'
+
+    return `<img :src="self.image" />`
 }
 
 lemonade.render(Test, root);

@@ -49,6 +49,11 @@ if (! lemonade && typeof(require) === 'function') {
         if (typeof(controls.action) === 'function') {
             controls.action();
         }
+        // Remove cursor
+        if (controls.e) {
+            controls.e.style.cursor = '';
+            controls.e.classList.remove('moving');
+        }
         // Reset controls
         controls = {};
         // Reset state controls
@@ -82,8 +87,6 @@ if (! lemonade && typeof(require) === 'function') {
             controls.left = left
             controls.e.style.top = top + 'px';
             controls.e.style.left = left + 'px';
-            controls.e.style.cursor = "move";
-
 
             state.x = x;
             state.y = y;
@@ -186,12 +189,11 @@ if (! lemonade && typeof(require) === 'function') {
             // Get the position and dimensions
             let rect = item.getBoundingClientRect();
 
-            controls = {
-                type: null,
-                e: item,
-                w: rect.width,
-                h: rect.height,
-            }
+            controls.type = null;
+            controls.d = null;
+            controls.e = item;
+            controls.w = rect.width;
+            controls.h = rect.height;
 
             // When resizable
             if (self.resizable === true) {
@@ -226,16 +228,22 @@ if (! lemonade && typeof(require) === 'function') {
             let item = self.el;
             // Get the position and dimensions
             let rect = item.getBoundingClientRect();
+
+            controls.e = item;
+            controls.w = rect.width;
+            controls.h = rect.height;
+
             let corner = rect.width - (x - rect.left) < 40 && (y - rect.top) < 40;
 
-            if (self.closable === true && corner === true) {
+            if (self.minimizable === true && corner === true) {
+                self.minimized = ! self.minimized;
+            } else if (self.closable === true && corner === true) {
                 self.closed = true;
-            } else if (self.minimizable === true && corner === true) {
-                self.minimized = ! item.lemon.self.minimized;
-            } else {
+            } else if (! self.minimized) {
+                // If is not minimized
                 if (controls.type === 'resize') {
                     // This will be the callback when finalize the resize
-                    controls.action = function() {
+                    controls.action = function () {
                         self.width = parseInt(item.style.width);
                         self.height = parseInt(item.style.height);
                     }
@@ -246,22 +254,22 @@ if (! lemonade && typeof(require) === 'function') {
                     if (!item.style.height) {
                         item.style.height = controls.h + 'px';
                     }
-                } else {
-                    // Modal is draggable by the title
-                    if (self.draggable === true && self.title && y - rect.top < 40) {
-                        // Action
-                        controls.type = 'move';
-                        // Callback
-                        controls.action = function() {
-                            self.top = parseInt(item.style.top);
-                            self.left = parseInt(item.style.left);
-                        }
+
+                    e.preventDefault();
+                } else if (self.draggable === true && self.title && y - rect.top < 40) {
+                    // Action
+                    controls.type = 'move';
+                    // Callback
+                    controls.action = function () {
+                        self.top = parseInt(item.style.top);
+                        self.left = parseInt(item.style.left);
                     }
+                    controls.e.classList.add('moving');
                 }
             }
         }
 
-        return `<div class="lm-modal" title="{{self.title}}" closed="{{self.closed}}" :closable="self.closable" :minimized="self.minimized" :minimizable="self.minimizable" :top="self.top" :left="self.left" :width="self.width" :height="self.height" onmousedown="self.mousedown(e)" onmousemove="self.mousemove(e)" tabindex="-1">${template}</div>`
+        return `<div class="lm-modal" title="{{self.title}}" closed="{{self.closed}}" closable="{{self.closable}}" minimizable="{{self.minimizable}}" minimized="{{self.minimized}}" :top="self.top" :left="self.left" :width="self.width" :height="self.height" onmousedown="self.mousedown(e)" onmousemove="self.mousemove(e)" tabindex="-1">${template}</div>`
     }
 
     lemonade.setComponents({ Modal: Modal });

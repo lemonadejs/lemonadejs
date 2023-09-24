@@ -212,6 +212,9 @@ This software is free to use, and it is distributed under the MIT license.
     <li><a href="https://lemonadejs.net/docs/components">Components</a></li>
     <li><a href="https://lemonadejs.net/docs/classes">Classes</a></li>
     <li><a href="https://lemonadejs.net/docs/web-components">Web components</a></li>
+    <li><a href="https://lemonadejs.net/docs/quick-reference">Quick reference</a></li>
+    <li><a href="https://lemonadejs.net/docs/debugging">Debugging</a></li>
+    <li><a href="https://lemonadejs.net/docs/contributions">Contributing</a></li>
 </ul>
 
 <h3>Utilities</h3>
@@ -223,13 +226,33 @@ This software is free to use, and it is distributed under the MIT license.
     <li><a href="https://lemonadejs.net/docs/module">Module (ESM)</a></li>
 </ul>
 
-<h3>Useful</h3>
+<h3>Libraries</h3>
 <ul>
-    <li><a href="https://lemonadejs.net/docs/quick-reference">Quick reference</a></li>
-    <li><a href="https://lemonadejs.net/docs/debugging">Debugging</a></li>
-    <li><a href="https://lemonadejs.net/docs/contributions">Contributing</a></li>
+    <li><a href="https://lemonadejs.net/library/list">List</a></li>
+    <li><a href="https://lemonadejs.net/library/rating">Rating</a></li>
+    <li><a href="https://lemonadejs.net/library/router">Router</a></li>
+    <li><a href="https://lemonadejs.net/library/signature">Signature</a></li>
+    <li><a href="https://lemonadejs.net/components/data-grid">Data grid</a></li>
+    <li><a href="https://lemonadejs.net/components/image-cropper" title="Photo cropper and filters component">Image cropper</a></li>
+    <li><a href="https://lemonadejs.net/components/modal">Modal</a></li>
+    <li><a href="https://lemonadejs.net/components/tabs">Tabs</a></li>
+    <li><a href="https://lemonadejs.net/components/color-picker">Color picker</a></li>
 </ul>
 
+<h3>Examples</h3>
+<ul>
+    <li><a href="https://lemonadejs.net/examples/lamp">Lamp</a></li>
+    <li><a href="https://lemonadejs.net/examples/counter">Counter</a></li>
+    <li><a href="https://lemonadejs.net/examples/color-generator">Color generator</a></li>
+    <li><a href="https://lemonadejs.net/examples/value-persistence">Value persistence</a></li>
+    <li><a href="https://lemonadejs.net/examples/div-onresize">DIV onresize</a></li>
+    <li><a href="https://lemonadejs.net/examples/rating">Star rating</a></li>
+    <li><a href="https://lemonadejs.net/examples/table">Table</a></li>
+    <li><a href="https://lemonadejs.net/examples/enable-disable-elements">Disable elements</a></li>
+    <li><a href="https://lemonadejs.net/examples/color-picker">Color picker</a></li>
+    <li><a href="https://lemonadejs.net/examples/hangman">Hangman game</a></li>
+    <li><a href="https://lemonadejs.net/examples/tic-tac-toe">Tic tac toe</a></li>
+</ul>
 
 <h2>Other tools</h2>
 

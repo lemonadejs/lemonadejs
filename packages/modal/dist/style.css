@@ -12,6 +12,11 @@
     box-shadow: 0 0 4px 3px rgba(80,80,80,.1);
     opacity: 1;
     transition: opacity 0.5s ease;
+    will-change: transform;
+}
+
+.lm-modal.moving {
+    cursor: move !important;
 }
 
 @media only screen and (max-width : 800px) {
@@ -82,7 +87,6 @@
     font-size: 24px;
 }
 
-
 .lm-modal[title=""]::before {
     display: none;
 }
@@ -92,18 +96,16 @@
 }
 
 .lm-modal[minimized="true"] {
-    bottom: 0;
-    min-height: 0px;
+    bottom: 10px;
+    min-height: 0;
     height: 45px !important;
-}
-
-.lm-modal[minimized="true"]::before {
-    height: 100%;
-    cursor: pointer;
+    top: initial !important;
+    left: initial !important;
+    overflow: hidden;
 }
 
 .lm-modal[minimized="true"]::after {
-    content: '';
+    content: 'open_in_full';
 }
 
 @keyframes slide-bottom-in {

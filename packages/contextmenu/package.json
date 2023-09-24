@@ -1,0 +1,22 @@
+{
+    "name": "@lemonadejs/contextmenu",
+    "title": "LemonadeJS contextmenu",
+    "description": "LemonadeJS Contextmenu JavaScript Plugin",
+    "author": {
+        "name": "Contact <contact@lemonadejs.net>",
+        "url": "https://lemonadejs.net"
+    },
+    "keywords": [
+        "javascript contextmenu"
+    ],
+    "scripts": {
+        "start": "webpack serve --history-api-fallback",
+        "build": "webpack --config webpack.config.js"
+    },
+    "dependencies": {
+        "@lemonadejs/modal": "^2.1.0",
+        "lemonadejs": "^3.3.2"
+    },
+    "main": "dist/index.js",
+    "version": "1.0.1"
+}
