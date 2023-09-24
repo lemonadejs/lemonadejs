@@ -576,9 +576,7 @@ function Test() {
 
     window.test = self;
 
-    self.image = 'https://jspreadsheet.com/templates/default/img/logo.svg'
-
-    return `<img :src="self.image" />`
+    return `<Modal title="test" :backdrop="true" closed="{{self.closed}}" :minimizable="true" :draggable="true" :resizable="false" :ref="self.test"><input/><input/></Modal>`
 }
 
 lemonade.render(Test, root);

@@ -36,6 +36,8 @@ interface options {
     top?: number;
     /** Position Left */
     left?: number;
+    /** Load the content from a remote URL */
+    url?: string;
 }
 
 interface instance {
