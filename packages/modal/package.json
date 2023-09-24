@@ -16,5 +16,5 @@
         "lemonadejs": "^3.4.0"
     },
     "main": "dist/index.js",
-    "version": "2.2.0"
+    "version": "2.2.1"
 }

@@ -161,6 +161,15 @@ if (! lemonade && typeof(require) === 'function') {
                 self.el.classList.add('fullscreen');
             }
 
+            // Focus out of the component
+            self.el.addEventListener('focusout', function(e) {
+                if (self.autoclose === true) {
+                    if (!self.el.contains(e.relatedTarget)) {
+                        self.closed = true;
+                    }
+                }
+            });
+
             // Close and stop propagation
             document.addEventListener('keydown', (e) => {
                 if (e.key === 'Escape' && self.closed === false) {

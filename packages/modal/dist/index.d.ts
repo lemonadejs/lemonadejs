@@ -10,21 +10,36 @@ interface Modal {
 }
 
 interface options {
+    /** Close the modal when it loses the focus */
+    autoclose?: boolean;
+    /** Modal is closed */
     closed?: boolean;
+    /** Modal can be closed */
     closable?: boolean;
+    /** Modal is minimized */
     minimized?: boolean;
+    /** Modal can be minimized */
     minimizable?: boolean;
+    /** Modal can be resized */
     resizable?: boolean;
+    /** Modal can be moved from its original position */
     draggable?: boolean;
+    /** Modal is automatic align center */
     center?: boolean;
+    /** Title of the modal */
     title?: string;
+    /** Width of the modal */
     width?: number;
+    /** Height of the modal */
     height?: number;
+    /** Position top */
     top?: number;
+    /** Position Left */
     left?: number;
 }
 
 interface instance {
+    autoclose: boolean;
     closed: boolean;
     closable: boolean;
     minimized: boolean;
