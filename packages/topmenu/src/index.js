@@ -576,7 +576,24 @@ function Test() {
 
     window.test = self;
 
-    return `<Modal title="test" :backdrop="true" closed="{{self.closed}}" :minimizable="true" :draggable="true" :resizable="false" :ref="self.test"><input/><input/></Modal>`
+    return `<div>
+        <div style="display: flex; height: 250px;">
+            <div style="width: 350px; height: 10px; background-color: red;"><Modal title="test 1" :backdrop="true" closed="{{self.closed}}" :minimizable="true" :draggable="true" :resizable="false" :autoadjust="true" :corner="true" :ref="self.test">N - 1</Modal></div>
+            <div style="width: 350px; height: 10px; background-color: red;"><Modal title="test 2" :backdrop="true" closed="{{self.closed}}" :minimizable="true" :draggable="true" :resizable="false" :autoadjust="true" :corner="true" :ref="self.test">N - 2</Modal></div>
+            <div style="width: 350px; height: 10px; background-color: red;"><Modal title="test 3" :backdrop="true" closed="{{self.closed}}" :minimizable="true" :draggable="true" :resizable="false" :autoadjust="true" :corner="true" :ref="self.test">N - 3</Modal></div>
+            <div style="width: 350px; height: 10px; background-color: red;"><Modal title="test 4" :backdrop="true" closed="{{self.closed}}" :minimizable="true" :draggable="true" :resizable="false" :autoadjust="true" :corner="true" :ref="self.test">N - 4</Modal></div>
+            <div style="width: 350px; height: 10px; background-color: red;"><Modal title="test 5" :backdrop="true" closed="{{self.closed}}" :minimizable="true" :draggable="true" :resizable="false" :autoadjust="true" :corner="true" :ref="self.test">N - 5</Modal></div>
+            <div style="width: 350px; height: 10px; background-color: red;"><Modal title="test 6" :backdrop="true" closed="{{self.closed}}" :minimizable="true" :draggable="true" :resizable="false" :autoadjust="true" :corner="true" :ref="self.test">N - 6</Modal></div>
+        </div>
+        <div style="display: flex; height: 250px;">
+            <div style="width: 350px; height: 10px; background-color: red;"><Modal title="test 7" :backdrop="true" closed="{{self.closed}}" :minimizable="true" :draggable="true" :resizable="false" :autoadjust="true" :corner="true" :ref="self.test">N - 7</Modal></div>
+            <div style="width: 350px; height: 10px; background-color: red;"><Modal title="test 8" :backdrop="true" closed="{{self.closed}}" :minimizable="true" :draggable="true" :resizable="false" :autoadjust="true" :corner="true" :ref="self.test">N - 8</Modal></div>
+            <div style="width: 350px; height: 10px; background-color: red;"><Modal title="test 9" :backdrop="true" closed="{{self.closed}}" :minimizable="true" :draggable="true" :resizable="false" :autoadjust="true" :corner="true" :ref="self.test">N - 9</Modal></div>
+            <div style="width: 350px; height: 10px; background-color: red;"><Modal title="test 10" :backdrop="true" closed="{{self.closed}}" :minimizable="true" :draggable="true" :resizable="false" :autoadjust="true" :corner="true" :ref="self.test">N - 10</Modal></div>
+            <div style="width: 350px; height: 10px; background-color: red;"><Modal title="test 11" :backdrop="true" closed="{{self.closed}}" :minimizable="true" :draggable="true" :resizable="false" :autoadjust="true" :corner="true" :ref="self.test">N - 11</Modal></div>
+            <div style="width: 350px; height: 10px; background-color: red;"><Modal title="test 12" :backdrop="true" closed="{{self.closed}}" :minimizable="true" :draggable="true" :resizable="false" :autoadjust="true" :corner="true" :ref="self.test">N - 12</Modal></div>
+        </div>
+    <div>`
 }
 
 lemonade.render(Test, root);

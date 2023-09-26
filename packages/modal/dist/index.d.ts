@@ -38,6 +38,8 @@ interface options {
     left?: number;
     /** Load the content from a remote URL */
     url?: string;
+    /** Ensures modal will be visible on screen */
+    autoAdjust?: boolean;
 }
 
 interface instance {
