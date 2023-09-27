@@ -12,9 +12,6 @@ if (!Modal && typeof (require) === 'function') {
     global.Contextmenu = factory();
 }(this, (function () {
 
-    // Level
-    let index = 0;
-
     // Get the coordinates of the action
     const getCoords = function(e) {
         let x;
@@ -86,6 +83,9 @@ if (!Modal && typeof (require) === 'function') {
 
     const Contextmenu = function() {
         let self = this;
+
+         // Level
+        let index = 0;
 
         // Container for all modals
         self.modals = [];
