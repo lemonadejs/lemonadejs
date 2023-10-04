@@ -14,20 +14,9 @@
         "javascript plugins",
         "javascript color picker"
     ],
-    "scripts": {
-        "build": "webpack --config webpack.config.js"
-    },
     "dependencies": {
-        "lemonadejs": "^3.3.0"
+        "lemonadejs": "^3.4.0"
     },
     "main": "dist/index.js",
-    "version": "3.0.5",
-    "devDependencies": {
-        "@lemonadejs/modal": "^2.0.4",
-        "@lemonadejs/tabs": "^1.0.4",
-        "css-loader": "^6.8.1",
-        "mini-css-extract-plugin": "^2.7.6",
-        "webpack": "^5.88.1",
-        "webpack-cli": "^5.1.4"
-    }
+    "version": "3.1.0"
 }
