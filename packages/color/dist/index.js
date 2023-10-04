@@ -1,13 +1,13 @@
 if (!lemonade && typeof (require) === 'function') {
-    var lemonade = require('../../../dist/lemonade');
+    var lemonade = require('lemonadejs');
 }
 
 if (!Modal && typeof (require) === 'function') {
-    var Modal = require('../../modal/dist/index');
+    var Modal = require('@lemonadejs/modal');
 }
 
 if (!Tabs && typeof (require) === 'function') {
-    var Tabs = require('../../tabs/dist/index');
+    var Tabs = require('@lemonadejs/tabs');
 }
 
 ; (function (global, factory) {
@@ -46,8 +46,8 @@ if (!Tabs && typeof (require) === 'function') {
             if (event.target.tagName === 'TD') {
                 let color = event.target.getAttribute('data-value')
 
-                // Remove current selected mark
-                let selected = document.querySelector('.lm-color-selected');
+                // Remove current selected mark - TODO: need to remove document from here.
+                let selected = self.el.querySelector('.lm-color-selected');
                 if (selected) {
                     selected.classList.remove('lm-color-selected');
                 }
