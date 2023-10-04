@@ -2,8 +2,6 @@
     position: absolute;
     min-width: 150px;
     min-height: 120px;
-    width: 300px;
-    height: 260px;
     border-radius: 4px;
     z-index: 9;
     background-color: #fff;
@@ -15,25 +13,23 @@
     will-change: transform;
 }
 
-.lm-modal.moving {
-    cursor: move !important;
+.lm-modal[data-responsive] {
+    width: 100% !important;
+    bottom: 0;
+    left: 0;
+    border: 0;
+    border-radius: 0;
+    transform: none;
+    animation: slide-bottom-in 0.4s forwards;
 }
 
-@media only screen and (max-width : 800px) {
-    .lm-modal {
-        width: 100% !important;
-        bottom: 0;
-        left: 0;
-        border: 0;
-        border-radius: 0;
-        transform: none;
-        animation: slide-bottom-in 0.4s forwards;
-    }
+.lm-modal[data-responsive].fullscreen {
+    top: 0;
+    height: 100% !important;
+}
 
-    .lm-modal.fullscreen {
-        top: 0;
-        height: 100% !important;
-    }
+.lm-modal.moving {
+    cursor: move !important;
 }
 
 .lm-modal-picker {
