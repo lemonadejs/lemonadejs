@@ -46,7 +46,7 @@ if (!Tabs && typeof (require) === 'function') {
             if (event.target.tagName === 'TD') {
                 let color = event.target.getAttribute('data-value')
 
-                // Remove current selected mark - TODO: need to remove document from here.
+                // Remove current selected mark
                 let selected = self.el.querySelector('.lm-color-selected');
                 if (selected) {
                     selected.classList.remove('lm-color-selected');
