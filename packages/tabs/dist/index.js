@@ -48,7 +48,7 @@ if (! lemonade && typeof(require) === 'function') {
                 select(self.selected);
 
                 if (typeof(self.onopen) === 'function') {
-                    self.onopen.call(self, self, self.selected);
+                    self.onopen.call(self, self.selected);
                 }
             }
         }
