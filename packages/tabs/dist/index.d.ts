@@ -13,6 +13,7 @@ interface options {
     data?: object[];
     selected?: number;
     position?: number;
+    onopen?: () => void;
 }
 
 interface instance {

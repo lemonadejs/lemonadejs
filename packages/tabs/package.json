@@ -13,8 +13,8 @@
         "tabs js"
     ],
     "dependencies": {
-        "lemonadejs": "^3.3.1"
+        "lemonadejs": "^3.4.0"
     },
     "main": "dist/index.js",
-    "version": "1.0.4"
+    "version": "1.1.0"
 }
