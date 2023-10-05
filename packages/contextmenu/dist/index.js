@@ -29,10 +29,21 @@ if (!Modal && typeof (require) === 'function') {
     }
 
     const Item = function() {
-        if (this.type === 'line') {
+        let self = this;
+
+        self.onload = function() {
+            if (self.item && typeof (self.onclick) === 'function') {
+                self.item.addEventListener("click", (e) => {
+                    self.onclick()
+                    self.parent.parent.parent.close(0)
+                });
+            }
+        }
+
+        if (self.type === 'line') {
             return `<hr />`;
         } else {
-            return `<div data-icon="{{self.icon}}" data-submenu="{{!!self.submenu}}" onmouseover="self.parent.parent.open(e, self)">
+            return `<div data-icon="{{self.icon}}" data-submenu="{{!!self.submenu}}" onmouseover="self.parent.parent.open(e, self)" :ref="self.item">
                 <a>{{self.title}}</a> <span>{{self.shortcut}}</span>
             </div>`;
         }
@@ -113,7 +124,7 @@ if (!Modal && typeof (require) === 'function') {
             } else if (e.type == 'contextmenu') {
                 modal.closed = false;
             }
-
+            
             // If the modal is open and the content is different from what is shown
             if (modal.closed === false) {
                 // Close modals with higher level
@@ -127,7 +138,7 @@ if (!Modal && typeof (require) === 'function') {
                 }
             }
         }
-
+        
         self.close = function(level) {
             self.modals.forEach(function(value, k) {
                 if (k >= level) {
@@ -142,7 +153,9 @@ if (!Modal && typeof (require) === 'function') {
             }
             // Create event for focus out
             self.root.addEventListener("focusout", (e) => {
-                self.close(0);
+                if (!e.relatedTarget) {
+                    self.close(0);
+                }
             });
             // Parent
             self.root.addEventListener("contextmenu", function(e) {
