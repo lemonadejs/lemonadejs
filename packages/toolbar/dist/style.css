@@ -1,4 +1,4 @@
-.toolbar {
+.lm-toolbar {
     display: flex;
     align-items: center;
     box-sizing: border-box;
@@ -15,7 +15,7 @@
     border-radius: 0px;
 }
 
-.toolbar div {
+.lm-toolbar div {
     flex: 1;
     -webkit-user-select: none;
     -moz-user-select: none;
@@ -25,23 +25,23 @@
     text-align:center;
 }
 
-.toolbar a {
+.lm-toolbar a {
     text-decoration: none;
     display: inline-block;
     color: #000;
 }
 
-.toolbar i {
+.lm-toolbar i {
     display: block;
     color:#333;
 }
 
-.toolbar span {
+.lm-toolbar span {
     font-size:0.7em;
     display:block;
     color:#929292;
 }
 
-.toolbar:empty {
+.lm-toolbar:empty {
     display: none;
 }

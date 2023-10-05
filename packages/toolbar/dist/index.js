@@ -37,16 +37,16 @@
     return function(html) {
         const self = this;
 
-        if (! self.data) {
-            self.data = [];
+        if (! self.options) {
+            self.options = [];
         }
 
         if (html) {
              extract.call(self, html);
         }
 
-        return `<div class="toolbar" @loop="self.data">
-            <div>
+        return `<div class="lm-toolbar" @loop="self.data">
+            <div class="lm-toolbar-item">
                 <a href="{{self.route}}">
                 <i class="material-icons">{{self.content}}</i>
                 <span>{{self.title}}</span>
