@@ -54,12 +54,12 @@ You can configure things such as color palette, toggle button type, and event ma
 
 #### Color Picker Properties
 
-| Property | Type | Description |
-| -------- | ---- | ----------- |
-| palette? | array | A matrix containing hexadecimal color values. There is a default palette. |
-| closed? | boolean | Controls the open and close state of the modal. |
-| type? | string | The type of element that will toggle the color picker modal. Options: 'input', 'box' or empty.  |
-| value? | string | The value of the color that is currently selected. |
+| Property | Type | Description                                                                                       |
+| -------- | ---- |---------------------------------------------------------------------------------------------------|
+| palette? | array | A matrix containing hexadecimal color values. There is a default palette.                         |
+| closed? | boolean | Controls the open and close state of the modal.                                                   |
+| type? | string | The type of element that will toggle the color picker modal. Options: 'input', 'inline' or empty. |
+| value? | string | The value of the color that is currently selected.                                                |
 
 ### Color Picker Events
 
@@ -76,4 +76,4 @@ The [LemonadeJS](https://lemonadejs.net) Color is released under the MIT.
 ## Other Tools
 
 -   [jSuites](https://jsuites.net/v4/)
--   [Jspreadsheet](https://jspreadsheet.com)
+-   [Jspreadsheet Data Grid](https://jspreadsheet.com)

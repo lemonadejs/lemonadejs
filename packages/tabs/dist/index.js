@@ -1,4 +1,4 @@
-if (!lemonade && typeof (require) === 'function') {
+if (! lemonade && typeof(require) === 'function') {
     var lemonade = require('lemonadejs');
 }
 
@@ -46,6 +46,10 @@ if (!lemonade && typeof (require) === 'function') {
         self.onchange = function (property) {
             if (property === 'selected') {
                 select(self.selected);
+
+                if (typeof(self.onopen) === 'function') {
+                    self.onopen.call(self, self.selected);
+                }
             }
         }
 
@@ -55,8 +59,8 @@ if (!lemonade && typeof (require) === 'function') {
             }
         }
 
-        return `<div class="lm-tabs" position="{{self.position||''}}">
-            <ul :ref="self.headers" :loop="self.tabs" onclick="self.click(e, this)" :selected="self.selected"><li class="lm-tab-list-item">{{self.title}}</li></ul>
+        return `<div class="lm-tabs" :position="self.position">
+            <ul :ref="self.headers" :loop="self.tabs" :selected="self.selected" onclick="self.click(e, this)"><li class="lm-tab-list-item">{{self.title}}</li></ul>
             <div :ref="self.content" class="lm-tabs-content">${content}</div>
         </div>`
     }

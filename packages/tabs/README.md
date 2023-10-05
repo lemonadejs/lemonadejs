@@ -44,7 +44,11 @@ import "@lemonadejs/tabs/dist/style.css"
 export default function Component() {
     const self = this;
 
-    return `<Tabs>
+    self.open = (index) => {
+        console.log(index)
+    }
+    
+    return `<Tabs :onopen="self.open">
         <div title="Tab 1">Content of the first tab</div>
         <div title="Tab 2">Content of the second tab</div>
     </Tabs>`;
@@ -59,11 +63,12 @@ You can configure things such as tabs titles, tabs contents and selected tab.
 
 #### Tabs Properties
 
-| Property | Type | Description |
-| -------- | ---- | ----------- |
-| data? | array | An optional alternative method to provide the title and content that will serve as the basis for rendering the tabs. |
-| selected? | number | The index of the initially selected tab. Starts from 0. |
-| position? | string | The position of the tabs bar within the parent element. Use 'center' to center-align the tabs. |
+| Property  | Type     | Description                                                                                                          |
+|-----------|----------|----------------------------------------------------------------------------------------------------------------------|
+| data?     | array    | An optional alternative method to provide the title and content that will serve as the basis for rendering the tabs. |
+| selected? | number   | The index of the initially selected tab. Starts from 0.                                                              |
+| position? | string   | The position of the tabs bar within the parent element. Use 'center' to center-align the tabs.                       |
+| onopen?   | function | When a new tabs is opened.                                                                                           |
 
 ## License
 
@@ -72,4 +77,4 @@ The [LemonadeJS](https://lemonadejs.net) Tabs is released under the MIT.
 ## Other Tools
 
 -   [jSuites](https://jsuites.net/v4/)
--   [Jspreadsheet](https://jspreadsheet.com)
+-   [Jspreadsheet Data Grid](https://jspreadsheet.com)

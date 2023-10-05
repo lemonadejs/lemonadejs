@@ -131,9 +131,31 @@ if (! lemonade && typeof(require) === 'function') {
         }
     }
 
+    const adjustTop = function() {
+        let self = this;
+        let rect = self.el.getBoundingClientRect();
+        self.el.style.marginTop = '';
+        let limit = document.documentElement.clientHeight + window.scrollY - (rect.top +  rect.height);
+        if (limit < 0) {
+            self.el.style.marginTop = limit - 10 + 'px';
+        }
+        console.log(limit)
+    }
+
+    const adjustLeft = function() {
+        let self = this;
+        self.el.style.marginLeft = '';
+        let rect = self.el.getBoundingClientRect();
+        // Make sure component will be visible on page
+        let limit = document.documentElement.clientWidth - (rect.left +  rect.width);
+        if (limit < 0) {
+            self.el.style.marginLeft = limit - 10 + 'px';
+        }
+    }
+
     const Modal = function (template) {
         let self = this;
-        
+
         // Make sure keep the state as boolean
         self.closed = !!self.closed;
 
@@ -150,27 +172,34 @@ if (! lemonade && typeof(require) === 'function') {
                     });
             }
 
-
             // Initial centralize
             if (self.center === true) {
                 self.top = (window.innerHeight - self.height) / 2;
                 self.left = (window.innerWidth - self.width) / 2;
-            } else if (self.autoadjust) {
-                let rect = self.el.getBoundingClientRect();
-                
-                // Make sure component will be visible on page
-                if ((self.el.offsetLeft + rect.width) - document.documentElement.clientWidth > 0) {
-                    self.el.style.left = document.documentElement.clientWidth - rect.width;
-                }
-                
-                if ((self.el.offsetTop + rect.height) - document.documentElement.clientHeight > 0) {
-                    self.el.style.top = document.documentElement.clientHeight - rect.height;
-                }
             }
-            
+
+            // Dimensions
+            if (self.width) {
+                self.el.style.width = self.width + 'px';
+            }
+            if (self.height) {
+                self.el.style.height = self.height + 'px';
+            }
+            if (self.top) {
+                self.el.style.top = self.top + 'px';
+            }
+            if (self.left) {
+                self.el.style.left = self.left + 'px';
+            }
+
             // Full screen
             if (self.height > 260) {
                 self.el.classList.add('fullscreen');
+            }
+
+            // Responsive
+            if (document.documentElement.clientWidth < 800 && self.responsive !== false) {
+                self.el.setAttribute('data-responsive', true);
             }
 
             // Focus out of the component
@@ -197,6 +226,15 @@ if (! lemonade && typeof(require) === 'function') {
                 self.closed ? Dispatch.call(self,'onclose') : Dispatch.call(self,'onopen');
             } else if (property === 'top' || property === 'left' || property === 'width' || property === 'height') {
                 self.el.style[property] = self[property] + 'px';
+
+                // Adjust position
+                if (self.autoadjust) {
+                    if (property === 'top') {
+                        adjustTop.call(self);
+                    } else if (property === 'left') {
+                        adjustLeft.call(self);
+                    }
+                }
             }
         }
 
@@ -258,7 +296,6 @@ if (! lemonade && typeof(require) === 'function') {
 
             if (self.minimizable === true && corner === true) {
                 self.minimized = ! self.minimized;                
-
 
                 // Handles minimized modal positioning
                 if (self.minimized) {

@@ -83,21 +83,23 @@ You can configure things such as position, size, and functionalities.
 
 #### Modal Properties
 
-| Property | Type | Description |
-| -------- | ---- | ----------- |
-| title? | string | The header title of the modal |
-| height? | number | The height of the modal in pixels |
-| width? | number | The width of the modal in pixels |
-| top? | number | The vertical position of the modal within its container in pixels |
-| left? | number | The horizontal position of the modal within its container in pixels |
-| draggable? | boolean | Determines if the modal can be dragged |
-| resizable? | boolean | Determines if the modal can be resized |
-| closed? | boolean | Controls the open and close state of the modal |
-| closable? | boolean | Enables the close button |
-| minimized? | boolean | Controls the minimized state of the modal |
-| minimizable? | boolean | Enables the minimize button |
-| center? | boolean | Enables rendering the modal in the center of its parent container |
-| url? | string | The URL from which to fetch and render content |
+| Property     | Type    | Description                                                        |
+|--------------|---------|--------------------------------------------------------------------|
+| title?       | string  | The header title of the modal                                      |
+| height?      | number  | The height of the modal in pixels                                  |
+| width?       | number  | The width of the modal in pixels                                   |
+| top?         | number  | The vertical position of the modal within its container in pixels  |
+| left?        | number  | The horizontal position of the modal within its container in pixels |
+| draggable?   | boolean | Determines if the modal can be dragged                             |
+| resizable?   | boolean | Determines if the modal can be resized                             |
+| closed?      | boolean | Controls the open and close state of the modal                     |
+| closable?    | boolean | Enables the close button                                           |
+| minimized?   | boolean | Controls the minimized state of the modal                          |
+| minimizable? | boolean | Enables the minimize button                                        |
+| center?      | boolean | Enables rendering the modal in the center of its parent container  |
+| url?         | string  | The URL from which to fetch and render content                     |
+| autoadjust?  | boolean | Adjust the position when the modal is outside the viewport         |
+| autoclose?   | boolean | Close when the modal loses focus                                   |
 
 #### Modal Events
 
@@ -113,4 +115,4 @@ The LemonadeJS Modal is released under the MIT.
 ## Other Tools
 
 -   [jSuites](https://jsuites.net/v4/)
--   [Jspreadsheet](https://jspreadsheet.com)
+-   [Jspreadsheet Data Grid](https://jspreadsheet.com)

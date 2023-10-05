@@ -10,10 +10,10 @@ interface Color {
 }
 
 interface options {
-    palette?: array[];
+    palette?: string[];
     closed?: boolean;
     name?: string;
-    type?: string;
+    type?: 'inline' | 'input' | undefined;
     value?: string;
     onopen?: () => void;
     onclose?: () => void;
@@ -21,7 +21,7 @@ interface options {
 }
 
 interface instance {
-    palette?: array[];
+    palette?: string[];
     closed?: boolean;
     name?: string;
     type?: string;

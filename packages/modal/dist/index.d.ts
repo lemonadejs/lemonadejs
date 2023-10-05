@@ -39,7 +39,9 @@ interface options {
     /** Load the content from a remote URL */
     url?: string;
     /** Ensures modal will be visible on screen */
-    autoAdjust?: boolean;
+    autoadjust?: boolean;
+    /** Responsive mode. Default is true */
+    responsive?: boolean;
 }
 
 interface instance {
