@@ -4,12 +4,28 @@
     border: 1px solid transparent;
     border-radius: 4px;
     box-shadow: 0 2px 6px 2px rgba(60,64,67,.15);
-    max-height: calc(100vh - 94px);
+    max-height: 300px;
     overflow-y: auto;
 
     width: initial;
     height: initial;
     min-height: initial;
+    padding-bottom: 4px;
+}
+
+.lm-menu .lm-modal::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+}
+
+.lm-menu .lm-modal::-webkit-scrollbar-track {
+    border: 1px solid #fff;
+    background: #eee;
+}
+
+.lm-menu .lm-modal::-webkit-scrollbar-thumb {
+    border: 1px solid #fff;
+    background: #888;
 }
 
 .lm-menu-submenu {
@@ -17,7 +33,7 @@
     padding-bottom: 1px;
 }
 
-.lm-menu-submenu > div {
+.lm-menu-submenu > div.lm-menu-item {
     box-sizing: border-box;
     display: flex;
     padding: 0 12px 0 32px;
@@ -28,26 +44,27 @@
     align-items: center;
 }
 
-.lm-menu-submenu > div a {
+.lm-menu-submenu > div.lm-menu-item a {
     text-decoration: none;
     flex: 1;
     cursor: pointer;
     line-height: 28px;
 }
 
-.lm-menu-submenu > div span {
+.lm-menu-submenu > div.lm-menu-item span {
     margin-right: 10px;
+    min-height: 28px;
 }
 
-.lm-menu-submenu > div[data-submenu="true"]::after {
+.lm-menu-submenu > div.lm-menu-item[data-submenu="true"]::after {
     content: '\25B6'
 }
 
-.lm-menu-submenu > div.disabled {
+.lm-menu-submenu > div.lm-menu-item.disabled {
     color: #ccc;
 }
 
-.lm-menu-submenu > div:hover {
+.lm-menu-submenu > div.lm-menu-item:hover {
     background: #ebebeb;
 }
 
@@ -58,15 +75,11 @@
     margin-bottom:5px;
 }
 
-.lm-menu-submenu > div::before {
+.lm-menu-submenu > div.lm-menu-item::before {
     content: attr(data-icon);
     font-family: 'Material Icons';
-    font-size: 15px;
+    font-size: 18px;
     position: absolute;
     left: 9px;
     line-height: 24px;
-}
-
-.lm-menu-submenu.symbols > div::before {
-    font-family: 'Material Symbols Outlined';
 }
