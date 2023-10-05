@@ -1,0 +1,13 @@
+.lm-picker {
+}
+
+.lm-picker-title {
+    padding: 5px 10px;
+    border: solid 1px black;
+    border-radius: 3px;
+}
+
+.lm-picker-title:hover {
+    cursor: pointer;
+    user-select: none;
+}
