@@ -1,10 +1,13 @@
 import lemonade from '../../../dist/lemonade'
 import Modal from '../../modal/dist/index';
-import Contextmenu from  '../../contextmenu/dist/index';
-import Topmenu from '../dist/index';
+//import Topmenu from '../dist/index';
+//import '../../contextmenu/dist/style.css'
 import '../../contextmenu/dist/style.css'
 import '../dist/style.css';
+import '../../tabs/dist/style.css'
 import '../../modal/dist/style.css'
+import '../../color/dist/style.css'
+import '../../picker/dist/style.css'
 
 function T(t) {
     return t;
@@ -182,6 +185,22 @@ const options = [
     {
         title: T('Insert'),
         submenu: [
+            {
+                title: T('Color'),
+                icon: 'color',
+                submenu: [
+                    {
+                        type: 'inline',
+                        component: function(e) {
+                            let self = this;
+                            self.update = function() {
+                                console.log(arguments,this)
+                            }
+                            return `<Color type="inline" :onupdate="self.update" />`;
+                        }
+                    }
+                ],
+            },
             {
                 title: T('Rows'),
                 icon: 'table_rows',
@@ -1138,21 +1157,58 @@ const options2 = [
     }
 ];
 
+const picker = [
+    {
+        icon: 'border_all',
+        title: 'All the borders'
+    },
+    {
+        icon: 'border_outer',
+        title: 'External borders only',
+    },
+    {
+        icon: 'border_inner',
+        title: 'Internal borders only',
+    },
+    {
+        icon: 'border_horizontal',
+        title: 'Horizontal borders only',
+    },
+    {
+        icon: 'border_vertical',
+        title: 'Vertical borders only',
+    },
+    {
+        icon: 'border_left',
+        title: 'Left borders only',
+    },
+    {
+        icon: 'border_top',
+    },
+    {
+        icon: 'border_right',
+    },
+    {
+        icon: 'border_bottom',
+    },
+    {
+        type: 'line',
+    },
+    {
+        icon: 'border_clear',
+        title: 'Clear all borders'
+    },
+]
+
 function Test() {
     let self = this;
 
-    window.test = self;
-
-    self.options = options
-    self.options2 = options2
+    self.options = picker
 
     return `<div>
-                <div style="height: 400px;">
-                    <Topmenu :options="self.options" />
-                </div>
-                <div style="height: 400px;">
-                    <Topmenu :options="self.options2" />
-                </div>
+            <Modal title="test1" :draggable="true" :minimizable="true" />
+            <Modal title="test2" :draggable="true" :minimizable="true" />
+            <Modal title="test3" :draggable="true" :minimizable="true" />
         </div>`
 }
 

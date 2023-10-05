@@ -267,11 +267,9 @@
         let o = {};
         let k = null;
         let a = this.attributes;
-        let f = null;
         if (a && a.length) {
             for (let i = 0; i < a.length; i++) {
                 k = a[i].name;
-                f = k.substr(0,1);
                 if (props && typeof(this[k]) !== 'undefined') {
                     o[k] = this[k];
                 } else {

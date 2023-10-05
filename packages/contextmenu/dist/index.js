@@ -30,20 +30,12 @@ if (!Modal && typeof (require) === 'function') {
 
     const Item = function() {
         let self = this;
-
-        self.onload = function() {
-            if (self.item && typeof (self.onclick) === 'function') {
-                self.item.addEventListener("click", (e) => {
-                    self.onclick()
-                    self.parent.parent.parent.close(0)
-                });
-            }
-        }
-
-        if (self.type === 'line') {
+        if (this.type === 'line') {
             return `<hr />`;
+        } else if (this.type === 'inline') {
+            return '<div>' + this.component() + '</div>';
         } else {
-            return `<div data-icon="{{self.icon}}" data-submenu="{{!!self.submenu}}" onmouseover="self.parent.parent.open(e, self)" :ref="self.item">
+            return `<div class="lm-menu-item" data-icon="{{self.icon}}" data-submenu="{{!!self.submenu}}" onmouseover="self.parent.parent.open(e, self)">
                 <a>{{self.title}}</a> <span>{{self.shortcut}}</span>
             </div>`;
         }
@@ -83,7 +75,7 @@ if (!Modal && typeof (require) === 'function') {
             }
         }
 
-        let template = `<Modal :closed="true" :ref="self.modal">
+        let template = `<Modal :closed="true" :ref="self.modal" :responsive="false" :autoadjust="true">
             <div class="lm-menu-submenu">
                 <Item :loop="self.options" />
             </div>
@@ -153,7 +145,7 @@ if (!Modal && typeof (require) === 'function') {
             }
             // Create event for focus out
             self.root.addEventListener("focusout", (e) => {
-                if (!e.relatedTarget) {
+                if (! self.el.contains(e.relatedTarget)) {
                     self.close(0);
                 }
             });

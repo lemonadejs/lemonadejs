@@ -59,15 +59,15 @@ if (! lemonade && typeof(require) === 'function') {
         /**
          * Setup the action button with the necessary steps
          */
-        self.createAction = function(text, action) {
+        self.createAction = function(title, button, action) {
             // Message
             self.alert = '';
             // Show the text for the button action
-            self.action.value = T(text);
+            self.action.value = T(button);
             // Bind the onclick action
             self.action.onclick = action;
             // Update title
-            self.title = T(text);
+            self.title = T(title);
             // Other adjustments
             if (typeof(self.onupdate) === 'function') {
                 self.onupdate(self, text);
@@ -200,7 +200,7 @@ if (! lemonade && typeof(require) === 'function') {
             self.appendChild(['Logo','Instructions','Email','Password','Action','Google','Facebook','Remember','Request','Profile']);
 
             // Action
-            self.createAction('Login', function() {
+            self.createAction('Login', 'Login', function() {
                 self.request({
                     username: self.email,
                     password: sha512(self.password),
@@ -235,7 +235,10 @@ if (! lemonade && typeof(require) === 'function') {
                                 terms: self.terms
                             }, function (result) {
                                 if (result.action === 'bindSocialAccount') {
-                                    self.bindSocialAccount();
+                                    self.bindSocialAccount(result);
+                                    return false;
+                                } else if (result.action === 'acceptTermsAndConditions') {
+                                    self.acceptTermsAndConditions(result);
                                     return false;
                                 }
                             });
@@ -268,13 +271,22 @@ if (! lemonade && typeof(require) === 'function') {
                 self.error('Facebook API not found');
             } else {
                 var Request = function(response) {
+                    if (self.action.value === T('Create a new account')) {
+                        if (typeof (self.onbeforecreate) === 'function') {
+                            self.onbeforecreate(self);
+                        }
+                    }
+
                     self.request({
                         social: 'facebook',
                         token: response.authResponse,
                         terms: self.terms
                     }, function (result) {
                         if (result.action === 'bindSocialAccount') {
-                            self.bindSocialAccount();
+                            self.bindSocialAccount(result);
+                            return false;
+                        } else if (result.action === 'acceptTermsAndConditions') {
+                            self.acceptTermsAndConditions(result);
                             return false;
                         }
                     });
@@ -304,7 +316,7 @@ if (! lemonade && typeof(require) === 'function') {
             self.appendChild(['Logo','Instructions','Password','Action','Cancel'], 'Please enter your password to bind your account.');
 
             // Create action
-            self.createAction('Bind accounts', function() {
+            self.createAction('Bind accounts', 'Bind accounts', function() {
                 try {
                     if (! self.password) {
                         throw('Password is mandatory');
@@ -318,7 +330,6 @@ if (! lemonade && typeof(require) === 'function') {
                     self.error(e);
                 }
             })
-
         }
 
         /**
@@ -329,7 +340,7 @@ if (! lemonade && typeof(require) === 'function') {
             self.appendChild(['Logo','Instructions','Email','Action','Cancel']);
 
             // Action
-            self.createAction('Request a new password', function() {
+            self.createAction('Request a new password', 'Request a new password', function() {
                 try {
                     if (!jSuites.validations.email(self.email)) {
                         throw('Invalid e-mail address');
@@ -356,7 +367,7 @@ if (! lemonade && typeof(require) === 'function') {
             self.appendChild(['Logo','Instructions','Code','Action','Cancel'], 'Please enter the code you have received by email or message');
 
             // Action
-            self.createAction('Confirm code', function() {
+            self.createAction('Confirm code', 'Confirm code', function() {
                 try {
                     if (self.code.length !== 6) {
                         throw('The code should has 6 digits');
@@ -390,7 +401,7 @@ if (! lemonade && typeof(require) === 'function') {
             self.instructions = 'Please choose a new password';
 
             // Action
-            self.createAction('Reset my password', function() {
+            self.createAction('Reset my password', 'Reset my password', function() {
                 try {
                     if (! self.password) {
                         throw('You need to choose a new password');
@@ -417,7 +428,7 @@ if (! lemonade && typeof(require) === 'function') {
             self.appendChild(['Logo','Instructions','Name','Username','Email','Action','Google','Terms','Cancel']);
 
             // Action
-            self.createAction('Create a new account', function() {
+            self.createAction('Create a new account', 'Create a new account', function() {
                 try {
                     if (typeof(self.onbeforecreate) === 'function') {
                         self.onbeforecreate(self);
@@ -433,6 +444,32 @@ if (! lemonade && typeof(require) === 'function') {
                         name: self.name,
                         login: self.username,
                         username: self.email,
+                        terms: self.terms,
+                    });
+                } catch (e) {
+                    self.error(e);
+                }
+            });
+        }
+
+        self.acceptTermsAndConditions = function(result) {
+            // Start with correct elements
+            self.appendChild(['Logo','Instructions','Action','Terms','Cancel']);
+
+            // Instructions
+            if (result.message) {
+                self.instructions = result.message;
+            }
+
+            // Action
+            self.createAction('Terms and conditions', 'Continue', function() {
+                try {
+                    if (typeof(self.onbeforecreate) === 'function') {
+                        self.onbeforecreate(self);
+                    }
+
+                    self.request({
+                        ...self.data,
                         terms: self.terms,
                     });
                 } catch (e) {

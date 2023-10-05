@@ -5,3 +5,7 @@
 .lm-topmenu-options > div {
     padding: 10px;
 }
+
+.lm-topmenu-title {
+    cursor: pointer;
+}

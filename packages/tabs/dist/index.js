@@ -1,4 +1,4 @@
-if (! lemonade && typeof(require) === 'function') {
+if (!lemonade && typeof (require) === 'function') {
     var lemonade = require('lemonadejs');
 }
 
