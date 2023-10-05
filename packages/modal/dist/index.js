@@ -1,5 +1,5 @@
-if (! lemonade && typeof(require) === 'function') {
-    var lemonade = require('lemonadejs');
+if (!lemonade && typeof (require) === 'function') {
+    var lemonade = require('../../../dist/lemonade');
 }
 
 ;(function (global, factory) {
@@ -14,6 +14,8 @@ if (! lemonade && typeof(require) === 'function') {
     let controls = {};
     // Width of the border
     let cornerSize = 10;
+    // Container with minimized modals
+    const minimizedModals = [];
 
     // Get the coordinates of the action
     const getCoords = function(e) {
@@ -139,7 +141,6 @@ if (! lemonade && typeof(require) === 'function') {
         if (limit < 0) {
             self.el.style.marginTop = limit - 10 + 'px';
         }
-        console.log(limit)
     }
 
     const adjustLeft = function() {
@@ -151,6 +152,10 @@ if (! lemonade && typeof(require) === 'function') {
         if (limit < 0) {
             self.el.style.marginLeft = limit - 10 + 'px';
         }
+    }
+
+    const isTrue = function(e) {
+        return e === true || e === 1 || e === 'true';
     }
 
     const Modal = function (template) {
@@ -181,9 +186,13 @@ if (! lemonade && typeof(require) === 'function') {
             // Dimensions
             if (self.width) {
                 self.el.style.width = self.width + 'px';
+            } else {
+                self.width = self.el.offsetWidth;
             }
             if (self.height) {
                 self.el.style.height = self.height + 'px';
+            } else {
+                self.width = self.el.offsetHeight;
             }
             if (self.top) {
                 self.el.style.top = self.top + 'px';
@@ -294,28 +303,26 @@ if (! lemonade && typeof(require) === 'function') {
 
             let corner = rect.width - (x - rect.left) < 40 && (y - rect.top) < 40;
 
-            if (self.minimizable === true && corner === true) {
+            if (isTrue(self.minimizable) && corner === true) {
                 self.minimized = ! self.minimized;                
 
                 // Handles minimized modal positioning
                 if (self.minimized) {
-                    if (!lemonade.minimizedModals) {
-                        lemonade.minimizedModals = []
-                    }
+                    // Minimize modals
+                    minimizedModals.push(self);
+
+                    let rowIndex = Math.floor((minimizedModals.length - 1) / 5)
+                    let row = minimizedModals.filter((_, i) => rowIndex === Math.floor((i) / 5))
                     
-                    lemonade.minimizedModals.push(self)
-                    
-                    let rowIndex = Math.floor((lemonade.minimizedModals.length - 1) / 5)
-                    let row = lemonade.minimizedModals.filter((_, i) => rowIndex === Math.floor((i) / 5))
-                    
-                    self.left = self.el.offsetLeft
+                    self.left = self.el.offsetLeft;
+
                     self.el.style.left = 10 + ((row.length - 1) * (self.width || 310))
                     self.el.style.marginBottom = rowIndex * 50
                 } else {
-                    let index = lemonade.minimizedModals.indexOf(self)
-                    let right = lemonade.minimizedModals.slice(index + 1)
+                    let index = minimizedModals.indexOf(self)
+                    let right = minimizedModals.slice(index + 1)
 
-                    lemonade.minimizedModals.splice(index, 1)
+                    minimizedModals.splice(index, 1)
 
                     for (let i = 0; i < right.length; i++) {
                         let rowIndex = Math.floor((index + i + 1) / 5)
@@ -334,7 +341,7 @@ if (! lemonade && typeof(require) === 'function') {
                     self.el.style.left = 'initial'
                     self.el.style.marginBottom = 0
                 }
-            } else if (self.closable === true && corner === true) {
+            } else if (isTrue(self.closable) && corner === true) {
                 self.closed = true;
             } else if (! self.minimized) {
                 // If is not minimized
@@ -353,7 +360,7 @@ if (! lemonade && typeof(require) === 'function') {
                     }
 
                     e.preventDefault();
-                } else if (self.draggable === true && self.title && y - rect.top < 40) {
+                } else if (isTrue(self.draggable) && self.title && y - rect.top < 40) {
                     // Action
                     controls.type = 'move';
                     // Callback
@@ -373,10 +380,21 @@ if (! lemonade && typeof(require) === 'function') {
 
     return function (root, options) {
         if (typeof(root) === 'object') {
-            let template = root.innerHTML;
-            root.innerHTML = '';
-
-            lemonade.render(Modal, root, options, template)
+            // Keep the DOM elements
+            let elements = [];
+            while (root.firstChild) {
+                elements.push(root.firstChild);
+                root.firstChild.remove();
+            }
+            // Create the modal
+            let e = lemonade.render(Modal, root, options, '');
+            // Append any elements inside the modal
+            if (elements.length) {
+                while (elements[0]) {
+                    e.appendChild(elements[0]);
+                    elements.shift();
+                }
+            }
             return options;
         } else {
             return Modal.call(this, root)

@@ -1,7 +1,7 @@
 .lm-modal {
     position: absolute;
-    min-width: 150px;
-    min-height: 120px;
+    min-width: 300px;
+    min-height: 240px;
     border-radius: 4px;
     z-index: 9;
     background-color: #fff;
