@@ -46,12 +46,12 @@ if (!Modal && typeof (require) === 'function') {
             let result = [];
 
             // Get the weekdays
-            for (let i = 0; i < 7; i++) {
-                result.push({
-                    title: Weekdays[i].substring(0,1).toUpperCase(),
-                    bold: true,
-                });
-            }
+            // for (let i = 0; i < 7; i++) {
+            //     result.push({
+            //         title: Weekdays[i].substring(0,1).toUpperCase(),
+            //         bold: true,
+            //     });
+            // }
 
             // Number of days in the month
             tmp = new Date(Y, M, 0, 0, 0);
@@ -92,10 +92,12 @@ if (!Modal && typeof (require) === 'function') {
                 if (self.view === 'days') {
                     if (newIndex < self.index) {
                         // Go to the previous month
-                        self.render(new Date(date.getFullYear(),date.getMonth()-1,15));
+                        newIndex = 42 + newIndex
+                        self.render(date = new Date(date.getFullYear(),date.getMonth()-1,15));
                     } else {
                         // Go to the next month
                         self.render(date = new Date(date.getFullYear(),date.getMonth()+1,15));
+                        newIndex = newIndex - 42
                     }
                 } else if (self.view === 'years') {
                     let year;
@@ -144,6 +146,11 @@ if (!Modal && typeof (require) === 'function') {
                 self.data = views[self.view](date);
             }
         }
+
+        self.weekdays = Weekdays.map(weekname => {
+            return { title: weekname.substring(0, 1) }
+        })
+
 
         self.onchange = function(prop) {
             if (prop === 'view') {
@@ -233,7 +240,7 @@ if (!Modal && typeof (require) === 'function') {
                     <div><span onclick="self.view = 'months'">{{self.month}}</span> <span onclick="self.view = 'years'">{{self.year}}</span></div> 
                     <div><i class="material-icons" onclick="self.prev(true)">arrow_drop_up</i> <i class="material-icons" onclick="self.next(true)">arrow_drop_down</i></div>
                 </div>
-                <div class="lm-calenar-weekdays" :loop="self.weekdays"></div>
+                <div class="lm-calendar-weekdays" :loop="self.weekdays"><div>{{self.title}}</div></div>
             </div>
             <div class="lm-calendar-content" :loop="self.data"><div data-grey="{{self.grey}}" data-bold="{{self.bold}}" data-selected="{{self.selected}}" onclick="self.parent.select(self)">{{self.title}}</div></div>
         </div>`;
