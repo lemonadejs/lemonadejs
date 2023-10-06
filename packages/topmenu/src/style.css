@@ -1,0 +1,71 @@
+.lm-calendar-header {
+    padding: 15px;
+    font-size: 1.2em;
+    border-bottom: 1px solid #ccc;
+    display: flex;
+}
+
+.lm-calendar-header span, .lm-calendar-header i {
+    cursor: pointer;
+}
+
+.lm-calendar-header > div:first-child {
+    display: flex;
+    flex: 1;
+}
+
+.lm-calendar-weekdays {
+    display: none;
+    padding: 10px;
+    box-sizing: border-box;
+    flex-grow: 1;
+    width: calc(100% * (1/7));
+    line-height: 25px;
+    text-align: center;
+}
+
+data[data-view="days"] {
+    display: inline-block;
+}
+
+.lm-calendar-content {
+    display: flex;
+    flex-wrap: wrap;
+    font-size: 0.9em;
+}
+
+.lm-calendar-content > div {
+    display: inline-block;
+    padding: 10px;
+    box-sizing: border-box;
+    flex-grow: 1;
+    width: calc(100% * (1/7));
+    line-height: 25px;
+    text-align: center;
+}
+
+.lm-calendar-content > div:hover {
+    border-radius: 24px;
+    background-color: #eee;
+}
+
+.lm-calendar-content[data-view="months"]  > div {
+    width: calc(100% * (1/3));
+}
+.lm-calendar-content[data-view="years"]  > div {
+    width: calc(100% * (1/5));
+}
+
+.lm-calendar-content > div[data-grey="true"] {
+    color: #ccc;
+}
+
+.lm-calendar-content > div[data-bold="true"] {
+    font-weight: bold;
+}
+
+.lm-calendar-content > div[data-selected="true"] {
+    font-weight: bold;
+    border-radius: 24px;
+    background-color: #eee;
+}

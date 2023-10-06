@@ -1,9 +1,10 @@
 import lemonade from '../../../dist/lemonade'
-import Modal from '../../modal/dist/index';
+import Calendar from './calendar';
 //import Topmenu from '../dist/index';
 //import '../../contextmenu/dist/style.css'
 import '../../contextmenu/dist/style.css'
 import '../dist/style.css';
+import '../src/style.css';
 import '../../tabs/dist/style.css'
 import '../../modal/dist/style.css'
 import '../../color/dist/style.css'
@@ -1205,10 +1206,8 @@ function Test() {
 
     self.options = picker
 
-    return `<div>
-            <Modal title="test1" :draggable="true" :minimizable="true" />
-            <Modal title="test2" :draggable="true" :minimizable="true" />
-            <Modal title="test3" :draggable="true" :minimizable="true" />
+    return `<div style="width: 300px;margin: 20px;">
+            <Calendar type="inline" value="2023-10-23" />
         </div>`
 }
 
