@@ -33,6 +33,7 @@
     width: calc(100% * (1/7));
     line-height: 25px;
     text-align: center;
+    font-weight: bold;
 }
 
 data[data-view="days"] {

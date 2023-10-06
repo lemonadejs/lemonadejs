@@ -45,14 +45,6 @@ if (!Modal && typeof (require) === 'function') {
 
             let result = [];
 
-            // Get the weekdays
-            // for (let i = 0; i < 7; i++) {
-            //     result.push({
-            //         title: Weekdays[i].substring(0,1).toUpperCase(),
-            //         bold: true,
-            //     });
-            // }
-
             // Number of days in the month
             tmp = new Date(Y, M, 0, 0, 0);
             let numOfDays = tmp.getDate();
@@ -83,6 +75,10 @@ if (!Modal && typeof (require) === 'function') {
 
         // Internal date
         let date = new Date();
+
+        self.weekdays = Weekdays.map(weekname => {
+            return { title: weekname.substring(0, 1) };
+        })
 
         const setIndex = function(newIndex) {
             // Reset the current selection
@@ -131,7 +127,6 @@ if (!Modal && typeof (require) === 'function') {
             }
         }
 
-
         self.render = function(newDate, view) {
             // Update internal date
             date = newDate;
@@ -146,11 +141,6 @@ if (!Modal && typeof (require) === 'function') {
                 self.data = views[self.view](date);
             }
         }
-
-        self.weekdays = Weekdays.map(weekname => {
-            return { title: weekname.substring(0, 1) }
-        })
-
 
         self.onchange = function(prop) {
             if (prop === 'view') {
