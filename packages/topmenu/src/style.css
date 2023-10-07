@@ -1,8 +1,8 @@
 .lm-calendar-header {
-    padding: 15px;
     font-size: 1.2em;
     border-bottom: 1px solid #ccc;
     display: flex;
+    flex-direction: column;
 }
 
 .lm-calendar-header span, .lm-calendar-header i {
@@ -11,17 +11,29 @@
 
 .lm-calendar-header > div:first-child {
     display: flex;
+    padding: 15px;
     flex: 1;
+    user-select: none;
 }
 
 .lm-calendar-weekdays {
     display: none;
+}
+
+.lm-calendar-container[data-view="days"] .lm-calendar-weekdays {
+    display: flex;
+    width: 100%;
+}
+
+.lm-calendar-weekdays > div {
+    display: inline-block;
     padding: 10px;
     box-sizing: border-box;
     flex-grow: 1;
     width: calc(100% * (1/7));
     line-height: 25px;
     text-align: center;
+    font-weight: bold;
 }
 
 data[data-view="days"] {
@@ -49,10 +61,10 @@ data[data-view="days"] {
     background-color: #eee;
 }
 
-.lm-calendar-content[data-view="months"]  > div {
+.lm-calendar-container[data-view="months"] .lm-calendar-content > div {
     width: calc(100% * (1/3));
 }
-.lm-calendar-content[data-view="years"]  > div {
+.lm-calendar-container[data-view="years"] .lm-calendar-content > div {
     width: calc(100% * (1/5));
 }
 

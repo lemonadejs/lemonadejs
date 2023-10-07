@@ -23,18 +23,29 @@ if (!Modal && typeof (require) === 'function') {
             for (let i = year-12; i <= year+12; i++) {
                 result.push({
                     title: i,
+                    value: i
                 });
             }
+
+            result[12].selected = true;
+            this.index = 12;
+
             return result;
         },
-        months: function() {
+        months: function(date) {
+            let month = date.getMonth();
             let result = [];
             // Get the weekdays
             for (let i = 0; i < 12; i++) {
                 result.push({
                     title: Months[i].substring(0,3),
+                    value: i
                 });
             }
+
+            result[month].selected = true;
+            this.index = month;
+
             return result;
         },
         days: function(date) {
@@ -44,14 +55,6 @@ if (!Modal && typeof (require) === 'function') {
             let tmp;
 
             let result = [];
-
-            // Get the weekdays
-            for (let i = 0; i < 7; i++) {
-                result.push({
-                    title: Weekdays[i].substring(0,1).toUpperCase(),
-                    bold: true,
-                });
-            }
 
             // Number of days in the month
             tmp = new Date(Y, M, 0, 0, 0);
@@ -65,6 +68,7 @@ if (!Modal && typeof (require) === 'function') {
                 tmp = new Date(Y, M, i, 0, 0);
                 let r = {
                     title: tmp.getDate(),
+                    value: i
                 }
                 if (i <= 0 || i >= numOfDays) {
                     r.grey = true;
@@ -84,6 +88,19 @@ if (!Modal && typeof (require) === 'function') {
         // Internal date
         let date = new Date();
 
+        const setDate = function(newDate) {
+            // Update internal date
+            date = newDate;
+            // Update headers
+            let value = date.toISOString().substring(0,10).split('-');
+            self.month = Months[parseInt(value[1])-1];
+            self.year = parseInt(value[0]);
+        }
+
+        self.weekdays = Weekdays.map(weekname => {
+            return { title: weekname.substring(0, 1) };
+        })
+
         const setIndex = function(newIndex) {
             // Reset the current selection
             self.data[self.index].selected = false;
@@ -92,10 +109,12 @@ if (!Modal && typeof (require) === 'function') {
                 if (self.view === 'days') {
                     if (newIndex < self.index) {
                         // Go to the previous month
+                        newIndex = 42 + newIndex
                         self.render(new Date(date.getFullYear(),date.getMonth()-1,15));
                     } else {
                         // Go to the next month
-                        self.render(date = new Date(date.getFullYear(),date.getMonth()+1,15));
+                        self.render(new Date(date.getFullYear(),date.getMonth()+1,15));
+                        newIndex = newIndex - 42
                     }
                 } else if (self.view === 'years') {
                     let year;
@@ -107,7 +126,7 @@ if (!Modal && typeof (require) === 'function') {
                         year = 5;
                         newIndex = newIndex - 5;
                     }
-                    self.render(date = new Date(date.getFullYear()+year,date.getMonth(),1));
+                    self.render(new Date(date.getFullYear()+year,date.getMonth(),1));
                 } else if (self.view === 'months') {
                     if (newIndex < self.index) {
                         newIndex = 12 + newIndex;
@@ -121,22 +140,11 @@ if (!Modal && typeof (require) === 'function') {
             // Update index
             self.index = newIndex;
 
-            // Update year on the header if the view is years view
-            if (self.view === 'years') {
-                self.year = self.data[newIndex].title;
-            } else if (self.view === 'months') {
-                self.month = self.data[newIndex].title;
-            }
+            setHeaders()
         }
 
-
         self.render = function(newDate, view) {
-            // Update internal date
-            date = newDate;
-            // Update headers
-            let value = date.toISOString().substring(0,10).split('-');
-            self.month = Months[parseInt(value[1])-1];
-            self.year = parseInt(value[0]);
+            setDate(newDate)
             // Update view
             if (view) {
                 self.view = view;
@@ -148,7 +156,7 @@ if (!Modal && typeof (require) === 'function') {
         self.onchange = function(prop) {
             if (prop === 'view') {
                 if (typeof(views[self.view]) === 'function') {
-                    self.data = views[self.view](date);
+                    self.data = views[self.view].call(self, date);
                 }
             }
         }
@@ -206,6 +214,15 @@ if (!Modal && typeof (require) === 'function') {
 
         document.addEventListener('keyup', keydown)
 
+        let setHeaders = function() {
+            // Update year on the header if the view is years view
+            if (self.view === 'years') {
+                self.year = self.data[self.index].title;
+            } else if (self.view === 'months') {
+                self.month = self.data[self.index].title;
+            }
+        }
+
         self.select = function(s) {
             // Update selected property
             s.selected = true;
@@ -215,6 +232,21 @@ if (!Modal && typeof (require) === 'function') {
             self.data[self.index].selected = false;
             // Update my index
             self.index = index;
+
+            let value = [date.getFullYear(), date.getMonth(), date.getDate()]
+
+            if (self.view === 'years') {
+                value[0] = s.value
+            } else if (self.view === 'months') {
+                value[1] = s.value
+            } else {
+                value[2] = s.value
+            }
+
+            setDate(new Date(...value))
+            
+            // if (s.grey) {
+            // }
         }
 
         self.done = function() {
@@ -233,7 +265,7 @@ if (!Modal && typeof (require) === 'function') {
                     <div><span onclick="self.view = 'months'">{{self.month}}</span> <span onclick="self.view = 'years'">{{self.year}}</span></div> 
                     <div><i class="material-icons" onclick="self.prev(true)">arrow_drop_up</i> <i class="material-icons" onclick="self.next(true)">arrow_drop_down</i></div>
                 </div>
-                <div class="lm-calenar-weekdays" :loop="self.weekdays"></div>
+                <div class="lm-calendar-weekdays" :loop="self.weekdays"><div>{{self.title}}</div></div>
             </div>
             <div class="lm-calendar-content" :loop="self.data"><div data-grey="{{self.grey}}" data-bold="{{self.bold}}" data-selected="{{self.selected}}" onclick="self.parent.select(self)">{{self.title}}</div></div>
         </div>`;

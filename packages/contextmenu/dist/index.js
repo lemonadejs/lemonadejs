@@ -183,7 +183,7 @@ if (! Modal && typeof (require) === 'function') {
             } else if (e.type === 'contextmenu') {
                 modal.closed = false;
             }
-
+            
             // If the modal is open and the content is different from what is shown
             if (modal.closed === false) {
                 // Close modals with higher level
@@ -197,7 +197,7 @@ if (! Modal && typeof (require) === 'function') {
                 }
             }
         }
-
+        
         self.close = function(level) {
             self.modals.forEach(function(value, k) {
                 if (k >= level) {

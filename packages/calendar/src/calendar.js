@@ -165,7 +165,7 @@ if (!Modal && typeof (require) === 'function') {
     document.addEventListener('keydown', handleKeyDown)
 
     function ControllerDisplay() {
-        let self = this
+        let self = this;
 
         let template = `<div>
             <button :class="self.mode === 'date' ? 'visible' : ''" onclick="self.parent.parent.mode = 'month'">{{self.month}}</button>
@@ -175,6 +175,45 @@ if (!Modal && typeof (require) === 'function') {
         </div>`
 
         return lemonade.element(template, self)
+    }
+
+    function Table() {
+        let self = this;
+
+        let m;
+
+        if (self.mode === "date") {
+            m = makeDaysMatrix(self.month, self.year, self.range);
+        } else if (self.mode === "month") {
+            m = makeMonthsMatrix(self.months);
+        } else if (self.mode === "year") {
+            m = makeYearsMatrix(self.year);
+        }
+
+        // <thead><tr :loop="self.parent.header"><th>{{self.title}}</th></tr></head>
+
+        let template = '<tbody>';
+
+        
+        for (let i = 0; i < m.length; i++) {
+            template += '<tr>'
+            for (let j = 0; j < m[i].length; j++) {
+                template += '<td '
+
+                if (m[i][j].type === 'disabled') {
+                    template += 'class="disabled-cell"';
+                }
+
+                template += `x="${j}" y="${i}" value="${m[i][j].value || ''}" type="${m[i][j].type}"
+                    ondblclick="this.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode.lemon.self.select(${j}, ${i})"
+                    onclick="this.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode.lemon.self.hover(${j}, ${i})">${m[i][j].value || ''}</td>`;
+            }
+            template += '</tr>';
+        }
+
+        template += '</tbody>'
+
+        return template
     }
 
     function Calendar() {
@@ -214,24 +253,13 @@ if (!Modal && typeof (require) === 'function') {
         setFormatTime();
 
         self.onload = function() {
-            if (self.mode === "date") {
-                self.makeDaysTable();
-            } else if (self.mode === "month") {
-                self.makeMonthsTable();
-            } else if (self.mode === "year") {
-                self.makeYearsTable();
-            }
+            lemonade.render(Table, self.component.table, { ...self, onload: null, onchange: null })
         }
 
         self.onchange = function(prop) {
             if (prop === "month" || prop === "year" || prop === "mode") {
-                if (self.mode === "date") {
-                    self.makeDaysTable();
-                } else if (self.mode === "month") {
-                    self.makeMonthsTable();
-                } else if (self.mode === "year") {
-                    self.makeYearsTable();
-                }
+                self.component.table.innerHTML = ''
+                lemonade.render(Table, self.component.table, { ...self, onload: null, onchange: null })
             } else if (prop === "value") {
                 if (typeof (self.onupdate) === 'function') {
                     self.onupdate(self.value);
@@ -546,9 +574,7 @@ if (!Modal && typeof (require) === 'function') {
                         </div>
                         <button onclick="self.parent.mode = 'date'">Done</button>
                     </div>
-                    <table mode="{{self.parent.mode}}">
-                        <thead><tr :loop="self.parent.header"><th>{{self.title}}</th></tr></head>
-                        <tbody :ref="self.tbody"></tbody>
+                    <table mode="{{self.parent.mode}}" :ref="self.table">
                     </table>
                 </div>
             </Modal>
