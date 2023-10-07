@@ -1,7 +1,8 @@
 import lemonade from '../../../dist/lemonade'
 import Calendar from './calendar';
-//import Topmenu from '../dist/index';
-//import '../../contextmenu/dist/style.css'
+import Topmenu from '../dist/index';
+import Contextmenu from '../../contextmenu/dist/index';
+import '../../contextmenu/dist/style.css'
 import '../../contextmenu/dist/style.css'
 import '../dist/style.css';
 import '../src/style.css';
@@ -1204,10 +1205,10 @@ const picker = [
 function Test() {
     let self = this;
 
-    self.options = picker
+    self.options = options
 
-    return `<div style="width: 300px;margin: 20px;">
-            <Calendar type="inline" value="2023-10-23" />
+    return `<div>
+            <Topmenu :options="self.options" />
         </div>`
 }
 

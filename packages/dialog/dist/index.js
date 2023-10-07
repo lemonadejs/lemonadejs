@@ -79,7 +79,7 @@
             </div>
             <div class="jdialog-footer">
                 <div style="{{self.type == 'input' ? 'display: block;' : 'display: none;'}}">
-                    <input type="text" @bind="self.input" value="{{self.input}}" placeholder="{{self.inputPlaceholder}}" />
+                    <input type="title" @bind="self.input" value="{{self.input}}" placeholder="{{self.inputPlaceholder}}" />
                 </div>
                 <div>
                     <input type="button" value="OK" @ref="self.confirmButton">

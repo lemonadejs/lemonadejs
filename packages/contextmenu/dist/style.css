@@ -9,8 +9,9 @@
 
     width: initial;
     height: initial;
+    min-width: 250px;
     min-height: initial;
-    padding-bottom: 4px;
+    padding-bottom: 6px;
 }
 
 .lm-menu .lm-modal::-webkit-scrollbar {
@@ -36,7 +37,7 @@
 .lm-menu-submenu > div.lm-menu-item {
     box-sizing: border-box;
     display: flex;
-    padding: 0 12px 0 32px;
+    padding: 0 8px 0 32px;
     width: 250px;
     font-size: 11px;
     font-family:sans-serif;
@@ -51,9 +52,8 @@
     line-height: 28px;
 }
 
-.lm-menu-submenu > div.lm-menu-item span {
-    margin-right: 10px;
-    min-height: 28px;
+.lm-menu-submenu > div.lm-menu-item div {
+    margin-right: 5px;
 }
 
 .lm-menu-submenu > div.lm-menu-item[data-submenu="true"]::after {
@@ -64,7 +64,8 @@
     color: #ccc;
 }
 
-.lm-menu-submenu > div.lm-menu-item:hover {
+.lm-menu-submenu > div.lm-menu-item:hover,
+.lm-menu-submenu > div.lm-menu-item[data-cursor="true"] {
     background: #ebebeb;
 }
 
@@ -78,8 +79,9 @@
 .lm-menu-submenu > div.lm-menu-item::before {
     content: attr(data-icon);
     font-family: 'Material Icons';
-    font-size: 18px;
+    font-size: 16px;
     position: absolute;
     left: 9px;
     line-height: 24px;
+    transform: rotate(0.03deg);
 }

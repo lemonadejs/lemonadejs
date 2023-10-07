@@ -532,24 +532,24 @@ if (! lemonade && typeof(require) === 'function') {
                 </div>
                 <div @ref="self.containerCaptcha" class="jlogin-captcha">
                     <label>Security code</label>
-                    <input type="text" name="captcha" @bind="self.captcha">
+                    <input type="title" name="captcha" @bind="self.captcha">
                     <img @ref="self.captchaImage" />
                 </div>
                 <div @ref="self.containerCode">
                     <label>Code</label>
-                    <input type="text" name="code" @bind="self.code" onkeypress="self.enter(e)">
+                    <input type="title" name="code" @bind="self.code" onkeypress="self.enter(e)">
                 </div>
                 <div @ref="self.containerName">
                     <label>Name</label>
-                    <input type="text" name="name" @bind="self.name" @ref="self.nameInput">
+                    <input type="title" name="name" @bind="self.name" @ref="self.nameInput">
                 </div>
                 <div @ref="self.containerUsername">
                     <label>Username</label>
-                    <input type="text" name="username" autocomplete="new-username" @bind="self.username">
+                    <input type="title" name="username" autocomplete="new-username" @bind="self.username">
                 </div>
                 <div @ref="self.containerEmail">
                     <label>E-mail</label>
-                    <input type="text" name="email" data-validation="email" autocomplete="new-username" @bind="self.email" @ref="self.emailInput" onkeypress="self.enter(e)" onblur="self.blur(this)">
+                    <input type="title" name="email" data-validation="email" autocomplete="new-username" @bind="self.email" @ref="self.emailInput" onkeypress="self.enter(e)" onblur="self.blur(this)">
                 </div>
                 <div @ref="self.containerPassword">
                     <label>Password</label>

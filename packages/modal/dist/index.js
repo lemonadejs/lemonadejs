@@ -186,13 +186,13 @@ if (!lemonade && typeof (require) === 'function') {
             // Dimensions
             if (self.width) {
                 self.el.style.width = self.width + 'px';
-            } else {
+            } else if (self.el.offsetWidth) {
                 self.width = self.el.offsetWidth;
             }
             if (self.height) {
                 self.el.style.height = self.height + 'px';
-            } else {
-                self.width = self.el.offsetHeight;
+            } else if (self.el.offsetHeight) {
+                self.height = self.el.offsetHeight;
             }
             if (self.top) {
                 self.el.style.top = self.top + 'px';
@@ -229,7 +229,7 @@ if (!lemonade && typeof (require) === 'function') {
                 }
             });
         }
-
+        console.log(self)
         self.onchange = function(property) {
             if (property === 'closed') {
                 self.closed ? Dispatch.call(self,'onclose') : Dispatch.call(self,'onopen');
