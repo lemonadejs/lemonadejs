@@ -402,6 +402,7 @@ if (!Modal && typeof (require) === 'function') {
             if (self.type !== "inline") {
                 // Create modal instance
                 self.modal = {
+                    width: 300,
                     closed: true,
                     autoclose: true,
                 };
