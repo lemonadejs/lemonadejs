@@ -122,6 +122,7 @@ if (!Modal && typeof (require) === 'function') {
         return 1;
     }
 
+    // Get the position of the data based on the view
     const getPosition = function() {
         let position = 2;
         if (this.view === 'years') {
@@ -132,7 +133,16 @@ if (!Modal && typeof (require) === 'function') {
         return position;
     }
 
-    const Picker = function() {
+    // Transform in two digits
+    const Two = function(value) {
+        value = '' + value;
+        if (value.length == 1) {
+            value = '0' + value;
+        }
+        return value;
+    }
+
+    const Calendar = function() {
         let self = this;
 
         // Weekdays
@@ -336,12 +346,33 @@ if (!Modal && typeof (require) === 'function') {
             }
         }
 
-        self.done = function() {
-            self.set(date.toISOString().substring(0,10));
+        /**
+         * Open the modal
+         */
+        self.open = function() {
+            if (self.modal) {
+                self.modal.closed = false;
+            }
         }
 
-        self.reset = function() {
-            self.set('');
+        /**
+         * Close the modal
+         */
+        self.close = function() {
+            if (self.modal && self.modal.closed === false) {
+                self.modal.closed = true;
+            }
+        }
+
+        /**
+         * Get value from cursor
+         * @returns {string}
+         */
+        self.getValue = function() {
+            let v = [ self.cursor.y, self.cursor.m, self.cursor.d ];
+            let d = new Date(Date.UTC(...v));
+            // Update the headers of the calendar
+            return d.toISOString().substring(0,10);
         }
 
         self.onchange = function(prop) {
@@ -350,11 +381,15 @@ if (!Modal && typeof (require) === 'function') {
                     // When change the view update the data
                     self.data = views[self.view].call(self, date);
                 }
+            } else if (prop === 'value') {
+                if (typeof(self.onupdate) === 'function') {
+                    self.onupdate.call(self, self.value);
+                }
             }
         }
 
         self.onload = function() {
-            let d = new Date(self.parent.value);
+            let d = new Date(self.value);
             // Update my index
             self.cursor = {
                 y: d.getFullYear(),
@@ -363,94 +398,73 @@ if (!Modal && typeof (require) === 'function') {
             };
             // Update the internal calendar date
             setDate(d);
+
+            if (self.type !== "inline") {
+                // Create modal instance
+                self.modal = {
+                    closed: true,
+                    autoclose: true,
+                };
+                // Generate modal
+                Modal(self.el, self.modal);
+            }
+
+            // Create input controls
+            if (self.input) {
+                self.input.classList.add('lm-calendar-input');
+                self.input.addEventListener('focus', self.open);
+                self.input.addEventListener('click', self.open);
+                self.input.addEventListener('blur', self.blur);
+            }
         }
 
+        /**
+         * Handler blur
+         * @param e
+         */
+        self.blur = function(e) {
+            if (self.modal) {
+                if (!(e.relatedTarget && self.modal.el.contains(e.relatedTarget))) {
+                    if (self.modal.closed === false) {
+                        self.modal.closed = true
+                    }
+                }
+            }
+        }
+
+        /**
+         * Handler keyboard
+         * @param e
+         */
         const keydown = function(e) {
             if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
                 self.prev(e);
             } else if (e.key === 'ArrowDown' || e.key === 'ArrowRight') {
                 self.next(e);
+            } else if (e.key === 'Enter') {
+                self.value = self.getValue();
+                self.close();
             }
         }
 
-        document.addEventListener('keydown', keydown)
+        document.addEventListener('keydown', keydown);
 
-        return `<div class="lm-calendar-container" data-view="{{self.view}}">
-            <div class="lm-calendar-header">
-                <div>
-                    <div class="lm-calendar-labels"><div onclick="self.view = 'months'">{{self.month}}</div> <div onclick="self.view = 'years'">{{self.year}}</div></div> 
-                    <div class="lm-calendar-navigation"><i class="material-icons" onclick="self.prev()">arrow_drop_up</i> <i class="material-icons" onclick="self.next()">arrow_drop_down</i></div>
-                </div>
-                <div class="lm-calendar-weekdays" :loop="self.weekdays"><div>{{self.title}}</div></div>
+        return `<div class="lm-calendar">
+                <div class="lm-calendar-options">
+                <button onclick="self.value = ''; self.close();">Reset</button>
+                <button onclick="self.value = self.getValue(); self.close();">Done</button>
             </div>
-            <div class="lm-calendar-content" :loop="self.data"><div data-grey="{{self.grey}}" data-bold="{{self.bold}}" data-selected="{{self.selected}}" onclick="self.parent.select(self)">{{self.title}}</div></div>
-        </div>`;
-    }
-
-    const Calendar = function() {
-        let self = this;
-
-        if (typeof(self.closed) === 'undefined') {
-            self.closed = true;
-        }
-
-        self.onchange = function(prop) {
-            if (prop === 'value') {
-                if (typeof(self.onupdate) === 'function') {
-                    self.onupdate.call(self, self.value);
-                }
-            }
-        }
-
-        self.get = function() {
-            return self.value;
-        }
-
-        self.set = function(v) {
-            self.value = v;
-        }
-
-        self.open = function() {
-            self.closed = false;
-        }
-
-        self.close = function() {
-            if (self.closed === false) {
-                self.closed = true;
-            }
-        }
-
-        self.blur = function(e) {
-            if (! self.el.contains(e.relatedTarget) && self.closed === false) {
-                self.closed = true;
-            }
-        }
-
-        let template;
-        if (self.type === 'inline') {
-            template = `<div class="lm-calendar">
-                <Picker :set="self.set" />
-            </div>`
-        } else {
-            // if (self.input) {
-            //     self.input.classList.add('lm-color-input');
-            //     self.input.addEventListener('focus', self.open);
-            //     self.input.addEventListener('click', self.open);
-            //     self.input.addEventListener('blur', self.blur);
-            // }
-
-            template = `<div class="lm-calendar">
-                <Modal closed="{{self.closed}}" :width="260" :height="240" :onopen="self.onopen" :onclose="self.onclose" :autoclose="true">
-                    <div class="lm-calendar-options">
-                        <button onclick="self.parent.value = ''; self.parent.close();">Reset</button>
-                        <button onclick="self.parent.close();">Done</button>
+            <div class="lm-calendar-container" data-view="{{self.view}}">
+                <div class="lm-calendar-header">
+                    <div>
+                        <div class="lm-calendar-labels"><div onclick="self.view = 'months'">{{self.month}}</div> <div onclick="self.view = 'years'">{{self.year}}</div></div> 
+                        <div class="lm-calendar-navigation"><i class="material-icons" onclick="self.prev()">arrow_drop_up</i> <i class="material-icons" onclick="self.next()">arrow_drop_down</i></div>
                     </div>
-                    <Picker :set="self.parent.set" :ref="self.calendar" />
-                </Modal>
-            </div>`
-        }
-
-        return lemonade.element(template, self, { Picker })
+                    <div class="lm-calendar-weekdays" :loop="self.weekdays"><div>{{self.title}}</div></div>
+                </div>
+                <div class="lm-calendar-content" :loop="self.data"><div data-grey="{{self.grey}}" data-bold="{{self.bold}}" data-selected="{{self.selected}}" onclick="self.parent.select(self)">{{self.title}}</div></div>
+            </div>
+        </div>`
     }
 
     lemonade.setComponents({ Calendar: Calendar });

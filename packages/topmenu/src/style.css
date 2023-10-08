@@ -1,3 +1,27 @@
+.lm-calendar .lm-modal {
+    min-width: initial;
+    min-height: initial;
+}
+
+.lm-calendar-options {
+    display: none;
+}
+
+.lm-modal .lm-calendar-options {
+    display: flex;
+    justify-content: space-between;
+    border-bottom: 1px solid #ddd;
+    padding: 2px;
+}
+
+.lm-modal .lm-calendar-options button {
+    border: 0;
+    background-color: transparent;
+    text-transform: uppercase;
+    cursor: pointer;
+    margin: 10px;
+}
+
 .lm-calendar-header {
     display: flex;
     flex-direction: column;
@@ -56,7 +80,7 @@
     grid-template-columns: repeat(7, 1fr);
     grid-gap: 2px;
     padding: 10px;
-    font-size: 0.8em;
+    font-size: 0.75em;
 }
 
 .lm-calendar-content > div {
@@ -64,8 +88,8 @@
     text-align: center;
     aspect-ratio: 1 / 1;
     display: flex;
-    justify-content: center; /* Center content horizontally */
-    align-items: center; /* Center content vertically */
+    justify-content: center;
+    align-items: center;
     padding: 8px;
     cursor: pointer;
 }
@@ -95,3 +119,10 @@
     border-radius: 100px;
     background-color: #eee;
 }
+
+.lm-calendar-input {
+    padding-right: 24px !important;
+    box-sizing: border-box;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24"><path d="M200-80q-33 0-56.5-23.5T120-160v-560q0-33 23.5-56.5T200-800h40v-80h80v80h320v-80h80v80h40q33 0 56.5 23.5T840-720v560q0 33-23.5 56.5T760-80H200Zm0-80h560v-400H200v400Zm0-480h560v-80H200v80Zm0 0v-80 80Zm280 240q-17 0-28.5-11.5T440-440q0-17 11.5-28.5T480-480q17 0 28.5 11.5T520-440q0 17-11.5 28.5T480-400Zm-160 0q-17 0-28.5-11.5T280-440q0-17 11.5-28.5T320-480q17 0 28.5 11.5T360-440q0 17-11.5 28.5T320-400Zm320 0q-17 0-28.5-11.5T600-440q0-17 11.5-28.5T640-480q17 0 28.5 11.5T680-440q0 17-11.5 28.5T640-400ZM480-240q-17 0-28.5-11.5T440-280q0-17 11.5-28.5T480-320q17 0 28.5 11.5T520-280q0 17-11.5 28.5T480-240Zm-160 0q-17 0-28.5-11.5T280-280q0-17 11.5-28.5T320-320q17 0 28.5 11.5T360-280q0 17-11.5 28.5T320-240Zm320 0q-17 0-28.5-11.5T600-280q0-17 11.5-28.5T640-320q17 0 28.5 11.5T680-280q0 17-11.5 28.5T640-240Z"/></svg>') top 50% right 0px no-repeat, content-box;
+}
+

@@ -1209,7 +1209,7 @@ function Test() {
     self.test = '2023-10-08';
 
     return `<div style="width: 280px;">
-            <input type="text" :bind="self.test"/><Calendar type="inline" :bind="self.test"/>
+            <input type="text" :bind="self.test" :ref="self.input"/><Calendar :bind="self.test" :input="self.input"/>
         </div>`
 }
 

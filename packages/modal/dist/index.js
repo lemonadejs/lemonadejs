@@ -229,7 +229,7 @@ if (!lemonade && typeof (require) === 'function') {
                 }
             });
         }
-        console.log(self)
+
         self.onchange = function(property) {
             if (property === 'closed') {
                 self.closed ? Dispatch.call(self,'onclose') : Dispatch.call(self,'onopen');
