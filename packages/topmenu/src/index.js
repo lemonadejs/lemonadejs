@@ -1206,9 +1206,10 @@ function Test() {
     let self = this;
 
     self.options = options
+    self.test = '2023-10-08';
 
-    return `<div>
-            <Topmenu :options="self.options" />
+    return `<div style="width: 280px;">
+            <input type="text" :bind="self.test"/><Calendar type="inline" :bind="self.test"/>
         </div>`
 }
 
