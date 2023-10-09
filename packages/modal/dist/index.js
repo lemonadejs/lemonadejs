@@ -337,7 +337,7 @@ if (!lemonade && typeof (require) === 'function') {
             let corner = rect.width - (x - rect.left) < 40 && (y - rect.top) < 40;
 
             if (isTrue(self.minimizable) && corner === true) {
-                self.minimized = ! self.minimized;                
+                self.minimized = ! self.minimized;
                 // Handles minimized modal positioning
                 if (self.minimized) {
                     setMini(self);
@@ -355,10 +355,10 @@ if (!lemonade && typeof (require) === 'function') {
                         self.height = parseInt(item.style.height);
                     }
                     // Make sure the width and height is defined for the modal
-                    if (! item.style.width) {
+                    if (!item.style.width) {
                         item.style.width = controls.w + 'px';
                     }
-                    if (! item.style.height) {
+                    if (!item.style.height) {
                         item.style.height = controls.h + 'px';
                     }
 

@@ -1,16 +1,18 @@
-//import lemonade from '../../../dist/lemonade'
-//import Calendar from './calendar';
-//import Topmenu from '../dist/index';
-//import Contextmenu from '../../contextmenu/dist/index';
-//import '../../contextmenu/dist/style.css'
-//import '../../contextmenu/dist/style.css'
-//import '../dist/style.css';
-//import '../src/style.css';
-//import '../../tabs/dist/style.css'
-//import '../../modal/dist/style.css'
-//import '../../color/dist/style.css'
-//import '../../picker/dist/style.css'
-/*
+import lemonade from '../../../dist/lemonade'
+import Calendar from './calendar';
+import Topmenu from '../dist/index';
+import Contextmenu from '../../contextmenu/dist/index';
+import '../../contextmenu/dist/style.css'
+import '../../contextmenu/dist/style.css'
+import '../dist/style.css';
+import '../src/style.css';
+import '../../tabs/dist/style.css'
+import '../../modal/dist/style.css'
+import '../../color/dist/style.css'
+import '../../picker/dist/style.css'
+import Wheel from '../../wheel/dist/index.js'
+import '../../wheel/dist/style.css'
+
 function T(t) {
     return t;
 }
@@ -1202,15 +1204,20 @@ const picker = [
     },
 ]
 
+
 function Test() {
     let self = this;
 
-    self.options = options
-    self.test = '2023-10-08';
+    self.options = [{ title: '10dq3d', value: 10 },{ title: '20', value: 10 },{ title: '30', value: 10 },{ title: '40', value: 10 },{ title: '50', value: 10 },{ title: '60', value: 10 },{ title: '70', value: 10 },{ title: '80', value: 10 },{ title: '90', value: 10 },{ title: '100', value: 10 },{ title: '110', value: 10 },{ title: '120', value: 10 },{ title: '130', value: 10 },{ title: '140', value: 10 }]
+
+    self.handleupdate = function(newValue) {
+        self.value = newValue.title
+    }
 
     return `<div style="width: 280px;">
-            <input type="text" :bind="self.test" :ref="self.input"/><Calendar :bind="self.test" :input="self.input"/>
+            <div>{{self.value}}</div>
+            <Wheel :options="self.options" :onupdate="self.handleupdate"/>
         </div>`
 }
 
-lemonade.render(Test, root);*/
+lemonade.render(Test, root);
