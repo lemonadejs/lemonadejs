@@ -1,9 +1,9 @@
 if (!lemonade && typeof (require) === 'function') {
-    var lemonade = require('../../../dist/lemonade');
+    var lemonade = require('lemonadejs');
 }
 
 if (! Modal && typeof (require) === 'function') {
-    var Modal = require('../../modal/dist/index');
+    var Modal = require('@lemonadejs/modal"');
 }
 
 ; (function (global, factory) {

@@ -14,9 +14,9 @@
         "build": "webpack --config webpack.config.js"
     },
     "dependencies": {
-        "@lemonadejs/modal": "^2.3.0",
+        "@lemonadejs/modal": "^2.3.1",
         "lemonadejs": "^3.4.0"
     },
     "main": "dist/index.js",
-    "version": "1.0.2"
+    "version": "1.0.3"
 }
