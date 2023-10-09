@@ -96,11 +96,15 @@
 }
 
 .lm-modal[minimized="true"] {
-    bottom: 10px;
-    min-height: 0;
-    height: 45px !important;
+    bottom: 0;
     top: initial !important;
+    left: initial !important;
+    width: 200px !important;
+    height: 45px !important;
+    min-width: initial;
+    min-height: initial;
     overflow: hidden;
+    transition: margin 0.2s ease-in-out;
 }
 
 .lm-modal[minimized="true"]::after {

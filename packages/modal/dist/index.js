@@ -145,8 +145,8 @@ if (!lemonade && typeof (require) === 'function') {
 
     const adjustLeft = function() {
         let self = this;
-        self.el.style.marginLeft = '';
         let rect = self.el.getBoundingClientRect();
+        self.el.style.marginLeft = '';
         // Make sure component will be visible on page
         let limit = document.documentElement.clientWidth - (rect.left +  rect.width);
         if (limit < 0) {
@@ -287,6 +287,39 @@ if (!lemonade && typeof (require) === 'function') {
             }
         }
 
+        const refreshMinimized = function() {
+            let items = minimizedModals;
+            let numOfItems = items.length;
+            let width = 0;
+            let height = 5;
+            for (let i = 0; i < numOfItems; i++) {
+                let item = items[i];
+                item.el.style.marginLeft = width;
+                item.el.style.marginBottom = height;
+                width += 205;
+
+                if (document.body.offsetWidth - width < 205) {
+                    width = 0;
+                    height += 50;
+                }
+            }
+        }
+
+        const setMini = function(self) {
+            // Minimize modals
+            minimizedModals.push(self);
+            // Refresh positions
+            refreshMinimized.call(self);
+        }
+
+        const removeMini = function(self) {
+            minimizedModals.splice(minimizedModals.indexOf(self), 1);
+            self.el.style.marginLeft = '';
+            self.el.style.marginBottom = '';
+            // Refresh positions
+            refreshMinimized.call(self);
+        }
+
         self.mousedown = function(e) {
             // Get mouse coordinates
             let [x,y] = getCoords(e);
@@ -305,41 +338,11 @@ if (!lemonade && typeof (require) === 'function') {
 
             if (isTrue(self.minimizable) && corner === true) {
                 self.minimized = ! self.minimized;                
-
                 // Handles minimized modal positioning
                 if (self.minimized) {
-                    // Minimize modals
-                    minimizedModals.push(self);
-
-                    let rowIndex = Math.floor((minimizedModals.length - 1) / 5)
-                    let row = minimizedModals.filter((_, i) => rowIndex === Math.floor((i) / 5))
-                    
-                    self.left = self.el.offsetLeft;
-
-                    self.el.style.left = 10 + ((row.length - 1) * (self.width || 310))
-                    self.el.style.marginBottom = rowIndex * 50
+                    setMini(self);
                 } else {
-                    let index = minimizedModals.indexOf(self)
-                    let right = minimizedModals.slice(index + 1)
-
-                    minimizedModals.splice(index, 1)
-
-                    for (let i = 0; i < right.length; i++) {
-                        let rowIndex = Math.floor((index + i + 1) / 5)
-                        let column = ((i + index + 1) % 5)
-
-                        if (rowIndex !== 0 && column === 0) {
-                            right[i].el.style.left = 10 + ((5 - 1) * (self.width || 310))
-                            right[i].el.style.marginBottom = 10 + ((rowIndex - 1) * 50)
-                        } else if (rowIndex !== 0) {
-                            right[i].el.style.left = right[i].el.offsetLeft - (self.width || 310)
-                        } else {
-                            right[i].el.style.left = right[i].el.offsetLeft - (self.width || 310)
-                        }
-                    }
-
-                    self.el.style.left = 'initial'
-                    self.el.style.marginBottom = 0
+                    removeMini(self);
                 }
             } else if (isTrue(self.closable) && corner === true) {
                 self.closed = true;
@@ -352,10 +355,10 @@ if (!lemonade && typeof (require) === 'function') {
                         self.height = parseInt(item.style.height);
                     }
                     // Make sure the width and height is defined for the modal
-                    if (!item.style.width) {
+                    if (! item.style.width) {
                         item.style.width = controls.w + 'px';
                     }
-                    if (!item.style.height) {
+                    if (! item.style.height) {
                         item.style.height = controls.h + 'px';
                     }
 
