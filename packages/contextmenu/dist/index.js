@@ -3,7 +3,7 @@ if (!lemonade && typeof (require) === 'function') {
 }
 
 if (! Modal && typeof (require) === 'function') {
-    var Modal = require('@lemonadejs/modal"');
+    var Modal = require('@lemonadejs/modal');
 }
 
 ; (function (global, factory) {
