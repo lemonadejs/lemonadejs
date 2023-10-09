@@ -1,16 +1,16 @@
-import lemonade from '../../../dist/lemonade'
-import Calendar from './calendar';
-import Topmenu from '../dist/index';
-import Contextmenu from '../../contextmenu/dist/index';
-import '../../contextmenu/dist/style.css'
-import '../../contextmenu/dist/style.css'
-import '../dist/style.css';
-import '../src/style.css';
-import '../../tabs/dist/style.css'
-import '../../modal/dist/style.css'
-import '../../color/dist/style.css'
-import '../../picker/dist/style.css'
-
+//import lemonade from '../../../dist/lemonade'
+//import Calendar from './calendar';
+//import Topmenu from '../dist/index';
+//import Contextmenu from '../../contextmenu/dist/index';
+//import '../../contextmenu/dist/style.css'
+//import '../../contextmenu/dist/style.css'
+//import '../dist/style.css';
+//import '../src/style.css';
+//import '../../tabs/dist/style.css'
+//import '../../modal/dist/style.css'
+//import '../../color/dist/style.css'
+//import '../../picker/dist/style.css'
+/*
 function T(t) {
     return t;
 }
@@ -1213,4 +1213,4 @@ function Test() {
         </div>`
 }
 
-lemonade.render(Test, root);
+lemonade.render(Test, root);*/

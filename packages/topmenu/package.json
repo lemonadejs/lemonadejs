@@ -14,11 +14,11 @@
         "build": "webpack --config webpack.config.js"
     },
     "dependencies": {
-        "@lemonadejs/modal": "^2.0.4",
-        "lemonadejs": "^3.3.2"
+        "@lemonadejs/contextmenu": "^1.0.1",
+        "lemonadejs": "^3.4.0"
     },
     "main": "dist/index.js",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "devDependencies": {
         "css-loader": "^6.8.1",
         "mini-css-extract-plugin": "^2.7.6",

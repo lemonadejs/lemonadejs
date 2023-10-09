@@ -3,7 +3,7 @@ if (!lemonade && typeof (require) === 'function') {
 }
 
 if (! Contextmenu && typeof (require) === 'function') {
-    var Contextmenu = require('../../contextmenu/dist/index');
+    var Contextmenu = require('@lemonadejs/contextmenu');
 }
 
 ; (function (global, factory) {
