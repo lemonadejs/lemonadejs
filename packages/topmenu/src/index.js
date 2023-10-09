@@ -1205,7 +1205,6 @@ const picker = [
 ]
 
 
-
 function Test() {
     let self = this;
 

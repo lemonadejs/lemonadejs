@@ -304,37 +304,40 @@ if (!lemonade && typeof (require) === 'function') {
             let corner = rect.width - (x - rect.left) < 40 && (y - rect.top) < 40;
 
             if (isTrue(self.minimizable) && corner === true) {
-                self.minimized = ! self.minimized;                
+                self.minimized = ! self.minimized;         
+                
+                let itemsBeforeGoingUp = Math.floor(window.innerWidth / (rect.width))
 
                 // Handles minimized modal positioning
                 if (self.minimized) {
                     // Minimize modals
                     minimizedModals.push(self);
 
-                    let rowIndex = Math.floor((minimizedModals.length - 1) / 5)
-                    let row = minimizedModals.filter((_, i) => rowIndex === Math.floor((i) / 5))
+                    let rowIndex = Math.floor((minimizedModals.length - 1) / itemsBeforeGoingUp)
+                    let row = minimizedModals.filter((_, i) => rowIndex === Math.floor((i) / itemsBeforeGoingUp))
                     
                     self.left = self.el.offsetLeft;
 
-                    self.el.style.left = 10 + ((row.length - 1) * (self.width || 310))
+                    self.el.style.marginLeft = ((row.length - 1) * rect.width)
                     self.el.style.marginBottom = rowIndex * 50
                 } else {
+                    // Maximize modals
                     let index = minimizedModals.indexOf(self)
                     let right = minimizedModals.slice(index + 1)
 
                     minimizedModals.splice(index, 1)
 
                     for (let i = 0; i < right.length; i++) {
-                        let rowIndex = Math.floor((index + i + 1) / 5)
-                        let column = ((i + index + 1) % 5)
+                        let rowIndex = Math.floor((index + i + 1) / itemsBeforeGoingUp)
+                        let column = ((i + index + 1) % itemsBeforeGoingUp)
 
                         if (rowIndex !== 0 && column === 0) {
-                            right[i].el.style.left = 10 + ((5 - 1) * (self.width || 310))
-                            right[i].el.style.marginBottom = 10 + ((rowIndex - 1) * 50)
+                            right[i].el.style.left = ((itemsBeforeGoingUp - 1) * rect.width)
+                            right[i].el.style.marginBottom = ((rowIndex - 1) * 50)
                         } else if (rowIndex !== 0) {
-                            right[i].el.style.left = right[i].el.offsetLeft - (self.width || 310)
+                            right[i].el.style.left = right[i].el.offsetLeft - rect.width
                         } else {
-                            right[i].el.style.left = right[i].el.offsetLeft - (self.width || 310)
+                            right[i].el.style.left = right[i].el.offsetLeft - rect.width
                         }
                     }
 
