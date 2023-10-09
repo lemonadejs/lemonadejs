@@ -1,20 +1,33 @@
 if (!lemonade && typeof (require) === 'function') {
-    var lemonade = require('../../../dist/lemonade');
-}
-
-if (!Contextmenu && typeof (require) === 'function') {
-    var Contextmenu = require('../../contextmenu/dist/index');
+    var lemonade = require('lemonadejs');
 }
 
 ; (function (global, factory) {
     typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
-        typeof define === 'function' && define.amd ? define(factory) :
-            global.Wheel = factory();
+    typeof define === 'function' && define.amd ? define(factory) :
+    global.Wheel = factory();
 }(this, (function () {
 
     let isMouseDown = false;
-    let startY;  // Stores the Y-coordinate where the mouse was pressed
-    let startScroll;  // Initial scroll position
+    let startY;
+    let startScroll;
+
+    const mouseDown = function (e) {
+        isMouseDown = true;
+        startY = e.clientY;  // Get the current Y-coordinate
+        startScroll = this.scrollTop;  // Get the current scroll position
+        this.classList.remove('lm-wheel-grid');
+    }
+
+    const mouseMove = function(e) {
+        if (! isMouseDown) {
+            return;
+        }
+        let yDiff = e.clientY - startY;
+        let s = this;
+        s.scrollTop = startScroll - yDiff;
+        e.preventDefault();
+    }
 
     const Wheel = function () {
         let self = this;
@@ -48,32 +61,12 @@ if (!Contextmenu && typeof (require) === 'function') {
 
                 self.value = self.options[self.ul.scrollTop / 40];
             }, { passive: false });
-
-            self.ul.addEventListener('mousedown', function (e) {
-                isMouseDown = true;
-                startY = e.clientY;  // Get the current Y-coordinate
-                startScroll = this.scrollTop;  // Get the current scroll position
-                this.classList.remove('picker-grid');
-            });
-
-            self.ul.addEventListener('mousemove', function (e) {
-                if (!isMouseDown) return;  // If the mouse isn't pressed, don't do anything
-                e.preventDefault();  // Prevent the default drag behavior
-
-                // Calculate the difference between current Y-coordinate and starting Y-coordinate
-                let yDiff = e.clientY - startY;
-
-                // Set the scroll position based on the initial scroll and the mouse movement
-                let s = this;
-                requestAnimationFrame(function () {
-                    s.scrollTop = startScroll - yDiff;
-                })
-
-            });
+            self.ul.addEventListener('mousedown', mouseDown);
+            self.ul.addEventListener('mousemove', mouseMove);
 
             document.addEventListener('mouseup', function () {
                 isMouseDown = false;  // Set the flag to false when mouse is released
-                self.ul.classList.remove('picker-grid');
+                self.ul.classList.remove('lm-wheel-grid');
                 self.ul.scrollTo({
                     behavior: "smooth",
                     top: Math.round(self.ul.scrollTop / 40) * 40
@@ -83,11 +76,11 @@ if (!Contextmenu && typeof (require) === 'function') {
             });
         }
 
-        return `<div class="picker" id="picker" :value="self.value">
-        <ul class="picker-grid" :loop="self.options" :ref="self.ul">
-            <li>{{self.title}}</li>
-        </ul>
-    </div>`;
+        return `<div class="lm-wheel" :value="self.value">
+            <ul class="lm-wheel-grid" :loop="self.options" :ref="self.ul">
+                <li>{{self.title}}</li>
+            </ul>
+        </div>`;
     }
 
     lemonade.setComponents({ Wheel: Wheel });

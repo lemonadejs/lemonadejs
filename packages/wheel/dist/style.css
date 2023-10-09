@@ -1,4 +1,4 @@
-.picker {
+.lm-wheel {
     display: inline-grid;
     position: relative;
     font-size: 28px;
@@ -8,7 +8,7 @@
     font-family: 'San Francisco Text', sans-serif;
 }
 
-.picker:before, .picker:after {
+.lm-wheel:before, .lm-wheel:after {
     content: "";
     position: absolute;
     width: 100%;
@@ -17,19 +17,19 @@
     box-sizing: border-box;
 }
 
-.picker:before {
+.lm-wheel:before {
     top: 0;
     background: linear-gradient(white, rgba(255, 255, 255, 0.7));
     border-bottom: 1px solid #eee;
 }
 
-.picker:after {
+.lm-wheel:after {
     bottom: 0;
     background: linear-gradient(rgba(255, 255, 255, 0.7), white);
     border-top: 1px solid #eee;
 }
 
-.picker ul {
+.lm-wheel ul {
     max-height: 200px;
     padding: 80px 0 80px 0;
     overflow-y: scroll;
@@ -42,20 +42,20 @@
     scrollbar-width: none;
 }
 
-.picker-grid {
+.lm-wheel-grid {
     scroll-snap-type: y mandatory;
 }
 
-.picker ul::-webkit-scrollbar {
+.lm-wheel ul::-webkit-scrollbar {
     display: none;
     width: 0;
 }
 
-.picker ul::-moz-scrollbar {
+.lm-wheel ul::-moz-scrollbar {
     width: 0;
 }
 
-.picker li {
+.lm-wheel li {
     box-sizing: border-box;
     scroll-snap-align: center;
     text-align: center;
