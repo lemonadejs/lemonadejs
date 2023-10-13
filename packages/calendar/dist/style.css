@@ -1,273 +1,128 @@
 .lm-calendar .lm-modal {
-    display: flex;
-    flex-direction: column;
-    font-size: 13px;
+    min-width: initial;
+    min-height: initial;
 }
 
-.lm-calendar td {
-    font-size: 14px !important;
+.lm-calendar-options {
+    display: none;
 }
 
-.lm-calendar-controllers {
+.lm-modal .lm-calendar-options {
     display: flex;
     justify-content: space-between;
-    font-size: 1.3em;
-    padding: 10px 0px;
+    border-bottom: 1px solid #ddd;
+    padding: 2px;
 }
 
-.lm-calendar-controllers button {
-    all: unset;
-}
-
-.lm-calendar-controllers > div {
-    padding: 0px 15px;
-    display: flex;
-    justify-content: space-evenly;
-}
-
-.lm-calendar-controllers button {
+.lm-modal .lm-calendar-options button {
+    border: 0;
+    background-color: transparent;
+    text-transform: uppercase;
     cursor: pointer;
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
+    margin: 10px;
 }
 
-.lm-calendar-controllers > div:nth-child(1) button {
-    padding: 0px 4px;
+.lm-calendar-header {
+    display: flex;
+    flex-direction: column;
 }
 
-.lm-calendar-controllers > div:nth-child(2) button {
-    width: 30px;
+.lm-calendar-header > div:first-child {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    flex: 1;
+    user-select: none;
+}
+
+.lm-calendar-header .lm-calendar-labels {
+    font-size: 1.4em;
+    display: flex;
+    flex: 1;
+    cursor: pointer;
+    padding-left: 5px;
+}
+
+.lm-calendar-header .lm-calendar-labels > div {
+    margin: 2px;
+}
+
+.lm-calendar-navigation {
+    cursor: pointer;
+}
+
+.lm-calendar-navigation i {
+    padding: 5px;
+}
+
+.lm-calendar-weekdays {
+    display: none;
+    grid-template-columns: repeat(7, 1fr);
+    grid-gap: 2px;
+    padding: 0 10px 0 10px;
+    font-size: 0.8em;
+}
+
+.lm-calendar-container[data-view="days"] .lm-calendar-weekdays {
+    display: grid;
+}
+
+.lm-calendar-weekdays > div {
+    display: inline-block;
+    padding: 10px;
+    box-sizing: border-box;
     text-align: center;
     font-weight: bold;
 }
 
-.lm-calendar-controllers > div button:hover {
-    color: #858585;
-}
-
-.lm-calendar-controllers > div:nth-child(1) > button {
-    display: none;
-}
-
-.lm-calendar-controllers > div > button.visible {
-    display: block;
-}
-
-.lm-calendar-controllers[mode="time"] {
-    display: none;
-} 
-
-.lm-calendar-content-wrapper {
-    flex-grow: 1;
-    padding: 5px 5px 10px 5px;
-}
-
-.lm-calendar-content-wrapper table[mode="time"] {
-    display: none;
-}
-
-.lm-calendar-content-wrapper > div {
-    display: none;
-    justify-content: center;
-    align-items: center;
-    height: 100%;
-}
-
-.lm-calendar-content-wrapper .options {
-    height: 210px;
-    overflow-y: scroll;
-    border: 1px solid rgba(0,0,0, 0.1);
-}
-
-.lm-calendar-content-wrapper .options div {
-    text-align: center;
-    width: 50px;
-    height: 30px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    cursor: pointer;
-}
-
-.lm-calendar-content-wrapper .options .selected {
-    background-color: #E5E5E5;
-}
-
-.lm-calendar-content-wrapper > div[mode="time"] {
-    display: flex;
-}
-
-.lm-calendar-content-wrapper > div > button {
-    all: unset;
-    border: solid 1px rgba(0,0,0, 0.1);
-    border-radius: 5px;
-    text-align: center;
-    width: 90px;
-    height: 30px;
-    margin-left: 20px;
-}
-
-
-.lm-calendar-content-wrapper > div > button:hover {
-    cursor: pointer;
-    background-color: #F5F5F5;
-}
-
-.lm-calendar table {
-    height: 100%;
-    width: 100%;
-}
-
-.lm-calendar td {
-    text-align: center;
-}
-
-.lm-calendar td:not([value=""]):hover {
-    outline: solid 2px black;
-    cursor: pointer;
-}
-
-.lm-calendar td:not([value=""]) {
-    font-size: 1.1em;
-}
-
-.lm-calendar td.selected {
-    outline: solid 2px #959595 !important;
-}
-
-.lm-calendar td:not([type="current"]) {
-    color: #A5A5A5;
-}
-
-.lm-calendar ::-webkit-scrollbar {
-    width: 10px;
-}
-  
-.lm-calendar ::-webkit-scrollbar-track {
-    background: #f1f1f1;
-}
-  
-.lm-calendar ::-webkit-scrollbar-thumb {
-    background: #888;
-}
-  
-.lm-calendar ::-webkit-scrollbar-thumb:hover {
-    background: #555;
-}
-
-.disabled-cell {
-    color: #E5E5E5 !important;
-}
-
-.disabled-cell:hover {
-    outline: none !important;
-    cursor: default !important;
-}
-
-@media only screen and (max-width : 800px) {
-    .lm-calendar {
-        font-size: 1.3rem !important;
-    }
-
-    .lm-calendar td, th {
-        font-size: 1.3rem !important;
-    }
-
-    .lm-calendar-content-wrapper .options {
-        height: 240px;
-    }
-    
-    .lm-calendar-content-wrapper .options div {
-        width: 20vw;
-        height: 40px;
-    }
-
-    .lm-calendar ::-webkit-scrollbar {
-        width: 3vw;
-    }
-}
-.lm-modal {
-    position: absolute;
-    min-width: 150px;
-    min-height: 120px;
-    width: 300px;
-    height: 260px;
-    border-radius: 4px;
-    z-index: 9;
-    background-color: #fff;
-    border: 1px solid #ccc;
-    box-sizing: border-box;
-    box-shadow: 0 0 4px 3px rgba(80,80,80,.1);
-}
-
-@media only screen and (max-width : 800px) {
-    .lm-modal {
-        width: 100% !important;
-        bottom: 0;
-        left: 0;
-        border: 0;
-        border-radius: 0;
-        transform: none;
-        animation: slide-bottom-in 0.4s forwards;
-    }
-
-    .lm-modal.fullscreen {
-        top: 0;
-        height: 100% !important;
-    }
-}
-
-.lm-modal-picker {
-    width: 100% !important;
-    height: 260px !important;
-    left: 0;
-    bottom: 0;
-    border: 0;
-    border-radius: 0;
-    transform: none;
-}
-
-.lm-modal-center {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-.lm-modal[title]::before {
-    content: attr(title);
-    display: block;
-    position: relative;
-    width: 100%;
-    border-bottom: 1px solid #ccc;
+.lm-calendar-content {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    grid-gap: 2px;
     padding: 10px;
-    box-sizing: border-box;
-    font-size: 1.2em;
-    line-height: 24px;
+    font-size: 0.75em;
 }
 
-.lm-modal[closable="true"]::after {
-    content: 'close';
-    font-family: 'Material Icons';
-    display: block;
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    font-size: 24px;
+.lm-calendar-content > div {
+    box-sizing: border-box;
+    text-align: center;
+    aspect-ratio: 1 / 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 8px;
     cursor: pointer;
 }
 
-
-.lm-modal[title=""]::before {
-    display: none;
+.lm-calendar-container[data-view="months"] .lm-calendar-content {
+    grid-template-columns: repeat(4, 1fr);
+}
+.lm-calendar-container[data-view="years"] .lm-calendar-content {
+    grid-template-columns: repeat(4, 1fr);
 }
 
-.lm-modal[closed="true"] {
-    display: none !important;
+.lm-calendar-content > div[data-grey="true"] {
+    color: #ccc;
 }
 
-@keyframes slide-bottom-in {
-    0% { transform: translateY(100%); }
-    100% { transform: translateY(0%); }
+.lm-calendar-content > div[data-bold="true"] {
+    font-weight: bold;
+}
+
+.lm-calendar-content > div[data-selected="true"] {
+    font-weight: bold;
+    border-radius: 100px;
+    background-color: #eee;
+}
+
+.lm-calendar-content > div:hover {
+    border-radius: 100px;
+    background-color: #eee;
+}
+
+.lm-calendar-input {
+    padding-right: 24px !important;
+    box-sizing: border-box;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24"><path d="M200-80q-33 0-56.5-23.5T120-160v-560q0-33 23.5-56.5T200-800h40v-80h80v80h320v-80h80v80h40q33 0 56.5 23.5T840-720v560q0 33-23.5 56.5T760-80H200Zm0-80h560v-400H200v400Zm0-480h560v-80H200v80Zm0 0v-80 80Zm280 240q-17 0-28.5-11.5T440-440q0-17 11.5-28.5T480-480q17 0 28.5 11.5T520-440q0 17-11.5 28.5T480-400Zm-160 0q-17 0-28.5-11.5T280-440q0-17 11.5-28.5T320-480q17 0 28.5 11.5T360-440q0 17-11.5 28.5T320-400Zm320 0q-17 0-28.5-11.5T600-440q0-17 11.5-28.5T640-480q17 0 28.5 11.5T680-440q0 17-11.5 28.5T640-400ZM480-240q-17 0-28.5-11.5T440-280q0-17 11.5-28.5T480-320q17 0 28.5 11.5T520-280q0 17-11.5 28.5T480-240Zm-160 0q-17 0-28.5-11.5T280-280q0-17 11.5-28.5T320-320q17 0 28.5 11.5T360-280q0 17-11.5 28.5T320-240Zm320 0q-17 0-28.5-11.5T600-280q0-17 11.5-28.5T640-320q17 0 28.5 11.5T680-280q0 17-11.5 28.5T640-240Z"/></svg>') top 50% right 0px no-repeat, content-box;
 }
 

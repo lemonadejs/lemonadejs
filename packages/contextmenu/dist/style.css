@@ -11,7 +11,6 @@
     height: initial;
     min-width: 250px;
     min-height: initial;
-    padding-bottom: 6px;
 }
 
 .lm-menu .lm-modal::-webkit-scrollbar {

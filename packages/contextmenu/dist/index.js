@@ -1,9 +1,13 @@
+/**
+ * Na navegacao de cursor, tem um problema pois a linha esta sendo seleciona
+ */
+
 if (!lemonade && typeof (require) === 'function') {
-    var lemonade = require('lemonadejs');
+    var lemonade = require('../../../dist/lemonade');
 }
 
 if (! Modal && typeof (require) === 'function') {
-    var Modal = require('@lemonadejs/modal');
+    var Modal = require('../../modal/dist/index');
 }
 
 ; (function (global, factory) {
@@ -30,12 +34,13 @@ if (! Modal && typeof (require) === 'function') {
 
     const Item = function() {
         let self = this;
+
         if (this.type === 'line') {
             return `<hr />`;
         } else if (this.type === 'inline') {
             return '<div>' + this.component() + '</div>';
         } else {
-            return `<div class="lm-menu-item" data-cursor="{{self.cursor}}" data-icon="{{self.icon}}" data-submenu="{{!!self.submenu}}" onmouseover="self.parent.parent.open(self)">
+            return `<div class="lm-menu-item" data-cursor="{{self.cursor}}" data-icon="{{self.icon}}" data-submenu="{{!!self.submenu}}" onmouseup="self.parent.parent.mouseUp(self, e)" onmouseenter="self.parent.parent.mouseEnter(self)" onmouseleave="self.parent.parent.mouseLeave(self)">
                 <a>{{self.title}}</a> <div>{{self.shortcut}}</div>
             </div>`;
         }
@@ -44,6 +49,8 @@ if (! Modal && typeof (require) === 'function') {
     const Create = function() {
         let self = this;
 
+        // Delay on open
+        let delayTimer;
         // Save the position of this modal
         let index = self.parent.modals.length;
 
@@ -57,7 +64,18 @@ if (! Modal && typeof (require) === 'function') {
             console.log(self.cursor,self.options);
         }
 
-        // Open handler
+        /**
+         * Close the modal
+         */
+        self.close = function() {
+            // Close modals with higher level
+            self.parent.close(index);
+        }
+
+        /**
+         * Open submenu handler
+         * @param s
+         */
         self.open = function(s) {
             if (s.submenu) {
                 // Get the modal in the container of modals
@@ -95,7 +113,33 @@ if (! Modal && typeof (require) === 'function') {
             }
         }
 
-        let template = `<Modal :closed="true" :ref="self.modal" :responsive="false" :autoadjust="true" :onclose="self.onclose">
+        // Mouse open
+        self.mouseUp = function(s, e) {
+            if (typeof(s.onclick) === 'function') {
+                s.onclick.call(s, e);
+            }
+
+            if (! s.submenu) {
+                self.close();
+            }
+        }
+
+        self.mouseEnter = function(s) {
+            if (delayTimer) {
+                clearTimeout(delayTimer);
+            }
+            delayTimer = setTimeout(function() {
+                self.open(s);
+            }, 200);
+        }
+
+        self.mouseLeave = function() {
+            if (delayTimer) {
+                clearTimeout(delayTimer);
+            }
+        }
+
+        let template = `<Modal :closed="true" :ref="self.modal" :responsive="false" :auto-adjust="true" :onclose="self.onclose" :focus="false">
             <div class="lm-menu-submenu">
                 <Item :loop="self.options" />
             </div>
@@ -151,7 +195,15 @@ if (! Modal && typeof (require) === 'function') {
     }
 
     const closeSubmenu = function() {
-        this.parent.parent.close(this.parent.parent.modalIndex);
+        //this.parent.parent.close(this.parent.parent.modalIndex);
+        this.parent.close();
+
+        if (typeof(this.options[this.cursor]) !== 'undefined') {
+            // Add the cursor
+            this.options[this.cursor].cursor = false;
+            // Cursor
+            delete this.cursor;
+        }
     }
 
     const Contextmenu = function() {
