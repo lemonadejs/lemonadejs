@@ -1,7 +1,7 @@
 {
     "name": "lemonadejs",
-    "title": "Micro reactive, two-way binding and hooks JavaScript vanilla library.",
-    "description": "Lemonade is a lightweight, micro reactive vanilla javascript library to create quick and reusable JS components without dependencies.",
+    "title": "Micro reactive, two-way data binding JavaScript library.",
+    "description": "Lemonade is a lightweight, micro reactive JavaScript library to create quick and reusable reactive JS components. No dependencies or transpile is require",
     "author": {
         "name": "Contact <contact@lemonadejs.net>",
         "url": "https://lemonadejs.net"
