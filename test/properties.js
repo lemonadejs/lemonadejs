@@ -8,12 +8,10 @@ describe('Properties', () => {
                 value: 123,
             }
             // Title and year are declared in the parent template
-            let template = `<div>
-            <h1 :ref="self.title">{{self.test.value}}</h1>
-            <input type="button" onclick="self.test.value++" :ref="self.button" />
-          </div>`;
-
-            return lemonade.element(template, self);
+            return (render) => render`<div>
+                <h1 :ref="self.title">{{self.test.value}}</h1>
+                <input type="button" onclick="${()=>self.test.value++}" :ref="self.button" />
+            </div>`;
         }
 
         // Render the component and assert the return
@@ -66,9 +64,9 @@ describe('Properties', () => {
             let self = this;
             self.value = 100;
             return `<>
-            <ClassComponent value="{{self.value}}" @ref="self.class" />
-            <FunctionComponent value="{{self.value}}" @ref="self.function" />
-        </>`;
+                <ClassComponent value="{{self.value}}" @ref="self.class" />
+                <FunctionComponent value="{{self.value}}" @ref="self.function" />
+            </>`;
         }
 
         // Register as a global component.

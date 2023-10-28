@@ -40,11 +40,12 @@ describe('Bind', () => {
         function Component() {
             let self = this;
             self.test = 120;
-            return `<div>
-            <h1 @ref="self.title">{{self.test}}</h1>
-            <Hello @bind="self.test" @ref="self.component" />
-            <input type="button" onclick="self.test++" @ref="self.button"  />
-        </div>`;
+
+            return (render) => render`<div>
+                <h1 @ref="self.title">{{self.test}}</h1>
+                <Hello @bind="self.test" @ref="self.component" />
+                <input type="button" onclick="${()=>self.test++}" @ref="self.button"  />
+            </div>`;
         }
 
 
@@ -86,11 +87,9 @@ describe('Bind', () => {
     it('Two-way data binding for custom elements with @bind', function() {
         function Test() {
             let self = this;
-            let template = `<div>
-            <input type="button" onclick="self.value++" @ref="self.button" />
-        </div>`;
-
-            return lemonade.element(template, self);
+            return (render) => render `<div>
+                <input type="button" onclick="${()=>self.value++}" @ref="self.button" />
+            </div>`;
         }
 
         // Get the attributes from the tag
@@ -98,9 +97,9 @@ describe('Bind', () => {
             let self = this;
             self.test = 120;
             let template = `<div class="p10">
-            <h1 @ref="self.title">{{self.test}}</h1>
-            <Test @bind="self.test" @ref="self.component" />
-        </div>`;
+                <h1 @ref="self.title">{{self.test}}</h1>
+                <Test @bind="self.test" @ref="self.component" />
+            </div>`;
 
             return lemonade.element(template, self, {Test});
         }
@@ -120,7 +119,7 @@ describe('Bind', () => {
             // This will bring all properties defined in the tag
             let self = this;
             // Custom HTML components has the self.value as default
-            return `<b onclick="self.value++">{{self.value}}</b>`;
+            return (render) => render`<b onclick="${()=>self.value++}">{{self.value}}</b>`;
         }
 
         function Component() {

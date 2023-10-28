@@ -8,8 +8,8 @@ describe('General', () => {
 
             render() {
                 return `<div>
-                <h1>{{self.value}}</h1>
-            </div>`;
+                    <h1>{{self.value}}</h1>
+                </div>`;
             }
         }
 
@@ -20,14 +20,14 @@ describe('General', () => {
 
             // Title and year are declared in the parent template
             let template = `<div>
-            <Hello value="{{self.value}}" @ref="self.component"/>
-          </div>`;
+                <Hello value="{{self.value}}" @ref="self.component"/>
+            </div>`;
 
             return lemonade.element(template, self, {Hello});
         }
 
         // Render the component and assert the return
-        return render(Component).assert(1000, function () {
+        return render(Component).assert('1000', function () {
             let self = this;
 
             return self.component?.value;
