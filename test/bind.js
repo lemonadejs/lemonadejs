@@ -116,10 +116,7 @@ describe('Bind', () => {
 
     it('Two-way data binding on custom elements (protection against loop)', function() {
         function Test() {
-            // This will bring all properties defined in the tag
-            let self = this;
-            // Custom HTML components has the self.value as default
-            return (render) => render`<b onclick="${()=>self.value++}">{{self.value}}</b>`;
+            return `<b>{{self.value}}</b>`;
         }
 
         function Component() {
@@ -132,12 +129,12 @@ describe('Bind', () => {
         lemonade.setComponents({Test});
 
         // Render the component and assert the return
-        return render(Component).assert(true, function () {
+        return render(Component).assert('2', function () {
             let self = this;
             // Trigger update
             self.test++;
             // Check for the title updates
-            return self.component.value === self.test;
+            return self.component.value;
         })
     });
 

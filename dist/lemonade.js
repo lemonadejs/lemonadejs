@@ -382,7 +382,15 @@
                 v = castProperty.call(o.s, o.v);
             } else {
                 v = o.v.replace(isScript, function(a,b) {
-                    return extractFromPath.call(o.s, b);
+                    let r = extractFromPath.call(o.s, b);
+                    if (typeof(r) === 'function') {
+                        return r.call(o.s);
+                    } else {
+                        if (typeof(r) === 'undefined') {
+                            r = run.call(o.s, b);
+                        }
+                        return r;
+                    }
                 });
             }
 
@@ -663,13 +671,18 @@
                     element.removeAttribute(k[i]);
                     // If not a method, should be converted to a method
                     if (typeof(value) !== 'function') {
-                        value = extractFromPath.call(self, prop);
+                        let t = extractFromPath.call(self, prop);
+                        if (t) {
+                            value = t;
                     }
-                    if (typeof(value) === 'function') {
-                        element.addEventListener(k[i].substring(2), value);
-                    } else {
-                        console.error(k[i], shouldBeReference, element)
                     }
+                    element.addEventListener(k[i].substring(2), (e) => {
+                        if (typeof(value) === 'function') {
+                            value.call(this, e, self);
+                        } else {
+                            Function('self', 'e', value).call(this, self, e);
+                        }
+                    });
                 } else {
                     // Check for special properties
                     let first = k[i].substr(0,1);
@@ -794,6 +807,10 @@
 
         // Return the final template
         return [result,d];
+    }
+
+    const run = function(s) {
+        return Function('self', '"use strict";return (' + s + ')')(this);
     }
 
     // LemonadeJS object
