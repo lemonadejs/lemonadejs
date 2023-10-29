@@ -52,17 +52,17 @@
             t = t.filter(item => item !== '');
             // Object
             let o = this;
-            let lastObject = o;
+            let lastObject;
             while (t.length) {
                 // Get the property
                 let p = t.shift();
                 // Process config
                 if (config) {
-                    if (! Array.isArray(o)) {
-                        lastObject = o;
+                    if (typeof(o) === 'object' && ! Array.isArray(o)) {
+                        lastObject = [o,p];
                     }
                     if (t.length === 0) {
-                        return [lastObject, p];
+                        return lastObject;
                     }
                 }
                 // Check if the property exists
@@ -111,6 +111,14 @@
         } catch (e) {}
 
         return attr;
+    }
+
+    /**
+     * This allows to run inline script on legacy system. Inline script can lead to security issues so use carefully.
+     * @param {string} s string to function
+     */
+    const run = function(s) {
+        return Function('self', '"use strict";return (' + s + ')')(this);
     }
 
     /**
@@ -674,7 +682,7 @@
                         let t = extractFromPath.call(self, prop);
                         if (t) {
                             value = t;
-                    }
+                        }
                     }
                     element.addEventListener(k[i].substring(2), (e) => {
                         if (typeof(value) === 'function') {
@@ -693,16 +701,14 @@
                         let q = { type };
                         // Process types
                         if (type === 'ready') {
-                            // If not a method, should be convert to a method
+                            // If not a method, should be converted to a method
                             if (typeof(value) !== 'function') {
                                 value = extractFromPath.call(self, prop);
                             }
                             if (typeof(value) === 'function') {
                                 q.method = value.bind(element, element, self);
                             } else {
-                                q.method = () => {
-                                    console.error(k[i], shouldBeReference, element)
-                                }
+                                q.method = Function('self', attr[k[i]]).bind(element, self);
                             }
                         } else if (type === 'ref') {
                             // Create a reference to the HTML element or to the self of the custom element
@@ -807,10 +813,6 @@
 
         // Return the final template
         return [result,d];
-    }
-
-    const run = function(s) {
-        return Function('self', '"use strict";return (' + s + ')')(this);
     }
 
     // LemonadeJS object

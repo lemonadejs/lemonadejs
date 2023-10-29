@@ -31,6 +31,7 @@ describe('Properties', () => {
                 name: 'test',
                 scope: ['login', 'email'],
             }
+            // Expression should not be using when you defining CSP
             return `<div>{{self.test.name.includes('es')}} {{self.test.scope.length}}</div>`;
         }
 
@@ -100,7 +101,8 @@ describe('Properties', () => {
     it('Conditional background-color based on a value of an element', function() {
         function Component() {
             let self = this;
-            self.value = 1000;
+            self.value = '1000';
+            // Expression should not be using when you defining CSP
             return `<input type="text" style="background-color: {{self.value.includes('-')?'red':'green'}}"/>`;
         }
 
@@ -108,7 +110,7 @@ describe('Properties', () => {
         return render(Component).assert('red', function () {
             let self = this;
             // Change the value to negative
-            self.value = -2000;
+            self.value = '-2000';
             // Return the value
             return self.el.style.backgroundColor;
         })
@@ -136,6 +138,8 @@ describe('Properties', () => {
         function Component() {
             let self = this;
             self.test = 5.22;
+
+            // Expression should not be using when you defining CSP
             return `<input type="text" value="{{Math.round(2*self.test)}}"/>`;
         }
 
@@ -144,6 +148,26 @@ describe('Properties', () => {
             let self = this;
             // Change the value to negative
             self.test = 10.11;
+            // Return the value
+            return self.el.value;
+        })
+    });
+
+    it('Parsing a function', function() {
+        function Component() {
+            let self = this;
+            self.value = 5.22;
+            self.total = function() {
+                return self.value * 2;
+            }
+
+            // This is not inline scripting and can be used with CSP.
+            return `<input type="text" test="{{self.value}} * 2 = {{self.total}}" value="{{self.total}}" />`;
+        }
+
+        // Render the component and assert the return
+        return render(Component).assert('10.44', function () {
+            let self = this;
             // Return the value
             return self.el.value;
         })

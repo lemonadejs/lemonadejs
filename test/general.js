@@ -90,8 +90,8 @@ describe('General', () => {
             let self = this;
             self.test = 120;
             return `<>
-            <hello-element value="{{self.test}}" @ref="self.element"></hello-element>
-        </>`;
+                <hello-element value="{{self.test}}" @ref="self.element"></hello-element>
+            </>`;
         }
 
         // Render the component and assert the return
