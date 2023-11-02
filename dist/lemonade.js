@@ -725,7 +725,7 @@
                                 // Add event oninput for the two-way binding
                                 let h = function() {
                                     // Get the reference to the object
-                                    let o = Path.call(self, prop);
+                                    let o = extractFromPath.call(self, prop, true);
                                     // Apply the new value
                                     (o[0])[o[1]] = getAttribute(this);
                                 }
