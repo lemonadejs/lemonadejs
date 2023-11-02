@@ -1,5 +1,5 @@
 /**
- * Lemonadejs v3.5.0 (ESM build)
+ * Lemonadejs v3.5.1 (ESM build)
  *
  * Website: https://lemonadejs.net
  * Description: Create amazing web based reusable components.
