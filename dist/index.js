@@ -134,7 +134,7 @@ function Lemonade() {
      * @return {boolean}
      */
     const isDOM = function(o) {
-        return (o instanceof Element || o instanceof HTMLDocument || o instanceof DocumentFragment);
+        return (o instanceof HTMLElement || o instanceof Element || o instanceof DocumentFragment);
     }
 
     /**
@@ -860,10 +860,10 @@ function Lemonade() {
                 console.error('Invalid DOM return');
                 return false;
             }
-        }
 
-        // Process the first child
-        o = o.firstChild;
+            // Process the first child
+            o = o.firstChild;
+        }
 
         // Keep reference to the root elements
         if (o.tagName === 'ROOT') {
