@@ -496,7 +496,7 @@ function Lemonade() {
     const parseTokens = function(content) {
         // Get all self tokens in use
         if (typeof(content.v) === 'string') {
-            let tokens = content.v.match(/self([.a-zA-Z0-9_\[\]]+)*/gm);
+            let tokens = content.v.match(/self(\.\w+|\[\d+\])*/gm);
             if (tokens) {
                 for (let i = 0; i < tokens.length; i++) {
                     // Get path to the object
