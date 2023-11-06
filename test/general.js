@@ -27,7 +27,7 @@ describe('General', () => {
         }
 
         // Render the component and assert the return
-        return render(Component).assert('1000', function () {
+        return render(Component).assert(1000, function () {
             let self = this;
 
             return self.component?.value;

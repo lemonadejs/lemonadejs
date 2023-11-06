@@ -384,20 +384,33 @@ function Lemonade() {
             if (o.reference) {
                 v = castProperty.call(o.s, o.v);
             } else {
-                v = o.v.replace(isScript, function(a,b) {
-                    let r = extractFromPath.call(o.s, b);
-                    if (typeof(r) === 'function') {
-                        return r.call(o.s, o.e, a);
+                let index = 0;
+                let result;
+                // Replace string
+                v = o.v.replace(isScript, function(a, b) {
+                    // How many replacements
+                    index++;
+                    // Try to find the property
+                    result = extractFromPath.call(o.s, b);
+                    // If that is a function execute and get the return
+                    if (typeof(result) === 'function') {
+                        result = result.call(o.s, o.e, a);
                     } else {
-                        if (typeof(r) === 'undefined') {
-                            r = run.call(o.s, b);
-                            if (typeof(r) === 'undefined') {
-                                r = '';
+                        if (typeof(result) === 'undefined') {
+                            result = run.call(o.s, b);
+                            if (typeof(result) === 'undefined') {
+                                result = '';
                             }
                         }
-                        return r;
                     }
+                    // Return
+                    return result;
                 });
+
+                // Parse correct type
+                if (typeof(result) !== 'string' && index === 1) {
+                    v = result;
+                }
             }
 
             if (o.e.lemonade) {

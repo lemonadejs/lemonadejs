@@ -134,7 +134,7 @@ describe('Bind', () => {
             // Trigger update
             self.test++;
             // Check for the title updates
-            return self.component.value;
+            return self.component.el.textContent;
         })
     });
 
