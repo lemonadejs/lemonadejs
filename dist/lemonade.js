@@ -392,11 +392,10 @@
                 v = o.v.replace(isScript, function(a,b) {
                     let r = extractFromPath.call(o.s, b);
                     if (typeof(r) === 'function') {
-                        return r.call(o.s);
+                        return r.call(o.s, o.e, a);
                     } else {
                         if (typeof(r) === 'undefined') {
                             r = run.call(o.s, b);
-
                             if (typeof(r) === 'undefined') {
                                 r = '';
                             }
@@ -566,9 +565,9 @@
     /**
      * Read a textContent from an element to see if there is any script associated
      * @param {HTMLElement} e - element
-     * @param {array} injection
+     * @param {array} components
      */
-    const parseContent = function(e, injection) {
+    const parseContent = function(e, components) {
         // Get the content of the property
         let text = e.textContent;
         // Check if the content has script marks {{}}
@@ -582,10 +581,10 @@
                 // Text node
                 text = result[j];
                 // Injected values
-                if (text && injection) {
+                if (text && components && components.__REF) {
                     let r = text.match(/__lm=(\d+)/);
                     if (r && r[1]) {
-                        text = injection[r[1]].v;
+                        text = components.__REF[r[1]].v;
                     }
                 }
                 // Create text node
@@ -604,9 +603,8 @@
      * Parse all attributes from one element
      * @param {HTMLElement} element
      * @param {object} components
-     * @param {array} injection
      */
-    const parse = function(element, components, injection) {
+    const parse = function(element, components) {
         // Self for this parser
         let self = this;
         // Helpers
@@ -666,10 +664,10 @@
         if (k.length) {
             for (let i = 0; i < k.length; i++) {
                 let value = attr[k[i]];
-                if (injection) {
+                if (components && components.__REF) {
                     let r = value.match(/{{__lm=(\d+)}}/);
                     if (r && r[1]) {
-                        value = injection[r[1]].v;
+                        value = components.__REF[r[1]].v;
                         element.setAttribute(k[i], value);
                     }
                 }
@@ -771,12 +769,12 @@
                 t.push(element.children[i]);
             }
             for (let i = 0; i < t.length; i++) {
-                parse.call(self, t[i], components, injection);
+                parse.call(self, t[i], components);
             }
         } else {
             if (element.textContent) {
                 // Parse textual content
-                parseContent.call(self, element, injection);
+                parseContent.call(self, element, components);
             }
         }
 
@@ -842,6 +840,10 @@
             return false;
         }
 
+        if (! components) {
+            components = {};
+        }
+
         // Flexible element (class or method)
         if (typeof(o) == 'function') {
             if (isClass(o)) {
@@ -859,7 +861,8 @@
                 // Process return
                 if (typeof(o) === 'function') {
                     let d = o(dynamic.bind({ c: o, s: self }));
-                    o = L.element(d[0], self, components, d[1]);
+                    components.__REF = d[1];
+                    o = L.element(d[0], self, components);
                 } else if (typeof(o) === 'string') {
                     o = L.element(o, self, components);
                 }
@@ -939,10 +942,9 @@
      * @param {string|HTMLElement} t - HTML template to be parsed or a existing DOM element
      * @param {object} self - The default self object
      * @param {object?} components - all custom components references
-     * @param {object?} injection - arguments from a string literal injection
      * @return {HTMLElement|null} el - result of the DOM parse
      */
-    L.element = function(t, self, components, injection) {
+    L.element = function(t, self, components) {
         // Element
         let el;
         let root;
@@ -993,7 +995,7 @@
         }
 
         // Parse the content
-        parse.call(self, el, components, injection);
+        parse.call(self, el, components);
 
         // Create the el bound to the self
         register(self, 'el', el);
