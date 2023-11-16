@@ -66,7 +66,7 @@
                     }
                 }
                 // Check if the property exists
-                if (o.hasOwnProperty(p)) {
+                if (o.hasOwnProperty(p) || typeof(o[p]) !== 'undefined') {
                     o = o[p];
                 } else {
                     return undefined;
