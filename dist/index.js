@@ -1,5 +1,5 @@
 /**
- * LemonadeJS v4.0.0 (ESM build)
+ * LemonadeJS v4.0.1 (ESM build)
  *
  * Website: https://lemonadejs.net
  * Description: Create amazing web based reusable components.
@@ -384,12 +384,10 @@ function Lemonade() {
             if (o.reference) {
                 v = castProperty.call(o.s, o.v);
             } else {
-                let index = 0;
+                let cast = false;
                 let result;
                 // Replace string
                 v = o.v.replace(isScript, function(a, b) {
-                    // How many replacements
-                    index++;
                     // Try to find the property
                     result = extractFromPath.call(o.s, b);
                     // If that is a function execute and get the return
@@ -403,12 +401,14 @@ function Lemonade() {
                             }
                         }
                     }
+                    // Parse correct type
+                    if (typeof(result) !== 'string' && a === o.v) {
+                        cast = true;
+                    }
                     // Return
                     return result;
                 });
-
-                // Parse correct type
-                if (typeof(result) !== 'string' && index === 1) {
+                if (cast === true) {
                     v = result;
                 }
             }
