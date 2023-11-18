@@ -92,4 +92,4 @@ declare namespace lemonade {
     function setComponents(components: Object) : void;
 }
 
-export = lemonade;
+export default lemonade;

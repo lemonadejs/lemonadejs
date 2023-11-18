@@ -1,5 +1,5 @@
 /**
- * LemonadeJS v4.0.1
+ * LemonadeJS v4.0.2
  *
  * Website: https://lemonadejs.net
  * Description: Create amazing web based reusable components.
@@ -699,9 +699,9 @@
                     }
                     element.addEventListener(k[i].substring(2), (e) => {
                         if (typeof(value) === 'function') {
-                            value.call(this, e, self);
+                            value.call(element, e, self);
                         } else {
-                            Function('self', 'e', value).call(this, self, e);
+                            Function('self', 'e', value).call(element, self, e);
                         }
                     });
                 } else {
