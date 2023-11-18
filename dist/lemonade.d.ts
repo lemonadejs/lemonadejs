@@ -64,6 +64,13 @@ declare namespace lemonade {
     function apply(root: HTMLElement, self: Object, components?: Object) : void;
 
     /**
+     * Extract a property from a nested object using a string address
+     * @param {string} str address inside the nested object
+     * @param {boolean} config get the configuration obj => property
+     */
+    function path(str: string, config: boolean) : any;
+
+    /**
      * Get an artifact from LemonadeJS Sugar by its alias identification
      * @param {string} alias Existing sugar alias
      * @return {Object|Function} Sugar Artifact
