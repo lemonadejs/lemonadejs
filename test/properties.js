@@ -8,12 +8,10 @@ describe('Properties', () => {
                 value: 123,
             }
             // Title and year are declared in the parent template
-            let template = `<div>
-            <h1 :ref="self.title">{{self.test.value}}</h1>
-            <input type="button" onclick="self.test.value++" :ref="self.button" />
-          </div>`;
-
-            return lemonade.element(template, self);
+            return (render) => render`<div>
+                <h1 :ref="self.title">{{self.test.value}}</h1>
+                <input type="button" onclick="${()=>self.test.value++}" :ref="self.button" />
+            </div>`;
         }
 
         // Render the component and assert the return
@@ -33,6 +31,7 @@ describe('Properties', () => {
                 name: 'test',
                 scope: ['login', 'email'],
             }
+            // Expression should not be using when you defining CSP
             return `<div>{{self.test.name.includes('es')}} {{self.test.scope.length}}</div>`;
         }
 
@@ -66,9 +65,9 @@ describe('Properties', () => {
             let self = this;
             self.value = 100;
             return `<>
-            <ClassComponent value="{{self.value}}" @ref="self.class" />
-            <FunctionComponent value="{{self.value}}" @ref="self.function" />
-        </>`;
+                <ClassComponent value="{{self.value}}" @ref="self.class" />
+                <FunctionComponent value="{{self.value}}" @ref="self.function" />
+            </>`;
         }
 
         // Register as a global component.
@@ -86,13 +85,13 @@ describe('Properties', () => {
         function Component() {
             let self = this;
             self.disabled = true;
-            let template = `<input type="text" disabled="{{!self.disabled}}"/>`;
+            let template = `<input type="text" disabled="{{self.disabled}}"/>`;
 
             return lemonade.element(template, self)
         }
 
         // Render the component and assert the return
-        return render(Component).assert(false, function () {
+        return render(Component).assert(true, function () {
             let self = this;
             // Return the value
             return self.el.disabled;
@@ -103,6 +102,7 @@ describe('Properties', () => {
         function Component() {
             let self = this;
             self.value = '1000';
+            // Expression should not be using when you defining CSP
             return `<input type="text" style="background-color: {{self.value.includes('-')?'red':'green'}}"/>`;
         }
 
@@ -138,6 +138,8 @@ describe('Properties', () => {
         function Component() {
             let self = this;
             self.test = 5.22;
+
+            // Expression should not be using when you defining CSP
             return `<input type="text" value="{{Math.round(2*self.test)}}"/>`;
         }
 
@@ -146,6 +148,26 @@ describe('Properties', () => {
             let self = this;
             // Change the value to negative
             self.test = 10.11;
+            // Return the value
+            return self.el.value;
+        })
+    });
+
+    it('Parsing a function', function() {
+        function Component() {
+            let self = this;
+            self.value = 5.22;
+            self.total = function() {
+                return self.value * 2;
+            }
+
+            // This is not inline scripting and can be used with CSP.
+            return `<input type="text" test="{{self.value}} * 2 = {{self.total}}" value="{{self.total}}" />`;
+        }
+
+        // Render the component and assert the return
+        return render(Component).assert('10.44', function () {
+            let self = this;
             // Return the value
             return self.el.value;
         })

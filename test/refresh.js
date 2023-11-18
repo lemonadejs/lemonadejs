@@ -12,13 +12,13 @@ describe('Refresh', () => {
         function Component() {
             let self = this;
             let template = `<>
-            <p></p>
-            <Test value="1"/>
-            <p></p>
-            <Test value="2" @ref="self.reference"/>
-            <p></p>
-            <Test value="3"/>
-        </>`;
+                <p></p>
+                <Test value="1"/>
+                <p></p>
+                <Test value="2" @ref="self.reference"/>
+                <p></p>
+                <Test value="3"/>
+            </>`;
 
             return lemonade.element(template, self, {Test});
         }
@@ -36,16 +36,17 @@ describe('Refresh', () => {
 
     it('Testing node tagName a single item inside a loop refresh', function() {
         function Test() {
-            var self = this;
+            let self = this;
+
             if (self.status) {
-                return `<h1 onclick="self.status = 0; self.refresh()">{{self.title}}</h1>`;
+                return `<h1>{{self.title}}</h1>`;
             } else {
-                return `<h2 onclick="self.status = 0; self.refresh()">{{self.title}}</h2>`;
+                return `<h2>{{self.title}}</h2>`;
             }
         }
 
         function Component() {
-            var self = this;
+            let self = this;
             self.rows = [
                 {title: 'Google', description: 'The alpha search engine...', status: 1},
                 {title: 'Bing', description: 'The microsoft search engine...', status: 1},
@@ -71,17 +72,18 @@ describe('Refresh', () => {
     it('Update the property of a self when using reference', function() {
 
         function Test() {
-            var self = this;
+            let self = this;
+            self.onload = function() {
+                self.data *= 10;
+            }
 
             return `<div>{{self.data}}</div>`;
         }
 
         function Component() {
             let self = this;
-
             self.number = 1;
-
-            return `<><Test :data="self.number*10" :ref="self.instance" /></>`;
+            return `<><Test :data="self.number" :ref="self.instance" /></>`;
         }
 
 

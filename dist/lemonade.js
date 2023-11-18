@@ -1,16 +1,10 @@
 /**
- * LemonadeJS v3.5.1
+ * LemonadeJS v4.0.1
  *
  * Website: https://lemonadejs.net
  * Description: Create amazing web based reusable components.
  *
- * This software is distribute under MIT License
- *
- * Roadmap
- * - @bind jSuites.dropdown initial value is not set when properties has a value
- * - setComponents for local variables
- * - {{self.test*self.test}} - avoid duplication in the monitoring
- * - Classes are not detect with https://codesandbox.io/s/lemonadejs-examples-sebfeo
+ * This software is distributed under MIT License
  */
 
 ;(function (global, factory) {
@@ -44,41 +38,87 @@
     let isScript = /{{(.*?)}}/g;
 
     /**
-     * Path string to object
-     * @param {string} str - path to the value as a string
-     * @param {boolean} onlyObject - get the last valid object in the nested object
-     * @return {array|boolean} - return the object and the property
+     * Extract a property from a nested object using a string address
+     * @param {string} str address inside the nested object
+     * @param {boolean} config get the configuration obj => property
      */
-    const Path = function(str, onlyObject) {
-        let t = str.split('.');
-        if (t.length) {
+    const extractFromPath = function(str, config) {
+        try {
+            let t = str.toString().replace(/[\[\]]/g, '.').split('.');
+            if (t[0] === 'self') {
+                t.shift();
+            }
+            // Remove blanks
+            t = t.filter(item => item !== '');
             // Object
             let o = this;
-            // Property
-            let p = null;
-            while (t.length > 1) {
+            let lastObject;
+            while (t.length) {
                 // Get the property
-                p = t.shift();
-                // Check if the property exists
-                if (o.hasOwnProperty(p)) {
-                    if (! onlyObject || typeof(o[p]) === 'object' && ! Array.isArray(o[p])) {
-                        o = o[p];
-                    } else {
-                        return [o,p];
+                let p = t.shift();
+                // Process config
+                if (config) {
+                    if (typeof(o) === 'object' && ! Array.isArray(o)) {
+                        lastObject = [o,p];
                     }
+                    if (t.length === 0) {
+                        return lastObject;
+                    }
+                }
+                // Check if the property exists
+                if (o.hasOwnProperty(p) || typeof(o[p]) !== 'undefined') {
+                    o = o[p];
                 } else {
                     return undefined;
                 }
             }
-            // Get the property
-            p = t.shift();
-            // Return the value
-            if (o) {
-                return [o,p];
+
+            if (typeof(o) !== 'undefined') {
+                return o;
             }
-        }
+        } catch (e) {}
+
         // Something went wrong
-        return false;
+        return undefined;
+    }
+
+    /**
+     * Cast the value of an attribute
+     */
+    const castProperty = function(attr) {
+        // Parse type
+        try {
+            if (typeof(attr) === 'string' && attr) {
+                // Remove any white spaces
+                attr = attr.trim();
+                if (attr === 'true') {
+                    return true;
+                } else if (attr === 'false') {
+                    return false;
+                } else if (! isNaN(attr)) {
+                    return Number(attr);
+                } else if (attr.substring(0, 1) === '{') {
+                    if (attr.slice(-1) === '}') {
+                        return JSON.parse(attr);
+                    }
+                } else if (attr.substring(0, 5) === 'self.') {
+                    let v = extractFromPath.call(this, attr);
+                    if (typeof(v) !== 'undefined') {
+                        return v;
+                    }
+                }
+            }
+        } catch (e) {}
+
+        return attr;
+    }
+
+    /**
+     * This allows to run inline script on legacy system. Inline script can lead to security issues so use carefully.
+     * @param {string} s string to function
+     */
+    const run = function(s) {
+        return Function('self', '"use strict";return (' + s + ')')(this);
     }
 
     /**
@@ -99,7 +139,7 @@
      * @return {boolean}
      */
     const isDOM = function(o) {
-        return (o instanceof Element || o instanceof HTMLDocument || o instanceof DocumentFragment);
+        return (o instanceof HTMLElement || o instanceof Element || o instanceof DocumentFragment);
     }
 
     /**
@@ -285,35 +325,20 @@
     }
 
     /**
-     * Parse javascript
-     * @param {string} s - string
-     * @return {any}
-     */
-    const run = function(s) {
-        return Function('self', '"use strict";return (' + s + ')')(this);
-    }
-
-    const removeMark = function(v) {
-        return v.replace(isScript, '$1');
-    }
-
-    /**
      * Run a loop in the data for the element {e}
      * @param {object} o - tracking content object
      */
     const loop = function(o) {
-        let s = Path.call(o.s, o.v.replace('self.',''));
-        if (s) {
+        let data = extractFromPath.call(o.s, o.v);
+        if (data) {
             // Template for the render
             let t;
             // Method handler for custom elements
             let m;
             // Contains all new elements
             let d = [];
-            // Get the data from the self based on the property
-            let data = (s[0])[s[1]];
             // If data exists render each element of the array
-            if (data && data.length) {
+            if (data.length) {
                 for (let i = 0; i < data.length; i++) {
                     let e = data[i].el;
                     if (! e) {
@@ -362,16 +387,34 @@
             let v;
             // Verify if the value is a reference or a string
             if (o.reference) {
-                v = run.call(o.s, o.v);
+                v = castProperty.call(o.s, o.v);
             } else {
-                let s = o.v.split('}}')[0];
-                if (s.substr(0, 2) === '{{' && s.length === o.v.length - 2) {
-                    s = removeMark(o.v);
-                    v = run.call(o.s, s);
-                } else {
-                    v = o.v.replace(isScript, function (a, b) {
-                        return run.call(o.s, b);
-                    });
+                let cast = false;
+                let result;
+                // Replace string
+                v = o.v.replace(isScript, function(a, b) {
+                    // Try to find the property
+                    result = extractFromPath.call(o.s, b);
+                    // If that is a function execute and get the return
+                    if (typeof(result) === 'function') {
+                        result = result.call(o.s, o.e, a);
+                    } else {
+                        if (typeof(result) === 'undefined') {
+                            result = run.call(o.s, b);
+                            if (typeof(result) === 'undefined') {
+                                result = '';
+                            }
+                        }
+                    }
+                    // Parse correct type
+                    if (typeof(result) !== 'string' && a === o.v) {
+                        cast = true;
+                    }
+                    // Return
+                    return result;
+                });
+                if (cast === true) {
+                    v = result;
                 }
             }
 
@@ -425,13 +468,15 @@
      * @param {string|object|number} v - value
      */
     const register = function(s, p, v) {
-        Object.defineProperty(s, p, {
-            enumerable: false,
-            configurable: true,
-            get: function() {
-                return v;
-            }
-        });
+        if (typeof(s) === 'object') {
+            Object.defineProperty(s, p, {
+                enumerable: false,
+                configurable: true,
+                get: function () {
+                    return v;
+                }
+            });
+        }
     }
 
     /**
@@ -441,27 +486,28 @@
     const observers = function(p) {
         // Lemon handler
         let s = this;
-        let value = this[p];
-        // Do not allow undefined
-        if (value === undefined) {
-            value = '';
+        if (typeof(s) === 'object') {
+            let value = this[p];
+            // Do not allow undefined
+            if (typeof (value) === 'undefined') {
+                value = '';
+            }
+            // Create the observer
+            Object.defineProperty(s, p, {
+                set: function (v) {
+                    // Update val
+                    value = v;
+                    // Refresh bound elements
+                    dispatch.call(this, p);
+                },
+                get: function () {
+                    // Get value
+                    return value;
+                },
+                configurable: true,
+                enumerable: true,
+            });
         }
-
-        // Create the observer
-        Object.defineProperty(s, p, {
-            set: function(v) {
-                // Update val
-                value = v;
-                // Refresh bound elements
-                dispatch.call(this, p);
-            },
-            get: function() {
-                // Get value
-                return value;
-            },
-            configurable: true,
-            enumerable: true,
-        });
     }
 
     /**
@@ -470,29 +516,28 @@
      */
     const parseTokens = function(content) {
         // Get all self tokens in use
-        let tokens = content.v.match(/self.([.a-zA-Z1-9_]+)*/gm);
-        if (tokens) {
-            for (let i = 0; i < tokens.length; i++) {
-                // Property found
-                let p = tokens[i].replace('self.', '');
-                // Get path to the object
-                p = Path.call(this, p, true);
-                // Register
-                let t = R.tracking.get(p[0]);
-                if (! t) {
-                    t = {};
-                    R.tracking.set(p[0], t);
-                }
-                // Do not include self.__ref in the tracking system
-                if (p[1] !== '__r') {
-                    // Register the properties of the self
-                    if (!t[p[1]]) {
-                        t[p[1]] = [];
+        if (typeof(content.v) === 'string') {
+            let tokens = content.v.match(/self(\.\w+|\[\d+\])*/gm);
+            if (tokens) {
+                for (let i = 0; i < tokens.length; i++) {
+                    // Get path to the object
+                    let p = extractFromPath.call(this, tokens[i], true);
+                    if (p) {
+                        // Register
+                        let t = R.tracking.get(p[0]);
+                        if (!t) {
+                            t = {};
+                            R.tracking.set(p[0], t);
+                        }
+                        // Register the properties of the self
+                        if (! t[p[1]]) {
+                            t[p[1]] = [];
+                        }
+                        // Save relationship between the self and the tag attributes. TODO: avoid double call when {{self.value*self.value}}
+                        t[p[1]].push(content);
+                        // Create the necessary observers for this property
+                        observers.call(p[0], p[1]);
                     }
-                    // Save relationship between the self and the tag attributes. TODO: avoid double call when {{self.value*self.value}}
-                    t[p[1]].push(content);
-                    // Create the necessary observers for this property
-                    observers.call(p[0], p[1]);
                 }
             }
         }
@@ -503,13 +548,15 @@
 
     /**
      * Parse the content object to see if is necessary to start tracking
-     * @param {object} content: content tracking object
+     * @param {object} content the tracking object
      */
     const parseExpression = function(content) {
         // Check if the content has script marks {{}}
-        if (content.v.match(isScript)) {
-            // Get all self tokens in use
-            parseTokens.call(this, content);
+        if (typeof(content.v) === 'string') {
+            if (content.v.match(isScript)) {
+                // Get all self tokens in use
+                parseTokens.call(this, content);
+            }
         }
     }
 
@@ -517,7 +564,7 @@
      * Read a attribute from an element to see if there is any script associated
      * @param {HTMLElement} e
      * @param {string} name - attribute name
-     * @param {string|number} value? - value to be attributed
+     * @param {string|number?} value - value to be attributed
      */
     const parseAttribute = function(e, name, value) {
         // Get the content of the property
@@ -531,8 +578,9 @@
     /**
      * Read a textContent from an element to see if there is any script associated
      * @param {HTMLElement} e - element
+     * @param {array} components
      */
-    const parseContent = function(e) {
+    const parseContent = function(e, components) {
         // Get the content of the property
         let text = e.textContent;
         // Check if the content has script marks {{}}
@@ -545,6 +593,13 @@
             for (let j = 0; j < result.length; j++) {
                 // Text node
                 text = result[j];
+                // Injected values
+                if (text && components && components.__REF) {
+                    let r = text.match(/__lm=(\d+)/);
+                    if (r && r[1]) {
+                        text = components.__REF[r[1]].v;
+                    }
+                }
                 // Create text node
                 let node = document.createTextNode(text);
                 // Append text node back to the element
@@ -619,20 +674,31 @@
         let k = Object.keys(attr);
         if (k.length) {
             for (let i = 0; i < k.length; i++) {
+                let value = attr[k[i]];
+                if (components && components.__REF) {
+                    let r = value.match(/{{__lm=(\d+)}}/);
+                    if (r && r[1]) {
+                        value = components.__REF[r[1]].v;
+                        element.setAttribute(k[i], value);
+                    }
+                }
+
                 // Create input event to monitor changes in the HTML element
                 let prop = attr[k[i]].replace('self.', '');
+
                 // Parse events
                 if (! handler && k[i].substring(0,2) === 'on') {
-                    // Naturally on attributes already expects scripts, so no marks is necessary. But this is just for make sure there is no marks.
-                    let value = removeMark(attr[k[i]]);
-                    // References
-                    if (value.indexOf('self.__r') === 0) {
-                        value = run.call(self, value);
-                    }
-                    // Get action
+                    // Remove any inline javascript from the template
                     element.removeAttribute(k[i]);
-                    element.addEventListener(k[i].substring(2), function(e) {
-                        if (typeof(value) == 'function') {
+                    // If not a method, should be converted to a method
+                    if (typeof(value) !== 'function') {
+                        let t = extractFromPath.call(self, prop);
+                        if (t) {
+                            value = t;
+                        }
+                    }
+                    element.addEventListener(k[i].substring(2), (e) => {
+                        if (typeof(value) === 'function') {
                             value.call(this, e, self);
                         } else {
                             Function('self', 'e', value).call(this, self, e);
@@ -648,8 +714,15 @@
                         let q = { type };
                         // Process types
                         if (type === 'ready') {
-                            // Call this method when the element is ready and appended to the DOM
-                            q.method = Function('self', attr[k[i]]).bind(element, self);
+                            // If not a method, should be converted to a method
+                            if (typeof(value) !== 'function') {
+                                value = extractFromPath.call(self, prop);
+                            }
+                            if (typeof(value) === 'function') {
+                                q.method = value.bind(element, element, self);
+                            } else {
+                                q.method = Function('self', attr[k[i]]).bind(element, self);
+                            }
                         } else if (type === 'ref') {
                             // Create a reference to the HTML element or to the self of the custom element
                             self[prop] = element.lemonade && element.lemonade.handler ? element.lemonade.self : element;
@@ -662,10 +735,10 @@
                                 let s = element.lemonade.self;
                                 parseTokens.call(s, { e: self, a: prop, v: '{{self.value}}', s: s, protect: true });
                             } else {
-                                // Add event oninput for the two way binding
+                                // Add event oninput for the two-way binding
                                 let h = function() {
                                     // Get the reference to the object
-                                    let o = Path.call(self, prop);
+                                    let o = extractFromPath.call(self, prop, true);
                                     // Apply the new value
                                     (o[0])[o[1]] = getAttribute(this);
                                 }
@@ -685,7 +758,7 @@
                             parseTokens.call(self, { e: element, a: prop, v: attr[k[i]], s: self, r: r, loop: true })
                         } else {
                             // Parse attributes
-                            parseTokens.call(self, { e: element, a: type, v: attr[k[i]], s: self, reference: true })
+                            parseTokens.call(self, { e: element, a: type, v: value, s: self, reference: true })
                         }
 
                         // Sent to the queue
@@ -701,7 +774,7 @@
         }
 
         // Check the children
-        if (element.children.length) {
+        if (element.children && element.children.length) {
             t = [];
             for (let i = 0; i < element.children.length; i++) {
                 t.push(element.children[i]);
@@ -712,7 +785,7 @@
         } else {
             if (element.textContent) {
                 // Parse textual content
-                parseContent.call(self, element);
+                parseContent.call(self, element, components);
             }
         }
 
@@ -733,23 +806,29 @@
 
     /**
      * Extract variables from the dynamic and append to the self
-     * @return {string} t - converted template from ${} to {{self}}
+     * @return {[string, array]} grab the literal injection
      */
     const dynamic = function() {
-        let i = 0;
-        // Replace the scripts for the self marks
-        let t = this.c.toString().split('`')[1].replace(/\${.*?}/gm, function () {
-            return '{{self.__r[' + (i++) + ']}}';
-        });
-        // Get all arguments but the first
-        let a = Array.from(arguments);
-        a.shift();
-        this.s.__r = a;
+        let d = [];
+        let a = arguments;
+        let total = a[0].length - 1;
+
+        const result = a[0].map((value, index) => {
+            if (index < total) {
+                d.push({
+                    v: a[index+1]
+                });
+                return value + '{{__lm=' + (index) + '}}';
+            } else {
+                return value;
+            }
+        }).join('');
+
         // Return the final template
-        return t;
+        return [result,d];
     }
 
-    // Lemonadejs object
+    // LemonadeJS object
     const L = {};
 
     /**
@@ -772,37 +851,42 @@
             return false;
         }
 
+        if (! components) {
+            components = {};
+        }
+
         // Flexible element (class or method)
-        if (typeof (o) == 'function') {
+        if (typeof(o) == 'function') {
             if (isClass(o)) {
-                if (! self) {
+                if (typeof(self) === 'undefined') {
                     self = new o({});
                 }
                 o = L.element(self.render(template), self, components);
             } else {
-                if (! self) {
+                if (typeof(self) === 'undefined') {
                     self = {};
                 }
                 // Execute component
                 o = o.call(self, template, components);
+
                 // Process return
-                if (typeof (o) === 'function') {
-                    o = L.element(o(dynamic.bind({c: o, s: self})), self, components);
-                    // Remove dynamic references
-                    delete self.__r;
-                } else if (typeof (o) === 'string') {
+                if (typeof(o) === 'function') {
+                    let d = o(dynamic.bind({ c: o, s: self }));
+                    components.__REF = d[1];
+                    o = L.element(d[0], self, components);
+                } else if (typeof(o) === 'string') {
                     o = L.element(o, self, components);
                 }
             }
 
-            if (!isDOM(o)) {
+            if (! isDOM(o)) {
                 console.error('Invalid DOM return');
                 return false;
             }
-        }
 
-        // Process the first child
-        o = o.firstChild;
+            // Process the first child
+            o = o.firstChild;
+        }
 
         // Keep reference to the root elements
         if (o.tagName === 'ROOT') {
@@ -847,9 +931,10 @@
                     t.remove();
                 }
             } else {
-                let s = Path.call(this, p);
-                // Refresh a loop
-                dispatch.call(s[0], s[1]);
+                let s = extractFromPath.call(this, p, true);
+                if (s) {
+                    dispatch.call(s[0], s[1]);
+                }
             }
         });
 
@@ -875,7 +960,7 @@
         let el;
         let root;
         // Lemonade handler
-        if (! self) {
+        if (typeof(self) === 'undefined') {
             self = {};
         }
 
@@ -969,9 +1054,9 @@
 
     /**
      * Set the values from {o} to {this}
-     * @param {object} o: set the values of {this} when the this[property] is found in {o}, or when flag force is true
-     * @param {boolean} f: create a new property when that does not exists yet, but is found in {o}
-     * @return {object} - this is redundant since object {this} is a reference and is already available in the caller
+     * @param {object} o set the values of {this} when the this[property] is found in {o}, or when flag force is true
+     * @param {boolean} f create a new property when that does not exists yet, but is found in {o}
+     * @return {object} this is redundant since object {this} is a reference and is already available in the caller
      */
     L.setProperties = function(o, f) {
         for (let p in o) {
@@ -994,7 +1079,7 @@
 
     /**
      * Lemonade CC (common container) helps you share a self or function through the whole application
-     * @param {string} name: alias for your declared object(self) or function
+     * @param {string} name alias for your declared object(self) or function
      * @returns {Object | Function} - registered element
      */
     L.get = function(name) {

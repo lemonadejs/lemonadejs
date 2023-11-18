@@ -79,4 +79,27 @@ describe('Loop', () => {
             return self.el.children.length;
         })
     });
+
+    it('Loop with numerical arrays', function() {
+        let Component = function() {
+            let self = this;
+            self.data = [0,1,2];
+            return `<div :loop="self.data"><span>{{self}}</span></div>`;
+        }
+
+        // Render the component and assert the return
+        return render(Component).assert('0', function () {
+            let self = this;
+            return self.el.children[0].textContent;
+        })
+    });
+
+
+
+
+
+
+
+
+
 });
