@@ -610,8 +610,6 @@
         }
     }
 
-    const shouldBeReference = 'should be a reference to a function on';
-
     /**
      * Parse all attributes from one element
      * @param {HTMLElement} element
