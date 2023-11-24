@@ -1,5 +1,5 @@
 /**
- * LemonadeJS v4.0.5
+ * LemonadeJS v4.0.6
  *
  * Website: https://lemonadejs.net
  * Description: Create amazing web based reusable components.
@@ -676,10 +676,11 @@
             for (let i = 0; i < k.length; i++) {
                 let value = attr[k[i]];
                 if (components && components.__REF) {
+                    // Check for reference replace requirement
                     let r = value.match(/{{__lm=(\d+)}}/);
                     if (r && r[1]) {
+                        // Overwrite value
                         value = components.__REF[r[1]].v;
-                        element.setAttribute(k[i], value);
                     }
                 }
 
@@ -690,14 +691,14 @@
                 if (! handler && k[i].substring(0,2) === 'on') {
                     // Remove any inline javascript from the template
                     element.removeAttribute(k[i]);
-                    // If not a method, should be converted to a method
-                    if (typeof(value) !== 'function') {
-                        let t = extractFromPath.call(self, prop);
-                        if (t) {
-                            value = t;
-                        }
-                    }
                     element.addEventListener(k[i].substring(2), (e) => {
+                        // If not a method, should be converted to a method
+                        if (typeof(value) !== 'function') {
+                            let t = extractFromPath.call(self, prop);
+                            if (t) {
+                                value = t;
+                            }
+                        }
                         if (typeof(value) === 'function') {
                             value.call(element, e, self);
                         } else {
@@ -716,19 +717,22 @@
                         if (type === 'ready') {
                             // If not a method, should be converted to a method
                             if (typeof(value) !== 'function') {
-                                value = extractFromPath.call(self, prop);
+                                let t = extractFromPath.call(self, prop);
+                                if (t) {
+                                    value = t;
+                                }
                             }
                             if (typeof(value) === 'function') {
                                 q.method = value.bind(element, element, self);
                             } else {
-                                q.method = Function('self', attr[k[i]]).bind(element, self);
+                                q.method = Function('self', value).bind(element, self);
                             }
                         } else if (type === 'ref') {
                             // Create a reference to the HTML element or to the self of the custom element
                             self[prop] = element.lemonade && element.lemonade.handler ? element.lemonade.self : element;
                         } else if (type === 'bind') {
                             // Register the value attribute to be tracked
-                            parseTokens.call(self, { e: element, a: prop, v: '{{' + attr[k[i]] + '}}', s: self, bind: true })
+                            parseTokens.call(self, { e: element, a: prop, v: '{{' + value + '}}', s: self, bind: true })
 
                             // Register the value attribute to be tracked in the parent
                             if (handler) {
@@ -755,7 +759,7 @@
                                 r = element.parentNode
                             }
                             // Register the value attribute to be tracked
-                            parseTokens.call(self, { e: element, a: prop, v: attr[k[i]], s: self, r: r, loop: true })
+                            parseTokens.call(self, { e: element, a: prop, v: value, s: self, r: r, loop: true })
                         } else {
                             // Parse attributes
                             parseTokens.call(self, { e: element, a: type, v: value, s: self, reference: true })
@@ -766,6 +770,18 @@
                         // Remove special attribute from the tag
                         element.removeAttribute(k[i]);
                     } else {
+                        if (attr[k[i]] !== value) {
+                            if (typeof(value) === 'function' || typeof(value) === 'object') {
+                                // Do not make sense to set an function or object to a HTML attribute
+                                element[k[i]] = value;
+                                // Make sure the HTML is blank
+                                element.setAttribute(k[i], '');
+                            } else {
+                                // Make sure the HTML is blank
+                                element.setAttribute(k[i], value);
+                            }
+                        }
+
                         // Parse attributes
                         parseAttribute.call(self, element, k[i]);
                     }

@@ -9,4 +9,5 @@ packages
 webpack.config.js
 mocha.config.js
 test
+docs
 TODO.txt
