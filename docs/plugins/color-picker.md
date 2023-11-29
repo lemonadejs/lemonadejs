@@ -19,20 +19,20 @@ npm install @lemonadejs/color
 
 ### Settings
 
-| Attribute | Type | Description |
-| --- | --- | --- |
-| pallete? | Array | A matrix containing hexadecimal color values. There is a default palette. |
-| closed? | Boolean | Controls the open and close state of the modal. |
-| type? | String | The type of element that will toggle the color picker modal. Options: 'input',  'box' or empty. |
-| value? | String | The value of the color that is currently selected. |
+| Attribute          | Description                                                               |
+|--------------------|---------------------------------------------------------------------------|
+| palette?: string[] | A matrix containing hexadecimal color values. There is a default palette. |
+| closed?: boolean   | Controls the open and close state of the modal.                           |
+| type?: 'default' | The type of element that will toggle the color picker modal. |
+| value?: string     | The value of the color that is currently selected.                        |
 
 ### Events
 
-| Event | Type | Description |
-| --- | --- | --- |
-| onopen? | () => void | Called when modal opens. |
-| onclose? | () => void | Called when modal closes. |
-| onupdate? | (instance.value) => void | Called when value updates. |
+| Event                               | Description |
+|-------------------------------------| --- |
+| onopen?: () => void                 | Called when modal opens. |
+| onclose?: () => void                | Called when modal closes. |
+| onupdate?: (instance.value) => void | Called when value updates. |
 
 Examples
 --------
@@ -51,10 +51,8 @@ Simple implementation of Color Component.
 <div id="root"></div>
 
 <script>
-const root = document.getElementById("root")
-
-Color(root, {
-    type: 'input',
+Color(document.getElementById("root"), {
+    type: 'inline',
 })
 </script>
 </html>
@@ -64,36 +62,43 @@ import lemonade from 'lemonadejs'
 import Color from '@lemonadejs/color';
 import '@lemonadejs/color/dist/style.css';
 
-lemonade.setComponents({ Color });
-
 function App() {
     let self = this;
 
-    return `<>
-            <Color type="input" />
-        </>`;
+    return `<div><Color type="inline" /><div/>`;
 }
 ```
 ```jsx
-import React, { useRef, useEffect } from "react";
-import Color from "@lemonadejs/color";
-import "@lemonadejs/color/dist/style.css";
+import React, { useRef } from 'react';
+import Color from '@lemonadejs/color/dist/react';
 
 export default function App() {
-    const divRef = useRef(null);
-    const colorRef = useRef(null);
-  
-    useEffect(() => {
-        if (!colorRef.current) {
-            colorRef.current = Color(divRef.current, {
-                type: "input"
-            });
-        }
-    }, []);
-  
-    return <div ref={divRef}></div>;
+    const myRef = useRef();
+
+    return (<>
+        <Color type={"inline"} ref={myRef}/>
+    </>);
 }
 ```
+<!-- ```vue
+<template>
+        <Color type="inline" />
+</template>
+
+<script>
+import Color from '@lemonadejs/color/dist/vue'
+
+export default {
+    name: 'App',
+    components: {
+        Color
+    }
+}
+</script>
+
+<style></style>
+```
+-->
 
 ### Customization
 
@@ -104,14 +109,10 @@ This example showcases the use of a custom element to toggle the color picker.
 <html>
 <script src="https://cdn.jsdelivr.net/npm/lemonadejs/dist/lemonade.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@lemonadejs/color/dist/index.min.js"></script>
-<link
-  rel="stylesheet"
-  href="https://cdn.jsdelivr.net/npm/@lemonadejs/color/dist/style.css"
-/>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@lemonadejs/color/dist/style.css"/>
 
-<button id="btn">
-  Toggle Color Picker
-</button>
+<input type="button" id="btn" value="Open"></div>
+
 <div id="root"></div>
 
 <script>
@@ -119,20 +120,20 @@ const root = document.getElementById("root");
 const button = document.getElementById("btn");
 
 const component = Color(root, {
-  onupdate: function (color) {
-    button.style.color = color;
-  },
-  palette: [
-    ["#001969", "#233178", "#394a87", "#4d6396", "#607ea4", "#7599b3"],
-    ["#00429d", "#2b57a7", "#426cb0", "#5681b9", "#6997c2", "#7daeca"],
-    ["#3659b8", "#486cbf", "#597fc5", "#6893cb", "#78a6d1", "#89bad6"],
-    ["#003790", "#315278", "#48687a", "#5e7d81", "#76938c", "#8fa89a"]
-  ]
+    onupdate: function (s, color) {
+        button.style.backgroundColor = color;
+    },
+    palette: [
+        ["#001969", "#233178", "#394a87", "#4d6396", "#607ea4", "#7599b3"],
+        ["#00429d", "#2b57a7", "#426cb0", "#5681b9", "#6997c2", "#7daeca"],
+        ["#3659b8", "#486cbf", "#597fc5", "#6893cb", "#78a6d1", "#89bad6"],
+        ["#003790", "#315278", "#48687a", "#5e7d81", "#76938c", "#8fa89a"]
+    ]
 });
 
-button.onclick = function () {
-  component.closed = !component.closed;
-};
+button.addEventListener('click', () => {
+  component.open();
+});
 </script>
 </html>
 ```
@@ -146,63 +147,83 @@ lemonade.setComponents({ Color });
 function App() {
     const self = this;
 
-    self.handleUpdate = function(color) {
-        self.fontColor = color;
+    self.handleUpdate = function(s, color) {
+        button.style.backgroundColor = color;
     }   
-
-    self.closed = true; 
-    self.fontColor = '#000000'; 
+ 
     self.palette = [
-        ['#001969', '#233178', '#394a87', '#4d6396', '#607ea4', '#7599b3' ],
-        ['#00429d', '#2b57a7', '#426cb0', '#5681b9', '#6997c2', '#7daeca' ],
-        ['#3659b8', '#486cbf', '#597fc5', '#6893cb', '#78a6d1', '#89bad6' ],
-        ['#003790', '#315278', '#48687a', '#5e7d81', '#76938c', '#8fa89a' ],
+        ["#001969", "#233178", "#394a87", "#4d6396", "#607ea4", "#7599b3"],
+        ["#00429d", "#2b57a7", "#426cb0", "#5681b9", "#6997c2", "#7daeca"],
+        ["#3659b8", "#486cbf", "#597fc5", "#6893cb", "#78a6d1", "#89bad6"],
+        ["#003790", "#315278", "#48687a", "#5e7d81", "#76938c", "#8fa89a"]
     ];  
 
     return `<>
-        <button onclick="self.closed = !self.closed" style="color: {{self.fontColor}};">Toggle Color Picker</button>
-        <Color :closed="self.closed" :onupdate="self.handleUpdate" :palette="self.palette"/>
+        <input type="button" onclick="self.component.open"></div>
+        <Color :closed="true" :onupdate="self.handleUpdate" :palette="self.palette" :ref="self.component" />
     </>`
 }
 ```
 ```jsx
-import React, { useRef, useEffect } from "react";
-import Color from "@lemonadejs/color";
-import "@lemonadejs/color/dist/style.css";
+import React, { useRef } from 'react';
+import Color from '@lemonadejs/color/dist/react';
+
+const palette = [
+    ["#001969", "#233178", "#394a87", "#4d6396", "#607ea4", "#7599b3"],
+    ["#00429d", "#2b57a7", "#426cb0", "#5681b9", "#6997c2", "#7daeca"],
+    ["#3659b8", "#486cbf", "#597fc5", "#6893cb", "#78a6d1", "#89bad6"],
+    ["#003790", "#315278", "#48687a", "#5e7d81", "#76938c", "#8fa89a"]
+]
 
 export default function App() {
-    const divRef = useRef(null);
-    const colorRef = useRef(null);  
+    const colorRef = useRef();
+    const buttonRef = useRef();
 
-    const [color, setColor] = useState("#000000");  
-
-    const handleToggle = function () {
-        colorRef.current.closed = !colorRef.current.closed;
-    };  
-
-    useEffect(() => {
-        if (!colorRef.current) {
-            colorRef.current = Color(divRef.current, {
-                onupdate: function (c) {
-                    setColor(c);
-                },
-                palette: [
-                    ["#001969", "#233178", "#394a87", "#4d6396", "#607ea4", "#7599b3"],
-                    ["#00429d", "#2b57a7", "#426cb0", "#5681b9", "#6997c2", "#7daeca"],
-                    ["#3659b8", "#486cbf", "#597fc5", "#6893cb", "#78a6d1", "#89bad6"],
-                    ["#003790", "#315278", "#48687a", "#5e7d81", "#76938c", "#8fa89a"]
-                ]
-            });
-        }
-    }, []);
-
-    return (
+    return (<>
         <div>
-            <button style={{ color: color }} onClick={handleToggle}>
-                Toggle Color Picker
-            </button>
-            <div ref={divRef}></div>
+            <button onClick={() => colorRef.current.open()} ref={buttonRef}>Open</button>
+            <Color
+                palette={palette}
+                ref={colorRef}
+                onupdate={(s, color) => buttonRef.current.style.backgroundColor = color}
+            />
         </div>
-    );
+    </>);
 }
 ```
+<!-- ```vue
+<template>
+    <div>
+        <button @click="this.$refs.colorRef.current.open()" ref="buttonRef">Open</button>
+        <Color :palette="palette" :onupdate="updateColor" ref="colorRef" />
+    </div>
+</template>
+
+<script>
+import Color from '@lemonadejs/color/dist/vue'
+
+export default {
+    name: 'App',
+    components: {
+        Color
+    },
+    data() {
+        const palette = [
+            ["#001969", "#233178", "#394a87", "#4d6396", "#607ea4", "#7599b3"],
+            ["#00429d", "#2b57a7", "#426cb0", "#5681b9", "#6997c2", "#7daeca"],
+            ["#3659b8", "#486cbf", "#597fc5", "#6893cb", "#78a6d1", "#89bad6"],
+            ["#003790", "#315278", "#48687a", "#5e7d81", "#76938c", "#8fa89a"]
+        ]
+
+        return { palette }
+    },
+    methods: {
+        updateColor(s, color) {
+            this.$refs.buttonRef.style.backgroundColor = color;
+        }
+    }
+}
+</script>
+
+<style></style>
+``` -->

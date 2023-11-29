@@ -109,10 +109,12 @@ This example showcases the approach with the data property.
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@lemonadejs/tabs/dist/style.min.css" />
 
 <div id="root"></div>
-<button onclick="component.selected = 2">Select Wednesday</button>
+<input id="bttn-select" type="button" value="Select Wednesday" />
 
 <script>
 const root = document.getElementById("root");
+const button = document.getElementById("bttn-select");
+
 
 const data = [{
     title: "Monday", content: `<ul>
@@ -143,6 +145,10 @@ const component = Tabs(root, {
     data: data,
     selected: 0
 });
+
+button.addEventListener("click", () => {
+    component.selected = 2
+})
 </script>
 </html>
 ```

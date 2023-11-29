@@ -73,4 +73,4 @@ Learning examples
 Extensions using LemonadeJS
 ---------------------------
 
-*   [Linkedin-style photo uploader and cropper](/docs/v1/components/image-cropper "Photo cropper and filters component")
+*   [Linkedin-style photo uploader and cropper](/docs/plugins/image-cropper "Photo cropper and filters component")
