@@ -11,30 +11,41 @@ declare namespace lemonade {
     type OnchangeFunction = (property: string, affectedElements: object) => void;
 
     interface ComponentEvents {
+        /**
+         * When the component is ready and appended to the DOM
+         */
         onload?: OnloadFunction;
-
+        /**
+         * When a property used in the template is changed. Properties are tracked only when used in the template.
+         */
         onchange?: OnchangeFunction;
     }
 
     type FunctionComponent = (this: {
+        /**
+         * Root element of the component
+         */
         el: HTMLElement;
-
+        /**
+         * Parent component self
+         */
         parent: FunctionComponent;
-
+        /**
+         * Refresh a property that is an array or the entire component.
+         * @param target
+         */
         refresh: (target?: string) => void
-
         [key: string]: any;
     } & ComponentEvents) => void
 
     class component {
         constructor(s?: Record<string, any>);
-
+        // Root DOM element
         el: HTMLElement;
-
+        // Self which called the child component
         parent: FunctionComponent;
-
+        // Refresh an array or the entire component
         refresh: (target?: string) => void
-
         [key: string]: any;
     }
 
@@ -52,8 +63,10 @@ declare namespace lemonade {
      * @param {Function} component LemonadeJS component
      * @param {HTMLElement} root DOM element container
      * @param {Object} self inject a self object to the renderer
+     * @param {string?} template template to be passed to component
+     * @return {HTMLElement} Result DOM element, ready to be append to the DOM
      */
-    function render(component: Function, root: HTMLElement, self?: Object) : false | Element | Document | DocumentFragment;
+    function render(component: Function, root: HTMLElement, self?: Object, template?: String) : false | Element | Document | DocumentFragment;
 
     /**
      * Bind a self to an existing appended DOM element
