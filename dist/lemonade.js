@@ -1,5 +1,5 @@
 /**
- * LemonadeJS v4.0.7
+ * LemonadeJS v4.1.0
  *
  * Website: https://lemonadejs.net
  * Description: Create amazing web based reusable components.
@@ -294,10 +294,14 @@
         } else if (typeof(e[t]) !== 'undefined' || typeof(v) == 'function' || typeof(v) == 'object') {
             e[t] = v;
         } else {
-            if (v === '') {
-                e.removeAttribute(t);
+            if (isDOM(e)) {
+                if (v === '') {
+                    e.removeAttribute(t);
+                } else {
+                    e.setAttribute(t, v);
+                }
             } else {
-                e.setAttribute(t, v);
+                e[t] = v;
             }
         }
     }
@@ -424,7 +428,7 @@
 
             if (o.protect) {
                 // Protect from loop
-                if (o.e[a] == v) {
+                if (o.e[a] === v) {
                     return;
                 }
             }
@@ -495,10 +499,12 @@
             // Create the observer
             Object.defineProperty(s, p, {
                 set: function (v) {
-                    // Update val
-                    value = v;
-                    // Refresh bound elements
-                    dispatch.call(this, p);
+                    // Only update if the value is really different
+                    if (value !== v) {
+                        value = v;
+                        // Refresh bound elements
+                        dispatch.call(this, p);
+                    }
                 },
                 get: function () {
                     // Get value
