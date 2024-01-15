@@ -689,23 +689,28 @@ function Lemonade() {
                 let prop = attr[k[i]].replace('self.', '');
 
                 // Parse events
-                if (! handler && k[i].substring(0,2) === 'on') {
-                    // Remove any inline javascript from the template
-                    element.removeAttribute(k[i]);
-                    element.addEventListener(k[i].substring(2), (e) => {
-                        // If not a method, should be converted to a method
-                        if (typeof(value) !== 'function') {
-                            let t = extractFromPath.call(self, prop);
-                            if (t) {
-                                value = t;
+                if (k[i].substring(0,2) === 'on') {
+                    if (handler) {
+                        // Parse attributes
+                        parseTokens.call(self, { e: element, a: k[i], v: value, s: self, reference: true })
+                    } else {
+                        // Remove any inline javascript from the template
+                        element.removeAttribute(k[i]);
+                        element.addEventListener(k[i].substring(2), (e) => {
+                            // If not a method, should be converted to a method
+                            if (typeof (value) !== 'function') {
+                                let t = extractFromPath.call(self, prop);
+                                if (t) {
+                                    value = t;
+                                }
                             }
-                        }
-                        if (typeof(value) === 'function') {
-                            value.call(element, e, self);
-                        } else {
-                            Function('self', 'e', value).call(element, self, e);
-                        }
-                    });
+                            if (typeof (value) === 'function') {
+                                value.call(element, e, self);
+                            } else {
+                                Function('self', 'e', value).call(element, self, e);
+                            }
+                        });
+                    }
                 } else {
                     // Check for special properties
                     let first = k[i].substr(0,1);
