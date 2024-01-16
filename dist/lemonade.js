@@ -1,5 +1,5 @@
 /**
- * LemonadeJS v4.1.0
+ * LemonadeJS v4.1.1
  *
  * Website: https://lemonadejs.net
  * Description: Create amazing web based reusable components.
@@ -444,8 +444,10 @@
     /**
      * Dispatch all updates for a property from the self
      * @param {string} property - property from the self
+     * @param {any} oldValue property value
+     * @param {any} newValue property value
      */
-    const dispatch = function(property) {
+    const dispatch = function(property, oldValue, newValue) {
         // Tracking object
         let o = R.tracking.get(this);
         if (o) {
@@ -460,7 +462,7 @@
 
             // A property has changed
             if (typeof(this.onchange) === 'function') {
-                this.onchange(property, o, this);
+                this.onchange(property, o, this, oldValue, newValue);
             }
         }
     }
@@ -499,12 +501,12 @@
             // Create the observer
             Object.defineProperty(s, p, {
                 set: function (v) {
-                    // Only update if the value is really different
-                    if (value !== v) {
-                        value = v;
-                        // Refresh bound elements
-                        dispatch.call(this, p);
-                    }
+                    // Old value
+                    let oldValue = value;
+                    // New value
+                    value = v;
+                    // Refresh bound elements
+                    dispatch.call(this, p, oldValue, v);
                 },
                 get: function () {
                     // Get value
