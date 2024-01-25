@@ -1,4 +1,4 @@
-<h1>LemonadeJS v3: Reactive micro library</h1>
+<h1>LemonadeJS v4: Reactive micro library</h1>
 
 <h2>Create amazing web-based interfaces with LemonadeJS</h2>
 
