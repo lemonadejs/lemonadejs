@@ -1,5 +1,5 @@
-title: Quick Reference
-keywords: Lemonadejs, two-way binding, frontend, javascript library, javascript plugin, javascript, quick reference
+title: Quick Reference for LemonadeJS v1
+keywords: LemonadeJS, two-way data binding, frontend, javascript library, javascript plugin, javascript, quick reference
 description: A summary of the main concepts, methods and events when using LemonadeJS.
 
 ![LemonadeJS quick reference](img/learning.png)

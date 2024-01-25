@@ -1,10 +1,10 @@
-title: JavaScript Signature Pad Plugin
+title: LemonadeJS Signature Pad
 keywords: LemonadeJS, two-way binding, frontend, javascript library, javascript plugin, javascript, reactive, react, signature pad, plugins
 description: Delve into an optimized reactive JavaScript signature pad implementation using the power of LemonadeJS.
 
-Signature Pad
+LemonadeJS Signature Pad
 =============
-`Pico Library`{.jtag .black}
+`Pico Library`{.jtag .black .framework-images}
 
 This library has less than 2 KBytes  
   
@@ -21,32 +21,24 @@ npm install @lemonadejs/signature
 
 ### Attributes
 
-| Attribute | Description |
-|  --- | --- |
-| value?: Array | The value represents the painted point's position. |
-| width?: Number | The width of the signature pad. |
-| height?: Number | The height of the signature pad. |
-| instructions?: String | The instruction text. It appears at the bottom of the signature pad. |
-| line?: Number | The size of each painted point. |
-| disabled?: Boolean | Signature is disabled if true. |
-
-### Methods
-
-| Method | Description                                                                  |
-| --- |------------------------------------------------------------------------------|
-| getValue: function | Gets the value array  `instance.getValue() => number[][]`                    |
-| setValue: function | Sets the internal state value  `instance.setValue(value: number[][]) => void` |
-| getImage: function | Gets the image based on the value  `instance.getImage() => string`           |
+| Attribute | Type | Description |
+|  --- | --- | --- |
+| name? | String | Represents the identifier for the signature pad. |
+| line? | Number | The size of each painted point. |
+| value? | Array of Arrays | The value represents the painted point's position. |
+| width? | Number | The width of the signature pad. |
+| height? | Number | The height of the signature pad. |
+| instructions? | String | The instruction text. It appears at the bottom of the signature pad. |
+| getValue | Function | Gets the value array. |
+| setValue | Function | Sets the internal state value. |
+| getImage | Function | Gets the image based on the value. |
 
 ### Events
 
-| Event | Description                                                               |
-| --- |---------------------------------------------------------------------------|
-| onchange?: Function | When the value of the component changes  `onchange(value: object) => void` |
-| onload?: Function | When the component completes loading  `onload(value: object) => void`     |
-
-  
-  
+| Event | Description |
+| --- |---------------|
+| onchange? | When the value of the component changes |
+| onload? | When the component completes loading |
 
 #### Codesandbox example
 
@@ -81,9 +73,6 @@ Signature(root, {
 import lemonade from "lemonadejs";
 import Signature from "@lemonadejs/signature";
 
-// Register signature component across the application
-lemonade.setComponents({ Signature });
-
 export default function Component() {
     const self = this;
     self.width = 400;
@@ -97,25 +86,38 @@ export default function Component() {
 }
 ```
 ```jsx
-import React, { useEffect, useRef } from "react";
-import Signature from "@lemonadejs/signature";
+import React, { useRef } from 'react';
+import Signature from '@lemonadejs/signature/dist/react';
 
-export default function Component() {
-    const componentRef = useRef(null);
+export default function App() {
+    const signatureRef = useRef();
 
-    useEffect(() => {
-        if (!componentRef.current.innerText) {
-            Signature(componentRef.current, {
-                width: 400,
-                height: 200,
-                value: [],
-                instructions: "Please sign this document"
-            });
-        }
-    }, []);
-
-    return <div ref={componentRef}></div>;
+    return (<>
+        <Signature
+            ref={signatureRef}
+            value={[]}
+            width={400}
+            height={200}
+            instructions={"Please sign this document"}
+        />
+    </>);
 }
+```
+```vue
+<template>
+    <Signature ref="signature" :value="[]" :width="400" :height="200" instructions="Please sign this document" />
+</template>
+  
+<script>
+import Signature from '@lemonadejs/signature/dist/vue';
+
+export default {
+    name: 'App',
+    components: {
+        Signature,
+    },
+};
+</script>
 ```
 
 ### Programmatic changes
@@ -163,59 +165,59 @@ updateWidth.addEventListener("click", () => {
 import lemonade from "lemonadejs";
 import Signature from "@lemonadejs/signature";
 
-// Register signature component across the application
-lemonade.setComponents({ Signature });
-
 function Component() {
     const self = this;
-    self.width = 500;
-    self.height = 200;
-    self.value = [];
 
     self.change = function() {
-        console.log(JSON.stringify(self.value));
+        console.log(JSON.stringify(self.signRef.value));
     }
 
     self.load = function() {
-        self.value = [
+        self.signRef.value = [
             [139,41],[139,45],[139,51],[139,56],[138,61],[138,65],[137,67],[137,69],[137,70],
             [137,71],[138,71],[142,66],[154,56],[171,45],[194,32],[220,21],[247,15],[270,10],
             [282,10],[292,11],[297,14],[297,15],[297,18],[297,20],[297,24],[297,27],[297,30],
             [297,33],[297,34],[297,35],[298,35],[299,36],[300,37],[302,37],1
         ];
+    }
+
+    self.increase = function() {
+        self.signRef.width = 800
     }
 
     return `<>
         <div class="signature">
-            <Signature value="{{self.value}}"
-               onchange="{{self.change}}"
-               width="{{self.width}}"
-               height="{{self.height}}"
-               instructions="Please sign in the box above" />
+            <Signature
+                :ref="self.signRef"
+                :value="[]"
+                :onchange="self.change"
+                :width="500"
+                :height="200"
+                instructions="Please sign in the box above"
+            />
         </div><br>
-        <input type="button" value="Update width" onclick="self.width = 800" />
-        <input type="button" value="Update value" onclick="self.load()"  />
+        <input type="button" value="Update width" onclick="self.increase" />
+        <input type="button" value="Update value" onclick="self.load"  />
     </>`;
 }
 ```
 ```jsx
-import React, { useEffect, useRef } from "react";
-import Signature from "@lemonadejs/signature";
-    
-export default function Component() {
-    const divRef = useRef(null);
-    const componentRef = useRef(null);
+import React, { useRef } from 'react';
+import Signature from '@lemonadejs/signature/dist/react';
 
-    const change = function () {
-        console.log(JSON.stringify(componentRef.current.value));
+export default function App() {
+    const signatureRef = useRef();
+
+    const displayNewValue = function () {
+        console.log(JSON.stringify(signatureRef.current.value));
     };
 
     const increase = function () {
-        componentRef.current.width = 800;
+        signatureRef.current.width = 800;
     };
 
     const load = function () {
-        componentRef.current.value = [
+        signatureRef.current.value = [
             [139,41],[139,45],[139,51],[139,56],[138,61],[138,65],[137,67],[137,69],[137,70],
             [137,71],[138,71],[142,66],[154,56],[171,45],[194,32],[220,21],[247,15],[270,10],
             [282,10],[292,11],[297,14],[297,15],[297,18],[297,20],[297,24],[297,27],[297,30],
@@ -223,26 +225,61 @@ export default function Component() {
         ];
     };
 
-    useEffect(() => {
-        if (!componentRef.current) {
-            componentRef.current = Signature(divRef.current, {
-                width: 500,
-                height: 200,
-                value: [],
-                instructions: "Please sign in the box above",
-                onchange: change
-            });
-        }
-    }, []);
+    return (<>
+        <Signature
+            ref={signatureRef}
+            value={[]}
+            width={500}
+            height={200}
+            instructions={"Please sign in the box above"}
+            onchange={displayNewValue}
+        />
 
-    return (
-        <>
-            <div ref={divRef}></div>
-            <input type="button" value="Update width" onClick={() => increase()} />
-            <input type="button" value="Update value" onClick={() => load()} />
-        </>
-    );
+        <input type="button" onClick={increase} value="Update Width" />
+        <input type="button" onClick={load} value="Update Value" />
+    </>);
 }
+```
+```vue
+<template>
+    <Signature
+        ref="signature"
+        :value="[]"
+        :width="500"
+        :height="200"
+        instructions="Please sign in the box above"
+    />
+
+    <input type="button" @click="increase" value="Update Width" />
+    <input type="button" @click="load" value="Update Value" />
+</template>
+  
+<script>
+import Signature from '@lemonadejs/signature/dist/vue';
+
+export default {
+    name: 'App',
+    components: {
+        Signature,
+    },
+    methods: {
+        increase() {
+            this.$refs.signature.current.width = 800 
+        },
+        load() {
+            this.$refs.signature.current.value = [
+                [139,41],[139,45],[139,51],[139,56],[138,61],[138,65],[137,67],[137,69],[137,70],
+                [137,71],[138,71],[142,66],[154,56],[171,45],[194,32],[220,21],[247,15],[270,10],
+                [282,10],[292,11],[297,14],[297,15],[297,18],[297,20],[297,24],[297,27],[297,30],
+                [297,33],[297,34],[297,35],[298,35],[299,36],[300,37],[302,37],1
+            ]
+        },
+        displayNewValue() {
+            console.log(JSON.stringify(this.$refs.signature.current.value));
+        }
+    }
+};
+</script>
 ```
   
 ### Methods
@@ -256,12 +293,15 @@ Exporting the signature as image base64.
 
 <div id='root'></div>
 <input type="button" value="Reset" id="resetCanvas" />
-<input type="button" value="Download as image" id="getImage" />
+<input type="button" value="Save as image" id="getImage" />
 <img id="image" class="image full-width" />
 
 <script>
+const root = document.getElementById("root")
+const resetCanvas = document.getElementById("resetCanvas")
+const getImage = document.getElementById("getImage")
 // Call signature with the root element and the options object, saving its reference in a variable
-const component = Signature(document.getElementById("root"), {
+const component = Signature(root, {
     width: 500,
     height: 100,
     instructions: "Please sign in the box above"
@@ -279,10 +319,7 @@ getImage.addEventListener("click", () => {
 ```
 ```javascript
 import lemonade from "lemonadejs";
-import Signature from "@lemonadejs/signature";
-
-// Register signature component across the application
-lemonade.setComponents({ Signature });
+import "@lemonadejs/signature";
 
 function Component() {
     const self = this;
@@ -310,57 +347,117 @@ function Component() {
 }
 ```
 ```jsx
-import React, { useEffect, useRef } from "react";
-import Signature from "@lemonadejs/signature";
+import React, { useRef } from 'react';
+import Signature from '@lemonadejs/signature/dist/react';
 
-export default function Component() {
-    const divRef = useRef(null);
-    const componentRef = useRef(null);
+export default function App() {
+    const signatureRef = useRef(null);
     const imgRef = useRef(null);
 
     const onGetImage = function () {
-        imgRef.current.src = componentRef.current.getImage();
+        imgRef.current.src = signatureRef.current.getImage();
     };
 
     const reset = function () {
-        componentRef.current.value = [];
+        signatureRef.current.value = [];
     };
 
-    useEffect(() => {
-        if (!componentRef.current) {
-            componentRef.current = Signature(divRef.current, {
-                width: 500,
-                height: 100,
-                value: [],
-                instructions: "Please sign in the box above"
-            });
-        }
-    }, []);
+    return (<>
+        <Signature
+            ref={signatureRef}
+            value={[]}
+            width={500}
+            height={100}
+            instructions={"Please sign in the box above"}
+        />
 
-    return (
-        <>
-            <div ref={divRef}></div>
-            <input type="button" value="Reset" onClick={() => reset()} />
-            <input
-                type="button"
-                value="Download as image"
-                onClick={() => onGetImage()}
-            />
-            <div>
-                <img ref={imgRef} className="image full-width" />
-            </div>
-        </>
-    );
+        <input type="button" value="Reset" onClick={reset} />
+        <input
+            type="button"
+            value="Download as image"
+            onClick={onGetImage}
+        />
+        <div>
+            <img ref={imgRef} className="image full-width" />
+        </div>
+    </>);
 }
 ```
+```vue
+<template>
+    <Signature
+        ref="signature"
+        :value="[]"
+        :width="500"
+        :height="100"
+        instructions="Please sign in the box above"
+    />
 
-### CSS for this section
+    <input type="button" value="Reset" @click="reset" />
+        <input
+            type="button"
+            value="Download as image"
+            @click="onGetImage"
+        />
+        <div>
+            <img ref="imgRef" className="image full-width" />
+        </div>
+</template>
+  
+<script>
+import Signature from '@lemonadejs/signature/dist/vue';
 
-```css
-.signature {
-    border: 1px dashed #ccc;
-    display: inline-block;
-    text-align: center;
-    margin-bottom: 10px;
+export default {
+    name: 'App',
+    components: {
+        Signature,
+    },
+    methods: {
+        onGetImage() {
+            this.$refs.imgRef.src = this.$refs.signature.current.getImage();
+        },
+        reset() {
+            this.$refs.signature.current.value = [];
+        }
+    }
+};
+</script>
+```
+
+## Further references
+
+### Downloading Image from Base64
+
+To initiate the download of an image from the signature component, you can employ a method akin to the previous example, with additional code for downloading the base64-encoded image.
+
+Below is a sample code snippet that can serve as a foundation:
+
+{.ignore}
+```javascript
+function handleDownload() {
+    // Retrieve the base64 string value from the signature component
+    const cleanBase64 = component.getImage().split(',')[1]
+
+
+    // Convert base64 to a blob
+    const byteCharacters = atob(cleanBase64);
+    const byteNumbers = new Array(byteCharacters.length);
+    for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+    }
+    const byteArray = new Uint8Array(byteNumbers);
+    const blob = new Blob([byteArray], { type: 'application/octet-stream' });
+
+    // Create a download link
+    const downloadLink = document.createElement('a');
+    downloadLink.href = URL.createObjectURL(blob);
+    downloadLink.download = 'signature.png'; // Set the desired file name and extension
+
+    // Trigger the download
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
+
+    // Remove the link from the page
+    document.body.removeChild(downloadLink);
 }
 ```

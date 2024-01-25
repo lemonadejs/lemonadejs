@@ -1,5 +1,5 @@
-title: Event countdown
-keywords: Lemonadejs, two-way binding, frontend, javascript library, javascript plugin, javascript, github, contributions, open-source
+title: JavaScript Reactive Event Countdown Example
+keywords: LemonadeJS, two-way binding, frontend, javascript library, javascript plugin, javascript, github, contributions, open-source
 description: A simple example to integrate an third party component and LemonadeJS.
 
 Event countdown

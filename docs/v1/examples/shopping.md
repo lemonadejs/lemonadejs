@@ -1,5 +1,5 @@
-title: Shopping Cart
-keywords: Lemonadejs, two-way binding, frontend, javascript library, javascript plugin, javascript, github, contributions, open-source
+title: Reactive Shopping Cart Example
+keywords: LemonadeJS, two-way binding, frontend, javascript library, javascript plugin, javascript, github, contributions, open-source
 description: A simple shopping cart using LemonadeJS and Jsuites templates
 
 Shopping

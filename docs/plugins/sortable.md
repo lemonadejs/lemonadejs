@@ -2,7 +2,7 @@ title: Create Reactive Sortable Lists with LemonadeJS
 keywords: LemonadeJS, two-way data binding, frontend, javascript library, javascript plugin, javascript, reactive, react, sortable
 description: Design interactive, reactive sortable lists using the intuitive Lemonade Sortable JavaScript plugins.
 
-Sortable
+LemonadeJS Sortable
 ========
 
 This library has 1.3 Kbytes

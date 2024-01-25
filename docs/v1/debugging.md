@@ -1,6 +1,6 @@
-title: Debugging
-keywords: Lemonadejs, two-way binding, frontend, javascript library, javascript plugin, javascript, quick reference
-description: A summary of the main concepts, methods and events when using LemonadeJS.
+title: Debugging on LemonadeJS v1
+keywords: LemonadeJS, two-way data binding, frontend, javascript library, javascript plugin, javascript, quick reference
+description: Most common problems when developing with LemonadeJS version 1.
 
 ![Most common problems and debug suggestions](img/debug.png)
 

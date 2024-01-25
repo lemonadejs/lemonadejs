@@ -1,4 +1,4 @@
-title: Implementing Reactive Attributes with LemonadeJS
+title: Reactive Attributes in LemonadeJS: UI Development
 keywords: LemonadeJS, reactive attributes, data binding, frontend development, JavaScript library, user interface, UI updates
 description: Explore the capabilities of reactive attributes in LemonadeJS to establish dynamic data connections within user interfaces, enhancing synchronization between the DOM and your application's state without external dependencies.
 
@@ -239,4 +239,4 @@ Next, dive into the `:bind` attribute to master two-way data binding with HTML f
 
 &nbsp;
 
-[Next Chapter: Two way binding](/docs/v4/two-way-binding){.button .main}
+[Next Chapter: Two way binding](/docs/two-way-binding){.button .main}

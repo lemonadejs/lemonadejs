@@ -67,5 +67,5 @@ In the most common applications you can use `lemonade.render` to render elements
 
 &nbsp;
 
-[Next chapter: Native lemonade JavaScript events](/docs/v4/events){.button .main}
+[Next chapter: Native lemonade JavaScript events](/docs/events){.button .main}
 

@@ -1,5 +1,5 @@
-title: Lamp
-keywords: Lemonadejs, two-way binding, frontend, javascript library, javascript plugin, javascript, github, contributions, open-source
+title: Reactive Lamp Example
+keywords: LemonadeJS, two-way data binding, frontend, javascript library, javascript plugin, javascript, github, contributions, open-source
 description: A simple state change example using LemonadeJS.
 
 Lamp

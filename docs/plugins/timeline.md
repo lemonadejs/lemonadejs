@@ -1,10 +1,18 @@
+title: JavaScript Timeline: Versatile JavaScript Timeline Plugin
+description: LemonadeJS Timeline is a framework-agnostic JavaScript plugin perfect can be integrated with Vue, React, and Angular developers. Effortlessly create interactive logs, event highlights, and minimalist roadmaps with extensive customization options. Modify colours, content, and point positions with ease. Featuring automatic monthly event grouping and intuitive navigation, LemonadeJS Timeline simplifies complex data visualization.
+keywords: JavaScript timeline plugin, LemonadeJS Timeline, framework-agnostic JavaScript tool, Vue compatible timeline, React timeline component, Angular timeline integration, customizable timeline plugin, interactive logs JavaScript, roadmap visualization tool, monthly event grouping, data visualization JavaScript, UI component for developers, web development tools, timeline navigation feature.
+
+![JavaScript Timeline](img/javascript-timeline.jpg){style="width: initial; margin: 60px;"}
+
 LemonadeJS Timeline
 ===============
 
-A user-friendly component designed for displaying logs, highlights, and minimalist roadmaps. Easily configure colors, content, and point positions to suit your preferences. This lightweight tool ensures efficient performance, making data presentation a breeze. Simplify your displays with LemonadeJS Timeline.
+`Pico Library`{.jtag .black .framework-images}
 
-Documentation
--------------
+LemonadeJS Timeline is a framework-agnostic JavaScript plugin that offers integration with **Vue**, **React**, and **Angular**. Designed to enable developers to craft logs, event highlights, and minimalist roadmaps easily, it provides extensive customization options. Users have the flexibility to modify colours, content, and point positions and can take advantage of the automatic event grouping by month, complete with navigation functionality.
+
+
+## Documentation
 
 ### Installation
 
@@ -14,136 +22,42 @@ npm install @lemonadejs/timeline
 
 ### Settings
 
-| Attribute | Type | Description |
-| --------- | ---- | ----------- |
-| data | Array<Item> | An array of items to be displayed. Each item should follow the structure defined in the 'Item Details' section. |
-| type? | String | An optional parameter specifying the type of the timeline component. Use "monthly" to enable segregation and display only the items in the current month. If not set or set to a value other than "monthly" the timeline will display all items without monthly segregation. |
-| align? | String | An optional parameter determining the alignment of the timeline content. Accepted values include "left", "right", "top" and "bottom". Defaults to "left". |
-| message? | String | An optional message or label associated with the settings, providing additional context. This message will be displayed when there are no items to show in the timeline. |
-| orderdesc | Boolean | A boolean flag indicating whether the items should be ordered in descending order. If true, the items will be sorted in descending order; otherwise, they will be sorted in ascending order. |
+| Attribute      | Type         | Description                                                                                                        |
+|----------------|--------------|--------------------------------------------------------------------------------------------------------------------|
+| data           | Item[]       | An array of items to be displayed. Each item should follow the structure defined in the 'Item Properties' section. |
+| type?          | string       | There are default and monthly types. The latter will create a navigation per month and group all items.            |
+| align?         | string       | Align the bullet points. Accepted values include "left", "right", "top", and "bottom". `Default:  "left"`.         |
+| message?       | string       | Will show when no data to display                                                                                  |
+| order?         | string       | Accepted values are 'asc' for ascending and 'desc' for descending order. |
+| width? | number | Determines the width of the timeline container. |
+| height? | number | Determines the height of the timeline container. |
 
-### Item Details
+### Item Properties
 
-| Attribute | Type | Description |
-| --------- | ---- | ----------- |
-| date | Date | An date associated with the item, providing chronological information. |
-| title? | String | An optional title for the item, serving as a concise and meaningful identifier. |
-| subtitle? | String | An optional subtitle providing additional information or context related to the item. |
-| description? | String | An optional detailed description of the item, offering comprehensive information or context. |
-| borderColor? | String | An optional parameter specifying the color of the item's border for visual customization. |
-| borderStyle? | String | An optional parameter defining the style of the item's border, such as "solid," "dashed," or "dotted." |
+| Attribute             | Description                                                                    |
+|-----------------------|--------------------------------------------------------------------------------|
+| date?: string         | A date associated with the item, providing chronological information. |
+| title?: string      | Title for the item.                                                            |
+| subtitle?: string     | Sub caption for the item.                                                      |
+| description?: string  | Item description.                                                              |
+| borderColor?: string  | Border color                                                                   |
+| borderStyle?: string  | Define the style of the item's border, such as "solid," "dashed," or "dotted." |
 
 ### Events
 
-| Event | Trigger |
-| ----- | ------- |
-| onupdate? | Called when the items are updated. |
+| Event                  | Trigger                            |
+|------------------------|------------------------------------|
+| onupdate?              | Called when the items are updated. |
 
-### Examples
+## Examples
 
-```html
-<html>
-<script src="https://cdn.jsdelivr.net/npm/lemonadejs/dist/lemonade.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@lemonadejs/timeline/dist/index.min.js"></script>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@lemonadejs/timeline/dist/style.min.css" />
+The JavaScript timeline plugin offers a variety of options for customizing both style and behaviour to suit your project's needs. Below are several examples demonstrating how to use these options.
 
-<div id="root"></div>
+See more examples on https://codesandbox.io/p/sandbox/frosty-babycat-cjcwrk
 
-<script>
-const root = document.getElementById("root")
+### Appearance
 
-Timeline(root, {
-    data: [
-        { title: "Issue Identification", date: new Date(2022, 6, 1) },
-        { title: "Root Cause Analysis", date: new Date(2022, 6, 2) },
-        { title: "Implementation of Solution", date: new Date(2022, 6, 3) },
-    ]
-})
-</script>
-</html>
-```
-```javascript
-import lemonade from 'lemonadejs'
-import Timeline from '@lemonadejs/timeline';
-import '@lemonadejs/timeline/dist/style.css';
-
-
-lemonade.setComponents({ Timeline });
-
-export default function App() {
-    const self = this;
-
-    self.data = [
-        { title: "Issue Identification", date: new Date(2022, 6, 1) },
-        { title: "Root Cause Analysis", date: new Date(2022, 6, 2) },
-        { title: "Implementation of Solution", date: new Date(2022, 6, 3) },
-    ]
-
-    return `<div style="width: 500px; height: 300px;">
-        <Timeline :data="self.data" />
-    </div>`
-}
-```
-```jsx
-import React, { useRef } from 'react';
-import Timeline from '@lemonadejs/timeline/dist/react';
-
-export default function App() {
-    const myRef = useRef();
-
-    const data = [
-        { title: "Issue Identification", date: new Date(2022, 6, 1) },
-        { title: "Root Cause Analysis", date: new Date(2022, 6, 2) },
-        { title: "Implementation of Solution", date: new Date(2022, 6, 3) },
-    ];
-
-    return (
-    <div>
-        <Timeline ref={myRef} data={data}/>
-    </div>
-    );
-}
-```
-<!--
-vue```
-<template>
-    <div style="height: 500px;">
-        <Timeline :data="data" />
-    </div>
-</template>
-
-<script>
-import Timeline from '@lemonadejs/timeline/dist/vue'
-
-export default {
-    name: 'App',
-    components: {
-        Timeline
-    },
-    data() {
-        return {
-            data: [
-                { title: "Issue Identification", date: new Date(2022, 6, 1) },
-                { title: "Root Cause Analysis", date: new Date(2022, 6, 2) },
-                { title: "Implementation of Solution", date: new Date(2022, 6, 3) },
-            ]
-        };
-    },
-}
-</script>
-
-<style>
-</style>
-```
--->
-
-### Overview
-
-The LemonadeJS Timeline offers a pre-built solution designed for showcasing stylish and straightforward data visualizations. It allows customization of each element and provides options to fine-tune user engagement.
-
-### Modifying Appearance and Content
-
-You have the flexibility to position the content as desired, and customizing the colors of the Timeline is a straightforward process.
+The position, border style and colours can be defined using the component's attributes during initialization as below. 
 
 ```html
 <html>
@@ -158,9 +72,24 @@ const root = document.getElementById("root")
 
 Timeline(root, {
     data: [
-        { title: "Issue Identification", date: new Date(2022, 6, 1), borderColor: '#800080' },
-        { title: "Root Cause Analysis", date: new Date(2022, 6, 2), borderColor: '#008080' },
-        { title: "Implementation of Solution", date: new Date(2022, 6, 3), borderColor: '#808000' },
+        {
+            title: "Issue Identification",
+            date: new Date(2022, 6, 1),
+        },
+        {
+            title: "Root Cause Analysis",
+            date: new Date(2022, 6, 2),
+        },
+        {
+            title: "Implementation of Solution",
+            date: new Date(2022, 6, 3),
+            borderColor: '#808000',
+            borderStyle: 'dashed',
+        },
+        {
+            title: "Implementation of Solution",
+            date: new Date(2022, 6, 4),
+        }
     ],
     align: 'left'
 })
@@ -172,21 +101,31 @@ import lemonade from 'lemonadejs'
 import Timeline from '@lemonadejs/timeline';
 import '@lemonadejs/timeline/dist/style.css';
 
-
-lemonade.setComponents({ Timeline });
-
 export default function App() {
     const self = this;
 
     self.data = [
-        { title: "Issue Identification", date: new Date(2022, 6, 1), borderColor: '#800080' },
-        { title: "Root Cause Analysis", date: new Date(2022, 6, 2), borderColor: '#008080' },
-        { title: "Implementation of Solution", date: new Date(2022, 6, 3), borderColor: '#808000' },
-    ]
+        {
+            title: "Issue Identification",
+            date: new Date(2022, 6, 1),
+        },
+        {
+            title: "Root Cause Analysis",
+            date: new Date(2022, 6, 2),
+        },
+        {
+            title: "Implementation of Solution",
+            date: new Date(2022, 6, 3),
+            borderColor: '#808000',
+            borderStyle: 'dashed',
+        },
+        {
+            title: "Implementation of Solution",
+            date: new Date(2022, 6, 4),
+        }
+    ];
 
-    return `<div style="width: 500px; height: 300px;">
-        <Timeline :data="self.data" />
-    </div>`
+    return `<Timeline :data="self.data" align="left" /></div>`
 }
 ```
 ```jsx
@@ -196,25 +135,35 @@ import Timeline from '@lemonadejs/timeline/dist/react';
 export default function App() {
     const myRef = useRef();
 
-    const data = [
-        { title: "Issue Identification", date: new Date(2022, 6, 1), borderColor: '#800080' },
-        { title: "Root Cause Analysis", date: new Date(2022, 6, 2), borderColor: '#008080' },
-        { title: "Implementation of Solution", date: new Date(2022, 6, 3), borderColor: '#808000' },
+    self.data = [
+        {
+            title: "Issue Identification",
+            date: new Date(2022, 6, 1),
+        },
+        {
+            title: "Root Cause Analysis",
+            date: new Date(2022, 6, 2),
+        },
+        {
+            title: "Implementation of Solution",
+            date: new Date(2022, 6, 3),
+            borderColor: '#808000',
+            borderStyle: 'dashed',
+        },
+        {
+            title: "Implementation of Solution",
+            date: new Date(2022, 6, 4),
+        }
     ];
 
-    return (
-    <div>
-        <Timeline ref={myRef} data={data}/>
-    </div>
-    );
+    return (<div>
+        <Timeline ref={myRef} data={data} align="left" />
+    </div>);
 }
 ```
-<!--
-vue```
+```vue
 <template>
-    <div style="height: 500px;">
-        <Timeline :data="data" />
-    </div>
+    <Timeline :data="data" align="left" />
 </template>
 
 <script>
@@ -228,9 +177,24 @@ export default {
     data() {
         return {
             data: [
-                { title: "Issue Identification", date: new Date(2022, 6, 1), borderColor: '#800080' },
-                { title: "Root Cause Analysis", date: new Date(2022, 6, 2), borderColor: '#008080' },
-                { title: "Implementation of Solution", date: new Date(2022, 6, 3), borderColor: '#808000' },
+                {
+                    title: "Issue Identification",
+                    date: new Date(2022, 6, 1),
+                },
+                {
+                    title: "Root Cause Analysis",
+                    date: new Date(2022, 6, 2),
+                },
+                {
+                    title: "Implementation of Solution",
+                    date: new Date(2022, 6, 3),
+                    borderColor: '#808000',
+                    borderStyle: 'dashed',
+                },
+                {
+                    title: "Implementation of Solution",
+                    date: new Date(2022, 6, 4),
+                }
             ]
         };
     },
@@ -240,13 +204,10 @@ export default {
 <style>
 </style>
 ```
--->
 
 ### Timeline position
 
-You have the option to position the timeline in four different ways: left, right, bottom, or top.
-
-Play with this example on [codesandbox](https://codesandbox.io/p/sandbox/frosty-babycat-cjcwrk?file=%2Fsrc%2Findex.js).
+You have the option to position the timeline in four different ways: left, right, bottom, or top. Also, you can change that programatically as example below.
 
 ```html
 <html>
@@ -287,9 +248,6 @@ import lemonade from 'lemonadejs'
 import Timeline from '@lemonadejs/timeline';
 import '@lemonadejs/timeline/dist/style.css';
 
-
-lemonade.setComponents({ Timeline });
-
 export default function App() {
     const self = this;
 
@@ -298,28 +256,26 @@ export default function App() {
         { title: "Root Cause Analysis", date: new Date(2022, 6, 2) },
         { title: "Implementation of Solution", date: new Date(2022, 6, 3) },
     ]
-
-    self.onload = function() {
-        self.dropdown.addEventListener('change', (e) => {
-            self.tml.align = e.target.value
-        })
+    
+    self.align = function(e) {
+        self.ref.align = e.target.value;
     }
 
     return `<div>
-        <label for="dropdown">Choose a position to align:</label>
-        <select id="dropdown" :ref="self.dropdown">
+        <label>Choose a position to align:</label>
+        <select onchange="self.align">
             <option value="left">Left</option>
             <option value="right">Right</option>
             <option value="top">Top</option>
             <option value="bottom">Bottom</option>
         </select>
-        <div style="width: 500px; height: 300px;">
-            <Timeline :data="self.data" :ref="self.tml" />
-        </div>
+        <Timeline :data="self.data" :ref="self.ref" />
     </div>`
 }
 ```
 ```jsx
+// codesandbox: https://codesandbox.io/p/devbox/xenodochial-aj-9rdn66
+
 import React, { useRef } from 'react';
 import Timeline from '@lemonadejs/timeline/dist/react';
 
@@ -333,8 +289,8 @@ export default function App() {
     ];
 
     return (<>
-        <label for="dropdown">Choose a position to align:</label>
-        <select id="dropdown" onChange={(e) => myRef.current.align = e.target.value}>
+        <label>Choose a position to align:</label>
+        <select onChange={(e) => myRef.current.align = e.target.value}>
             <option value="left">Left</option>
             <option value="right">Right</option>
             <option value="top">Top</option>
@@ -346,19 +302,18 @@ export default function App() {
     </>);
 }
 ```
-<!--
-vue```
+```vue
+<!-- codesandbox: https://codesandbox.io/p/devbox/vigorous-wozniak-5dl5rk -->
+
 <template>
-    <label for="dropdown">Choose a position to align:</label>
-    <select id="dropdown" @change="this.$refs.timelineRef.current.align = $event.target.value">
+    <label>Choose a position to align:</label>
+    <select @change="this.$refs.timelineRef.current.align = $event.target.value">
         <option value="left">Left</option>
         <option value="right">Right</option>
         <option value="top">Top</option>
         <option value="bottom">Bottom</option>
     </select>
-    <div style="height: 300px; width: 500px">
-        <Timeline :data="data" ref="timelineRef" />
-    </div>
+    <Timeline :data="data" ref="timelineRef" />
 </template>
 
 <script>
@@ -380,15 +335,12 @@ export default {
     }
 }
 </script>
-
-<style></style>
-
 ```
--->
+
 
 ### Monthly Type
 
-The monthly type will organize the data based on its respective month and year. Enabling this option will display a controller with buttons for navigating to the next and previous months.
+The monthly type will be a monthly navigation control and organize the data based on its respective month and year.
 
 ```html
 <html>
@@ -396,99 +348,85 @@ The monthly type will organize the data based on its respective month and year. 
 <script src="https://cdn.jsdelivr.net/npm/@lemonadejs/timeline/dist/index.min.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@lemonadejs/timeline/dist/style.min.css" />
 
-<div id="root" style="width: 500px; height: 300px;"></div>
+<div id="root"></div>
 
 <script>
 const root = document.getElementById("root")
 
-const today = new Date()
-
-const names = ["Anne", "Louis", "Hector", "Maria", "John", "Carlos", "Grace", "Anthony", "Julia", "Olivia", "Ethan", "Sophia", "Jackson", "Liam", "Isabella", "Emma", "Aiden"];
-
-// Generate random dates
-const data = names.map(name => {
-    const randomDay = Math.ceil(Math.random() * 31);
-    const monthOffset = Math.floor(Math.random() * 3) - 1;
-    const date = new Date(today.getFullYear(), today.getMonth() + monthOffset, randomDay);
-
-    return { title: name, date: date };
-});
+let data = [];
+for (let i = 0; i < 500; i++) {
+    data.push({
+        date: faker.date.between({ from: new Date(2024, 0, 1), to: new Date(2024, 11, 31)}),
+        title: faker.commerce.productName(),
+        subtitle: faker.commerce.productName(),
+        description: faker.commerce.productDescription(),
+    })
+}
 
 const timeline = Timeline(root, {
     data: data,
     type: 'monthly',
-    align: 'left'
+    align: 'left',
+    width: 500,
+    height: 500,
 })
-
 </script>
 </html>
 ```
 ```javascript
 import lemonade from 'lemonadejs'
 import Timeline from '@lemonadejs/timeline';
+import { faker } from '@faker-js/faker';
+
 import '@lemonadejs/timeline/dist/style.css';
-
-
-lemonade.setComponents({ Timeline });
-
-const today = new Date()
-
-const names = ["Anne", "Louis", "Hector", "Maria", "John", "Carlos", "Grace", "Anthony", "Julia", "Olivia", "Ethan", "Sophia", "Jackson", "Liam", "Isabella", "Emma", "Aiden"];
-
-// Generate random dates
-const data = names.map(name => {
-    const randomDay = Math.ceil(Math.random() * 31);
-    const monthOffset = Math.floor(Math.random() * 3) - 1;
-    const date = new Date(today.getFullYear(), today.getMonth() + monthOffset, randomDay);
-
-    return { title: name, date: date };
-});
 
 export default function App() {
     const self = this;
 
-    self.data = data
+    self.data = [];
+    for (let i = 0; i < 10; i++) {
+        self.data.push({
+            date: faker.date.between({ from: new Date(2023, 0, 1), to: new Date(2023, 11, 31)}),
+            title: faker.commerce.productName(),
+            subtitle: faker.commerce.productName(),
+            description: faker.commerce.productDescription(),
+        })
+    }
 
-    return `<div style="width: 500px; height: 300px;">
-            <Timeline :data="self.data" :type="monthly" :ref="self.tml" />
-        </div>`
+    return `<Timeline :data="self.data" :type="monthly" :width="500" :height="300" />`
 }
 ```
 ```jsx
 import React, { useRef } from 'react';
 import Timeline from '@lemonadejs/timeline/dist/react';
+import { faker } from '@faker-js/faker';
 
-const today = new Date()
+import '@lemonadejs/timeline/dist/style.css';
 
-const names = ["Anne", "Louis", "Hector", "Maria", "John", "Carlos", "Grace", "Anthony", "Julia", "Olivia", "Ethan", "Sophia", "Jackson", "Liam", "Isabella", "Emma", "Aiden"];
-
-// Generate random dates
-const data = names.map(name => {
-    const randomDay = Math.ceil(Math.random() * 31);
-    const monthOffset = Math.floor(Math.random() * 3) - 1;
-    const date = new Date(today.getFullYear(), today.getMonth() + monthOffset, randomDay);
-
-    return { title: name, date: date };
-});
+let data = [];
+for (let i = 0; i < 10; i++) {
+    data.push({
+        date: faker.date.between({ from: new Date(2023, 0, 1), to: new Date(2023, 11, 31)}),
+        title: faker.commerce.productName(),
+        subtitle: faker.commerce.productName(),
+        description: faker.commerce.productDescription(),
+    })
+}
 
 export default function App() {
     const myRef = useRef();
 
-    return (<div style={{ height: '300px', width: '500px' }}>
-            <Timeline ref={myRef} data={data} type={"monthly"} />
-        </div>);
+    return (<Timeline ref={myRef} data={data} type="monthly" />);
 }
 ```
-<!--
-vue```
+```vue
 <template>
-    <div style="height: 300px; width: 500px">
-        <Timeline :data="data" type="monthly" ref="timelineRef" />
-    </div>
+   <Timeline :data="data" type="monthly" ref="timelineRef" />
 </template>
 
 <script>
 import Timeline from '@lemonadejs/timeline/dist/vue'
+import { faker } from '@faker-js/faker';
 
 export default {
     name: 'App',
@@ -496,32 +434,25 @@ export default {
         Timeline
     },
     data() {
-        const today = new Date()
-
-        const names = ["Anne", "Louis", "Hector", "Maria", "John", "Carlos", "Grace", "Anthony", "Julia", "Olivia", "Ethan", "Sophia", "Jackson", "Liam", "Isabella", "Emma", "Aiden"];
-
-        // Generate random dates
-        const data = names.map(name => {
-            const randomDay = Math.ceil(Math.random() * 31);
-            const monthOffset = Math.floor(Math.random() * 3) - 1;
-            const date = new Date(today.getFullYear(), today.getMonth() + monthOffset, randomDay);
-
-            return { title: name, date: date };
-        });
-
+        let data = [];
+        for (let i = 0; i < 1000; i++) {
+            data.push({
+                date: faker.date.between({ from: new Date(2023, 0, 1), to: new Date(2023, 11, 31)}),
+                title: faker.commerce.productName(),
+                subtitle: faker.commerce.productName(),
+                description: faker.commerce.productDescription(),
+            })
+        }
         return {
             data: data
         }
     }
 }
 </script>
-
-<style></style>
-
 ```
--->
 
-### Sort
+
+### Sorting
 
 The timeline can be organized either in ascending or descending order based on dates. This feature enhances the user experience by providing flexibility in viewing chronological events.
 
@@ -542,7 +473,6 @@ The timeline can be organized either in ascending or descending order based on d
 const root = document.getElementById("root")
 const dropdown = document.getElementById("dropdown-order")
 
-
 const tml = Timeline(root, {
     data: [
         { title: "Issue Identification", date: new Date(2022, 6, 1) },
@@ -552,7 +482,7 @@ const tml = Timeline(root, {
 })
 
 dropdown.addEventListener('change', (e) => {
-    tml.orderdesc = e.target.value === 'desc'
+    tml.order = e.target.value;
 })
 
 </script>
@@ -563,9 +493,6 @@ import lemonade from 'lemonadejs'
 import Timeline from '@lemonadejs/timeline';
 import '@lemonadejs/timeline/dist/style.css';
 
-
-lemonade.setComponents({ Timeline });
-
 export default function App() {
     const self = this;
 
@@ -575,21 +502,17 @@ export default function App() {
         { title: "Implementation of Solution", date: new Date(2022, 6, 3) },
     ]
 
-    self.onload = function() {
-        self.dropdown.addEventListener('change', (e) => {
-            self.tml.orderdesc = e.target.value === 'desc'
-        })
+    self.sort = function() {
+        self.ref.order = e.target.value
     }
 
     return `<div>
-        <label for="dropdown">Choose a sorting order:</label>
-        <select id="dropdown" :ref="self.dropdown">
+        <label>Choose a sorting order:</label>
+        <select onchange="self.sort">
             <option value="asc">Asc</option>
             <option value="desc">Desc</option>
         </select>
-        <div style="width: 500px; height: 300px;">
-            <Timeline :data="self.data" :ref="self.tml" />
-        </div>
+        <Timeline :data="self.data" :ref="self.ref" />
     </div>`
 }
 ```
@@ -608,7 +531,7 @@ export default function App() {
 
     return (<>
         <label for="dropdown">Choose a sorting order:</label>
-        <select id="dropdown" onChange={(e) => myRef.current.orderdesc = e.target.value === 'desc'}>
+        <select id="dropdown" onChange={(e) => myRef.current.order = e.target.value}>
             <option value="asc">Asc</option>
             <option value="desc">Desc</option>
         </select>
@@ -618,11 +541,10 @@ export default function App() {
     </>);
 }
 ```
-<!--
-vue```
+```vue
 <template>
     <label for="dropdown">Choose a sorting order:</label>
-    <select id="dropdown" @change="this.$refs.timelineRef.current.orderdesc = $event.target.value === 'desc'">
+    <select id="dropdown" @change="this.$refs.timelineRef.current.order = $event.target.value">
         <option value="asc">Asc</option>
         <option value="desc">Desc</option>
     </select>
@@ -650,8 +572,5 @@ export default {
     }
 }
 </script>
-
-<style></style>
-
 ```
--->
+

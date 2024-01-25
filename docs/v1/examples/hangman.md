@@ -1,6 +1,6 @@
-title: Hangman game
-keywords: Lemonadejs, two-way binding, frontend, javascript library, javascript plugin, javascript, github, contributions, open-source
-description: Understand all concepts of LemonadeJS in this advanced example.
+title: JavaScript Hangman Game | LemonadeJS v1
+keywords: LemonadeJS, two-way data binding, frontend, javascript library, javascript plugin, javascript, github, contributions, open-source
+description: Understand all concepts of LemonadeJS in this hangman game implementation.
 
 Hangman game
 ============

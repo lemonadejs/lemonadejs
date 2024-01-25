@@ -1,5 +1,5 @@
-title: Two-way data binding
-keywords: Lemonadejs, two-way binding, frontend, javascript library, javascript plugin, javascript
+title: Two-way data binding | LemonadeJS v1
+keywords: LemonadeJS, two-way data binding, frontend, javascript library, javascript plugin, javascript
 description: Two-way data binding helps the information sharing between the JavaScript and the view and vice versa.
 
 Two way data binding

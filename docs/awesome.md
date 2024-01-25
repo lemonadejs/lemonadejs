@@ -2,7 +2,7 @@ title: Awesome LemonadeJS: Resources, Snippets & Inspiration,
 keywords: LemonadeJS, awesome, resources, code snippets, frontend, javascript library, inspiration,
 description: Dive into a curated collection of LemonadeJS resources, code snippets, and other inspirational material to help you create excellent web applications.
 
-![Reactive library loop](img/drinking-lemonade.png){style="width: initial; max-height: 480px; margin: 60px;"}
+![Reactive library loop](img/drinking-lemonade.jpg){style="width:initial; margin: 60px;"}
 
 # Awesome Resources
 Unlock the full potential of your web applications with our handpicked selection of LemonadeJS resources. This guide is an indispensable tool for beginners and seasoned developers seeking to enhance their frontend development skills with the LemonadeJS library. Delve into various code snippets, tutorials, and inspirational examples that showcase the power and versatility of LemonadeJS.

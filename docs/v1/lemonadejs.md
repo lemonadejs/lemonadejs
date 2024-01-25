@@ -52,10 +52,10 @@ Or download from our [Github Official](http://github.com/paulhodel/jexcel "The j
   
   
 
-Create amazing online spreasheets
+Create amazing online spreadsheets
 ---------------------------------
 
-A example how to embed a simple javascript spreadsheet in your application. You can check out for more [examples](/jexcel/v4/examples "Examples") here.
+A example how to embed a simple javascript spreadsheet in your application. You can check out for more [examples](/jspreadsheet/v4/examples "Examples") here.
   
 
 ### Spreadsheet source code example

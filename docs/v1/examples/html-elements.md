@@ -1,3 +1,7 @@
+title: Reactive HTML forms
+keywords: LemonadeJS, two-way data binding, frontend, javascript library, javascript plugin, javascript, github, contributions, open-source
+description: A simple example of a reactive HTML form using LemonadeJS.
+
 Two way binding
 ===============
 

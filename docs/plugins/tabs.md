@@ -1,4 +1,8 @@
-JavaScript Tabs
+title: LemonadeJS Tabs: Versatile and Dynamic JavaScript Component for Vue, React, Angular
+description: Explore the capabilities of LemonadeJS Tabs, a versatile and dynamic component designed to facilitate the organization and presentation of distinct content sections within a minimalist tabbed interface. This JavaScript component seamlessly integrates with Vue, React, and Angular, offering an intuitive solution to enhance content navigation and user experience.
+keywords: LemonadeJS Tabs, versatile JavaScript component, dynamic content organization, minimalist tabbed interface, Vue compatible, React integration, Angular tabs, intuitive navigation, user-friendly interface, optimal performance UI component, web development tools, UI component for developers.
+
+LemonadeJS Tabs
 ===============
 
 Introducing the LemonadeJS JavaScript Tabs, a versatile and dynamic component designed to facilitate the organization and presentation of distinct content sections within a minimalist tabbed interface.  
@@ -6,8 +10,6 @@ Introducing the LemonadeJS JavaScript Tabs, a versatile and dynamic component de
 
 Documentation
 -------------
-
-  
 
 ### Installation
 
@@ -17,11 +19,20 @@ npm install @lemonadejs/tabs
 
 ### Settings
 
-| Attribute | Type | Description |
-| --- | --- | --- |
-| data? | Array | An optional alternative method to provide the title and content that will serve as the basis for rendering the tabs. |
-| selected? | Number | The index of the initially selected tab. Starts from 0. |
-position? | String | The position of the tabs bar within the parent element. Use 'center' to center-align the tabs. |
+| Property | Type | Description |
+| -------- | ---- | ----------- |
+| selected? | number | The index of the initially selected tab. Starts from 0. |
+| position? | string | The position of the tabs bar within the parent element. Use 'center' to center-align the tabs. |
+| data? | tabItem[] | An optional alternative method to provide the title and content that will serve as the basis for rendering the tabs. See more about the `tabItem` object in the Tab Item section below. |
+| round? | boolean | Dictates whether the tab style will feature rounded corners. |
+| onopen? | function | When a new tabs is opened. |
+
+#### Tab Item
+
+| Property | Description |
+| -------- | ----------- |
+| title    | The title of the tab, serving as the label displayed on the tab options. |
+| content  | The HTML content intended for this specific tab. |
 
 ### Useful Notes
 
@@ -47,9 +58,7 @@ How to utilize Tabs in simple implementations: This example demonstrates the dec
 </div>
 
 <script>
-const root = document.getElementById("root");
-
-Tabs(root, {
+Tabs(document.getElementById("root"), {
   selected: 0
 });
 </script>
@@ -59,8 +68,6 @@ Tabs(root, {
 import lemonade from 'lemonadejs'
 import Tabs from '@lemonadejs/tabs';
 import '@lemonadejs/tabs/dist/style.css';
-
-lemonade.setComponents({ Tabs });
 
 export default function App() {
     const self = this;
@@ -74,27 +81,40 @@ export default function App() {
 }
 ```
 ```jsx
-import React, { useRef, useEffect } from "react";
-import Tabs from "@lemonadejs/tabs";
+import React, { useRef } from "react";
+import Tabs from "@lemonadejs/tabs/dist/react";
 import "@lemonadejs/tabs/dist/style.css";
 
-export default function App() {
-    const wrapperRef = useRef(null);
-    const tabsRef = useRef(null);
-  
-    useEffect(() => {
-        if (!tabsRef.current) {
-            tabsRef.current = Tabs(wrapperRef.current, {
-                selected: 0
-            });
-        }
-    }, []);
-  
-    return <div ref={wrapperRef}>
+export default function Component() {
+    const component = useRef();
+
+    return (<div>
+        <Tabs ref={component}>
+            <div title={"Tab 1"}>Content of the first tab</div>
+            <div title={"Tab 2"}>Content of the second tab</div>
+        </Tabs>
+    </div>)
+}
+```
+```vue
+<template>
+    <Tabs ref="component">
         <div title="Tab 1">Content of the first tab</div>
         <div title="Tab 2">Content of the second tab</div>
-    </div>;
-}
+    </Tabs>
+</template>
+
+<script>
+import Tabs from '@lemonadejs/tabs/dist/vue';
+import '@lemonadejs/tabs/dist/style.css';
+
+export default {
+    name: 'App',
+    components: {
+        Tabs,
+    },
+};
+</script>
 ```
 
 ### Data property
@@ -112,42 +132,45 @@ This example showcases the approach with the data property.
 <input id="bttn-select" type="button" value="Select Wednesday" />
 
 <script>
-const root = document.getElementById("root");
-const button = document.getElementById("bttn-select");
-
-
-const data = [{
-    title: "Monday", content: `<ul>
+const data = [
+    {
+        title: "Monday",
+        content: `<ul>
             <li>09:00 AM - 10:00 AM: Keynote Speech</li>
             <li>10:30 AM - 12:00 PM: Panel Discussion</li>
             <li>12:00 PM - 01:30 PM: Lunch Break</li>
             <li>01:30 PM - 03:00 PM: Workshop</li>
             <li>03:30 PM - 05:00 PM: Networking Session</li>
         </ul>`
-},{
-    title: "Tuesday", content: `<ul>
+    },
+    {
+        title: "Tuesday",
+        content: `<ul>
             <li>09:30 AM - 10:30 AM: Keynote Speech</li>
             <li>11:00 AM - 12:30 PM: Workshop</li>
             <li>12:30 PM - 01:30 PM: Lunch Break</li>
             <li>02:00 PM - 03:30 PM: Breakout Sessions</li>
             <li>04:00 PM - 05:30 PM: Fireside Chat</li>
         </ul>`
-},{
-    title: "Wednesday", content: `<ul>
+    },
+    {
+        title: "Wednesday",
+        content: `<ul>
             <li>10:00 AM - 11:30 AM: Workshop</li>
             <li>12:00 PM - 01:30 PM: Lunch Break</li>
             <li>02:00 PM - 03:30 PM: Case Study Presentations</li>
             <li>04:00 PM - 05:00 PM: Closing Ceremony and Awards</li>
         </ul>`
-}]
+    }
+];
 
-const component = Tabs(root, {
+const component = Tabs(document.getElementById("root"), {
     data: data,
     selected: 0
 });
 
-button.addEventListener("click", () => {
-    component.selected = 2
+document.getElementById("bttn-select").addEventListener("click", () => {
+    component.selected = 2;
 })
 </script>
 </html>
@@ -157,92 +180,158 @@ import lemonade from 'lemonadejs'
 import Tabs from '@lemonadejs/tabs';
 import '@lemonadejs/tabs/dist/style.css';
 
-lemonade.setComponents({ Tabs });
-
 export default function App() {
     const self = this;
 
-    self.data = [{
-        title: "Monday", content: `<ul>
+    self.data = [
+        {
+            title: "Monday",
+            content: `<ul>
                 <li>09:00 AM - 10:00 AM: Keynote Speech</li>
                 <li>10:30 AM - 12:00 PM: Panel Discussion</li>
                 <li>12:00 PM - 01:30 PM: Lunch Break</li>
                 <li>01:30 PM - 03:00 PM: Workshop</li>
                 <li>03:30 PM - 05:00 PM: Networking Session</li>
             </ul>`
-    },{
-        title: "Tuesday", content: `<ul>
+        },
+        {
+            title: "Tuesday",
+            content: `<ul>
                 <li>09:30 AM - 10:30 AM: Keynote Speech</li>
                 <li>11:00 AM - 12:30 PM: Workshop</li>
                 <li>12:30 PM - 01:30 PM: Lunch Break</li>
                 <li>02:00 PM - 03:30 PM: Breakout Sessions</li>
                 <li>04:00 PM - 05:30 PM: Fireside Chat</li>
             </ul>`
-    },{
-        title: "Wednesday", content: `<ul>
+        },
+        {
+            title: "Wednesday",
+            content: `<ul>
                 <li>10:00 AM - 11:30 AM: Workshop</li>
                 <li>12:00 PM - 01:30 PM: Lunch Break</li>
                 <li>02:00 PM - 03:30 PM: Case Study Presentations</li>
                 <li>04:00 PM - 05:00 PM: Closing Ceremony and Awards</li>
             </ul>`
-    }]
+        }
+    ];
+
+    self.goToWednesday = function () {
+        self.tabsRef.selected = 2;
+    }
 
     return `<>
-            <Tabs :selected="0" :data="self.data" :ref="self.tabsRef"></Tabs>
-            <button onclick="self.tabsRef.selected = 2">Go To Wednesday</button>
-        </>`
+        <Tabs :selected="0" :data="self.data" :ref="self.tabsRef"></Tabs>
+        <button onclick="self.goToWednesday">Go To Wednesday</button>
+    </>`
 }
 ```
 ```jsx
-import React, { useRef, useEffect } from "react";
-import Tabs from "@lemonadejs/tabs";
+import React, { useRef } from "react";
+import Tabs from "@lemonadejs/tabs/dist/react";
 import "@lemonadejs/tabs/dist/style.css";
 
-const data = [{
-    title: "Monday", content: `<ul>
+const data = [
+    {
+        title: "Monday",
+        content: `<ul>
             <li>09:00 AM - 10:00 AM: Keynote Speech</li>
             <li>10:30 AM - 12:00 PM: Panel Discussion</li>
             <li>12:00 PM - 01:30 PM: Lunch Break</li>
             <li>01:30 PM - 03:00 PM: Workshop</li>
             <li>03:30 PM - 05:00 PM: Networking Session</li>
         </ul>`
-},{
-    title: "Tuesday", content: `<ul>
+    },
+    {
+        title: "Tuesday",
+        content: `<ul>
             <li>09:30 AM - 10:30 AM: Keynote Speech</li>
             <li>11:00 AM - 12:30 PM: Workshop</li>
             <li>12:30 PM - 01:30 PM: Lunch Break</li>
             <li>02:00 PM - 03:30 PM: Breakout Sessions</li>
             <li>04:00 PM - 05:30 PM: Fireside Chat</li>
         </ul>`
-},{
-    title: "Wednesday", content: `<ul>
+    },
+    {
+        title: "Wednesday",
+        content: `<ul>
             <li>10:00 AM - 11:30 AM: Workshop</li>
             <li>12:00 PM - 01:30 PM: Lunch Break</li>
             <li>02:00 PM - 03:30 PM: Case Study Presentations</li>
             <li>04:00 PM - 05:00 PM: Closing Ceremony and Awards</li>
         </ul>`
-}]
+    }
+];
 
 export default function App() {
-    const wrapperRef = useRef(null);
-    const tabsRef = useRef(null);
-  
-    useEffect(() => {
-        if (!tabsRef.current) {
-            tabsRef.current = Tabs(wrapperRef.current, {
-                selected: 0,
-                data: data
-            });
-        }
-    }, []);
+    const component = useRef();
 
-    const handleClick = () => {
-        tabsRef.current.selected = 2
+    const goToWednesday = () => {
+        component.current.selected = 2;
     }
   
     return <>
-        <div ref={wrapperRef}></div>
-        <button onClick={() => handleClick()}>Go To Wednesday</button>
+        <Tabs ref={component} data={data} />
+        <button onClick={() => goToWednesday()}>Go To Wednesday</button>
     </>;
 }
+```
+```vue
+<template>
+    <Tabs ref="component" :data="data" />
+    <button @click="goToWednesday">Go To Wednesday</button>
+</template>
+
+<script>
+import Tabs from '@lemonadejs/tabs/dist/vue';
+import '@lemonadejs/tabs/dist/style.css';
+
+export default {
+    name: 'App',
+    components: {
+        Tabs,
+    },
+    data() {
+        const data = [
+            {
+                title: "Monday",
+                content: `<ul>
+                    <li>09:00 AM - 10:00 AM: Keynote Speech</li>
+                    <li>10:30 AM - 12:00 PM: Panel Discussion</li>
+                    <li>12:00 PM - 01:30 PM: Lunch Break</li>
+                    <li>01:30 PM - 03:00 PM: Workshop</li>
+                    <li>03:30 PM - 05:00 PM: Networking Session</li>
+                </ul>`
+            },
+            {
+                title: "Tuesday",
+                content: `<ul>
+                    <li>09:30 AM - 10:30 AM: Keynote Speech</li>
+                    <li>11:00 AM - 12:30 PM: Workshop</li>
+                    <li>12:30 PM - 01:30 PM: Lunch Break</li>
+                    <li>02:00 PM - 03:30 PM: Breakout Sessions</li>
+                    <li>04:00 PM - 05:30 PM: Fireside Chat</li>
+                </ul>`
+            },
+            {
+                title: "Wednesday",
+                content: `<ul>
+                    <li>10:00 AM - 11:30 AM: Workshop</li>
+                    <li>12:00 PM - 01:30 PM: Lunch Break</li>
+                    <li>02:00 PM - 03:30 PM: Case Study Presentations</li>
+                    <li>04:00 PM - 05:00 PM: Closing Ceremony and Awards</li>
+                </ul>`
+            }
+        ]
+
+        return {
+            data
+        }
+    },
+    methods: {
+        goToWednesday: function () {
+            this.$refs.component.current.selected = 2;
+        }
+    }
+};
+</script>
 ```

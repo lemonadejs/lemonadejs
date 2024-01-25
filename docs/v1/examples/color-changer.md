@@ -1,5 +1,5 @@
-title: Color picker
-keywords: Lemonadejs, two-way binding, frontend, javascript library, javascript plugin, javascript, github, contributions, open-source
+title: JavaScript Color Picker Example
+keywords: LemonadeJS, two-way data binding, frontend, javascript library, javascript plugin, javascript, github, contributions, open-source
 description: A simple color picker example with lemonadeJS.
 
 Color Changer

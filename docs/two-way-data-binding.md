@@ -1,8 +1,8 @@
-title: Two-Way Data Binding with LemonadeJS,
-keywords: LemonadeJS, two-way binding, frontend, javascript library, reactive, react, Vue, Angular,
-description: Achieve real-time synchronization between JavaScript and views using LemonadeJS's efficient two-way data binding.
+title: Real-Time Two-Way Data Binding with LemonadeJS
+keywords: LemonadeJS, two-way data binding, frontend, javascript library, reactive, React, VueJS, AngularJS,
+description: Achieve real-time synchronization between JavaScript and views using LemonadeJS for two-way data binding.
 
-![Two-way data binding](img/learning-two-way-data-binding.png)
+![Two-way data binding](img/learning-two-way-data-binding.jpg)
 
 Two-way data binding
 ====================
@@ -200,13 +200,12 @@ lemonade.render(Editable, document.getElementById('root'));
 
 [See this example on codesandbox](hhttps://codesandbox.io/s/two-way-data-binding-with-content-editable-div-7nryuj)
 
-  
-  
 
-## Two-way data binding in custom elements
 
-The :bind attributed to custom elements binds with the component `self` attribute value.  
-  
+
+## Two-Way Data Binding in Custom Elements
+
+The `:bind` directive in LemonadeJS enables two-way data binding for custom elements. It links an attribute of the parent element to the `self.value` of the custom component. Thus, any changes to `self.value` are automatically reflected in the bound parent attribute, ensuring synchronized values.
 
 ### Basic implementation
 
@@ -291,4 +290,4 @@ The tags plugin component implements val() to integrate with LemonadeJS :bind.
 > In the example above, you might notice the usage of another of the native lemonade special HTML attribute: `:ready`. That method call happens when the element is created and appended to the DOM.  
 {.green}  
 
-[Next chapter: Dealing with arrays and loops](/docs/v4/arrays){.button .main}
+[Next chapter: Dealing with arrays and loops](/docs/arrays){.button .main}

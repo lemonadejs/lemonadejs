@@ -1,11 +1,11 @@
-title: JavaScript color picker,
+title: JavaScript color picker example,
 keywords: LemonadeJS, two-way binding, frontend, javascript library, javascript plugin, javascript, reactive, react, color picker,
-description: How to create a reactive JavaScript color picker with LemonadeJS.
+description: A simple implementation of a reactive JavaScript color picker using LemonadeJS. 
 
 Color picker
 ============
 
-How to create a reactive JavaScript color picker using LemonadeJS.  
+How to create a reactive JavaScript color picker using LemonadeJS.
   
 
 Example

@@ -1,8 +1,6 @@
-title: Contribute to LemonadeJS: Enhancing Reactive Frontend Development
+title: Contribute to LemonadeJS
 keywords: LemonadeJS, contributions, collaboration, open-source, frontend, JavaScript library, developers, GitHub
 description: Join the LemonadeJS community to contribute to a growing reactive frontend JavaScript library. Enhance your development with LemonadeJS's open-source ecosystem.
-
-![Open source community](img/contributing-with-lemonadejs.png)
 
 Contributions
 =============

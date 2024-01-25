@@ -1,0 +1,1 @@
+Style object to control reactivity on inline style

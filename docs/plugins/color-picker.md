@@ -1,11 +1,18 @@
-title: JavaScript color picker
-keywords: LemonadeJS, two-way binding, frontend, javascript library, javascript plugin, javascript, reactive, react, color picker
-description: How to create a reactive JavaScript color picker with LemonadeJS.
+title: JavaScript Color Picker
+keywords: LemonadeJS, Two-Way Data Binding, Frontend, JavaScript Library, JavaScript Plugin, JavaScript, Reactive, React, Color Picker
+description: LemonadeJS introduces a versatile and responsive JavaScript color picker. This reactive component simplifies the color selection process in web applications.
 
-LemonadeJS Color picker
+
+![JavaScript Color Picker](img/javascript-color-picker.jpg){style="margin: 40px; width: initial;"}
+
+JavaScript Color picker
 =======================
 
-The LemonadeJS JavaScript Color is a responsive and reactive component that simplifies color selection. It features two sections: a personalized palette and a pre-defined gradient of colors. With a customizable button, this component seamlessly integrates into your application, allowing users to pick colors effortlessly.  
+`JavaScript Components`{.jtag .black .framework-images}
+
+`Component size: 2.59KB gzipped`{.small}
+
+The LemonadeJS JavaScript Color Picker is a lightweight, responsive, and reactive component for web applications. It features two primary elements: a customizable personal palette and a pre-defined color gradient. Additionally, it supports various events and offers seamless integration with frameworks like React, Vue, and Angular.  
   
 
 Documentation
@@ -19,34 +26,35 @@ npm install @lemonadejs/color
 
 ### Settings
 
-| Attribute          | Description                                                               |
-|--------------------|---------------------------------------------------------------------------|
-| palette?: string[] | A matrix containing hexadecimal color values. There is a default palette. |
-| closed?: boolean   | Controls the open and close state of the modal.                           |
-| type?: 'default' | The type of element that will toggle the color picker modal. |
-| value?: string     | The value of the color that is currently selected.                        |
+| Attribute          | Description                                                                                       |
+|--------------------|---------------------------------------------------------------------------------------------------|
+| palette?: string[] | A matrix containing hexadecimal color values. There is a default palette.                         |
+| closed?: boolean   | Controls the open and close state of the color picker modal.                                      |
+| type?:string       | The type of element that will toggle the color picker modal. Options: 'input', 'inline' or empty. |
+| value?: string     | The value of the color that is currently selected.                                                |
 
 ### Events
 
-| Event                               | Description |
-|-------------------------------------| --- |
-| onopen?: () => void                 | Called when modal opens. |
-| onclose?: () => void                | Called when modal closes. |
-| onupdate?: (instance.value) => void | Called when value updates. |
+| Event                                             | Description                |
+|---------------------------------------------------|----------------------------|
+| onopen?: (self: object) => void                   | Called when modal opens.   |
+| onclose?: (self: object) => void                  | Called when modal closes.  |
+| onchange?: (self: object, string: value) => void  | Called when value changes. |
 
 Examples
 --------
 
-### Quick example
+### Inline usage
 
-Simple implementation of Color Component.  
-[See this example on codesandbox](https://codesandbox.io/s/flamboyant-night-6fgj2c?file=/index.html)
+The `type: inline` configuration allows for embedding the color picker directly within a webpage or application. Utilizing this setup, user interactions with the color picker can trigger actions through events, facilitating a more interactive and integrated experience.
 
 ```html
 <html>
 <script src="https://cdn.jsdelivr.net/npm/lemonadejs/dist/lemonade.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@lemonadejs/color/dist/index.min.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@lemonadejs/color/dist/style.min.css" />
+<script src="https://cdn.jsdelivr.net/npm/@lemonadejs/tabs/dist/index.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@lemonadejs/tabs/dist/style.min.css" />
 
 <div id="root"></div>
 
@@ -65,12 +73,13 @@ import '@lemonadejs/color/dist/style.css';
 function App() {
     let self = this;
 
-    return `<div><Color type="inline" /><div/>`;
+    return `<><Color type="inline" /></>`;
 }
 ```
 ```jsx
 import React, { useRef } from 'react';
 import Color from '@lemonadejs/color/dist/react';
+import '@lemonadejs/color/dist/style.css';
 
 export default function App() {
     const myRef = useRef();
@@ -80,13 +89,14 @@ export default function App() {
     </>);
 }
 ```
-<!-- ```vue
+```vue
 <template>
-        <Color type="inline" />
+    <Color type="inline" />
 </template>
 
 <script>
-import Color from '@lemonadejs/color/dist/vue'
+import Color from '@lemonadejs/color/dist/vue';
+import '@lemonadejs/color/dist/style.css';
 
 export default {
     name: 'App',
@@ -95,21 +105,20 @@ export default {
     }
 }
 </script>
-
-<style></style>
 ```
--->
 
-### Customization
+### Custom Color Palette
 
-This example showcases the use of a custom element to toggle the color picker.  
-[See this example on codesandbox](https://codesandbox.io/s/boring-drake-7xxwvq?file=/index.html)
+The following example illustrates how to incorporate the `onchange` event and customize the palette. It also features the default modal type, enabling users to open a modal for color selection from the color picker.
 
 ```html
+<!-- codesandbox: https://codesandbox.io/p/sandbox/gifted-kowalevski-d6xyjy -->
 <html>
 <script src="https://cdn.jsdelivr.net/npm/lemonadejs/dist/lemonade.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@lemonadejs/color/dist/index.min.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@lemonadejs/color/dist/style.css"/>
+<script src="https://cdn.jsdelivr.net/npm/@lemonadejs/tabs/dist/index.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@lemonadejs/tabs/dist/style.css"/>
 
 <input type="button" id="btn" value="Open"></div>
 
@@ -120,7 +129,7 @@ const root = document.getElementById("root");
 const button = document.getElementById("btn");
 
 const component = Color(root, {
-    onupdate: function (s, color) {
+    onchange: function (s, color) {
         button.style.backgroundColor = color;
     },
     palette: [
@@ -138,6 +147,7 @@ button.addEventListener('click', () => {
 </html>
 ```
 ```javascript
+// codesandbox: https://codesandbox.io/p/sandbox/lemonadejs-reactive-app-forked-s2rsll?file=%2Fsrc%2FApp.js
 import lemonade from 'lemonadejs'
 import Color from '@lemonadejs/color';
 import '@lemonadejs/color/dist/style.css';
@@ -160,13 +170,14 @@ function App() {
 
     return `<>
         <input type="button" onclick="self.component.open"></div>
-        <Color :closed="true" :onupdate="self.handleUpdate" :palette="self.palette" :ref="self.component" />
+        <Color :closed="true" :onchange="self.handleUpdate" :palette="self.palette" :ref="self.component" />
     </>`
 }
 ```
 ```jsx
 import React, { useRef } from 'react';
 import Color from '@lemonadejs/color/dist/react';
+import '@lemonadejs/color/dist/style.css';
 
 const palette = [
     ["#001969", "#233178", "#394a87", "#4d6396", "#607ea4", "#7599b3"],
@@ -185,22 +196,23 @@ export default function App() {
             <Color
                 palette={palette}
                 ref={colorRef}
-                onupdate={(s, color) => buttonRef.current.style.backgroundColor = color}
+                onchange={(s, color) => buttonRef.current.style.backgroundColor = color}
             />
         </div>
     </>);
 }
 ```
-<!-- ```vue
+```vue
 <template>
     <div>
         <button @click="this.$refs.colorRef.current.open()" ref="buttonRef">Open</button>
-        <Color :palette="palette" :onupdate="updateColor" ref="colorRef" />
+        <Color :palette="palette" :onchange="updateColor" ref="colorRef" />
     </div>
 </template>
 
 <script>
-import Color from '@lemonadejs/color/dist/vue'
+import Color from '@lemonadejs/color/dist/vue';
+import '@lemonadejs/color/dist/style.css';
 
 export default {
     name: 'App',
@@ -226,4 +238,4 @@ export default {
 </script>
 
 <style></style>
-``` -->
+```

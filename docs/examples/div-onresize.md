@@ -1,6 +1,6 @@
-title: DIV onresize,
-keywords: LemonadeJS, two-way data binding, frontend, javascript library, javascript plugin, javascript, reactive, react, examples,
-description: Learn how to implement a custom DIV onresize event using LemonadeJS
+title: DIV onresize
+keywords: LemonadeJS, two-way data binding, frontend, javascript library, javascript plugin, javascript, reactive, react, examples
+description: Learn how to implement a custom DIV onresize event using LemonadeJS and JavaScript Vanilla.
 
 DIV onresize
 ============
@@ -103,17 +103,14 @@ export default function Width() {
 A pure vanilla implementation
 -----------------------------
 
-Although this site is dedicated to LemonadeJS, for education purposes, we present you with a pure javascript vanilla implementation using onmousemove.  
-  
+Although this site is dedicated to LemonadeJS, for education purposes, we present you with a pure javascript vanilla implementation as follow.  
 
-Pure vanilla implementation
-
-  
 [DIV onresize example on jsfiddle](https://jsfiddle.net/lemonadejs/ugj7tc0f/)  
   
 
 ### Source code
 
+{.ignore}
 ```html
 <html>
 <script>

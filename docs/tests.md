@@ -2,6 +2,8 @@ title: Testing LemonadeJS Components
 keywords: LemonadeJS, testing, frontend, JavaScript library, reactive components, automation
 description: How to create and automate tests for your LemonadeJS components, ensuring high-quality reliable web applications.
 
+![Getting started with LemonadeJS](img/lemonadejs-bike.jpg){style="width: initial;"}
+
 Tests
 =====
 

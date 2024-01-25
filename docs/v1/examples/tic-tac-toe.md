@@ -1,6 +1,6 @@
-title: Tic tac toe game
-keywords: LemonadeJS, two-way binding, frontend, javascript library, javascript plugin, javascript, reactive, react, examples
-description: The reactive javascript tic tac toe game implementation using LemonadeJS.
+title: JavaScript Tic Tac Toe Game
+keywords: LemonadeJS, two-way data binding, frontend, javascript library, javascript plugin, javascript, reactive, react, examples
+description: The reactive javascript tic-tac-toe game implementation using LemonadeJS.
 
 
 Tic Tac Toe

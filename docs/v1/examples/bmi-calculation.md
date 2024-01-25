@@ -1,5 +1,5 @@
-title: Calculations from a HTML form
-keywords: Lemonadejs, two-way binding, frontend, javascript library, javascript plugin, javascript, github, contributions, open-source
+title: Simple BMI Calculation Form with LemonadeJS
+keywords: LemonadeJS, two-way data binding, frontend, javascript library, javascript plugin, javascript, github, contributions, open-source
 description: A simple example using LemonadeJS to create a calculation from a user input.
 
 BMI Calculation

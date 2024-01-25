@@ -1,4 +1,8 @@
-![Download LemonadeJS](img/download-lemonadejs.png)
+title: Download LemonadeJS
+keywords: LemonadeJS, two-way binding, frontend, javascript library, Reactive, React, Vue, Angular, micro library
+description: Find out more about the different ways to install or download LemonadeJS.
+
+![Download LemonadeJS](img/download-lemonadejs.jpg)
 
 Download
 ========
@@ -21,6 +25,7 @@ npm install lemonadejs
 
 CDN
 ---
+{.ignore}
 ```html
 <script src="https://cdn.jsdelivr.net/npm/lemonadejs@4/dist/lemonade.min.js"></script>
 ```
@@ -28,6 +33,7 @@ CDN
 
 Website
 -------
+{.ignore}
 ```html
 <script src="https://lemonadejs.net/v4/lemonade.js"></script>
 ```
@@ -40,3 +46,4 @@ Download the library
 - [Version 2](https://lemonadejs.net/v2/lemonade.zip)
 - [Version 3](https://lemonadejs.net/v4/lemonade.zip)
 - [Version 4](https://lemonadejs.net/v4/lemonade.zip)
+

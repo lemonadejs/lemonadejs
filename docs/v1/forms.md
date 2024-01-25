@@ -1,5 +1,5 @@
-title: HTML forms
-keywords: Lemonadejs, two-way binding, frontend, javascript library, javascript plugin, javascript, HTML forms
+title: Reactive HTML forms with LemonadeJS v1
+keywords: LemonadeJS, two-way binding, frontend, javascript library, javascript plugin, javascript, HTML forms
 description: How to create amazing interactive HTML forms using LemonadeJS.
 
 ![Two way data binding with LemonadeJS](img/forms.png)

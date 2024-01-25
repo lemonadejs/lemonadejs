@@ -1,8 +1,8 @@
-title: Dynamic Lists with LemonadeJS - Arrays and Loops Simplified
+title: JavaScript Components and Plugins
 keywords: LemonadeJS, two-way data binding, frontend, javascript library, javascript plugin, javascript, reactive, react, lists, loops, arrays, plugins
-description: Explore the LemonadeJS List component, a powerful library for creating dynamic elements with search and pagination from arrays of objects
+description: Find out several useful JavaScript reactive components common to any web application.
 
-![LemonadeJS Plugins](img/library.svg)
+![JavaScript Plugins](img/library.jpg)
 
 LemonadeJS Plugins
 ====================
@@ -37,8 +37,15 @@ Components
 
 The LemonadeJS component library includes other JavaScript plugins and components for common requirements.
 
-*   [Data Grid](/docs/plugins/data-grid): A micro (5KBytes) JavaScript Data Grid with search, pagination, sorting.
-*   [Image Cropper](/docs/plugins/image-cropper): A linkedin-style photo cropper.
+* [Data grid](/docs/plugins/data-grid) : A micro (5KBytes) JavaScript Data Grid with search, pagination, sorting.
+* [JavaScript Modal](/docs/plugins/modal) : Create advance resizable, draggable, closable or minimizable modals. 
+* [JavaScript Calendar](/docs/plugins/calendar) : JavaScript date picker with range selection and much more.
+* [JavaScript Dropdown](/docs/plugins/dropdown) : Highly performance autocomplete dropdown with groups, images and much more.
+* [Color picker](/docs/plugins/color-picker) : Simple javascript color picker.
+* [Timeline](/docs/plugins/timeline) : JavaScript timeline with grouping and other other customizable visual attributes.  
+* [Context Menu](/docs/plugins/context-menu) : JavaScript responsive context menu.
+* [Tabs](/docs/plugins/tabs) : Simple javascript tabs component.
+* [Image cropper](/docs/plugins/image-cropper) : A linkedin-style photo cropper.
 
 
 

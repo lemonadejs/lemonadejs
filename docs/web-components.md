@@ -36,7 +36,7 @@ class Hello extends HTMLElement {
         const self = this;
         return `<>
             <p>{{self.title}}</p>
-            <input type="button" value="setTitle()" onclick="self.change" />
+            <input type="button" value="setTitle()" onclick="self.change()" />
         </>`;
     }
 

@@ -1,8 +1,6 @@
-title: LemonadeJS Sugar for Global State Management in Web Apps
+title: Global Application State Management
 keywords: LemonadeJS, Sugar, Global State Management, Redux-Inspired, Frontend Development, JavaScript, Shared State Container
 description: Simplify global state management in your web applications with LemonadeJS Sugar. This feature of LemonadeJS provides a centralized state container for managing and sharing state across components, delivering a reactive and cohesive application experience.
-
-![Global communication between components](img/sugar.svg){style="max-height: 200px"}
 
 Sugar (Super global artifacts)
 ==============================

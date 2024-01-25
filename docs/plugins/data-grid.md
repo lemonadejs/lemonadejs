@@ -1,14 +1,18 @@
 title: JavaScript Data Grid
-keywords: LemonadeJS, two-way binding, frontend, javascript library, javascript plugin, javascript, reactive, react, plugins
+keywords: LemonadeJS, two-way data binding, frontend, javascript library, javascript plugin, javascript, reactive, react, plugins
 description: A micro reactive javascript data grid with edition, search and pagination using LemonadeJS.
 
-JavaScript Data Grid
+![JavaScript Data Grid](img/javascript-data-grid.jpg){style="width: initial; margin: 60px;"}
+
+LemonadeJS Data Grid
 ====================
 
-The LemonadeJS data grid is a lightweight (5KBytes) and highly customizable JavaScript component that provides a free (MIT) solution for rendering data in rows and columns. It offers features like search, filter, pagination, and in-cell editing, making it ideal for building complex interfaces. With its lightweight design and virtual scrolling, the data grid ensures fast and efficient performance, even with large datasets. Its flexibility allows easy configuration to suit specific requirements, providing developers with a powerful tool for creating scalable and interactive user interfaces.  
+`JavaScript Components`{.jtag .black .framework-images}
+
+The LemonadeJS JavaScript Data Grid is a lightweight (5KBytes) and highly customizable JavaScript component that provides a free (MIT) solution for rendering data in rows and columns. It offers features like search, filter, pagination, and in-cell editing, making it ideal for building complex interfaces. With its lightweight design and virtual scrolling, the data grid ensures fast and efficient performance, even with large datasets. Its flexibility allows easy configuration to suit specific requirements, providing developers with a powerful tool for creating scalable and interactive user interfaces.  
 
 > You can utilize this component with Vanilla JavaScript, LemonadeJS, or React.
-{.green}
+{.green style="display: inline-block"}
 
 Documentation
 -------------
@@ -21,56 +25,56 @@ npm install @lemonadejs/data-grid
   
 ### Settings
 
-| Attribute | Description |
-| --- | --- |
-| data: Array<Object> | The data that will be displayed on the grid based on the columns attribute. |
-| columns: Array<Object> | Each object represents a column of data to be displayed. The key 'name' refers to the data object key. |
-| pagination?: Number | Enable the pagination and define the number of items per page. | 
-| search?: Boolean | Enable the search. `Default: false` |
-| editable?: Boolean | The grid is editable. `Default: false` |
+| Attribute             | Description                                                                                                                                                  |
+|-----------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| data: object[]        | The data that will be displayed on the grid based on the columns attribute.                                                                                  |
+| columns: columnItem[] | Each columnItem object represents a column of data to be displayed. For more information about this object, please refer to the 'Column Item' section below. |
+| pagination?: Number   | Enable the pagination and define the number of items per page.                                                                                               | 
+| search?: Boolean      | Enable the search. `Default: false`                                                                                                                          |
+| editable?: Boolean    | The grid is editable. `Default: false`                                                                                                                       |
 
-### Instance
-
-| Property | Description |
-| --- | --- |
-| data: Array<Object> | Change the state of data. |
-| page: Number | Change the page index. |
-| pagination: Number | Enable pagination. |
-| search: Boolean | Enable search. |
-| sort: Function(sortBy: String, sortAsc: Boolean) | Sort the data. |
-| setValue: Function(x: Number | String, y: Number, value: String) | Set the value of a cell. |
-
-### Events
-
-| Event | Description |
-| --- | --- |
-| onsearch?: (self) => void | Called when a search happens. |
-| onchangepage?: (self) => void | Called when the user changes the page. |
-| onupdate?: (self, object) => void | Called when cell data is changed. |
-
-### Important points
-
-*   **Reserved Properties:** This library automatically generates an item for each index in the data array. Each array item contains two unique reserved properties, the el and parent, representing the DOM element and its parent self.
-*   **Modifying Cell Values:** When a user double-clicks a cell, it becomes editable. You can exit the edition mode by pressing 'Enter' or clicking on a different cell in the data grid.
-
-### Columns Options
+### Column Item
 
 The columns property regulates the presentation of columns on the JavaScript data grid, specifying characteristics such as the sequence of columns, their width, and the positioning of data within them.  
 
-| Option | Description |
-| --- | --- |
-| **name**?: string | Determines the key of the data object to which the column refers. |
-| **title**: string | Required. Determines the text that will be displayed in the column Header. |
-| **width**?: string | This option specifies the width of the column and should be provided as a string with the unit of measurement, such as '200px' or '2.5em'. By default, the width is set to '100px'. |
-| **align**?: string | This option determines the alignment of the text within the cells of the column. It should be provided as a string with a valid entry. The available options are 'left', 'right', 'center', and 'justify'. By default, the alignment is set to 'left'. |
-| **render**?: (cell, x, y, value, instance) => void | This option allows you to override the default rendering of the column and instead render a specific value. It is particularly useful for rendering HTML elements or components. In the context of this property, the keyword 'self' refers to the current row being rendered. |
+| Option                 | Description                                                                                                                                                                                                                                            |
+|------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **name**?: string      | Determines the key of the data object to which the column refers.                                                                                                                                                                                      |
+| **title**: string      | Required. Determines the text that will be displayed in the column Header.                                                                                                                                                                             |
+| **width**?: string     | This option specifies the width of the column and should be provided as a string with the unit of measurement, such as '200px' or '2.5em'. By default, the width is set to '100px'.                                                                    |
+| **align**?: string     | This option determines the alignment of the text within the cells of the column. It should be provided as a string with a valid entry. The available options are 'left', 'right', 'center', and 'justify'. By default, the alignment is set to 'left'. |
+| **render**?: function  | render(cell, x, y, value, instance) => void<br>                                                                                                                                                                                                        | This option allows you to override the default rendering of the column and instead render a specific value. It is particularly useful for rendering HTML elements or components. In the context of this property, the keyword 'self' refers to the current row being rendered. |
+
+### Instance
+
+| Property                                         | Description                       |
+|--------------------------------------------------|-----------------------------------|
+| data: object[]                                   | Change the state of data.         |
+| page: Number                                     | Change the page index.            |
+| pagination: Number                               | Enable pagination.                |
+| search: Boolean                                  | Enable search.                    |
+| sort: Function(sortBy: String, sortAsc: Boolean) | Sort the data.                    |
+| setValue: Function(x: Number                     | String, y: Number, value: String) | Set the value of a cell. |
+
+### Events
+
+| Event                             | Description                            |
+|-----------------------------------|----------------------------------------|
+| onsearch?: (self) => void         | Called when a search happens.          |
+| onchangepage?: (self) => void     | Called when the user changes the page. |
+| onupdate?: (self, object) => void | Called when cell data is changed.      |
+
+> ### Important points
+>
+> *   **Reserved Properties:** This library automatically generates an item for each index in the data array. Each array item contains two unique reserved properties, the el and parent, representing the DOM element and its parent self.
+> *   **Modifying Cell Values:** When a user double-clicks a cell, it becomes editable. You can exit the edition mode by pressing 'Enter' or clicking on a different cell in the data grid.
 
 Examples
 --------
 
-### Basic vanilla example
+### How to create a data grid from JSON.
 
-How to use the data grid in vanilla implementations.  
+The LemonadeJS Data Grid component is designed for creating high-performance grids with features like search and pagination. It offers flexible settings for custom rendering and event handling. Below is a straightforward example demonstrating how to generate a grid from a JSON object:
 
 ```html
 <html>
@@ -194,21 +198,20 @@ export default function App() {
 }
 ```
 ```jsx
-import React, { useRef, useEffect, useState } from "react";
-import Datagrid from '@lemonadejs/data-grid';
+import React, { useRef, useState } from "react";
+import Datagrid from '@lemonadejs/data-grid/dist/react';
 import '@lemonadejs/data-grid/dist/style.css';
 
 export default function App() {
-    const domRef = useRef();
-    const datagrid = useRef();
+    const datagridRef = useRef();
 
-    const [columns, setColumns] = useState([
+    const [columns] = useState([
         { name: 'name', title: 'Product', width: '200px', align: 'left' },
         { name: 'price', title: 'Price', width: '100px', align: 'center' },
         { name: 'description', title: 'Description', width: '300px', align: 'left' },
     ])
 
-    const [data, setData] = useState([
+    const [data] = useState([
         {
             id: 1,
             name: "T-Shirt",
@@ -235,43 +238,109 @@ export default function App() {
         },
     ])
 
-    useEffect(() => {
-        if (! datagrid.current.innerText) {
-            datagrid.current = Datagrid(domRef.current, {
-                data,
-                column,
-                onupdate: () => {
-                    console.log('Data grid was updated')
-                },
-                onchangepage: () => {
-                    console.log('Data grid page changed')
-                }
-            });
-        }
-    }, []);
-
     // This function assigns a value to the second cell of the column 'name'.
     const setItemValue = function () {
-        datagrid.current.setValue('name', 1, 'Blue Jeans')
+        datagridRef.current.setValue('name', 1, 'Blue Jeans')
     }
     
     // This function update the current page in pagination to 2.
     const goToPage2 = function () {
-        datagrid.current.page = 1;
+        datagridRef.current.page = 1;
     }
 
     return (<>
-        <div ref={domRef}></div>
-        <button onclick={() => goToPage2()}>Go To Page 2</button>
-        <button onclick={() => setItemValue()}>Change Value in 'Name' Second Line</button>
+        <Datagrid
+            ref={datagridRef}
+            data={data}
+            columns={columns}
+            pagination={2}
+            onupdate={() => console.log('Data grid was updated')}
+            onchangepage={() => console.log('Data grid page changed')}
+        />
+        <button onClick={() => goToPage2()}>Go To Page 2</button>
+        <button onClick={() => setItemValue()}>Change Value in 'Name' Second Line</button>
     </>);
 }
 ```
-
-### Working with large Data Sets
-
-The following example demonstrates the performance of the data grid when handling large data sets.  
+```vue
+<template>
+    <div>
+        <Datagrid ref="datagridRef" :data="data" :columns="columns" :pagination="2" :onupdate="handleUpdate"
+            :onchangepage="handleChangePage" />
+        <button @click="goToPage2">Go To Page 2</button>
+        <button @click="setItemValue">Change Value in 'Name' Second Line</button>
+    </div>
+</template>
   
+<script>
+import Datagrid from '@lemonadejs/data-grid/dist/vue';
+import '@lemonadejs/data-grid/dist/style.css';
+
+export default {
+    name: 'App',
+    components: {
+        Datagrid,
+    },
+    data() {
+        const columns = [
+            { name: 'name', title: 'Product', width: '200px', align: 'left' },
+            { name: 'price', title: 'Price', width: '100px', align: 'center' },
+            { name: 'description', title: 'Description', width: '300px', align: 'left' },
+        ];
+
+        const data = [
+            {
+                id: 1,
+                name: 'T-Shirt',
+                price: 19.99,
+                description: 'This is a high-quality cotton t-shirt in a variety of colors and sizes.',
+            },
+            {
+                id: 2,
+                name: 'Jeans',
+                price: 49.99,
+                description: 'These are premium denim jeans in a slim-fit style.',
+            },
+            {
+                id: 3,
+                name: 'Sneakers',
+                price: 79.99,
+                description: 'These are comfortable and stylish sneakers in a range of colors.',
+            },
+            {
+                id: 4,
+                name: 'Backpack',
+                price: 39.99,
+                description: 'This is a durable and spacious backpack with multiple compartments.',
+            },
+        ];
+
+        return {
+            columns,
+            data,
+        };
+    },
+    methods: {
+        goToPage2() {
+            this.$refs.datagridRef.current.page = 1
+        },
+        setItemValue() {
+            this.$refs.datagridRef.current.setValue('name', 1, 'Blue Jeans')
+        },
+        handleUpdate() {
+            console.log('Data grid was updated')
+        },
+        handleChangePage() {
+            console.log('Data grid page changed')
+        }
+    }
+};
+</script>
+```
+
+### Programmatic Updates and Working with Large Data Sets
+
+Upon creating a new data grid in LemonadeJS, an instance is generated that simplifies programmatic modifications. The following example highlights the data grid's ability to handle and load a large dataset. It also demonstrates the process of fetching data after initiating the data grid.
 
 In this example, the mock data is retrieved from [fakerapi.it](https://fakerapi.it/), which is a free API for generating fake data.
 
@@ -330,46 +399,89 @@ export default function App() {
 }
 ```
 ```jsx
-import React, { useRef, useEffect } from "react";
-import Datagrid from '@lemonadejs/data-grid';
+import React, { useRef, useState, useEffect } from "react";
+import Datagrid from '@lemonadejs/data-grid/dist/react';
 import '@lemonadejs/data-grid/dist/style.css';
 
 export default function App() {
-    const dom = useRef();
-    const datagrid = useRef();
+    const datagridRef = useRef();
+
+    const [columns] = useState([
+        { name: 'firstname', title: 'First Name', width: '100px', align: 'center' },
+        { name: 'lastname', title: 'Last Name', width: '100px', align: 'center' },
+        { name: 'email', title: 'Email', width: '250px', align: 'left' },
+        { name: 'phone', title: 'Phone', width: '150px', align: 'center' },
+        { name: 'address.country', title: 'Country', width: '200px', align: 'left' },
+    ])
+
+    const [data] = useState([])
 
     useEffect(() => {
-        if (! datagrid.current.innerText) {
-            datagrid.current = Datagrid(dom.current, {
-                data: [],
-                columns: [
-                    { name: 'firstname', title: 'First Name', width: '100px', align: 'center' },
-                    { name: 'lastname', title: 'Last Name', width: '100px', align: 'center' },
-                    { name: 'email', title: 'Email', width: '250px', align: 'left' },
-                    { name: 'phone', title: 'Phone', width: '150px', align: 'center' },
-                    { name: 'address.country', title: 'Country', width: '200px', align: 'left' },
-                ]
-            });
-
+        if (!datagridRef.current.innerText) {
             fetch('https://fakerapi.it/api/v1/persons?_quantity=500&_seed=1')
                 .then(response => response.clone().json())
                 .then(body => {
-                    datagrid.current.data = body.data;
+                    setData(body.data);
                 })
         }
-    }, []);
+    }, [])
 
-    return (
-        <div ref={dom}></div>
-    );
+    return (<>
+        <Datagrid
+            ref={datagridRef}
+            data={data}
+            columns={columns}
+            pagination={10}
+            search={true}
+        />
+    </>);
 }
 ```
-
-### Render with two Data grids
-
-[See this example on codesandbox](https://codesandbox.io/p/github/nicolasjesse/datagrid-example)  
+```vue
+<template>
+    <div>
+        <Datagrid ref="datagridRef" :data="data" :columns="columns" :pagination="10" :search="true" />
+    </div>
+</template>
   
-The following example showcases how to utilize the render property to enable HTML rendering within cells. To successfully solve the puzzle depicted in this example, the column numbers within each grid should sum up to 10, and each group within its respective grid must consist of unique values.  
+<script>
+import Datagrid from '@lemonadejs/data-grid/dist/vue';
+import '@lemonadejs/data-grid/dist/style.css';
+
+export default {
+    name: 'App',
+    components: {
+        Datagrid,
+    },
+    data() {
+        const columns = [
+            { name: 'firstname', title: 'First Name', width: '100px', align: 'center' },
+            { name: 'lastname', title: 'Last Name', width: '100px', align: 'center' },
+            { name: 'email', title: 'Email', width: '250px', align: 'left' },
+            { name: 'phone', title: 'Phone', width: '150px', align: 'center' },
+            { name: 'address.country', title: 'Country', width: '200px', align: 'left' },
+        ];
+
+        const data = [];
+
+        return {
+            columns,
+            data,
+        };
+    },
+    mounted() {
+        fetch('https://fakerapi.it/api/v1/persons?_quantity=500&_seed=1')
+                .then(response => response.clone().json())
+                .then(body => {
+                    this.data = body.data;
+                })
+    }
+};
+</script>
+```
+
+### Custom Cell Rendering
+This example demonstrates the render property, which enables HTML rendering within grid cells. This feature allows developers to design custom cell behaviours, tailoring the rendering process to specific requirements for each column.
 
 ```html
 <html>
@@ -436,136 +548,100 @@ export default function App() {
     ];
 
     return `<div>
-        <Datagrid :data="self.data" :columns="self.columns"/>
+        <Datagrid :data="self.data" :columns="self.columns" />
     </div>`;
 }
 ```
 ```jsx
-import React, { useRef, useEffect } from "react";
-import Datagrid from '@lemonadejs/data-grid';
-import '@lemonadejs/data-grid/dist/style.css';
-
-const data = [
-    { name: "Product A", price: 100, hasDiscount: false },
-    { name: "Product B", price: 130, hasDiscount: true },
-    { name: "Product C", price: 150, hasDiscount: true }
-];
-
-const columns = [
-    {
-        name: 'name',
-        title: 'Product',
-        width: '100px',
-        align: 'center'
-    },
-    {
-        name: 'price',
-        title: 'Price',
-        width: '100px',
-        render: function (e, x, y, value, instance) {
-            e.innerHTML = instance.hasDiscount ? `<div><s>$ ${value}</s> -> <strong>$ ${value-20}</strong></div>` : `<div>$ ${value}</div>`;
-        }
-    },
-];
-
-export default function App() {
-    const divRef = useRef(null);
-
-    useEffect(() => {
-        if (divRef.current && !divRef.current.innerText) {
-            Datagrid(divRef.current, {
-                data: data,
-                columns: columns
-            });
-        };
-    });
-
-    return (<>
-        <div ref={divRef}></div>
-    </>);
-}
-```
-
-React Wrapper
--------------
-
-React Wrapper: Use the Data Grid React component to integrate the grid into your React applications seamlessly. This wrapper simplifies the process, allowing you to display, manipulate, and interact with large datasets effortlessly using React's declarative and component-based approach.  
-  
-
-### Installing the React Wrapper
-
-```bash
-npm install @lemonadejs/react-data-grid
-```
-  
-#### Data Grid Example
-
-```react
+// codesandbox: https://codesandbox.io/p/devbox/gifted-ully-6lmppx
 import React, { useRef, useState } from "react";
-import Datagrid from '@lemonadejs/react-data-grid';
+import Datagrid from '@lemonadejs/data-grid/dist/react';
 import '@lemonadejs/data-grid/dist/style.css';
 
 export default function App() {
-    const datagrid = useRef();
+    const datagridRef = useRef();
 
-    const [columns, setColumns] = useState([
-        { name: 'name', title: 'Product', width: '200px', align: 'left' },
-        { name: 'price', title: 'Price', width: '100px', align: 'center' },
-        { name: 'description', title: 'Description', width: '300px', align: 'left' },
-    ])
-
-    const [data, setData] = useState([
+    const [columns] = useState([
         {
-            id: 1,
-            name: "T-Shirt",
-            price: 19.99,
-            description: "This is a high-quality cotton t-shirt in a variety of colors and sizes.",
+            name: 'name',
+            title: 'Product',
+            width: '100px',
+            align: 'center'
         },
         {
-            id: 2,
-            name: "Jeans",
-            price: 49.99,
-            description: "These are premium denim jeans in a slim-fit style.",
+            name: 'price',
+            title: 'Price',
+            width: '100px',
+            render: function (e, x, y, value, instance) {
+                e.innerHTML = instance.hasDiscount ? `<div><s>$ ${value}</s> -> <strong>$ ${value-20}</strong></div>` : `<div>$ ${value}</div>`;
+            }
         },
-        {
-            id: 3,
-            name: "Sneakers",
-            price: 79.99,
-            description: "These are comfortable and stylish sneakers in a range of colors.",
-        },
-        {
-            id: 4,
-            name: "Backpack",
-            price: 39.99,
-            description: "This is a durable and spacious backpack with multiple compartments.",
-        },
-    ])
+    ]);
 
-    // This function assigns a value to the second cell of the column 'name'.
-    const setItemValue = function () {
-        datagrid.current.setValue('name', 1, 'Blue Jeans')
-    }
-
-    // This function update the current page in pagination to 2.
-    const goToPage2 = function () {
-        datagrid.current.page = 1;
-    }
+    const [data] = useState([
+        { name: "Product A", price: 100, hasDiscount: false },
+        { name: "Product B", price: 130, hasDiscount: true },
+        { name: "Product C", price: 150, hasDiscount: true }
+    ]);
 
     return (<>
         <Datagrid
-            ref={datagrid}
+            ref={datagridRef}
             data={data}
             columns={columns}
-            pagination={2}
-            onupdate={() => console.log('Datagrid was updated')}
-            onchangepage={() => console.log('Datagrid page changed')}
         />
-        <button onclick={() => goToPage2()}>Go To Page 2</button>
-        <button onclick={() => setItemValue()}>Change Value in 'Name' Second Line</button>
     </>);
 }
 ```
+```vue
+<!-- codesandbox: https://codesandbox.io/p/sandbox/epic-monad-smnxt8 -->
+<template>
+    <div>
+        <Datagrid ref="datagridRef" :data="data" :columns="columns" />
+    </div>
+</template>
   
+<script>
+import Datagrid from '@lemonadejs/data-grid/dist/vue';
+import '@lemonadejs/data-grid/dist/style.css';
+
+export default {
+    name: 'App',
+    components: {
+        Datagrid,
+    },
+    data() {
+        const columns = [
+            {
+                name: 'name',
+                title: 'Product',
+                width: '100px',
+                align: 'center'
+            },
+            {
+                name: 'price',
+                title: 'Price',
+                width: '100px',
+                render: function (e, x, y, value, instance) {
+                    e.innerHTML = instance.hasDiscount ? `<div><s>$ ${value}</s> -> <strong>$ ${value-20}</strong></div>` : `<div>$ ${value}</div>`;
+                }
+            },
+        ];
+
+        const data = [
+            { name: "Product A", price: 100, hasDiscount: false },
+            { name: "Product B", price: 130, hasDiscount: true },
+            { name: "Product C", price: 150, hasDiscount: true }
+        ];
+
+        return {
+            columns,
+            data,
+        };
+    },
+};
+</script>
+```
 
 Enterprise Data Grid
 --------------------

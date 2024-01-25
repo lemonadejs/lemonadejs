@@ -1,3 +1,8 @@
+title: JavaScript Snake Game
+keywords: LemonadeJS, two-way data binding, frontend, javascript library, javascript plugin, javascript, reactive, react, examples
+description: The reactive javascript snake game implementation using LemonadeJS.
+
+
 Snake game
 ==========
 

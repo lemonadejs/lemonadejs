@@ -24,19 +24,11 @@ class Counter extends lemonade.component {
         this.count = 1;
     }
 
-    counter() {
-        this.count++;
-    }
-    
-    reset() {
-        this.count = 0;
-    }
-
     render() {
         return `<>
             <div>Counter: {{self.count}}</div><br>
-            <input type='button' onclick="self.counter" value='Go' />
-            <input type='button' onclick="self.reset" value='Reset' />
+            <input type='button' onclick="self.count++" value='Go' />
+            <input type='button' onclick="self.count = 0" value='Reset' />
         </>`;
     }
 }
@@ -53,19 +45,11 @@ export default class Counter extends lemonade.component {
         this.count = 1;
     }
 
-    counter() {
-        this.count++;
-    }
-
-    reset() {
-        this.count = 0;
-    }
-
     render() {
         return `<>
             <div>Counter: {{self.count}}</div><br>
-            <input type='button' onclick="self.counter" value='Go' />
-            <input type='button' onclick="self.reset" value='Reset' />
+            <input type='button' onclick="self.count++" value='Go' />
+            <input type='button' onclick="self.count = 0" value='Reset' />
         </>`;
     }
 }

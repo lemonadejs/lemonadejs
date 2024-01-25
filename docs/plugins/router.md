@@ -1,8 +1,8 @@
-title: JavaScript Router with LemonadeJS
+title: LemonadeJS Router
 keywords: LemonadeJS, two-way binding, frontend, javascript library, javascript plugin, javascript, reactive, react, router, router controller, plugins
 description: Unveil how to leverage LemonadeJS Router for controlling which component is rendered based on routing.
 
-Router
+LemonadeJS Router
 ======
 
 Pico Library This library has less than 2 KBytes  
