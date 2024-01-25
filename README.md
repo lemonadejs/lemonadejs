@@ -222,40 +222,41 @@ This software is free to use, and it is distributed under the MIT license.
     <li><a href="https://lemonadejs.net/docs/awesome">Awesome</a></li>
     <li><a href="https://lemonadejs.net/docs/sugar">Sugar</a></li>
     <li><a href="https://lemonadejs.net/docs/tests">Testing</a></li>
-    <li><a href="https://lemonadejs.net/libraries">Libraries</a></li>
+    <li><a href="https://lemonadejs.net/docs/plugins">Plugins</a></li>
     <li><a href="https://lemonadejs.net/docs/module">Module (ESM)</a></li>
 </ul>
 
 <h3>Libraries</h3>
 <ul>
-    <li><a href="https://lemonadejs.net/library/list">List</a></li>
-    <li><a href="https://lemonadejs.net/library/rating">Rating</a></li>
-    <li><a href="https://lemonadejs.net/library/router">Router</a></li>
-    <li><a href="https://lemonadejs.net/library/signature">Signature</a></li>
-    <li><a href="https://lemonadejs.net/components/data-grid">Data grid</a></li>
-    <li><a href="https://lemonadejs.net/components/image-cropper" title="Photo cropper and filters component">Image cropper</a></li>
-    <li><a href="https://lemonadejs.net/components/modal">Modal</a></li>
-    <li><a href="https://lemonadejs.net/components/tabs">Tabs</a></li>
-    <li><a href="https://lemonadejs.net/components/color-picker">Color picker</a></li>
+    <li><a href="https://lemonadejs.net/docs/plugins/list">List</a></li>
+    <li><a href="https://lemonadejs.net/docs/plugins/rating">Rating</a></li>
+    <li><a href="https://lemonadejs.net/docs/plugins/router">Router</a></li>
+    <li><a href="https://lemonadejs.net/docs/plugins/signature">Signature</a></li>
+    <li><a href="https://lemonadejs.net/docs/plugins/data-grid">Data grid</a></li>
+    <li><a href="https://lemonadejs.net/docs/plugins/image-cropper" title="Photo cropper and filters component">Image cropper</a></li>
+    <li><a href="https://lemonadejs.net/docs/plugins/modal">Modal</a></li>
+    <li><a href="https://lemonadejs.net/docs/plugins/tabs">Tabs</a></li>
+    <li><a href="https://lemonadejs.net/docs/plugins/calendar">JavaScript Calendar</a></li>
+    <li><a href="https://lemonadejs.net/docs/plugins/color-picker">Color picker</a></li>
 </ul>
 
 <h3>Examples</h3>
 <ul>
-    <li><a href="https://lemonadejs.net/examples/lamp">Lamp</a></li>
-    <li><a href="https://lemonadejs.net/examples/counter">Counter</a></li>
-    <li><a href="https://lemonadejs.net/examples/color-generator">Color generator</a></li>
-    <li><a href="https://lemonadejs.net/examples/value-persistence">Value persistence</a></li>
-    <li><a href="https://lemonadejs.net/examples/div-onresize">DIV onresize</a></li>
-    <li><a href="https://lemonadejs.net/examples/rating">Star rating</a></li>
-    <li><a href="https://lemonadejs.net/examples/table">Table</a></li>
-    <li><a href="https://lemonadejs.net/examples/enable-disable-elements">Disable elements</a></li>
-    <li><a href="https://lemonadejs.net/examples/color-picker">Color picker</a></li>
-    <li><a href="https://lemonadejs.net/examples/hangman">Hangman game</a></li>
-    <li><a href="https://lemonadejs.net/examples/tic-tac-toe">Tic tac toe</a></li>
+    <li><a href="https://lemonadejs.net/docs/examples/lamp">Lamp</a></li>
+    <li><a href="https://lemonadejs.net/docs/examples/counter">Counter</a></li>
+    <li><a href="https://lemonadejs.net/docs/examples/color-generator">Color generator</a></li>
+    <li><a href="https://lemonadejs.net/docs/examples/value-persistence">Value persistence</a></li>
+    <li><a href="https://lemonadejs.net/docs/examples/div-onresize">DIV onresize</a></li>
+    <li><a href="https://lemonadejs.net/docs/examples/rating">Star rating</a></li>
+    <li><a href="https://lemonadejs.net/docs/examples/table">Table</a></li>
+    <li><a href="https://lemonadejs.net/docs/examples/enable-disable-elements">Disable elements</a></li>
+    <li><a href="https://lemonadejs.net/docs/examples/color-picker">Color picker</a></li>
+    <li><a href="https://lemonadejs.net/docs/examples/hangman">Hangman game</a></li>
+    <li><a href="https://lemonadejs.net/docs/examples/tic-tac-toe">Tic tac toe</a></li>
 </ul>
 
 <h2>Other tools</h2>
 
-- [JavaScript Components](https://jsuites.net/v4/)
-- [JavaScript Data Grid with Spreadsheet-like Controls](https://jspreadsheet.com/)
-- [Free JavaScript Data Grid](https://bossanova.uk/jspreadsheet/v4/)
+- [JavaScript Components](https://jsuites.net/)
+- [JavaScript Data Grid](https://jspreadsheet.com/)
+- [Free JavaScript Data Grid](https://bossanova.uk/jspreadsheet/)
