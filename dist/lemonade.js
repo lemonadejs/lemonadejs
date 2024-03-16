@@ -1,5 +1,5 @@
 /**
- * LemonadeJS v4.2.0
+ * LemonadeJS v4.2.1
  *
  * Website: https://lemonadejs.net
  * Description: Create amazing web based reusable components.
@@ -1215,8 +1215,17 @@
                                 root = document.createElement('div');
                                 this.shadowRoot.appendChild(root);
                             }
-                            L.render(handler, root, this);
+                            // Give the browser time to calculate all width and heights
+                            requestAnimationFrame(() => {
+                                L.render(handler, root, this);
+                            });
                         }
+                    } else {
+                        requestAnimationFrame(() => {
+                            if (typeof (this.onreconnect) === 'function') {
+                                this.onreconnect();
+                            }
+                        });
                     }
                 }
             }
