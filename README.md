@@ -2,7 +2,7 @@
 
 ## Create amazing web-based interfaces with LemonadeJS
 
-![Micro Library](https://lemonadejs.net/templates/default/img/home.png)
+![Micro Library](https://lemonadejs.net/templates/default/img/lemonadejs-home.jpg)
 
 LemonadeJS is a super lightweight reactive vanilla javascript micro-library (7 KBytes). It helps to integrate the JavaScript (controllers) and the HTML (view). It supports two-way data binding and integrates natively with jSuites to help to create amazing interfaces quicker.<br><br>
 
