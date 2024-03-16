@@ -10,6 +10,13 @@ declare namespace lemonade {
 
     type OnchangeFunction = (property: string, affectedElements: object) => void;
 
+    interface WebComponentOptions {
+        /** Create the webcomponent inside a shadowRoot */
+        shadowRoot?: boolean,
+        /** Apply-only will apply the LemonadeJS self component on the existing HTML inside the tag already in the DOM */
+        applyOnly?: boolean,
+    }
+
     interface ComponentEvents {
         /**
          * When the component is ready and appended to the DOM
@@ -82,6 +89,14 @@ declare namespace lemonade {
      * @param {boolean} config get the configuration obj => property
      */
     function path(str: string, config: boolean) : any;
+
+    /**
+     * Extract a property from a nested object using a string address
+     * @param {string} name New webcomponent name. LemonadeJS includes a prefix of lm- so your final tag will be <lm-yourname>
+     * @param {function} handler LemonadeJS component
+     * @param {object} options Options for your webcomponent
+     */
+    function createWebComponent(name: string, handler: Function, options: WebComponentOptions) : any;
 
     /**
      * Get an artifact from LemonadeJS Sugar by its alias identification
