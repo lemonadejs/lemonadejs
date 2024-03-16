@@ -7,7 +7,7 @@ LemonadeJS Image Cropper
 
 The JavaScript image cropper is a plugin to support a user-friendly photo upload and allows small online editions such as image crop or changes in brightness, contrast, rotate, zoom.  
   
-The LemonadeJS cropper is based on jsuites [image cropper](https://jsuites.net/v4/image-cropper) component.  
+The LemonadeJS cropper is based on jsuites [image cropper](https://jsuites.net/docs/image-cropper) component.  
   
 
 Documentation

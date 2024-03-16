@@ -1,5 +1,5 @@
 /**
- * LemonadeJS v4.1.1 (ESM build)
+ * LemonadeJS v4.2.0 (ESM build)
  *
  * Website: https://lemonadejs.net
  * Description: Create amazing web based reusable components.
@@ -1177,6 +1177,48 @@ function Lemonade() {
     }
 
     L.path = extractFromPath;
+
+    L.createWebComponent = function(name, handler, options) {
+        if (typeof(handler) !== 'function') {
+            return 'Handler should be an function';
+        }
+
+        const componentName = 'lm-' + name;
+
+        // Check if the component is already defined
+        if (customElements.get(componentName)) {
+            console.warn(`${componentName} is already defined.`);
+        } else {
+            class Component extends HTMLElement {
+                constructor() {
+                    super();
+                }
+
+                connectedCallback() {
+                    // LemonadeJS is already rendered
+                    if (typeof(this.el) === 'undefined') {
+                        // Render
+                        if (options && options.applyOnly === true) {
+                            // Merge component
+                            handler.call(this);
+                            // Apply
+                            L.apply(this, this);
+                        } else {
+                            let root = this;
+                            if (options && options.shadowRoot === true) {
+                                this.attachShadow({ mode: 'open' });
+                                root = document.createElement('div');
+                                this.shadowRoot.appendChild(root);
+                            }
+                            L.render(handler, root, this);
+                        }
+                    }
+                }
+            }
+
+            window.customElements.define(componentName, Component);
+        }
+    }
 
     return L;
 }
