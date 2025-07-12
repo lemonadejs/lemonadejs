@@ -114,6 +114,12 @@ export const onload: (method: OnloadFunction<HTMLElement>) => void;
 export const onchange: <T>(method: OnchangeFunction<T>) => void;
 
 /**
+ * Force onchange when a property change value
+ * @param {string} prop Property name
+ */
+export const track: (prop: string) => void;
+
+/**
  * Create a reactive state container
  * @param value Initial value
  * @param callback Optional callback function when value changes
@@ -175,6 +181,7 @@ declare const lemonade: {
     path: typeof path;
     onload: typeof onload;
     onchange: typeof onchange;
+    track: typeof track;
     state: typeof state;
     setPath: typeof setPath;
     setComponents: typeof setComponents;
