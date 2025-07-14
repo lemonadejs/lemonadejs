@@ -177,10 +177,6 @@
                             }
                         })
                     }
-                    // Native onchange
-                    if (typeof(s.onchange) === 'function') {
-                        s.onchange.call(s, prop, oldValue, v);
-                    }
                 },
                 get: function () {
                     // Get value
@@ -1428,7 +1424,7 @@
                                                 handler.call(element, e, lemon.self);
                                             }
                                         } else {
-                                            // Legacy compatibility. Inline scripting is non-Compliance with Content Security Policy (CSP)
+                                            // Legacy compatibility. Inline scripting is non-Compliance with Content Security Policy (CSP). TODO: unify order of arguments
                                             eventHandler = function (e) {
                                                 Function('self', 'e', value).call(element, lemon.self, e);
                                             }
@@ -1835,6 +1831,9 @@
             path: {},
         }
 
+        // Current onchange
+        let externalOnchange = self.onchange;
+
         if (! item) {
             item = {};
         } else if (typeof(item) === 'string') {
@@ -1860,6 +1859,14 @@
             } else {
                 // Execute component
                 view = component.call(self, item.children);
+            }
+
+            // Resolve onchange scope conflict
+            if (typeof(self.onchange) === 'function' && externalOnchange !== self.onchange) {
+                // Keep onchange event in the new onchange format
+                lemon.change.push(self.onchange);
+                // Keep the external onchange
+                self.onchange = externalOnchange;
             }
 
             currentLemon = null;
