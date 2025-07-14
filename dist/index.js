@@ -1780,9 +1780,6 @@ function Lemonade() {
     // LemonadeJS object
     const L = {};
 
-    // Master container
-    let currentLemon = null;
-
     /**
      * Render a lemonade DOM element, method or class into a root DOM element
      * @param {function} component - LemonadeJS component or DOM created
@@ -1842,7 +1839,7 @@ function Lemonade() {
         if (component === Basic) {
             view = cloneChildren(item.children[0]);
         } else {
-            currentLemon = lemon;
+            R.currentLemon = lemon;
 
             if (isClass(component)) {
                 if (! (self instanceof component)) {
@@ -1862,7 +1859,7 @@ function Lemonade() {
                 self.onchange = externalOnchange;
             }
 
-            currentLemon = null;
+            R.currentLemon = null;
         }
 
         // Values
@@ -2023,9 +2020,9 @@ function Lemonade() {
     }
 
     const registerComponents = function(components) {
-        if (components && currentLemon) {
+        if (components && R.currentLemon) {
             for (const key in components) {
-                currentLemon.components[key.toUpperCase()] = components[key];
+                R.currentLemon.components[key.toUpperCase()] = components[key];
             }
         }
     }
@@ -2037,9 +2034,9 @@ function Lemonade() {
      * @param {object?} components
      */
     L.element = function(template, s, components) {
-        if (currentLemon && s && typeof(s) === 'object') {
-            if (s !== currentLemon.self) {
-                currentLemon.self = s;
+        if (R.currentLemon && s && typeof(s) === 'object') {
+            if (s !== R.currentLemon.self) {
+                R.currentLemon.self = s;
             }
         }
         registerComponents(components);
@@ -2254,26 +2251,25 @@ function Lemonade() {
     const wrongLevel = 'Hooks must be called at the top level of your component';
 
     L.onload = function(event) {
-        if (! currentLemon) {
+        if (! R.currentLemon) {
             createError(wrongLevel);
         }
-        currentLemon.load = event;
+        R.currentLemon.load = event;
     }
 
     L.onchange = function(event) {
-        if (! currentLemon) {
+        if (! R.currentLemon) {
             createError(wrongLevel);
         }
-        currentLemon.change.push(event);
+        R.currentLemon.change.push(event);
     }
 
     L.track = function(prop) {
-        if (! currentLemon) {
+        if (! R.currentLemon) {
             createError(wrongLevel);
         }
-
-        if (! currentLemon.events[prop]) {
-            currentLemon.events[prop] = [];
+        if (! R.currentLemon.events[prop]) {
+            R.currentLemon.events[prop] = [];
         }
     }
 
@@ -2319,11 +2315,11 @@ function Lemonade() {
 
     // TODO: Proxy for Objects and Arrays
     L.state = function(value, callback) {
-        if (! currentLemon) {
+        if (! R.currentLemon) {
             createError(wrongLevel);
         }
         // Keep lemon local
-        const lemon = currentLemon;
+        const lemon = R.currentLemon;
         // Create state container
         const s = new state();
         // Create method to update the state
@@ -2346,12 +2342,12 @@ function Lemonade() {
     }
 
     L.setPath = function(initialValues, change) {
-        if (! currentLemon) {
+        if (! R.currentLemon) {
             createError(wrongLevel);
         }
 
         // Lemon
-        const lemon = currentLemon;
+        const lemon = R.currentLemon;
         // My value object
         let value = {};
         // Create method to update the state
