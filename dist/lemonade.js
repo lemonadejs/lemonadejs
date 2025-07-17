@@ -2407,5 +2407,40 @@
         }
     }
 
+    L.events = (function() {
+        class CustomEvents extends Event {
+            constructor(type, props, options) {
+                super(type, {
+                    bubbles: true,
+                    composed: true,
+                    ...options,
+                });
+
+                if (props) {
+                    for (const key in props) {
+                        // Avoid assigning if property already exists anywhere on `this`
+                        if (! (key in this)) {
+                            this[key] = props[key];
+                        }
+                    }
+                }
+            }
+        }
+
+        const create = function(type, props, options) {
+            return new CustomEvents(type, props, options);
+        };
+
+        return {
+            create: create,
+            dispatch(element, event, options) {
+                if (typeof event === 'string') {
+                    event = create(event, options);
+                }
+                element.dispatchEvent(event);
+            }
+        };
+    })();
+
     return L;
 })));

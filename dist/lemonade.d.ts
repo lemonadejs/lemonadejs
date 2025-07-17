@@ -169,9 +169,38 @@ export const createWebComponent: (name: string, handler: Component, options?: We
  * @return {[Object, Function, Function]} Returns a tuple with the state object, a setter function, a getter function with filtered data by visibility
  */
 export const setPath: <T extends Record<string, any>>(
-    initialData: T, 
+    initialData: T,
     callback?: () => void
-  ) => [T, (updates: Partial<T>) => void, () => T];
+) => [T, (updates: Partial<T>) => void, () => T];
+
+/**
+ * Custom event class for LemonadeJS with extended properties.
+ */
+export class CustomEvents extends Event {
+    constructor(
+        type: string,
+        props?: Record<string, any>,
+        options?: EventInit
+    );
+    [key: string]: any;
+}
+
+/**
+ * Utility interface for creating and dispatching custom events.
+ */
+export interface Events {
+    create(
+        type: string,
+        props?: Record<string, any>,
+        options?: EventInit
+    ): CustomEvents;
+
+    dispatch(
+        element: HTMLElement,
+        event: string | Event,
+        options?: Record<string, any>
+    ): void;
+}
 
 // Define the default export for better IDE integration
 declare const lemonade: {
@@ -189,6 +218,7 @@ declare const lemonade: {
     set: typeof set;
     dispatch: typeof dispatch;
     createWebComponent: typeof createWebComponent;
+    events: Events;
 };
 
 export default lemonade;

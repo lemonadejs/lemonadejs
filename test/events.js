@@ -64,4 +64,34 @@ describe('Events', () => {
             return self.el.textContent;
         })
     });
+
+    let { events } = lemonade;
+
+    it('CustomEvents: create and dispatch with custom props', function() {
+        function Component() {
+            const self = this;
+
+            self.onload = () => {
+                // Add the event `test` to my root element
+                self.el.addEventListener('test', function(e) {
+                    self.el.title = e.action;
+                });
+            };
+
+            const click = () => {
+                events.dispatch(self.el, 'test', { action: 'cool' });
+            }
+
+            return render => render`
+                <button onclick="${click}" />
+            `;
+        }
+
+        // Render the component and assert the return
+        return render(Component).assert('cool', function () {
+            const self = this;
+            self.el.click();
+            return self.el.title;
+        });
+    });
 });
