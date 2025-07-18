@@ -95,7 +95,7 @@ describe('Loop', () => {
 
     it('Loop including custom element', function() {
         function Test() {
-            // Create one self for each interaction in the array
+            // Create oneself for each interaction in the array
             const self = this;
             // Template
             return `<li>{{self.title}}</li>`;
@@ -112,7 +112,7 @@ describe('Loop', () => {
             ];
 
             // Custom components such as List should always be unique inside a real tag.
-            return (render) => render`<ul :loop="self.rows"><Test :title="self.title" /></ul>`;
+            return render => render`<ul :loop="self.rows"><Test :title="self.title" /></ul>`;
         }
 
 
@@ -125,7 +125,7 @@ describe('Loop', () => {
 
     it('Loop including a custom element by reference', function() {
         function Test() {
-            // Create one self for each interaction in the array
+            // Create oneself for each interaction in the array
             const self = this;
             // Template
             return `<li>{{self.title}}</li>`;
@@ -139,7 +139,7 @@ describe('Loop', () => {
             ];
 
             // Custom components such as List should always be unique inside a real tag.
-            return (render) => render`<ul :loop="self.rows"><${Test} :title="self.title" /></ul>`;
+            return render => render`<ul :loop="self.rows"><${Test} :title="self.title" /></ul>`;
         }
 
 
@@ -147,6 +147,24 @@ describe('Loop', () => {
         return render(Component).assert('Google', function () {
             let self = this;
             return self.el.textContent;
+        })
+    });
+
+    it('Loop including a local scope variable', function() {
+        function Component() {
+            const rows = [
+                { title: 'Google' },
+                { title: 'Bing' },
+            ];
+
+            // Custom components such as List should always be unique inside a real tag.
+            return render => render`<ul :loop="${rows}"><li>{{self.title}}</li></ul>`;
+        }
+
+        // Render the component and assert the return
+        return render(Component).assert('Google', function () {
+            let self = this;
+            return self.el.firstChild.textContent;
         })
     });
 
@@ -161,7 +179,7 @@ describe('Loop', () => {
             ];
 
             // Custom components such as List should always be unique inside a real tag.
-            return (render) => render`<table>
+            return render => render`<table>
                 <tbody :loop="${self.rows}">
                     <tr><td>{{this.title}}</td></tr>
                 </tbody>

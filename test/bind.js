@@ -4,19 +4,19 @@ describe('Bind', () => {
         function Test() {
             // This will bring all properties defined in the tag
             let self = this;
-            // Custom HTML components has the self.value as default
-            return `<b>{{self.value}}</b>`;
+            // Custom HTML components have the self.value as default
+            return render => render`<b>{{self.value}}</b>`;
         }
 
         function Component() {
             let self = this;
             self.test = "Hello world";
 
-            return `<Test :bind="self.test" :ref="self.component"/>`;
+            return render => render`<Test :bind="self.test" :ref="self.component"/>`;
         }
 
         // Register as a global component.
-        lemonade.setComponents({Test});
+        lemonade.setComponents({ Test });
 
         // Render the component and assert the return
         return render(Component).assert('Hello world', function () {
@@ -41,7 +41,7 @@ describe('Bind', () => {
             let self = this;
             self.test = 120;
 
-            return (render) => render`<div>
+            return render => render`<div>
                 <h1 :ref="self.title">{{self.test}}</h1>
                 <Hello :bind="self.test" :ref="self.component" />
                 <input type="button" onclick="${()=>self.test++}" :ref="self.button"  />
@@ -72,8 +72,8 @@ describe('Bind', () => {
                 ]
             })
 
-            return `<select :loop='self.options' :bind='self.value' :ref="self.select">
-              <option value='{{self.id}}'>{{self.name}}</option>
+            return render => render`<select :loop='self.options' :bind='self.value' :ref="self.select">
+                <option value='{{self.id}}'>{{self.name}}</option>
             </select>`;
         }
 
@@ -86,9 +86,8 @@ describe('Bind', () => {
 
     it('Two-way data binding for custom elements with :bind', function() {
         function Test() {
-            let self = this;
-            return (render) => render `<div>
-                <input type="button" onclick="${()=>self.value++}" :ref="self.button" />
+            return render => render `<div>
+                <input type="button" onclick="${()=>this.value++}" :ref="this.button" />
             </div>`;
         }
 
@@ -101,7 +100,7 @@ describe('Bind', () => {
 
             window.test = this;
 
-            return `<div class="p10">
+            return render => render`<div class="p10">
                 <h1 :ref="self.title">{{self.test}}</h1>
                 <Test :bind="self.test" :ref="self.component" />
             </div>`;
@@ -119,13 +118,13 @@ describe('Bind', () => {
 
     it('Two-way data binding on custom elements (protection against loop)', function() {
         function Test() {
-            return `<b>{{self.value}}</b>`;
+            return render => render`<b>{{self.value}}</b>`;
         }
 
         function Component() {
             let self = this;
             self.test = 1;
-            return `<Test :bind="self.test" :ref="self.component"/>`;
+            return render => render`<Test :bind="self.test" :ref="self.component"/>`;
         }
 
         // Register as a global component.

@@ -112,7 +112,7 @@ describe('Loop', () => {
             ];
 
             // Custom components such as List should always be unique inside a real tag.
-            return (render) => render`<ul :loop="self.rows"><Test :title="self.title" /></ul>`;
+            return render => render`<ul :loop="self.rows"><Test :title="self.title" /></ul>`;
         }
 
 
@@ -139,7 +139,7 @@ describe('Loop', () => {
             ];
 
             // Custom components such as List should always be unique inside a real tag.
-            return (render) => render`<ul :loop="self.rows"><${Test} :title="self.title" /></ul>`;
+            return render => render`<ul :loop="self.rows"><${Test} :title="self.title" /></ul>`;
         }
 
 
@@ -161,7 +161,7 @@ describe('Loop', () => {
             ];
 
             // Custom components such as List should always be unique inside a real tag.
-            return (render) => render`<table>
+            return render => render`<table>
                 <tbody :loop="${self.rows}">
                     <tr><td>{{this.title}}</td></tr>
                 </tbody>

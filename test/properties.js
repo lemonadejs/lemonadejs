@@ -13,7 +13,7 @@ describe('Properties', () => {
             }
 
             // Title and year are declared in the parent template
-            return (render) => render`<div>
+            return render => render`<div>
                 <h1>${this.test.value}</h1>
                 <input type="button" onclick="${update}" :ref="${this.button}" />
             </div>`;
