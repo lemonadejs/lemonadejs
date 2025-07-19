@@ -849,6 +849,8 @@
                         if (typeof (result) === 'undefined') {
                             result = '';
                         }
+                    } else if (result === null) {
+                        result = '';
                     }
                     // Parse correct type
                     if (typeof(result) !== 'string' && a === text) {
@@ -885,7 +887,7 @@
             } else {
                 // TODO: improve that
                 requestAnimationFrame(() => {
-                    // Create temporary container
+                    // Create a temporary container
                     const t = document.createElement('div');
                     t.innerHTML = value;
                     // Insert elements and store references
@@ -901,7 +903,7 @@
             if (typeof(prop.expression) !== 'undefined') {
                 // Event to update the designed position
                 let event = function() {
-                    // Extra the value from the template
+                    // Extra value from the template
                     let value = lemon.view(parseTemplate)[prop.index];
                     // Process the NODE
                     if (item.type === '#text') {
@@ -965,7 +967,10 @@
 
                 // Event property to the element
                 event = () => {
-                    setAttribute(getElement(item), 'value', lemon.self[prop]);
+                    let value = getAttribute(getElement(item), 'value');
+                    if (lemon.self[prop] !== value) {
+                        setAttribute(getElement(item), 'value', lemon.self[prop]);
+                    }
                 }
                 // Append event
                 appendEvent(prop, event, true);
@@ -992,7 +997,7 @@
             } else {
                 if (typeof(prop.expression) !== 'undefined') {
                     getValue = () => {
-                        // Extra the value from the template
+                        // Extra value from the template
                         let data = lemon.view(parseTemplate)[prop.index];
                         if (data instanceof state) {
                             data = data.value;
@@ -1167,7 +1172,7 @@
             } else {
                 if (typeof(prop.expression) !== 'undefined') {
                     event = function() {
-                        // Extra the value from the template
+                        // Extra value from the template
                         let data = lemon.view(parseTemplate)[prop.index];
                         if (data instanceof state) {
                             data = data.value;
@@ -1322,7 +1327,7 @@
 
         const createElements = function(item) {
             if (typeof(item) === 'object') {
-                // Create element
+                // Create an element
                 if (item.type === '#comments') {
                     item.element = document.createComment(item.props[0].value);
                 } else if (item.type === '#text') {
@@ -1751,7 +1756,7 @@
     }
 
     function cloneChildren(element) {
-        // Base case: if element is null/undefined or not an object, return as is
+        // Base case: if an element is null/undefined or not an object, return as is
         if (!element || typeof element !== 'object') {
             return element;
         }
@@ -1761,13 +1766,13 @@
             return element.map(item => cloneChildren(item));
         }
 
-        // Create new object
+        // Create a new object
         const cloned = {};
 
         // Clone each property
         for (const key in element) {
             if (key === 'children') {
-                // Handle children specially as before
+                // Handle children especially as before
                 cloned.children = element.children ? cloneChildren(element.children) : undefined;
             } else if (key === 'props') {
                 // Deep clone props array
@@ -1830,6 +1835,7 @@
 
         // Current onchange
         let externalOnchange = self.onchange;
+        let externalOnload = self.onload;
 
         if (! item) {
             item = {};
@@ -2357,7 +2363,7 @@
         const lemon = R.currentLemon;
         // My value object
         let value = {};
-        // Create method to update the state
+        // Create a method to update the state
         const setValue = (newValue) => {
             if (typeof(lemon.path.initial) === 'undefined') {
                 if (typeof (newValue) === 'object') {
