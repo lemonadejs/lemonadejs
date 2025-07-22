@@ -54,15 +54,12 @@ Build modern applications with lemonadeJS and node.
 
 ```javascript
 import lemonade from "lemonadejs";
-import Hello from "./Hello";
 
 export default function App() {
-  let self = this;
-  self.count = 1;
-  return `<div>
-        <div><Hello /></div>
-        <p>You clicked {{self.count}} times</p>
-        <button onclick="self.count++;">Click me</button>
+  this.count = 1;
+  return render => render`<div>
+        <p>You clicked ${this.count} times</p>
+        <button onclick="${this.count++}">Click me</button>
   </div>`;
 }
 ```
@@ -78,18 +75,16 @@ Simplicity to run in the browser without dependencies, servers, transpiler.<br>
 <script src="https://cdn.jsdelivr.net/npm/lemonadejs/dist/lemonade.min.js"></script>
 <script>
 function Hello() {
-    let self = this;
-    return `<h1>{{self.title}}</h1>`;
+    return render => render`<h1>${this.title}</h1>`;
 }
 
 function App() {
-    let self = this;
-    self.count = 1;
-    return `<>
-      <Hello title="your title" />
-      <p>You clicked {{self.count}} times</p>
-      <button onclick="self.count++;">Click me</button>
-    </>`;
+  this.count = 1;
+  return render => render`<div>
+        <Hello title="some title" />
+        <p>You clicked ${this.count} times</p>
+        <button onclick="${this.count++}">Click me</button>
+  </div>`;
 }
 lemonade.render(App, document.getElementById('root'));
 </script>
@@ -103,18 +98,16 @@ lemonade.render(App, document.getElementById('root'));
 import lemonade from "lemonadejs";
 
 export default function Component() {
-    let self = this;
-
-    self.rows = [
+    this.rows = [
         { title:'Google', description: 'The alpha search engine...' },
         { title:'Bing', description: 'The microsoft search engine...' },
         { title:'Duckduckgo', description: 'Privacy in the first place...' },
     ];
 
     // Custom components such as List should always be unique inside a real tag.
-    return `<table cellpadding="6">
+    return render => render`<table cellpadding="6">
         <thead><tr><th>Title</th><th>Description</th></th></thead>
-        <tbody @loop="self.rows">
+        <tbody :loop="${this.rows}">
             <tr><td>{{self.title}}</td><td>{{self.description}}</td></tr>
         </tbody>
     </table>`;
@@ -130,14 +123,12 @@ export default function Component() {
 <script src="https://cdn.jsdelivr.net/npm/lemonadejs/dist/lemonade.min.js"></script>
 <script>
 function Component() {
-    // Create the self object
-    let self = this;
-    self.test = function(e) {
+    const test = (e) => {
         console.log(e);
         e.preventDefault();
     }
     // The property call is added to the observable list when added to the DOM
-    return `<input type="button" value="Click test" onclick="self.test(e);"/>`;
+    return render => render`<input type="button" value="Click test" onclick="${test}"/>`;
 }
 
 // Render the LemonadeJS element into the DOM
@@ -156,48 +147,19 @@ lemonade.render(Component, document.getElementById('root'));
 <script src="https://cdn.jsdelivr.net/npm/lemonadejs/dist/lemonade.min.js"></script>
 <script>
 function App() {
-    let self = this;
-    self.disabled = false;
-    return `<>
-      <button onclick="self.disabled = !self.disabled">Toggle</button>
-      <input type="text" disabled="{{self.disabled}}" />
+    this.disabled = false;
+    const toggle = () => {
+        this.disabled = !this.disabled;
+    }
+    return render => render`<>
+      <button onclick="${toggle}">Toggle</button>
+      <input type="text" disabled="${this.disabled}" />
     </>`;
 }
 lemonade.render(App, document.getElementById('root'));
 </script>
 </body>
 </html>
-```
-
-### Reactive Web Components
-
-```html
-<hello-element title="Hello world" />
-```
-
-```javascript
-class HelloElement extends HTMLElement {
-    constructor() {
-        super();
-    }
- 
-    render() {
-        let self = this;
-        return `<>
-            <h1>{{self.title}}</h1>
-            <input type="button" value="setTitle()"
-                onclick="self.title = 'Test'" />
-        </>`;
-    }
- 
-    connectedCallback() {
-        if (! this.el) {
-            lemonade.render(this.render, this, this);
-        }
-    }
-}
- 
-window.customElements.define('hello-element', HelloElement);
 ```
 
 
@@ -209,41 +171,49 @@ This software is free to use, and it is distributed under the MIT license.
 
 ### Documentation
 
-* [Getting started](https://lemonadejs.com/docs/getting-started)
-* [Attributes](https://lemonadejs.com/docs/attributes)
-* [Two-way binding](https://lemonadejs.com/docs/two-way-binding)
-* [Arrays](https://lemonadejs.com/docs/arrays)
-* [Methods](https://lemonadejs.com/docs/methods)
-* [Events](https://lemonadejs.com/docs/events)
-* [Components](https://lemonadejs.com/docs/components)
-* [Classes](https://lemonadejs.com/docs/classes)
-* [Web components](https://lemonadejs.com/docs/web-components)
-* [Quick reference](https://lemonadejs.com/docs/quick-reference)
-* [Debugging](https://lemonadejs.com/docs/debugging)
-* [Contributing](https://lemonadejs.com/docs/contributions)
-
-
-### Utilities
-
-* [Awesome](https://lemonadejs.com/docs/awesome)
-* [Sugar](https://lemonadejs.com/docs/sugar)
-* [Testing](https://lemonadejs.com/docs/tests)
-* [Plugins](https://lemonadejs.com/docs/plugins)
-* [Module (ESM)](https://lemonadejs.com/docs/module)
-
+* [Getting started](/docs/getting-started)
+* [Upgrades](/docs/upgrades)
+* [Quick reference](/docs/quick-reference)
+* [Changelog](/docs/changelog)
+* [Introduction](/docs/intro)
+* [Components](/docs/components)
+* [Props](/docs/props)
+* [Events](/docs/events)
+* [Onload](/docs/onload)
+* [Onchange](/docs/onchange)
+* [State](/docs/state)
+* [References](/docs/references)
+* [Ready](/docs/ready)
+* [Two-way data binding](/docs/two-way-data-binding)
+* [Render](/docs/render)
+* [Forms](/docs/forms)
+* [Arrays](/docs/arrays)
+* [Sugar](/docs/sugar)
+* [Testing](/docs/tests)
+* [Methods](/docs/methods)
+* [Classes](/docs/classes)
+* [Web-components](/docs/web-components)
+* [Module (ESM](/docs/module)
 
 ### Libraries
 
-* [JavaScript List](https://lemonadejs.com/docs/plugins/list)
-* [JavaScript Rating](https://lemonadejs.com/docs/plugins/rating)
-* [JavaScript Router](https://lemonadejs.com/docs/plugins/router)
-* [JavaScript Signature](https://lemonadejs.com/docs/plugins/signature)
-* [JavaScript Data grid](https://lemonadejs.com/docs/plugins/data-grid)
-* [JavaScript Image Cropper](https://lemonadejs.com/docs/plugins/image-cropper)
-* [JavaScript Modal](https://lemonadejs.com/docs/plugins/modal)
-* [JavaScript Tabs](https://lemonadejs.com/docs/plugins/tabs)
-* [JavaScript Calendar](https://lemonadejs.com/docs/plugins/calendar)
-* [JavaScript Color picker](https://lemonadejs.com/docs/plugins/color-picker)
+
+* [JavaScript Lists with Search and Pagination](/docs/plugins/list): Create a list of elements from an array based on a given template, including search and pagination.
+* [JavaScript Rating](/docs/plugins/rating): A micro JavaScript star rating plugin.
+* [JavaScript Router](/docs/plugins/router): Create a JavaScript single-page application with routes using LemonadeJS.
+* [Signature Pad](/docs/plugins/signature): A JavaScript Signature pad using LemonadeJS.
+* [JavaScript Data Grid](/docs/plugins/data-grid) : A micro (5KBytes) JavaScript Data Grid with search, pagination, sorting.
+* [JavaScript Modal](/docs/plugins/modal) : Create advance resizable, draggable, closable or minimizable modals. 
+* [JavaScript Calendar](/docs/plugins/calendar) : JavaScript date picker with range selection and much more.
+* [JavaScript Dropdown](/docs/plugins/dropdown) : Highly performance autocomplete dropdown with groups, images, and much more.
+* [JavaScript Color picker](/docs/plugins/color-picker) : Simple javascript color picker.
+* [JavaScript Timeline](/docs/plugins/timeline) : JavaScript timeline with grouping and other other customizable visual attributes.  
+* [JavaScript Context Menu](/docs/plugins/context-menu) : JavaScript responsive context menu.
+* [JavaScript Tabs](/docs/plugins/tabs) : Simple javascript tabs component.
+* [JavaScript Image cropper](/docs/plugins/image-cropper) : A linkedin-style photo cropper.
+* [JavaScript Switch](/docs/plugins/switch): A lightweight reactive switch button.
+* [JavaScript Top Menu](/docs/plugins/top-menu): A lightweight reactive top menu.
+
 
 
 ### Examples
@@ -259,6 +229,18 @@ This software is free to use, and it is distributed under the MIT license.
 * [Color picker](https://lemonadejs.com/docs/examples/color-picker">)
 * [Hangman game](https://lemonadejs.com/docs/examples/hangman">)
 * [Tic tac toe](https://lemonadejs.com/docs/examples/tic-tac-toe">)
+
+
+
+
+### Utilities
+
+* [Awesome](https://lemonadejs.com/docs/awesome)
+* [Sugar](https://lemonadejs.com/docs/sugar)
+* [Testing](https://lemonadejs.com/docs/tests)
+* [Plugins](https://lemonadejs.com/docs/plugins)
+* [Module (ESM)](https://lemonadejs.com/docs/module)
+
 
 
 ## Other tools
