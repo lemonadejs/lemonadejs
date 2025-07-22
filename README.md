@@ -171,48 +171,48 @@ This software is free to use, and it is distributed under the MIT license.
 
 ### Documentation
 
-* [Getting started](/docs/getting-started)
-* [Upgrades](/docs/upgrades)
-* [Quick reference](/docs/quick-reference)
-* [Changelog](/docs/changelog)
-* [Introduction](/docs/intro)
-* [Components](/docs/components)
-* [Props](/docs/props)
-* [Events](/docs/events)
-* [Onload](/docs/onload)
-* [Onchange](/docs/onchange)
-* [State](/docs/state)
-* [References](/docs/references)
-* [Ready](/docs/ready)
-* [Two-way data binding](/docs/two-way-data-binding)
-* [Render](/docs/render)
-* [Forms](/docs/forms)
-* [Arrays](/docs/arrays)
-* [Sugar](/docs/sugar)
-* [Testing](/docs/tests)
-* [Methods](/docs/methods)
-* [Classes](/docs/classes)
-* [Web-components](/docs/web-components)
-* [Module (ESM](/docs/module)
+* [Getting started](https://lemonadejs.com/docs/getting-started)
+* [Upgrades](https://lemonadejs.com/docs/upgrades)
+* [Quick reference](https://lemonadejs.com/docs/quick-reference)
+* [Changelog](https://lemonadejs.com/docs/changelog)
+* [Introduction](https://lemonadejs.com/docs/intro)
+* [Components](https://lemonadejs.com/docs/components)
+* [Props](https://lemonadejs.com/docs/props)
+* [Events](https://lemonadejs.com/docs/events)
+* [Onload](https://lemonadejs.com/docs/onload)
+* [Onchange](https://lemonadejs.com/docs/onchange)
+* [State](https://lemonadejs.com/docs/state)
+* [References](https://lemonadejs.com/docs/references)
+* [Ready](https://lemonadejs.com/docs/ready)
+* [Two-way data binding](https://lemonadejs.com/docs/two-way-data-binding)
+* [Render](https://lemonadejs.com/docs/render)
+* [Forms](https://lemonadejs.com/docs/forms)
+* [Arrays](https://lemonadejs.com/docs/arrays)
+* [Sugar](https://lemonadejs.com/docs/sugar)
+* [Testing](https://lemonadejs.com/docs/tests)
+* [Methods](https://lemonadejs.com/docs/methods)
+* [Classes](https://lemonadejs.com/docs/classes)
+* [Web-components](https://lemonadejs.com/docs/web-components)
+* [Module (ESM](https://lemonadejs.com/docs/module)
 
 ### Libraries
 
 
-* [JavaScript Lists with Search and Pagination](/docs/plugins/list): Create a list of elements from an array based on a given template, including search and pagination.
-* [JavaScript Rating](/docs/plugins/rating): A micro JavaScript star rating plugin.
-* [JavaScript Router](/docs/plugins/router): Create a JavaScript single-page application with routes using LemonadeJS.
-* [Signature Pad](/docs/plugins/signature): A JavaScript Signature pad using LemonadeJS.
-* [JavaScript Data Grid](/docs/plugins/data-grid) : A micro (5KBytes) JavaScript Data Grid with search, pagination, sorting.
-* [JavaScript Modal](/docs/plugins/modal) : Create advance resizable, draggable, closable or minimizable modals. 
-* [JavaScript Calendar](/docs/plugins/calendar) : JavaScript date picker with range selection and much more.
-* [JavaScript Dropdown](/docs/plugins/dropdown) : Highly performance autocomplete dropdown with groups, images, and much more.
-* [JavaScript Color picker](/docs/plugins/color-picker) : Simple javascript color picker.
-* [JavaScript Timeline](/docs/plugins/timeline) : JavaScript timeline with grouping and other other customizable visual attributes.  
-* [JavaScript Context Menu](/docs/plugins/context-menu) : JavaScript responsive context menu.
-* [JavaScript Tabs](/docs/plugins/tabs) : Simple javascript tabs component.
-* [JavaScript Image cropper](/docs/plugins/image-cropper) : A linkedin-style photo cropper.
-* [JavaScript Switch](/docs/plugins/switch): A lightweight reactive switch button.
-* [JavaScript Top Menu](/docs/plugins/top-menu): A lightweight reactive top menu.
+* [JavaScript Lists with Search and Pagination](https://lemonadejs.com/docs/plugins/list): Create a list of elements from an array based on a given template, including search and pagination.
+* [JavaScript Rating](https://lemonadejs.com/docs/plugins/rating): A micro JavaScript star rating plugin.
+* [JavaScript Router](https://lemonadejs.com/docs/plugins/router): Create a JavaScript single-page application with routes using LemonadeJS.
+* [Signature Pad](https://lemonadejs.com/docs/plugins/signature): A JavaScript Signature pad using LemonadeJS.
+* [JavaScript Data Grid](https://lemonadejs.com/docs/plugins/data-grid) : A micro (5KBytes) JavaScript Data Grid with search, pagination, sorting.
+* [JavaScript Modal](https://lemonadejs.com/docs/plugins/modal) : Create advance resizable, draggable, closable or minimizable modals. 
+* [JavaScript Calendar](https://lemonadejs.com/docs/plugins/calendar) : JavaScript date picker with range selection and much more.
+* [JavaScript Dropdown](https://lemonadejs.com/docs/plugins/dropdown) : Highly performance autocomplete dropdown with groups, images, and much more.
+* [JavaScript Color picker](https://lemonadejs.com/docs/plugins/color-picker) : Simple javascript color picker.
+* [JavaScript Timeline](https://lemonadejs.com/docs/plugins/timeline) : JavaScript timeline with grouping and other other customizable visual attributes.  
+* [JavaScript Context Menu](https://lemonadejs.com/docs/plugins/context-menu) : JavaScript responsive context menu.
+* [JavaScript Tabs](https://lemonadejs.com/docs/plugins/tabs) : Simple javascript tabs component.
+* [JavaScript Image cropper](https://lemonadejs.com/docs/plugins/image-cropper) : A linkedin-style photo cropper.
+* [JavaScript Switch](https://lemonadejs.com/docs/plugins/switch): A lightweight reactive switch button.
+* [JavaScript Top Menu](https://lemonadejs.com/docs/plugins/top-menu): A lightweight reactive top menu.
 
 
 
@@ -229,18 +229,6 @@ This software is free to use, and it is distributed under the MIT license.
 * [Color picker](https://lemonadejs.com/docs/examples/color-picker">)
 * [Hangman game](https://lemonadejs.com/docs/examples/hangman">)
 * [Tic tac toe](https://lemonadejs.com/docs/examples/tic-tac-toe">)
-
-
-
-
-### Utilities
-
-* [Awesome](https://lemonadejs.com/docs/awesome)
-* [Sugar](https://lemonadejs.com/docs/sugar)
-* [Testing](https://lemonadejs.com/docs/tests)
-* [Plugins](https://lemonadejs.com/docs/plugins)
-* [Module (ESM)](https://lemonadejs.com/docs/module)
-
 
 
 ## Other tools
