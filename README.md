@@ -49,7 +49,7 @@ LemonadeJS enables the creation of reusable components without the need for a tr
 
 Build modern applications with lemonadeJS and node.
 
-[See this example on codesandbox](https://codesandbox.io/s/reactive-micro-library-ny99bk)
+[See this example on StackBlitz](https://stackblitz.com/edit/vitejs-vite-ke7wwphz)
 
 ```javascript
 import lemonade from "lemonadejs";
@@ -58,7 +58,7 @@ export default function App() {
   this.count = 1;
   return render => render`<div>
         <p>You clicked ${this.count} times</p>
-        <button onclick="${this.count++}">Click me</button>
+        <button onclick="${()=>this.count++}">Click me</button>
   </div>`;
 }
 ```
@@ -82,7 +82,7 @@ function App() {
   return render => render`<div>
         <Hello title="some title" />
         <p>You clicked ${this.count} times</p>
-        <button onclick="${this.count++}">Click me</button>
+        <button onclick="${()=>this.count++}">Click me</button>
   </div>`;
 }
 lemonade.render(App, document.getElementById('root'));
