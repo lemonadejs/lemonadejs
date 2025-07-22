@@ -1,20 +1,19 @@
-# LemonadeJS v4: Reactive micro library
+# LemonadeJS: Micro Reactive JavaScript Library
 
-## Create amazing web-based interfaces with LemonadeJS
+## Create amazing web-based interfaces and framework-agnostic components with LemonadeJS
 
 ![Micro Library](https://lemonadejs.com/templates/default/img/lemonadejs-home.jpg)
 
-LemonadeJS is a super lightweight reactive vanilla javascript micro-library (7 KBytes). It helps to integrate the JavaScript (controllers) and the HTML (view). It supports two-way data binding and integrates natively with jSuites to help to create amazing interfaces quicker.<br><br>
+LemonadeJS is a super lightweight, reactive, vanilla JavaScript micro-library (7 KB). It helps integrate JavaScript (controllers) with HTML (view) through two-way data binding. It also integrates natively with jSuites to help you build amazing interfaces more quickly.<br><br>
 
-It would help you deliver reusable components and does not require transpiler, babel, or hundreds of other dependencies. It works just fine in any javascript dev environment. LemonadeJS has a quick learning curve, keeps coding fun, and is very close to native JS.
+LemonadeJS enables the creation of reusable components without the need for a transpiler, Babel, or dozens of dependencies. It works seamlessly in any JavaScript development environment. With a fast learning curve, LemonadeJS keeps coding enjoyable and stays close to native JavaScript.
 
-- Make rich and user-friendly web interfaces and applications
-- Handle complicated data inputs with ease and convenience
-- Improve the software user experience
-- Create rich CRUDS and beautiful UI
-- Highly flexible and customizable
-- Lightweight and simple to use
-
+- Build rich and user-friendly web interfaces and applications  
+- Handle complex data inputs with ease  
+- Enhance the software user experience  
+- Create rich CRUD interfaces and beautiful UIs  
+- Highly flexible and customizable  
+- Lightweight and simple to use  
 
 ## Installation
 
