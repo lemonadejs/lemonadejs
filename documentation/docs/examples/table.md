@@ -1,38 +1,28 @@
-title: Dynamic Reactive Tables with LemonadeJS,
-keywords: LemonadeJS, two-way binding, frontend, javascript library, javascript plugin, javascript, reactive, react, examples, table,
-description: How to create a reactive dynamic table from an array of objects using the loop attribute.
+title: Dynamic Reactive Tables with LemonadeJS
+keywords: LemonadeJS, two-way binding, frontend, JavaScript library, JavaScript plugin, JavaScript, reactive, React, examples, table
+description: Learn how to create a reactive dynamic table from an array of objects using LemonadeJS and the Loop attribute.
 
-Table
-=====
+# Dynamic Tables Example
 
-How to create dynamic tables from a JavaScript array of objects. The following example uses `:loop` attribute.  
-  
-
-Basic example
--------------
-
-Creating a dynamic HTML table using LemonadeJS.  
-
-### Source code
+This example demonstrates how to create dynamic tables using LemonadeJS by rendering rows from a JavaScript array of objects with the :loop attribute.
 
 ```html
 <html>
-<script src="https://lemonadejs.com/v4/lemonade.js"></script>
+<script src="https://lemonadejs.com/v5/lemonade.js"></script>
 <div id='root'></div>
 <script>
 function Component() {
-    const self = this;
-
-    self.rows = [
+    // Data
+    this.rows = [
         { title:'Google', description: 'The google search engine...' },
         { title:'Bing', description: 'The microsoft search engine...' },
         { title:'Duckduckgo', description: 'Privacy in the first place...' },
     ];
 
     // Dynamic table
-    return `<table>
+    return render => render`<table>
         <thead><tr><th>Title</th><th>Description</th></th></thead>
-        <tbody :loop="self.rows">
+        <tbody :loop="${this.rows}">
         <tr><td>{{self.title}}</td><td>{{self.description}}</td></tr>
         </tbody>
     </table>`;
@@ -42,21 +32,18 @@ lemonade.render(Component, document.getElementById('root'));
 </html>
 ```
 ```javascript
-import lemonade from "lemonadejs";
-
 export default function Component() {
-    const self = this;
-
-    self.rows = [
+    // Data
+    this.rows = [
         { title:'Google', description: 'The google search engine...' },
         { title:'Bing', description: 'The microsoft search engine...' },
         { title:'Duckduckgo', description: 'Privacy in the first place...' },
     ];
 
-    // Custom components 
-    return `<table>
+    // Dynamic table
+    return render => render`<table>
         <thead><tr><th>Title</th><th>Description</th></th></thead>
-        <tbody :loop="self.rows">
+        <tbody :loop="${this.rows}">
         <tr><td>{{self.title}}</td><td>{{self.description}}</td></tr>
         </tbody>
     </table>`;

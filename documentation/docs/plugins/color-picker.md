@@ -1,12 +1,9 @@
-title: JavaScript Color Picker - LemonadeJS
+title: JavaScript Color Picker
 keywords: LemonadeJS, Two-Way Data Binding, Frontend, JavaScript Library, JavaScript Plugin, JavaScript, Reactive, React, Color Picker
 description: LemonadeJS introduces a versatile and responsive JavaScript color picker. This reactive component simplifies the color selection process in web applications.
+canonical: https://lemonadejs.com/docs/plugins/color-picker
 
-
-![JavaScript Color Picker](img/javascript-color-picker.jpg){.right style="margin: 40px; width: initial;"}
-
-JavaScript Color Picker
-=======================
+# JavaScript Color Picker
 
 `JavaScript Components`{.jtag .black .framework-images}
 
@@ -15,8 +12,7 @@ JavaScript Color Picker
 The LemonadeJS JavaScript Color Picker is a lightweight, responsive, and reactive component for web applications. It features two primary elements: a customizable personal palette and a pre-defined color gradient. Additionally, it supports various events and offers seamless integration with frameworks like React, Vue, and Angular.  
   
 
-Documentation
--------------
+## Documentation
 
 ### Installation
 
@@ -26,20 +22,20 @@ npm install @lemonadejs/color
 
 ### Settings
 
-| Attribute          | Description                                                                                       |
-|--------------------|---------------------------------------------------------------------------------------------------|
-| palette?: string[] | A matrix containing hexadecimal color values. There is a default palette.                         |
-| closed?: boolean   | Controls the open and close state of the color picker modal.                                      |
-| type?:string       | The type of element that will toggle the color picker modal. Options: 'input', 'inline' or empty. |
-| value?: string     | The value of the color that is currently selected.                                                |
+| Attribute           | Description                                                                                       |
+|---------------------|---------------------------------------------------------------------------------------------------|
+| palette?: String[]  | A matrix containing hexadecimal color values. There is a default palette.                         |
+| closed?: Boolean    | Controls the open and close state of the color picker modal.                                      |
+| type?: String       | The type of element that will toggle the color picker modal. Options: 'input', 'inline' or empty. |
+| value?: String      | The value of the color that is currently selected.                                                |
 
 ### Events
 
-| Event                                             | Description                |
-|---------------------------------------------------|----------------------------|
-| onopen?: (self: object) => void                   | Called when modal opens.   |
-| onclose?: (self: object) => void                  | Called when modal closes.  |
-| onchange?: (self: object, string: value) => void  | Called when value changes. |
+| Event                                              | Description                |
+|----------------------------------------------------|----------------------------|
+| onopen?: (s: Object) => void                       | Called when modal opens.   |
+| onclose?: (s: Object) => void                      | Called when modal closes.  |
+| onchange?: (s: Object, value: String) => void      | Called when value changes. |
 
 Examples
 --------
@@ -71,9 +67,7 @@ import Color from '@lemonadejs/color';
 import '@lemonadejs/color/dist/style.css';
 
 function App() {
-    let self = this;
-
-    return `<><Color type="inline" /></>`;
+    return render => render`<Color type="inline" />`;
 }
 ```
 ```jsx
@@ -150,33 +144,32 @@ button.addEventListener('click', () => {
 // codesandbox: https://codesandbox.io/p/sandbox/lemonadejs-reactive-app-forked-s2rsll?file=%2Fsrc%2FApp.js
 import lemonade from 'lemonadejs'
 import Color from '@lemonadejs/color';
+
 import '@lemonadejs/color/dist/style.css';
 
-lemonade.setComponents({ Color });
-
 function App() {
-    const self = this;
 
-    self.handleUpdate = function(s, color) {
-        button.style.backgroundColor = color;
+    const handleUpdate = (s, color) => {
+        this.button.style.backgroundColor = color;
     }   
  
-    self.palette = [
+    const palette = [
         ["#001969", "#233178", "#394a87", "#4d6396", "#607ea4", "#7599b3"],
         ["#00429d", "#2b57a7", "#426cb0", "#5681b9", "#6997c2", "#7daeca"],
         ["#3659b8", "#486cbf", "#597fc5", "#6893cb", "#78a6d1", "#89bad6"],
         ["#003790", "#315278", "#48687a", "#5e7d81", "#76938c", "#8fa89a"]
     ];  
 
-    return `<>
-        <input type="button" onclick="self.component.open"></div>
-        <Color :closed="true" :onchange="self.handleUpdate" :palette="self.palette" :ref="self.component" />
+    return render => render`<>
+        <input type="button" onclick="{this.component.open}" :ref="${this.button}"></div>
+        <Color :closed="true" onchange="${handleUpdate}" palette="${palette}" :ref="${this.component}" />
     </>`
 }
 ```
 ```jsx
 import React, { useRef } from 'react';
 import Color from '@lemonadejs/color/dist/react';
+
 import '@lemonadejs/color/dist/style.css';
 
 const palette = [
@@ -236,6 +229,4 @@ export default {
     }
 }
 </script>
-
-<style></style>
 ```

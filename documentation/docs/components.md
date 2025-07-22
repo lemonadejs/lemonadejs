@@ -1,57 +1,156 @@
-title: Create Reusable Reactive UI Components with LemonadeJS
-keywords: LemonadeJS, reusable components, reactive UI, frontend, javascript library, components, hooks
-description: Learn how to create reusable and reactive UI components with LemonadeJS.
+title: Reactive Components with LemonadeJS
+keywords: LemonadeJS, reactive components, reusable UI, JavaScript library, frontend development, hooks, dynamic UI
+description: Discover how to design reusable, dynamic, and reactive UI components using LemonadeJS, a lightweight JavaScript library for modern frontend development.
+canonical: https://lemonadejs.com/docs/components
 
-Components
-==========
+# Components
 
-A component provides a powerful solution for crafting reusable functionalities. This section outlines the essential considerations for developing your custom components within LemonadeJS.
+Components are reusable building blocks that combine logic and UI, serving as the foundation of LemonadeJS applications. This section explores the core concepts and patterns essential for creating custom components.
 
-## Custom components
+## Overview
 
-In LemonadeJS, custom components consist of two primary elements: 'self', which encompasses the data and controls, and the HTML template, which forms the view. LemonadeJS simplifies the process of binding `self` and the template within a unified scope, thus ensuring a fluid interchange of properties, objects, and methods.
-
-{.green}
-> **Summary of this chapter**
-> 
-> Key points to remember
-> - **Self properties**: All attributes from the component's HTML tag are accessible in the method as this;
-> - **Reserved Properties**: parent, el, and refresh are reserved properties in any component;
-> - **Dynamic template**: All HTML contained within a component tag serves as the template and is part of the function call;
-> - **Component refresh**: Re-render the component while preserving the self's state;
-> - **Component declaration**: A custom tag and its methods should bear the same name and be declared in your call to lemonade.element(template, self, { Component1, Component2, ... });
+Components in LemonadeJS follow an instance-based architecture, where `this`{.highlight} serves as the context for accessing component properties and methods. Each component integrates template literals for defining the UI structure with reactive state management, enabling efficient DOM updates without requiring full component re-renders.
 
 
+## Component Declaration
 
+### Global Declaration
 
-### Self Properties
+Components can be registered globally using the `setComponents`{.highlight} method, making them accessible across all templates in your application. Component names should follow the PascalCase convention to distinguish them from native HTML elements in templates.
 
-All attributes defined within the custom component tag in the template are accessible inside the corresponding custom component's JavaScript code via `this`.  
-  
-```html
-<html>
-<script src="https://lemonadejs.com/v4/lemonade.js"></script>
-<div id='root'></div>
-<script>
+{.ignore}
+```javascript
 function Hello() {
-    // Get the attributes from the tag
-    const self = this;
-    // Title and year are declared in the parent template
-    return `<p>{{self.title}} {{self.year}}</p>`;
+    return render => render`<div>${this.year}</div>`;
+}
+
+// Register the custom component to be used on across your application
+lemonade.setComponents({ Hello });
+
+// Now any component can utilize the component <Hello/>
+function Component() {
+    // Year
+    this.value = 2025;
+    // Year is a prop create on the Hello scope
+    return render => render`<div>
+        <Hello year="${this.value}" />
+    </div>`;
+}
+```
+
+### Component References
+
+Components can be passed directly as references within templates, offering a flexible alternative to global registration. This method supports localized component usage and encourages more modular and maintainable code organization.
+
+{.ignore}
+```javascript
+function Hello() {
+    return render => render`<div>${this.year}</div>`;
 }
 
 function Component() {
-    const self = this;
-    self.value = '2023';
+    // Year
+    this.value = 2025;
+    // Update
+    const update = () => {
+        this.value++;
+    }
     // title and year will be available inside Hello through (this)
-    return `<>
-        <Hello title="Hello" year="{{self.value}}" />
-        <input type="button" value="Next"
-            onclick="self.value++" />
-    </>`;
+    return render => render`<div>
+        <${Hello} year="${this.value}" />
+        <input type="button" value="Next" onclick="${update}" />
+    </div>`;
 }
+```
+
+### Local Declaration
+
+In LemonadeJS, you can declare and use components locally by utilizing `lemonade.element`. Here's an example:
+
+```html
+<html>
+<script src="https://lemonadejs.com/v5/lemonade.js"></script>
+<div id='root'></div>
+<script>
+// Component
+function Test() {
+    return render => render`<p>Hello ${this.type}</p>`;
+}
+
+function Form() {
+    // Declare the components locally
+    let template = `<Test type="World" />`;
+
+    return lemonade.element(template, this, { Test });
+}
+// Render the component
+lemonade.render(Form, document.getElementById('root'));
+</script>
+</html>
+```
+```javascript
+import lemonade from 'lemonadejs';
+
+// Component
+function Test() {
+    return render => render`<p>Hello ${this.type}</p>`;
+}
+
+export default function Form() {
+    // Declare the components locally
+    let template = `<Test type="World" />`;
+
+    return lemonade.element(template, this, { Test });
+}
+```
+
+### Using JSX
+
+JSX simplifies the process of defining and utilizing components, making it more transparent and declarative. The example below demonstrates how to pass properties to a child component using JSX:
+
+{.ignore}
+```jsx
+function Hello() {
+    return (<div>{this.year}</div>);
+}
+
+function Component() {
+    // Year
+    this.value = 2025;
+    // title and year will be available inside Hello through (this)
+    return (
+        <div>
+            <Hello year={this.value} />
+        </div>
+    );
+}
+```
+
+
+## Props
+
+Props are values passed to components, enabling communication between parent and child components. In LemonadeJS, props are automatically bound to the component instance and are accessible through the `this` context.
+
+```html
+<html>
+<script src="https://lemonadejs.com/v5/lemonade.js"></script>
+<div id='root'></div>
+<script>
+function Crypto() {
+    return render => render `<div>
+        When <b>${this.title}</b> reaches <b>${this.value}</b>?
+    </div>`;
+}
+
 // Register custom tags
-lemonade.setComponents({ Hello });
+lemonade.setComponents({ Crypto });
+
+function Component() {
+    // The innerHTML of Crypto is the template for the component
+    return render => render`<div>
+        <Crypto title="Bitcoin" value="250000" />
+    </div>`;
+}
 // Render the component
 lemonade.render(Component, document.getElementById('root'));
 </script>
@@ -60,63 +159,60 @@ lemonade.render(Component, document.getElementById('root'));
 ```javascript
 import lemonade from 'lemonadejs';
 
-function Hello() {
-    // Get the attributes from the tag
-    const self = this;
-    // Title and year are declared in the parent template
-    return `<h1>{{self.title}} {{self.year}}</h1>`;
+function Crypto() {
+    return render => render `<div>
+        When <b>${this.title}</b> reaches <b>${this.value}</b>?
+    </div>`;
 }
 
 // Register custom tags
-lemonade.setComponents({ Hello });
+lemonade.setComponents({ Crypto });
 
 export default function Component() {
-    const self = this;
-    self.value = '2023';
-    // title and year will be available inside Hello through (this)
-    return `<>
-        <Hello title="Hello" year="{{self.value}}" />
-        <input type="button" value="Next"
-            onclick="self.value++" />
-    </>`;
+    // The innerHTML of Crypto is the template for the component
+    return render => render`<div>
+        <Crypto title="Bitcoin" value="250000" />
+    </div>`;
 }
 ```
 
-> **Reserved Self Properties**
-> 
-> Upon instantiation of a custom component, specific properties within the `self` object are reserved for distinct functions:
-> - **`parent`**: Refers to the self of the parent component from which the current component is called.
-> - **`el`**: Denotes the root HTML element of the custom component.
-> - **`refresh`**: A method that initiates a re-render of the component. It is frequently used after operations on arrays or objects when the view needs to be refreshed.
+### More About Props
+
+For more detailed information about props, please visit:\
+\
+[Component Props](/docs/props){.button}
 
 
-### Dynamic Template
+## Children
 
-Any HTML content within a custom component tag is recognized as its template. This content is passed into the component's method handler as the first argument, facilitating dynamic template functionality.
- 
-  
+### Overview
+
+LemonadeJS v5 exposes child component instances to the parent’s lifecycle hooks before DOM mounting. This pre-rendering access allows direct manipulation of child properties, implementation of conditional rendering logic, and custom initialization, all while preserving reactive bindings between parent and child components.
+
+### Child Component Rendering
+
+Child components are instantiated and attached to the parent’s root element during rendering, establishing the component hierarchy.
+
 ```html
 <html>
-<script src="https://lemonadejs.com/v4/lemonade.js"></script>
+<script src="https://lemonadejs.com/v5/lemonade.js"></script>
 <div id='root'></div>
 <script>
 // Template is based on the caller innerHTML
-function Crypto(template) {
-    // this received title from the caller
-    const self = this;
+function Crypto(children) {
+    // This array is available before the component is created and its children appended to the root element of the component
+    console.log(children);
     // Create the component
-    return template;
+    return render => render `<div data-title=${this.title}></div>`;
 }
 
 function Component() {
-    let self = this
-
     // The innerHTML of Crypto is the template for the component
-    return `<>
+    return render => render`<div>
         <Crypto title="Bitcoin">
-            <b>Coin: {{self.title}}</b>
+            <b>Coin: USD 250.000</b>
         </Crypto>
-    </>`;
+    </div>`;
 }
 // Register custom tags
 lemonade.setComponents({ Crypto });
@@ -129,160 +225,180 @@ lemonade.render(Component, document.getElementById('root'));
 import lemonade from 'lemonadejs';
 
 // Template is based on the caller innerHTML
-function Crypto(template) {
-    // this received title from the caller
-    const self = this;
+function Crypto(children) {
+    // This array is available before the component is created and its children appended to the root element of the component
+    console.log(children);
     // Create the component
-    return template;
+    return render => render `<div data-title=${this.title}></div>`;
 }
 
 // Register custom tags
 lemonade.setComponents({ Crypto });
 
 export default function Component() {
-    let self = this
-
     // The innerHTML of Crypto is the template for the component
-    return `<>
-        <p>Example</p>
+    return render => render`<div>
         <Crypto title="Bitcoin">
-            <b>Coin: {{self.title}}</b>
+            <b>Coin: USD 250.000</b>
         </Crypto>
-    </>`;
+    </div>`;
 }
 ```
-  
 
-### Component declaration
+## Component Reactivity
 
-It is important to notice in the examples above that the components `Hello` and `Crypto` need to be declared to be used across the application.  
+### Reactive Properties on `this`
+
+LemonadeJS enables reactivity for properties defined on the component’s this context when they are bound to the template literal. Changes to these properties are automatically detected and reflected in the DOM, provided they are used in dynamic expressions or direct references within the template, eliminating the need for manual re-rendering.
+
+```html
+<html>
+<script src="https://lemonadejs.com/v5/lemonade.js"></script>
+<div id='root'></div>
+<script>
+// Component
+function Test() {
+    this.status = false;
+
+    const update = () => {
+        this.status = ! this.status;
+    }
+    return render => render`<div>
+        <p>${this.status && `<b>test</b>`||''}</p>
+        <input type="button" value="Toggle" onclick="${update}" />
+    </div>`;
+}
+// Render the component
+lemonade.render(Test, document.getElementById('root'));
+</script>
+</html>
+```
+```javascript
+export default function Test() {
+    this.status = false;
+
+    const update = () => {
+        this.status = ! this.status;
+    }
+    return render => render`<div>
+        <p>${this.status && `<b>test</b>`||''}</p>
+        <input type="button" value="Toggle" onclick="${update}" />
+    </div>`;
+}
+```
+
+### Reactive State Objects
+
+States are also reactive objects but operate independently of the this context. In a similar way, when bound to the template literal, changes to their value property are automatically tracked and seamlessly updated in the DOM, also without additional re-rendering calls.
+
+```html
+<html>
+<script src="https://lemonadejs.com/v5/lemonade.js"></script>
+<div id='root'></div>
+<script>
+let { state } = lemonade;
+
+function Test() {
+    let status = state(false);
+
+    const update = () => {
+        status.value = ! status.value;
+    }
+    return render => render`<div>
+        <p>${(status.value && `<b>test</b>`)||''}</p>
+        <input type="button" value="Toggle" onclick="${update}" />
+    </div>`;
+}
+// Render the component
+lemonade.render(Test, document.getElementById('root'));
+</script>
+</html>
+```
+```javascript
+import { state } from 'lemonadejs';
+
+export default function Test() {
+    let status = state(false);
+
+    const update = () => {
+        status.value = ! status.value;
+    }
+    return render => render`<div>
+        <p>${(status.value && `<b>test</b>`)||''}</p>
+        <input type="button" value="Toggle" onclick="${update}" />
+    </div>`;
+}
+```
+
+## Reserved Context Properties
+
+When a custom component is instantiated in LemonadeJS, certain properties within the `this`{.highlight} context are reserved for core functionalities:
+
+| Property              | Description                                        |
+|-----------------------|----------------------------------------------------|
+| `el`{.highlight}      | Represents the root HTML element of the component. |
+| `refresh`{.highlight} | A method to trigger a re-render of the component.  |
+
+
+### Component Refresh
+
+The `refresh`{.highlight} method in a component is designed to force updates to the DOM. It can be used to refresh specific properties, the entire view, or the entire component.
+
+```html
+<html>
+<script src="https://lemonadejs.com/v5/lemonade.js"></script>
+<div id='root'></div>
+<script>
+// Component
+function Test() {
+    this.test = [1,2,3];
+
+    const update = () => {
+        this.test[2] = 30;
+        // Will re-render the elements in the template that uses the property test. 
+        // Can be useful when change array or objects that does not have an internal tracking
+        this.refresh('test');
+    }
     
-
-#### Local declaration
-
-To declare a local component, you can use `lemonade.element` to create your component as below.  
-  
-```html
-<html>
-<script src="https://lemonadejs.com/v4/lemonade.js"></script>
-<div id='root'></div>
-<script>
-// Component
-function Test() {
-    let self = this;
-    return `<p>Hello {{self.type}}</p>`;
-}
-
-function Form() {
-    let self = this;
-    // Declare the components locally
-    let template = `<>
-        <Test type="World" />
-    </>`;
-
-    return lemonade.element(template, self, { Test });
+    return render => render`<div>
+        <p>${this.test}</p>
+        <input type="button" value="Toggle" onclick="${update}" />
+    </div>`;
 }
 // Render the component
-lemonade.render(Form, document.getElementById('root'));
+lemonade.render(Test, document.getElementById('root'));
 </script>
 </html>
 ```
 ```javascript
-import lemonade from 'lemonadejs';
+export default function Test() {
+    this.test = [1,2,3];
 
-// Component
-function Test() {
-    let self = this;
-    return `<p>Hello {{self.type}}</p>`;
-}
-
-lemonade.setComponents({ Element })
-
-export default function Form() {
-    let self = this;
-    // Declare the components locally
-    let template = `<>
-        <Test type="World" />
-    </>`;
-    return lemonade.element(template, self, { Test });
-}
-```
-
-### Component refresh
-
-The `refresh` method within `self` is designed to initiate the update of an entire component or a specific array within a component. The following example illustrates conditional rendering: the component should execute a refresh to render different content based on certain conditions
-
-```html
-<html>
-<script src="https://lemonadejs.com/v4/lemonade.js"></script>
-<div id='root'></div>
-<script>
-// Component
-function Test() {
-    let self = this;
-    if (self.type) {
-        return `<select :bind="self.value">
-            <option value=""></option>
-            <option value="test">test</option>
-        </select>`;
-    } else {
-        return `<input type="text" :bind="self.value" />`;
+    const update = () => {
+        this.test[2] = 30;
+        // Will re-render the elements in the template that uses the property test. 
+        // Can be useful when change array or objects that does not have an internal tracking
+        this.refresh('test');
     }
-}
 
-function Form() {
-    let self = this;
-    // The innerHTML of Crypto is the template for the component
-    return `<>
-        <p>Form</p>
-        <Test :type="self.type" :ref="self.element" /><br><br>
-        <input type="button" value="Update type"
-            onclick="self.type = !self.type; self.element.refresh();" />
-    </>`;
-}
-// Register custom tags
-lemonade.setComponents({ Test });
-// Render the component
-lemonade.render(Form, document.getElementById('root'));
-</script>
-</html>
-```
-```javascript
-import lemonade from 'lemonadejs';
-
-// Component
-function Test() {
-    let self = this;
-    if (self.type) {
-        return `<select :bind="self.value">
-            <option value=""></option>
-            <option value="test">test</option>
-        </select>`;
-    } else {
-        return `<input type="text" :bind="self.value" />`;
-    }
-}
-
-// Register custom tags
-lemonade.setComponents({ Test });
-
-export default function Form() {
-    let self = this;
-    // The innerHTML of Crypto is the template for the component
-    return `<>
-        <p>Form</p>
-        <Test :type="self.type" :ref="self.element" /><br><br>
-        <input type="button" value="Update type"
-            onclick="self.type = !self.type; self.element.refresh();" />
-    </>`;
+    return render => render`<div>
+        <p>${this.test}</p>
+        <input type="button" value="Toggle" onclick="${update}" />
+    </div>`;
 }
 ```
 
+## Summary of this Chapter
 
-## Next Chapter
+Key points to remember:
 
-The next Chapter presents how to create a Component as a JavaScript class.  
+- **Attributes Access**: Component attributes are accessible via this.
+- **Reserved Properties**: parent, el, and refresh are reserved for core functionality.
+- **Component Refresh**: This enables updating the component while preserving its state.
+- **Declaration**: Components can be declared globally using setComponents.
 
-&nbsp;
+## What's Next?
 
-[Next chapter: Classes](/docs/classes){.button .main}
+Learn more about props and how to pass arguments to a component.
+
+[Learn more about props](/docs/props){.button}

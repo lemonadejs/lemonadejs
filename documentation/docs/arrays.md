@@ -1,51 +1,38 @@
-title: Component Loops using LemonadeJS
-keywords: LemonadeJS, two-way binding, frontend, javascript library, reactive, react, Vue, Angular, arrays, loops, lists
-description: Generate lists of elements from arrays using the loop attribute.
+title: Component Loops using LemonadeJS  
+keywords: LemonadeJS, two-way binding, frontend, JavaScript library, reactive, React, Vue, Angular, arrays, loops, lists  
+description: Generate dynamic lists from arrays using the LemonadeJS loop attribute.  
+canonical: https://lemonadejs.com/docs/arrays
 
-![Reactive library loop](img/lemonadejs-array.jpg){.right}
+# Loops
 
-Arrays
-======
+The `:loop` attribute in LemonadeJS enables dynamic list generation by iterating over an array of objects and rendering each item with a template string. Each item's properties are inherently reactive, allowing updates to individual elements without re-rendering the entire list. This attribute works seamlessly with both DOM elements and custom components. Each rendered item maintains its context, including the following reserved properties:
 
-The `:loop` attribute in LemonadeJS is a powerful tool for dynamically creating lists of elements, such as product listings or data grids, in the user interface. 
+| Property | Description                                                     |
+|----------|-----------------------------------------------------------------|
+| `el`     | A reference to the item's root DOM element.                     |
+| `parent` | A reference to the parent component containing the loop.        |
 
-It works by iterating over an array of objects and using a template string to define how each element should be represented as a DOM element. 
+## Examples
 
-This section will explore advanced features such as implementing search functionality that allows the list to be updated in real-time as new elements are added, or existing ones are filtered. That facilitates the creation of highly interactive and responsive interfaces where users can interact with complex datasets efficiently. 
+### Loop on DOM Elements
 
-> **Summary of this chapter**
->
-> - **Loop with Native DOM Tags**: Utilize the innerHTML as a template for each item in your array.
-> - **Isolated Scope per Item**: Treat each array item as an independent 'self' object.
-> - **Automatically Added Properties**: LemonadeJS automatically includes parent and el properties to each 'self'.
-> - **Reusable Elements**: To apply the same `:loop` to multiple elements without duplicating data, set false for the attribute `unique` on the DOM element.
-{.green}
-
-Examples
---------
-
-
-
-### :loop on real HTML tags
-
-When using the `:loop` on a native HTML tag, the innerHTML of the tag will be considered the template to create the elements.
+When applying the loop attribute to a DOM element, its inner HTML serves as the template for rendering each item in the array, as demonstrated below.
 
 ```html
 <html>
-<script src="https://lemonadejs.com/v4/lemonade.js"></script>
+<script src="https://lemonadejs.com/v5/lemonade.js"></script>
 <div id='root'></div>
 <script>
 function Crypto() {
-    const self = this;
 
-    self.data = [
+    this.data = [
         { title: 'BTC' },
         { title: 'ETH' },
         { title: 'LTC' },
     ];
 
     // The ul.innerHTML is the template for each item of the array
-    return `<ul :loop="self.data">
+    return render => render`<ul :loop="${this.data}">
         <li>{{self.title}}</li>
     </ul>`;
 }
@@ -57,57 +44,42 @@ lemonade.render(Crypto, document.getElementById('root'));
 import lemonade from 'lemonadejs';
 
 export default function Crypto() {
-    const self = this;
 
-    self.data = [
+    this.data = [
         { title: 'BTC' },
         { title: 'ETH' },
         { title: 'LTC' },
     ];
 
     // The ul.innerHTML is the template for each item of the array
-    return `<ul :loop="self.data">
+    return render => render`<ul :loop="${this.data}">
         <li>{{self.title}}</li>
     </ul>`;
 }
 ```
 
+### Loop on Components
 
-
-### :loop on custom HTML tags
-
-Custom components allow controls and behavior to be bound to each element in the array. In the following example, the parent contains the template for each child.
+When a loop is used on the custom element, the component will be rendered multiple times, one for each entry of the array.
 
 ```html
 <html>
-<script src="https://lemonadejs.com/v4/lemonade.js"></script>
+<script src="https://lemonadejs.com/v5/lemonade.js"></script>
 <div id='root'></div>
 <script>
-/**
- * This method is called one time for each entry in the array
- */
-function List(template) {
-    // "this" is a reference for each entry in the array.
-    const self = this;
-    // Return the template
-    return template;
+function List() {
+    return render => render`<li>${this.title}</li>`;
 }
 
 function Component() {
-    const self = this;
-
-    self.data = [
+    this.data = [
         { title: 'BTC' },
         { title: 'ETH' },
         { title: 'LTC' },
     ];
 
-    // The template for the List is defined inside the parent.
-    // That is going to be used for for each element in the array.
-    return `<ul>
-        <List :loop="self.data">
-            <li>{{self.title}}</li>
-        </List>
+    return render => render`<ul>
+        <List :loop="${this.data}" />
     </ul>`;
 }
 // Declare the global elements
@@ -119,36 +91,27 @@ lemonade.render(Component, document.getElementById('root'));
 ```javascript
 import lemonade from 'lemonadejs';
 
-function List(template) {
-    // "this" is a reference for each entry in the array.
-    const self = this;
-    // Return the template
-    return template;
+function List() {
+    return render => render`<li>${this.title}</li>`;
 }
 
 lemonade.setComponents({ List })
 
 export default function Component() {
-    const self = this;
-
-    self.data = [
+    this.data = [
         { title: 'BTC' },
         { title: 'ETH' },
         { title: 'LTC' },
     ];
 
-    // The template for the List is defined inside the parent.
-    // That is going to be used for for each element in the array.
-    return `<ul>
-        <List :loop="self.data">
-            <li>{{self.title}}</li>
-        </List>
+    return render => render`<ul>
+        <List :loop="${this.data}" />
     </ul>`;
 }
 ```
 
 
-### Custom components with :loop and controls
+### Interacting with the Loops
 
 The next example, brings the template inside the custom controller, and includes custom function to add and delete items in the array.  
   
@@ -158,39 +121,37 @@ The next example, brings the template inside the custom controller, and includes
 <div id='root'></div>
 <script>
 function Component() {
-    const self = this;
 
-    self.data = [
+    const add = () => {
+        this.data.push({ title: this.text });
+        // Update the data property in the view
+        this.refresh('data');
+        // Reset label
+        this.text = '';
+    }
+
+    const del = (e, itemOfTheArray) => {
+        this.data.splice(this.data.indexOf(itemOfTheArray), 1);
+        // Update the view
+        this.refresh('data');
+    }
+
+    this.data = [
         { title: 'BTC' },
         { title: 'ETH' },
         { title: 'LTC' },
     ];
 
-    self.add = function() {
-        self.data.push({ title: self.text });
-        // Update the view
-        self.refresh('data');
-        // Reset label
-        self.text = '';
-    }
-
-    self.del = function(s) {
-        self.data.splice(self.data.indexOf(s), 1);
-        // Update the view
-        self.refresh('data');
-    }
-
-    return `<>
-        <ul :loop="self.data">
+    return render => render`<div>
+        <ul :loop="${this.data}">
             <li>
                 <i>{{self.title}}</i>
-                <span onclick="self.parent.del(self)"
-                        style="cursor: pointer;">x</span>
+                <span onclick="${del}" style="cursor: pointer;"> (x)</span>
             </li>
         </ul>
         <input type="text" :bind="self.text" />
-        <input type="button" value="Add" onclick="self.add()" />
-    </>`;
+        <input type="button" value="Add" onclick="${add}" />
+    </div>`;
 }
 lemonade.render(Component, document.getElementById('root'));
 </script>
@@ -200,39 +161,36 @@ lemonade.render(Component, document.getElementById('root'));
 import lemonade from 'lemonadejs';
 
 export default function Component() {
-    const self = this;
+    const add = () => {
+        this.data.push({ title: this.text });
+        // Update the data property in the view
+        this.refresh('data');
+        // Reset label
+        this.text = '';
+    }
 
-    self.data = [
+    const del = (e, itemOfTheArray) => {
+        this.data.splice(this.data.indexOf(itemOfTheArray), 1);
+        // Update the view
+        this.refresh('data');
+    }
+
+    this.data = [
         { title: 'BTC' },
         { title: 'ETH' },
         { title: 'LTC' },
     ];
 
-    self.add = function() {
-        self.data.push({ title: self.text });
-        // Update the view
-        self.refresh('data');
-        // Reset label
-        self.text = '';
-    }
-
-    self.del = function(s) {
-        self.data.splice(self.data.indexOf(s), 1);
-        // Update the view
-        self.refresh('data');
-    }
-
-    return `<>
-        <ul :loop="self.data">
+    return render => render`<div>
+        <ul :loop="${this.data}">
             <li>
                 <i>{{self.title}}</i>
-                <span onclick="self.parent.del(self)"
-                        style="cursor: pointer;">x</span>
+                <span onclick="${del}" style="cursor: pointer;"> (x)</span>
             </li>
         </ul>
         <input type="text" :bind="self.text" />
-        <input type="button" value="Add" onclick="self.add()" />
-    </>`;
+        <input type="button" value="Add" onclick="${add}" />
+    </div>`;
 }
 ```
 
@@ -257,14 +215,14 @@ function Multiple() {
 
     // Unique is used to avoid a single DOM reference.
     // The self.el won't be added to the array.
-    return `<>
-            <ul :loop="self.data" unique="false">
-                <li>{{self.title}}</li>
-            </ul>
-            <ul :loop="self.data" unique="false">
-                <li>{{self.name}}</li>
-            </ul>
-        </>`;
+    return render => render`<>
+        <ul :loop="self.data" unique="false">
+            <li>{{self.title}}</li>
+        </ul>
+        <ul :loop="self.data" unique="false">
+            <li>{{self.name}}</li>
+        </ul>
+    </>`;
 }
 
 lemonade.render(Multiple, document.getElementById('root'));
@@ -285,45 +243,94 @@ export default function Multiple() {
 
     // Unique is used to avoid a single DOM reference.
     // The self.el won't be added to the array.
-    return `<>
-            <ul :loop="self.data" unique="false">
-                <li>{{self.title}}v/li>
-            </ul>
-            <ul :loop="self.data" unique="false">
-                <li>{{self.name}}</li>
-            </ul>
-        </>`;
+    return render => render`<>
+        <ul :loop="self.data" unique="false">
+            <li>{{self.title}}</li>
+        </ul>
+        <ul :loop="self.data" unique="false">
+            <li>{{self.name}}</li>
+        </ul>
+    </>`;
 }
 ```
 
-  
-  
+### Manual Loops  
 
-More references
----------------
+You can also create manual loops using javascript as below. 
 
-  
+```html
+<html>
+<script src="https://lemonadejs.com/v5/lemonade.js"></script>
+<div id='root'></div>
+<script>
+function Component() {
+    // Define an array to display in the view
+    this.items = ['Item 1', 'Item 2'];
 
-### Related examples
+    // Add a new item and refresh the view
+    const addItem = () => {
+        // Add a new item
+        this.items.push(`Item ${this.items.length + 1}`);
+        // Refresh the view
+        this.refresh('items');
+    };
+
+    return render => render`
+        <div>
+            <ul>
+                ${this.items.map(item => `<li>${item}</li>`).join('')}
+            </ul>
+            <input type="button" value="Add Item" onclick="${addItem}" />
+        </div>
+    `;
+}
+lemonade.render(Component, document.getElementById('root'));
+</script>
+</html>
+```
+```javascript
+import lemonade from 'lemonadejs';
+
+export default function Multiple() {
+    // Define an array to display in the view
+    this.items = ['Item 1', 'Item 2'];
+
+    // Add a new item and refresh the view
+    const addItem = () => {
+        // Add a new item
+        this.items.push(`Item ${this.items.length + 1}`);
+        // Refresh the view
+        this.refresh('items');
+    };
+
+    return render => render`
+        <div>
+            <ul>
+                ${this.items.map(item => `<li>${item}</li>`).join('')}
+            </ul>
+            <input type="button" value="Add Item" onclick="${addItem}" />
+        </div>
+    `;
+}
+```
+
+## Key Points
+
+- **Template**: HTML content serves as the template for each array item.
+- **Context**: Each item gets its scope via the `self`{.highlight} object.
+- **Properties**: Items include `parent`{.highlight} and `el`{.highlight} references for context and DOM access.
+- **Reusability**: Use `unique="false"` to reuse a `loop`{.highlight} across multiple elements.
+
+
+### More references
 
 *   [How to create a dynamic table from an array of objects](/docs/examples/table)
 *   [How to create a five-star rating](/docs/examples/rating)
 
-  
 
-### Related libraries
 
-*   [Five star rating reusable component](/docs/plugins/rating)
-*   [List with search and pagination](/docs/plugins/list)
+## What's Next?
 
-  
-  
-
-Conclusion
-----------
-
-For each element of an array we have the template to be cloned and each element of array has its own `self`, `self.parent` and `self.el`  
-
-&nbsp;
-
-[Next chapter: Programmatic methods](/docs/methods){.button .main}
+The next section explores best practices for component communication using Sugar.\
+\
+[Communication Between Components Using Sugar](/docs/sugar){.button}

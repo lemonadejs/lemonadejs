@@ -1,43 +1,36 @@
-title: Global Application State Management
+title: Data Sharing and Global Actions Management
 keywords: LemonadeJS, Sugar, Global State Management, Redux-Inspired, Frontend Development, JavaScript, Shared State Container
-description: Simplify global state management in your web applications with LemonadeJS Sugar. This feature of LemonadeJS provides a centralized state container for managing and sharing state across components, delivering a reactive and cohesive application experience.
+description: Simplify global property and action management with Sugar. Facilitate data sharing, state persistence, centralized debugging, and seamless interaction across application components.
+canonical: https://lemonadejs.com/docs/sugar
 
-Sugar (Super global artifacts)
-==============================
+# Sugar
 
-When managing complex applications with numerous components, sharing methods or properties, referred to as `self` in LemonadeJS, between these components becomes essential. LemonadeJS Sugar provides a solution to this with a global registry that allows for registering `self` methods or properties, making them accessible application-wide.  
-  
-> **Summary of this chapter**
->
-> This document highlights several aspects of Sugar:
->
-> - **Global Access**: Utilize Sugar's set and get methods to make a self available throughout various components, ensuring efficient scope sharing.
-> - **Data Dispatchers**: Employ data dispatchers to manipulate `self` properties while upholding their private scope, enhancing security and encapsulation.
-> - **Action Registration**: Facilitate global communication by registering data dispatcher actions, which can be invoked from any component, streamlining event handling.
-> - **Persistent State**: Capitalize on the persistence flag to maintain the latest data state across sessions for a Sugar alias, providing a seamless user experience.
-{.green}
+## Super Global Artifacts
 
-With these features, LemonadeJS Sugar provides a robust and intuitive approach to managing global states and facilitating communication between components.
+Sugar is a communication system in LemonadeJS that enables state sharing between components using a **pub/sub pattern**.
+Components subscribe to named events with `set`{.highlight} and trigger updates using `dispatch`{.highlight}, allowing state synchronization across
+the application. Components automatically update when changes are dispatched to their subscribed events.
 
-Example
--------
 
-In the following example, the self is registered on the Profile component and recovered on the Loader component.  
-  
+### Examples
+
+#### Scope
+
+##### Public Scope
+
+In this example, the Profile component is globally registered with the alias `My:Profile`, making it accessible throughout the application. The Loader component retrieves the registered Profile instance and updates its properties directly.
+
 ```html
 <html>
-<script src="https://lemonadejs.com/v4/lemonade.js"></script>
+<script src="https://lemonadejs.com/v5/lemonade.js"></script>
 <div id='root'></div>
 <script>
 function Profile() {
-    // Create a blank self
-    const self = this;
-
     // Register the self under My:Profile alias
-    lemonade.set('My:Profile', self);
+    lemonade.set('My:Profile', this);
 
     // Counter is created from the attribute counter
-    return `<form>
+    return render => render`<form>
         <label>Name:</label><br/>
         <input type="text" :bind="self.name" /><br/>
         <label>Email:</label><br/>
@@ -46,8 +39,8 @@ function Profile() {
 }
 
 function Loader() {
-    const self = this;
-    self.load = function() {
+
+    const load = function() {
         // Get My:Profile self
         let s = lemonade.get('My:Profile');
         // Updates directly to the self properties
@@ -55,24 +48,117 @@ function Loader() {
         s.email = 'john.lennon@beatles.com';
     }
 
-    return `<input type="button" value="Load the data" onclick="self.load()" />`;
+    return render => render`
+        <input type="button" value="Load the data" onclick="${load}" />
+    `;
 }
 lemonade.render(Profile, document.getElementById('root'));
 lemonade.render(Loader, document.getElementById('root'));
 </script>
 </html>
 ```
+```javascript
+export default function Profile() {
+    // Register the self under My:Profile alias
+    lemonade.set('My:Profile', this);
 
-Data Dispatcher
----------------
+    // Counter is created from the attribute counter
+    return render => render`<form>
+        <label>Name:</label><br/>
+        <input type="text" :bind="self.name" /><br/>
+        <label>Email:</label><br/>
+        <input type="text" :bind="self.email" />
+    </form>`;
+}
 
-Sometimes, you might not want the entire `self` to be accessible but still need to update the state of specific properties of one {self} from other components. A solution for this scenario is registering a data dispatcher function with LemonadeJS Sugar.  
-  
+export default function Loader() {
+    const load = function() {
+        // Get My:Profile self
+        let s = lemonade.get('My:Profile');
+        // Updates directly to the self properties
+        s.name = 'John Lennon';
+        s.email = 'john.lennon@beatles.com';
+    }
 
-### A basic example of persistence
+    return render => render`
+        <input type="button" value="Load the data" onclick="${load}" />
+    `;
+}
+```
 
-To illustrate this concept, we'll use an example similar to the one above, utilizing the persistence flag to maintain the last dispatched data saved, even after a page refresh.  
-  
+##### Private Scope
+
+Exposing the entire component object globally can raise security concerns. Instead, securely register specific actions to update properties or execute functions using the dispatch method. 
+
+```html
+<html>
+<script src="https://lemonadejs.com/v5/lemonade.js"></script>
+<div id='root'></div>
+<script>
+let { set, dispatch } = lemonade;
+
+function Profile() {
+    
+    set('my:profile', (s) => {
+        this.name = s.name;
+    });
+
+    // Counter is created from the attribute counter
+    return render => render`<form>
+        <label>Name:</label><br/>
+        <input type="text" :bind="${this.name}" /><br/>
+    </form>`;
+}
+
+function Loader() {
+
+    const update = function() {
+        // Send new values to another component using the dispatcher
+        dispatch('my:profile', {
+            name: 'John Lennon'
+        });
+    }
+    return render => render`<input type="button" value="Load" onclick="${update}" />`;
+}
+lemonade.render(Profile, document.getElementById('root'));
+lemonade.render(Loader, document.getElementById('root'));
+</script>
+</html>
+```
+```javascript
+import { set, dispatch, onchange } from 'lemonadejs';
+
+export default function Profile() {
+    
+    set('profile:updateName', (s) => {
+        this.name = s.name;
+    });
+
+    // Counter is created from the attribute counter
+    return render => render`<form>
+        <label>Name:</label><br/>
+        <input type="text" :bind="${this.name}" /><br/>
+    </form>`;
+}
+
+export default function Loader() {
+    
+    const update = function() {
+        // Send new values to another component using the dispatcher
+        dispatch('profile:updateName', {
+            name: 'John Lennon'
+        });
+    }
+    return render => render`
+        <input type="button" value="Load" onclick="${update}" />
+    `;
+}
+```
+
+
+### Persistence
+
+To illustrate this concept, we'll use an example similar to the one above, utilizing the persistence flag to maintain the last dispatched data saved, even after a page refresh.
 
 ```html
 <html>
@@ -85,7 +171,7 @@ function Profile() {
 
     // Register the dispatcher under Profile
     // and set the persistence as true
-    lemonade.set('Profile', function(s) {
+    lemonade.set('persistence:test', function(s) {
         self.name = s.name;
         self.email = s.email;
     }, true);
@@ -103,7 +189,7 @@ function Loader() {
     const self = this;
     self.dispatch = function() {
         // Send new values to another component using the dispatcher
-        lemonade.dispatch('Profile', {
+        lemonade.dispatch('persistence:test', {
             name: 'John Lennon',
             email: 'john.lennon@beatles.com',
         });
@@ -115,3 +201,19 @@ lemonade.render(Loader, document.getElementById('root'));
 </script>
 </html>
 ```
+
+## Summary of This Chapter
+
+This chapter explores key aspects of Sugar:
+
+- **Global Access**: Leverage Sugar's set and get methods to make `self` properties globally accessible across components.
+- **Action Registration**: Register actions to make them available across different components.
+- **Data Dispatchers**: Execute cross-component actions while preserving their private scope and ensuring security and encapsulation.
+- **Persistent State**: Utilize the persistence flag to retain the latest data state.
+
+
+## What's Next?
+
+Learn more about unit testing with LemonadeJS.\
+\
+[Unit testing](/docs/tests){.button}

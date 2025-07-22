@@ -30,7 +30,7 @@ var Component = (function() {
 
     self.rows = [
         { title:'Google', description: 'The alpha search engine...' },
-        { title:'Bind', description: 'The microsoft search engine...' },
+        { title:'Bing', description: 'The microsoft search engine...' },
         { title:'Duckduckgo', description: 'Privacy in the first place...' },
     ];
 
@@ -60,7 +60,7 @@ export default function Component() {
 
     self.rows = [
         { title:'Google', description: 'The alpha search engine...' },
-        { title:'Bind', description: 'The microsoft search engine...' },
+        { title:'Bing', description: 'The microsoft search engine...' },
         { title:'Duckduckgo', description: 'Privacy in the first place...' },
     ];
 

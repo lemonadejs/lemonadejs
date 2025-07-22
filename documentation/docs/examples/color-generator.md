@@ -3,38 +3,26 @@ keywords: LemonadeJS, two-way data binding, frontend, javascript library, javasc
 description: A simple reactive color generator using the mouse move event.
 canonical: https://lemonadejs.com/docs/examples/color-generator
 
-Color Changer
-=============
+# Colour Changer
 
-Color Changer generates a hexadecimal code that corresponds to a color. In this example you will learn how to use LemonadeJS to create a hexadecimal color generator!  
-  
+This example demonstrates using a native JavaScript `mousemove`{.highlight} event in LemonadeJS to update the DOM dynamically with a generated hexadecimal colour code.
 
-A working example
------------------
+## A Working Example
 
-Pass the mouse over the cards to change their colors
-
-[See this example on codesandbox](https://codesandbox.io/s/lemonadejs-color-generator-83fv4t)
-
-  
-
-### Source code
-
+Please move your mouse over the cards below to see their colours change dynamically.
 
 ```html
 <html>
-<script src="https://lemonadejs.com/v4/lemonade.js"></script>
+<script src="https://lemonadejs.com/v5/lemonade.js"></script>
 <div id='root'></div>
 <script>
 function ColorChanger() {
-    // Initializing self
-    const self = this;
 
-    let rand = function() {
+    const rand = function() {
         return parseInt(Math.random() * 255);
     }
 
-    self.applyColor = function(e) {
+    const applyColor = (e) => {
         // Get a RANDOM RGB number
         let color = [ rand(), rand(), rand() ];
         // Set background of the DOM
@@ -44,10 +32,10 @@ function ColorChanger() {
     }
 
     // Color changer template.
-    return `<div class="grid">
-        <div onmousemove="self.applyColor">Hover here</div>
-        <div onmousemove="self.applyColor">Hover here</div>
-        <div onmousemove="self.applyColor">Hover here</div>
+    return render => render`<div class="grid">
+        <div onmousemove="${applyColor}">Hover here</div>
+        <div onmousemove="${applyColor}">Hover here</div>
+        <div onmousemove="${applyColor}">Hover here</div>
     </div>`;
 }
 lemonade.render(ColorChanger, document.getElementById('root'));
@@ -58,14 +46,12 @@ lemonade.render(ColorChanger, document.getElementById('root'));
 import lemonade from 'lemonadejs';
 
 export default function ColorChanger() {
-    // Initializing self
-    const self = this;
 
-    let rand = function() {
+    const rand = function() {
         return parseInt(Math.random() * 255);
     }
 
-    self.applyColor = function(e) {
+    const applyColor = (e) => {
         // Get a RANDOM RGB number
         let color = [ rand(), rand(), rand() ];
         // Set background of the DOM
@@ -75,20 +61,17 @@ export default function ColorChanger() {
     }
 
     // Color changer template.
-    return `<div class="grid">
-        <div onmousemove="self.applyColor">Hover here</div>
-        <div onmousemove="self.applyColor">Hover here</div>
-        <div onmousemove="self.applyColor">Hover here</div>
+    return render => render`<div class="grid">
+        <div onmousemove="${applyColor}">Hover here</div>
+        <div onmousemove="${applyColor}">Hover here</div>
+        <div onmousemove="${applyColor}">Hover here</div>
     </div>`;
 }
 ```
 
-  
-  
+### CSS for the Color Generator Example
 
-### CSS of this section
-
-If you wish to use this example, please copy this CSS to your project.  
+To style the grid for the Color Generator example, use the following CSS:
   
 ```css
 .grid {

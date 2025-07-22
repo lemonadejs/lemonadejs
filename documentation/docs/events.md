@@ -1,133 +1,36 @@
-title: LemonadeJS Core Events,
-keywords: LemonadeJS, two-way binding, frontend, javascript library, reactive, react, Vue, Angular, events, javascript events,
-description: Utilize LemonadeJS events to design custom component responses and interactions.
+title: LemonadeJS Events
+keywords: LemonadeJS, events, JavaScript library, two-way binding, frontend development, reactive programming, custom components, JavaScript events, interactions
+description: Learn LemonadeJS events to create dynamic and responsive interactions in your components, enhancing user experiences and frontend workflows.
+canonical: https://lemonadejs.com/docs/events
 
-LemonadeJS events
-=================
+# Events
 
-This chapter will describe more about the two native events and the JavaScript event object (e). That can be defined inside your component to treat further and advance behavior.
+This section explains how to handle native JavaScript events within component templates and the two core component events provided by LemonadeJS.
 
-| Event                                | Description                                                                                                                                                                                                                                                                                              |
-|--------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| onload(component: DOMElement)        | It happens when the component is mounted and ready in the DOM.  <br>`self.onload(component: DOMElement) => void`                                                                                                                                                                                         |
-| onchange(property, affectedElements) | It happens when the value of a self property in observation is updated.  <br>`self.onchange(property: string, affected: object) => void`  <br>`@param property` \- self property that triggered the event.  <br>`@param affectedElements` \- When the same property is bound to different HTML elements. |
-  
-
-Examples
---------
-
-### When a property value changes
-
-There is a call to the method `self.onchange` when the value of a self property in observation changes. A self property is automatically added to the list of observable properties when this self property is included in the DOM.  
-  
-```html
-<html>
-<script src="https://lemonadejs.com/v4/lemonade.js"></script>
-<div id='root'></div>
-<script>
-function Component() {
-    // Create the self object
-    const self = this;
-    self.onchange = function(property) {
-        // It will be called when counter is updated
-        alert('The self property: ' + property + ' is updated');
-    }
-    // Create the property
-    self.counter = 1;
-    // Template
-    return `<>
-        <p>{{self.counter}}</p>
-        <input type="button" value="Counter+1" onclick="self.counter++;"/>
-    </>`;
-}
-// Render the LemonadeJS element into the DOM
-lemonade.render(Component, document.getElementById('root'));
-</script>
-</html>
-```
-```javascript
-import lemonade from 'lemonadejs';
-
-export default function Component() {
-    // Create the self object
-    const self = this;
-    self.onchange = function(property) {
-        // It will be called when counter is updated
-        alert('The self property: ' + property + ' is updated');
-    }
-    // Create the property
-    self.counter = 1;
-    // Template
-    return `<>
-        <p>{{self.counter}}</p>
-        <input type="button" value="Counter+1" onclick="self.counter++;"/>
-    </>`;
-}
-```
-
-[See this example on codesandbox](https://codesandbox.io/s/javascript-events-re4bwy)
-
-  
-  
-
-### When the component is ready
-
-The component method `self.onload` will be called when the component is ready and appended to the DOM.  
-  
-```html
-<html>
-<script src="https://lemonadejs.com/v4/lemonade.js"></script>
-<div id='root'></div>
-<script>
-function Component() {
-    // Create the self object
-    const self = this;
-    self.onload = function(element) {
-        // It will be called when the component is ready
-        self.container.style.color = 'red';
-    }
-    // Template
-    return `<div :ref="self.container">My component</div>`;
-}
-// Render the LemonadeJS element into the DOM
-lemonade.render(Component, document.getElementById('root'));
-</script>
-</html>
-```
-```javascript
-import lemonade from 'lemonadejs';
-
-export default function Component() {
-    // Create the self object
-    const self = this;
-    self.onload = function(element) {
-        // It will be called when the component is ready
-        self.container.style.color = 'red';
-    }
-    // Template
-    return `<div :ref="self.container">My component</div>`;
-}
-```
+## JavaScript Events
  
-The event object
-----------------
+### The Event Object
 
-From version 2.2.4 you can pass the event object (e) from the template to any event handler, as example below.  
+When declaring a JavaScript event to a DOM element, you will have the event object and component scope object, which can help with extra logic and event reuse.
   
+### A Simple Onclick Event
+
+A basic onclick event example to log the objects on the console.
+
 ```html
 <html>
-<script src="https://lemonadejs.com/v4/lemonade.js"></script>
+<script src="https://lemonadejs.com/v5/lemonade.js"></script>
 <div id='root'></div>
 <script>
 function Component() {
-    // Create the self object
-    const self = this;
-    self.test = function(e) {
+    const test = (e, s) => {
+        // Onclick Event Object
         console.log(e);
+        // Will be same as `this`
+        console.log(s);
         e.preventDefault();
     }
-    // The event object will be included
-    return `<input type="button" value="Click here" onclick="self.test(e);"/>`;
+    return render => render`<input type="button" value="Click here" onclick="${test}"/>`;
 }
 // Render the LemonadeJS element into the DOM
 lemonade.render(Component, document.getElementById('root'));
@@ -138,15 +41,124 @@ lemonade.render(Component, document.getElementById('root'));
 import lemonade from 'lemonadejs';
 
 export default function Component() {
-    // Create the self object
-    const self = this;
-    self.test = function(e) {
+    const test = (e, s) => {
+        // Onclick Event Object
         console.log(e);
+        // Will be same as `this`
+        console.log(s);
         e.preventDefault();
     }
-    // The event object will be included
-    return `<input type="button" value="Click here" onclick="self.test(e);"/>`;
+    return render => render`<input type="button" value="Click here" onclick="${test}"/>`;
 }
 ```
 
-The console shows the event object.
+### A Event With Loop
+
+When an event is used in a template within a loop, the s parameter represents the scope of each loop entry, enabling dynamic interactions with individual items of the array.
+
+```html
+<html>
+<script src="https://lemonadejs.com/v5/lemonade.js"></script>
+<div id='root'></div>
+<script>
+function Component() {
+    this.coin = 'Click in a coin';
+    
+    this.options = [
+        { title: 'Bitcoin' },
+        { title: 'Ethereum' },
+        { title: 'Litecoin' },
+    ];
+    
+    const test = (e, s) => {
+        // Update the component property
+        this.coin = s.title;
+    }
+    return render => render`<div>
+        <p>${this.coin}</p>
+        <ul :loop="${this.options}">
+            <li onclick="${test}">{{this.title}}</ul>
+        </ul>
+    </div>`;
+}
+// Render the LemonadeJS element into the DOM
+lemonade.render(Component, document.getElementById('root'));
+</script>
+</html>
+```
+```javascript
+import lemonade from 'lemonadejs';
+
+export default function Component() {
+    this.coin = 'Click in a coin';
+
+    this.options = [
+        { title: 'Bitcoin' },
+        { title: 'Ethereum' },
+        { title: 'Litecoin' },
+    ];
+
+    const test = (e, s) => {
+        // Update the component property
+        this.coin = s.title;
+    }
+    return render => render`<div>
+        <p>${this.coin}</p>
+        <ul :loop="${this.options}">
+            <li onclick="${test}">{{this.title}}</ul>
+        </ul>
+    </div>`;
+}
+```
+
+
+## Core Events
+
+LemonadeJS provides two core events: `onload`{.highlight} and `onchange`{.highlight}. The `onload` event fires when a component is mounted to the DOM, while `onchange` is triggered when reactive properties are updated.
+
+| Event                  | Description                                                                                                                                |
+|------------------------|--------------------------------------------------------------------------------------------------------------------------------------------|
+| `onload`{.highlight}   | Fires after component DOM mounting. Used for initialization.<br>`self.onload(component: DOMElement) => void`                               |
+| `onchange`{.highlight} | Fires when reactive properties update. Handles property changes.<br>`self.onchange(property: string, affectedElements: object) => void`    |
+
+### Private Declaration
+
+Events can be registered privately within the component as example below.
+
+{.ignore}
+```javascript
+import { onload } from 'lemonadejs';
+
+export default function Component() {
+    
+    onload((element) => {
+        console.log(element, 'is ready');
+    })
+    
+    return render => render`<h1>Hello</h1>`;
+}
+```
+
+### Component Property Events
+
+Alternatively, events can be registered directly on the component's `this` context, allowing parent components to access them. In contrast, private events remain fully encapsulated within the component, ensuring they are not externally accessible.
+
+{.ignore}
+```javascript
+export default function Component() {
+    
+    this.onload((element) => {
+        console.log(element, 'is ready');
+    })
+
+    return render => render`<h1>Hello</h1>`;
+}
+```
+
+## What's Next?
+
+To learn more about the core events, explore the dedicated sections below:
+
+- [Onload Event](/docs/onload)
+- [Onchange Event](/docs/onchange)
+

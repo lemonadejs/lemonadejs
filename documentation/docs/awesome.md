@@ -11,7 +11,9 @@ Unlock the full potential of your web applications with our handpicked selection
 LemonadeJS is a cutting-edge JavaScript library designed for effortlessly building dynamic and reactive web interfaces. Whether you're switching from other libraries or are a newcomer to the scene, this collection will equip you with the necessary tools and knowledge to effectively exploit the capabilities of LemonadeJS.
 Here are some examples worth sharing:
 
-### Creating dynamic tables
+### Creating Dynamic Tables
+
+The children tag for a parent that has loop will be duplicated for each entry on your array
 
 ```html
 <html>
@@ -19,21 +21,20 @@ Here are some examples worth sharing:
 <div id='root'></div>
 <script>
 function Component() {
-    const self = this;
 
-    self.rows = [
+    // Loop
+    this.rows = [
         { title:'Google', description: 'The alpha search engine...' },
-        { title:'Bind', description: 'The microsoft search engine...' },
+        { title:'Bing', description: 'The microsoft search engine...' },
         { title:'Duckduckgo', description: 'Privacy in the first place...' },
     ];
 
-    // Custom components such as List should always be unique inside a real tag.
-    return `<table cellpadding="6">
+    return render => render`<table>
         <thead>
             <tr><th>Title</th><th>Description</th></tr>
         </thead>
-        <tbody :loop="self.rows">
-            <tr><td>{{self.title}}</td><td>{{self.description}}</td></tr>
+        <tbody :loop="${this.rows}">
+            <tr><td>{{this.title}}</td><td>{{this.description}}</td></tr>
         </tbody>
     </table>`;
 }
@@ -49,7 +50,7 @@ export default function Component() {
 
     self.rows = [
         { title:'Google', description: 'The alpha search engine...' },
-        { title:'Bind', description: 'The microsoft search engine...' },
+        { title:'Bing', description: 'The microsoft search engine...' },
         { title:'Duckduckgo', description: 'Privacy in the first place...' },
     ];
 
@@ -65,10 +66,8 @@ export default function Component() {
 }
 ```
 
-  
-  
-
 ### Reactive web-components
+
 ```html
 <div id="root">
     <first-element title="Hello world" />
@@ -81,11 +80,9 @@ class FirstElement extends HTMLElement {
     }
 
     render() {
-        const self = this;
-        return `<>
-            <p>{{self.title}}</p>
-            <input type="button" value="setTitle()"
-                onclick="self.title = 'Test'" />
+        return render => render`<>
+            <p>${this.title}</p>
+            <input type="button" value="Update" onclick="${() => this.title = 'Test'}" />
         </>`;
     }
 
@@ -98,10 +95,8 @@ if (! window.customElements.get('first-element')) {
 }
 </script>
 ```
-  
-  
 
-### Creating a dynamic dropdown from a JS array
+### Dynamic Dropdowns
 
 ```html
 <html>
@@ -109,8 +104,10 @@ if (! window.customElements.get('first-element')) {
 <div id='root'></div>
 <script>
 function Component() {
-    const self = this;
-    this.value = 2;
+    // Default dropdown value
+    this.value = 4;
+
+    // Options for my dropdown
     this.options = [
         { id: 1, name: "Canada" },
         { id: 2, name: "United Kingdom" },
@@ -119,12 +116,12 @@ function Component() {
         { id: 5, name: "Australia" }
     ]
 
-    return `<>
-        <select :loop='self.options' :bind='self.value'>
-        <option value='{{self.id}}'>{{self.name}}</option>
+    return render => render`<div>
+        <div>The value is: ${this.value}</div>
+        <select :loop="${this.options}" :bind="${this.value}">
+            <option value='{{this.id}}'>{{this.name}}</option>
         </select>
-        <div>The value is: {{self.value}}</div>
-    </>`;
+    </div>`;
 }
 lemonade.render(Component, document.getElementById('root'));
 </script>
@@ -144,51 +141,54 @@ export default function Component() {
         { id: 5, name: "Australia" }
     ]
 
-    return `<>
-        <select :loop='self.options' :bind='self.value'>
-        <option value='{{self.id}}'>{{self.name}}</option>
+    render => render`<div>
+        <div>The value is: ${this.value}</div>
+        <select :loop="${this.options}" :bind="${this.value}">
+            <option value='{{this.id}}'>{{this.name}}</option>
         </select>
-        <div>The value is: {{self.value}}</div>
-    </>`;
+    </div>`;
 }
 ```
-  
-  
 
-### Control to disable of a form element
+### Disable State Of An Element 
 
 ```html
 <html>
 <script src="https://lemonadejs.com/v4/lemonade.js"></script>
 <div id='root'></div>
 <script>
+let { state } = lemonade;
 function Component() {
-    const self = this;
-    self.disabled = true;
-    self.toggle = () => {
-        self.disabled = !self.disabled;
+    const disabled = state(true, () => {
+        console.log('triggered');
+    });
+
+    const toggle = () => {
+        disabled.value = !disabled.value;
     }
-    return `<>
-        <input type="text" :disabled="self.disabled" value="test..." />
-        <input type="button" onclick="self.toggle" value="Toggle" />
-    </>`;
+    return render => render`<div>
+        <input type="text" disabled="${disabled}" value="test..." />
+        <input type="button" onclick="${toggle}" value="Toggle" />
+    </div>`;
 }
 lemonade.render(Component, document.getElementById('root'));
 </script>
 </html>
 ```
 ```javascript
-import lemonade from 'lemonadejs';
+import { state } from 'lemonadejs';
 
 export default function Component() {
-    const self = this;
-    self.disabled = true;
-    self.toggle = () => {
-        self.disabled = !self.disabled;
+    const disabled = state(true, () => {
+        console.log('triggered');
+    });
+
+    const toggle = () => {
+        disabled.value = !disabled.value;
     }
-    return `<>
-        <input type="text" :disabled="self.disabled" value="test..." />
-        <input type="button" onclick="self.toggle" value="Toggle" />
-    </>`;
+    return render => render`<div>
+        <input type="text" disabled="${disabled}" value="test..." />
+        <input type="button" onclick="${toggle}" value="Toggle" />
+    </div>`;
 }
 ```

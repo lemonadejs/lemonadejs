@@ -1,18 +1,16 @@
 title: JavaScript Components and Plugins
-keywords: LemonadeJS, two-way data binding, frontend, javascript library, javascript plugin, javascript, reactive, react, lists, loops, arrays, plugins
+keywords: LemonadeJS, two-way data binding, frontend, javascript library, JavaScript plugin, JavaScript, reactive, react, lists, loops, arrays, plugins
 description: Find out several useful JavaScript reactive components common to any web application.
 canonical: https://lemonadejs.com/docs/plugins
 
 ![JavaScript Plugins](img/library.jpg){.right}
 
-LemonadeJS JavaScript Components
-====================
+# JavaScript Components
 
-On the website, you can find different official components. We can categorize those as Pico Extension, Plugins, and Integrations.
+On the website, you can find different official components. We can categorize those as Pico Extensions, Plugins, and Integrations.
 
 
-Pico Library
-------------
+## Pico Library
 
 A Pico library is a collection of particular components that follow some characteristics below.
 
@@ -20,9 +18,7 @@ A Pico library is a collection of particular components that follow some charact
 *   No dependencies required;
 *   Highly optimized code;
 
-
-
-### Available components
+### Micro JavaScript Components
 
 Currently, the following components are available on the official LemonadeJS Pico Library.
 
@@ -33,20 +29,19 @@ Currently, the following components are available on the official LemonadeJS Pic
 
 
 
-Components
-----------
+## JavaScript Components
 
 The LemonadeJS component library includes other JavaScript plugins and components for common requirements.
 
 * [JavaScript Data Grid](/docs/plugins/data-grid) : A micro (5KBytes) JavaScript Data Grid with search, pagination, sorting.
 * [JavaScript Modal](/docs/plugins/modal) : Create advance resizable, draggable, closable or minimizable modals. 
 * [JavaScript Calendar](/docs/plugins/calendar) : JavaScript date picker with range selection and much more.
-* [JavaScript Dropdown](/docs/plugins/dropdown) : Highly performance autocomplete dropdown with groups, images and much more.
-* [Color picker](/docs/plugins/color-picker) : Simple javascript color picker.
-* [Timeline](/docs/plugins/timeline) : JavaScript timeline with grouping and other other customizable visual attributes.  
-* [Context Menu](/docs/plugins/context-menu) : JavaScript responsive context menu.
-* [Tabs](/docs/plugins/tabs) : Simple javascript tabs component.
-* [Image cropper](/docs/plugins/image-cropper) : A linkedin-style photo cropper.
+* [JavaScript Dropdown](/docs/plugins/dropdown) : Highly performance autocomplete dropdown with groups, images, and much more.
+* [JavaScript Color picker](/docs/plugins/color-picker) : Simple javascript color picker.
+* [JavaScript Timeline](/docs/plugins/timeline) : JavaScript timeline with grouping and other other customizable visual attributes.  
+* [JavaScript Context Menu](/docs/plugins/context-menu) : JavaScript responsive context menu.
+* [JavaScript Tabs](/docs/plugins/tabs) : Simple javascript tabs component.
+* [JavaScript Image cropper](/docs/plugins/image-cropper) : A linkedin-style photo cropper.
 * [JavaScript Switch](/docs/plugins/switch): A lightweight reactive switch button.
 * [JavaScript Top Menu](/docs/plugins/top-menu): A lightweight reactive top menu.
 

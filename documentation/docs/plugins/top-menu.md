@@ -1,7 +1,7 @@
 title: LemonadeJS Top Menu
 description: Elevate your application's user interface with the LemonadeJS Top Menu – a dynamic and efficient component crafted for seamless navigation and quick access to essential actions. This thoughtfully designed menu boasts a collection of carefully arranged buttons, ensuring a user-friendly experience. Prioritizing usability, the Top Menu combines a visually appealing layout with intuitive functionality. Its clear and simple design empowers users to effortlessly explore and interact with key features, enhancing overall navigation. Positioned as a centralized hub for core functionalities, this component enhances the accessibility of crucial actions, contributing to an enhanced user experience. Its adaptable nature allows for easy integration into a variety of applications, providing a consistent and responsive menu system tailored to your application's unique requirements.
 keywords: LemonadeJS Top Menu, application top menu, functional component, user experience, usability, organized interface, efficient navigation, essential features, clarity in design, simplicity in navigation, centralized access, core functionalities, improved user experience, adaptable nature, seamless integration, diverse applications, consistent menu system, responsive menu, application requirements.
-
+canonical: https://lemonadejs.com/docs/plugins/top-menu
 
 # JavaScript Top Menu
 

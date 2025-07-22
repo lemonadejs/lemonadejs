@@ -1,11 +1,11 @@
 title: JavaScript Timeline Plugin
 description: LemonadeJS Timeline is a framework-agnostic JavaScript plugin for creating dynamic, customizable timelines. Perfect for Vue, React, and Angular, it offers intuitive event grouping and easy navigation for effective data visualization.
 keywords: JavaScript Timeline, LemonadeJS, Vue, React, Angular, Customizable, Event Grouping, Data Visualization
+canonical: https://lemonadejs.com/docs/plugins/timeline
 
 ![JavaScript Timeline](img/javascript-timeline.jpg){.right style="width: initial; margin: 60px;"}
 
-JavaScript Timeline
-===============
+# JavaScript Timeline
 
 `Pico Library`{.jtag .black .framework-images}
 
@@ -23,28 +23,28 @@ npm install @lemonadejs/timeline
 
 Initialize the timeline with these settings to tailor the plugin to your specific needs:
 
-| Attribute       | Type          | Description                                                                                                        |
-|-----------------|---------------|--------------------------------------------------------------------------------------------------------------------|
-| data            | Item[]        | An array of items to be displayed. Each item should follow the structure defined in the 'Item Properties' section. |
-| type?           | string        | There are default and monthly types. The latter will create a navigation per month and group all items.            |
-| align?          | string        | Align the bullet points. Accepted values include "left", "right", "top", and "bottom". `Default:  "left"`.         |
-| message?        | string        | Will show when no data to display                                                                                  |
-| order?          | string        | Accepted values are 'asc' for ascending and 'desc' for descending order.                                           |
-| width?          | number        | Determines the width of the javascript timeline container.                                                         |
-| height?         | number        | Determines the height of the javascript timeline container.                                                                   |
+| Attribute          | Description                                                                                                        |
+|--------------------|--------------------------------------------------------------------------------------------------------------------|
+| `data: Item[]`     | An array of items to be displayed. Each item should follow the structure defined in the 'Item Properties' section. |
+| `type?: String`    | There are default and monthly types. The latter will create a navigation per month and group all items.            |
+| `align?: String`   | Align the bullet points. Accepted values include "left", "right", "top", and "bottom". `Default:  "left"`.         |
+| `message?: String` | Will show when no data to display                                                                                  |
+| `order?: String`   | Accepted values are 'asc' for ascending and 'desc' for descending order.                                           |
+| `width?: Number`   | Determines the width of the javascript timeline container.                                                         |
+| `height?: Number`  | Determines the height of the javascript timeline container.                                                                   |
 
 ### Entry Attributes
 
 Define each timeline event with these specific properties to customize its appearance and behavior:
 
-| Attribute              | Description                                                                     |
-|------------------------|---------------------------------------------------------------------------------|
-| date?: string          | A date associated with the item, providing chronological information.           |
-| title?: string         | Title for the item.                                                             |
-| subtitle?: string      | Sub caption for the item.                                                       |
-| description?: string   | Item description.                                                               |
-| borderColor?: string   | Border color                                                                    |
-| borderStyle?: string   | Define the style of the item's border, such as "solid," "dashed," or "dotted."  |
+| Attribute               | Description                                                                     |
+|-------------------------|---------------------------------------------------------------------------------|
+| `date?: String`         | A date associated with the item, providing chronological information.           |
+| `title?: String`        | Title for the item.                                                             |
+| `subtitle?: String`     | Sub caption for the item.                                                       |
+| `description?: String`  | Item description.                                                               |
+| `borderColor?: String`  | Border color                                                                    |
+| `borderStyle?: String`  | Define the style of the item's border, such as "solid," "dashed," or "dotted."  |
 
 ### Event Handling
 
@@ -107,9 +107,7 @@ import Timeline from '@lemonadejs/timeline';
 import '@lemonadejs/timeline/dist/style.css';
 
 export default function App() {
-    const self = this;
-
-    self.data = [
+    const data = [
         {
             title: "Issue Identification",
             date: new Date(2022, 6, 1),
@@ -130,7 +128,7 @@ export default function App() {
         }
     ];
 
-    return `<Timeline :data="self.data" align="left" /></div>`
+    return render => render`<Timeline data="${data}" align="left" /></div>`
 }
 ```
 ```jsx
@@ -254,27 +252,28 @@ import Timeline from '@lemonadejs/timeline';
 import '@lemonadejs/timeline/dist/style.css';
 
 export default function App() {
-    const self = this;
 
-    self.data = [
+    const ref = null;
+
+    const data = [
         { title: "Issue Identification", date: new Date(2022, 6, 1) },
         { title: "Root Cause Analysis", date: new Date(2022, 6, 2) },
         { title: "Implementation of Solution", date: new Date(2022, 6, 3) },
     ]
-    
-    self.align = function(e) {
-        self.ref.align = e.target.value;
+
+    const change = (e) => {
+        ref.align = e.target.value;
     }
 
-    return `<div>
+    return render => render`<div>
         <label>Choose a position to align:</label>
-        <select onchange="self.align">
+        <select onchange="${change}">
             <option value="left">Left</option>
             <option value="right">Right</option>
             <option value="top">Top</option>
             <option value="bottom">Bottom</option>
         </select>
-        <Timeline :data="self.data" :ref="self.ref" />
+        <Timeline data="${data}" :ref="${(e) => ref = e}" />
     </div>`
 }
 ```
@@ -299,7 +298,7 @@ export default function App() {
             <option value="top">Top</option>
             <option value="bottom">Bottom</option>
         </select>
-        <div style={{ height: '300px', width: '500px' }}>
+        <div>
             <Timeline ref={myRef} data={data} />
         </div>
     </>);
@@ -359,13 +358,13 @@ const root = document.getElementById("root")
 let data = [];
 for (let i = 0; i < 500; i++) {
     data.push({
-        date: faker.date.between(new Date(2023, 1, 1), new Date(2024, 12, 30)),
+        date: faker.date.between(new Date(2025, 1, 1), new Date(2025, 12, 30)),
         title: faker.commerce.productName(),
         subtitle: faker.commerce.department(),
         description: faker.commerce.productName(),
     })
 }
-console.log(data)
+
 const timeline = Timeline(root, {
     data: data,
     type: 'monthly',
@@ -386,17 +385,19 @@ import '@lemonadejs/timeline/dist/style.css';
 export default function App() {
     const self = this;
 
-    self.data = [];
+    const data = [];
     for (let i = 0; i < 10; i++) {
-        self.data.push({
-            date: faker.date.between(new Date(2023, 1, 1), new Date(2024, 12, 30)),
+        data.push({
+            date: faker.date.between(new Date(2025, 1, 1), new Date(2025, 12, 30)),
             title: faker.commerce.productName(),
             subtitle: faker.commerce.department(),
             description: faker.commerce.productName(),
         })
     }
+    
+    this.data = data;
 
-    return `<Timeline :data="self.data" :type="monthly" :width="500" :height="300" />`
+    return render => render`<Timeline data="${this.data}" width="${500}" height="${300}" type="monthly" />`
 }
 ```
 ```jsx
@@ -409,7 +410,7 @@ import '@lemonadejs/timeline/dist/style.css';
 let data = [];
 for (let i = 0; i < 10; i++) {
     data.push({
-        date: faker.date.between(new Date(2023, 1, 1), new Date(2024, 12, 30)),
+        date: faker.date.between(new Date(2025, 1, 1), new Date(2025, 12, 30)),
         title: faker.commerce.productName(),
         subtitle: faker.commerce.department(),
         description: faker.commerce.productName(),
@@ -440,7 +441,7 @@ export default {
         let data = [];
         for (let i = 0; i < 1000; i++) {
             data.push({
-                date: faker.date.between(new Date(2023, 1, 1), new Date(2024, 12, 30)),
+                date: faker.date.between(new Date(2025, 1, 1), new Date(2025, 12, 30)),
                 title: faker.commerce.productName(),
                 subtitle: faker.commerce.department(),
                 description: faker.commerce.productName(),
@@ -469,6 +470,7 @@ Configure the timeline to display events in ascending or descending chronologica
     <option value="asc">Asc</option>
     <option value="desc">Desc</option>
 </select>
+
 <div id="root"></div>
 
 <script>
@@ -491,30 +493,29 @@ dropdown.addEventListener('change', (e) => {
 </html>
 ```
 ```javascript
-import lemonade from 'lemonadejs'
+import { state } from 'lemonadejs'
 import Timeline from '@lemonadejs/timeline';
 import '@lemonadejs/timeline/dist/style.css';
 
 export default function App() {
-    const self = this;
 
-    self.data = [
+    let data = state([
         { title: "Issue Identification", date: new Date(2022, 6, 1) },
         { title: "Root Cause Analysis", date: new Date(2022, 6, 2) },
         { title: "Implementation of Solution", date: new Date(2022, 6, 3) },
-    ]
+    ]) 
 
-    self.sort = function() {
-        self.ref.order = e.target.value
+    const sort = (e) => {
+        this.ref.order = e.target.value
     }
 
-    return `<div>
+    return render => render`<div>
         <label>Choose a sorting order:</label>
-        <select onchange="self.sort">
+        <select onchange="${sort}">
             <option value="asc">Asc</option>
             <option value="desc">Desc</option>
         </select>
-        <Timeline :data="self.data" :ref="self.ref" />
+        <Timeline data="${data}" :ref="this.ref" />
     </div>`
 }
 ```

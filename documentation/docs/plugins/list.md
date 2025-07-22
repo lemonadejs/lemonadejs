@@ -1,11 +1,13 @@
 title: LemonadeJS List - Arrays and Loops Simplified
 keywords: LemonadeJS, two-way data binding, frontend, javascript library, javascript plugin, javascript, reactive, react, lists, loops, arrays, plugins
 description: Explore the LemonadeJS List component, a powerful library for creating dynamic elements with search and pagination from arrays of objects.
+canonical: https://lemonadejs.com/docs/plugins/list
 
-JavaScript List
-===============================
+# JavaScript List
+
 `Pico Library`{.jtag .black .framework-images}
 
+{.small}
 This library has less than 2 KBytes
 
 The LemonadeJS List is a library to create elements with search and pagination. It helps transform an array of objects into a list of HTML elements based on a defined template. It brings search and pagination natively, and it is possible to bind extended methods to extend its features.
@@ -23,18 +25,18 @@ npm install @lemonadejs/list
 
 ### Attributes
 
-| Attribute | Description |
-| --- | --- |
-| data: Array<Object> | Data should be an array of objects. |
-| pagination?: Number | Enable the pagination and define the number of items per page. |
-| search?: Boolean | Enable the search. |
-| onsearch?: Function | When a search happens. |
-| onchangepage?: Function | When the user changes the page. |
+| Attribute               | Description                                                    |
+|-------------------------|----------------------------------------------------------------|
+| data: Array<Object>     | Data should be an array of objects.                            |
+| pagination?: Number     | Enable the pagination and define the number of items per page. |
+| search?: Boolean        | Enable the search.                                             |
+| onsearch?: Function     | When a search happens.                                         |
+| onchangepage?: Function | When the user changes the page.                                |
 
 > ### Important points
 >
-> *   **Reserved self properties**: This library will create a item for each position of the data array. Each item will have its own self and a few reserved properties such as `self.el` and `self.parent`.
-> *   **Template**: The content of the component <List>`all code here`</List> is the template which will serve to create the items from the list. It is important you have only one root element.
+> * **Reserved self properties**: This library will create a item for each position of the data array. Each item will have its own self and a few reserved properties such as `self.el` and `self.parent`.
+> * **Template**: The content of the component <List>`all code here`</List> is the template which will serve to create the items from the list. It is important you have only one root element.
 > * **React/Vue Template**: In both React and Vue, it is essential to pass the template as a property. This requirement arises from the necessity for Lemonade to render the template in the component. Exploration of this necessity is detailed in the examples below.
 
 Examples
@@ -51,30 +53,30 @@ Create quick reactive javascript lists with search and pagination.
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@lemonadejs/list/dist/style.min.css"/>
 <div id='root' class="cards"></div>
 <script>
-    function Component() {
-        const self = this;
-        self.rows = [
-            { name:"bulbasaur", id: 1 },
-            { name:"ivysaur", id: 2 },
-            { name:"venusaur", id: 3 },
-            { name:"charmander", id: 4 },
-            { name:"charmeleon", id: 5 },
-            { name:"charizard", id: 6 },
-            { name:"squirtle", id: 7 },
-            { name:"wartortle", id: 8 },
-            { name:"blastoise", id: 9 },
-            { name:"caterpie", id: 10 },
-        ];
+function Component() {
+    const self = this;
+    self.rows = [
+        { name:"bulbasaur", id: 1 },
+        { name:"ivysaur", id: 2 },
+        { name:"venusaur", id: 3 },
+        { name:"charmander", id: 4 },
+        { name:"charmeleon", id: 5 },
+        { name:"charizard", id: 6 },
+        { name:"squirtle", id: 7 },
+        { name:"wartortle", id: 8 },
+        { name:"blastoise", id: 9 },
+        { name:"caterpie", id: 10 },
+    ];
 
-        return `<>
-            <List :data="self.rows" :search="true" :pagination="5">
-                <div class="card">
-                    <img src="/templates/default/img/pokemon/{{self.id}}.svg" />
-                    <div>{{self.name}}</div>
-                </div>
-            </List>
-        </>`;
-    }
+    return render => render`<div>
+        <List :data="self.rows" :search="true" :pagination="5">
+            <div class="card">
+                <img src="/templates/default/img/pokemon/{{self.id}}.svg" style="width: 40px" />
+                <div>{{self.name}}</div>
+            </div>
+        </List>
+    </div>`;
+}
 // Render component
 lemonade.render(Component, document.getElementById('root'));
 </script>
@@ -102,14 +104,14 @@ export default function Component() {
         { name:"caterpie", id: 10 },
     ];
 
-    return `<>
+    return `<div>
         <List :data="self.rows" :search="true" :pagination="5">
             <div class="card">
                 <img src="https://lemonadejs.com/templates/default/img/pokemon/{{self.id}}.svg" />
                 <div>{{self.name}}</div>
             </div>
         </List>
-    </>`;
+    </div>`;
 }
 ```
 ```jsx
@@ -215,25 +217,25 @@ const Countries = function() {
         self.refresh('countries');
     }
 
-    self.delete = function(_, s) {
-        // Find and delete the position based on the self given
+    self.delete = function(e, s) {
+        // Find and delete the position based on the self-given
         self.countries.splice(self.countries.indexOf(s), 1);
         // Refresh the array
         self.refresh('countries');
     }
 
-    return `<>
+    return render => render`<div>
         <List :data="self.countries" search="false">
             <div class="p4">
                 <span style="width: 200px; display: inline-block">{{self.name}}</span>
-                <input type="button" onclick="self.parent.parent.delete" value="Delete" style="width: 80px;" />
+                <input type="button" onclick="self.parent.parent.delete" value="Delete" />
             </div>
         </List>
         <div class="p4">
-            <input type="text" :ref="self.name" placeholder="Add new item" style="width: 200px;" />
-            <input type="button" value="Add" onclick="self.add" style="width: 80px;" />
+            <input type="text" :ref="self.name" placeholder="Add new item" />
+            <input type="button" value="Add" onclick="self.add" />
         </div>
-    </>`;
+    </div>`;
 }
 lemonade.render(Countries, document.getElementById('root'));
 </script>
@@ -256,14 +258,14 @@ export default function() {
         self.refresh('countries');
     }
 
-    self.delete = function(_, s) {
+    self.delete = function(e, s) {
         // Find and delete the position based on the self given
         self.countries.splice(self.countries.indexOf(s), 1);
         // Refresh the array
         self.refresh('countries');
     }
 
-    return `<>
+    return render => render`<div>
         <List :data="self.countries" search="false">
             <div class="p4">
                 <span style="width: 200px; display: inline-block">{{self.name}}</span>
@@ -274,7 +276,7 @@ export default function() {
             <input type="text" :ref="self.name" placeholder="Add new item" style="width: 200px;" />
             <input type="button" value="Add" onclick="self.add" style="width: 80px;" />
         </div>
-    </>`;
+    </div>`;
 }
 ```
 ```jsx

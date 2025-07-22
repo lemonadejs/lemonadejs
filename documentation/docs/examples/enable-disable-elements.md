@@ -2,55 +2,45 @@ title: Disabled form elements with LemonadeJS
 keywords: LemonadeJS, two-way binding, frontend, javascript library, javascript plugin, javascript, reactive, react, examples, disable attribute
 description: How to easily toggle the disable attribute on HTML form elements using LemonadeJS.
 
-Disable attribute in HTML elements
-==================================
+# Disable Elements
 
-LemonadeJS provides a simple way to control the disabled property of HTML elements.  
+LemonadeJS provides a simple way to control the disabled property of HTML elements using state.
   
-
-Example
--------
-
-  
-
 [See this example on jsfiddle](https://jsfiddle.net/spreadsheet/mh2d6w8f/)
 
-  
-
-### Source code
 
 ```html
 <html>
-<script src="https://lemonadejs.com/v4/lemonade.js"></script>
+<script src="https://lemonadejs.com/v5/lemonade.js"></script>
 <div id='root'></div>
 <script>
+let { state } = lemonade;
+
 function Component() {
-    const self = this;
-    self.disabled = true;
-    self.toggle = () => {
-        self.disabled = !self.disabled;
+    let disabled = state(true);
+    const toggle = () => {
+        disabled.value = ! disabled.value;
     }
-    return `<>
-        <input type="text" :disabled="self.disabled" value="test..." />
-        <input type="button" onclick="self.toggle" value="Toggle" />
-    </>`;
+    return render => render`<div>
+        <input type="text" disabled="${disabled}" value="test..." />
+        <input type="button" onclick="${toggle}" value="Toggle" />
+    </div>`;
 }
 lemonade.render(Component, document.getElementById('root'));
 </script>
 </html>
 ```
 ```javascript
-import lemonade from 'lemonadejs';
+import { state } from 'lemonadejs';
 
 export default function Component() {
-    const self = this;
-    self.disabled = true;
-    self.toggle = () => {
-        self.disabled = !self.disabled;
+    let disabled = state(true);
+    const toggle = () => {
+        disabled.value = ! disabled.value;
     }
-    return `<>
-        <input type="text" :disabled="self.disabled" value="test..." />
-        <input type="button" onclick="self.toggle" value="Toggle" />
-    </>`;
+    return render => render`<div>
+        <input type="text" disabled="${disabled}" value="test..." />
+        <input type="button" onclick="${toggle}" value="Toggle" />
+    </div>`;
 }
 ```

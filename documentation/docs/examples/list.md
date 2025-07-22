@@ -17,7 +17,7 @@ A basic example to render an array of objects.
 
 ```html
 <html>
-<script src="https://lemonadejs.com/v4/lemonade.js"></script>
+<script src="https://lemonadejs.com/v5/lemonade.js"></script>
 <div id='root'></div>
 
 <script>
@@ -36,7 +36,7 @@ function Component() {
 
     self.data = [
         { title:'Google', description: 'The alpha search engine...' },
-        { title:'Bind', description: 'The microsoft search engine...' },
+        { title:'Bing', description: 'The microsoft search engine...' },
         { title:'Yahoo', description: 'The old stuff...' },
     ];
 
@@ -68,7 +68,7 @@ function Component() {
 
     self.data = [
         { title:'Google', description: 'The alpha search engine...' },
-        { title:'Bind', description: 'The microsoft search engine...' },
+        { title:'Bing', description: 'The microsoft search engine...' },
         { title:'Yahoo', description: 'The old stuff...' },
     ];
 

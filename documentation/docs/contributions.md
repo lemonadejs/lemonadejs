@@ -1,27 +1,32 @@
 title: Contribute to LemonadeJS
 keywords: LemonadeJS, contributions, collaboration, open-source, frontend, JavaScript library, developers, GitHub
 description: Join the LemonadeJS community to contribute to a growing reactive frontend JavaScript library. Enhance your development with LemonadeJS's open-source ecosystem.
+canonical: https://lemonadejs.com/docs/contributions
 
-Contributions
-=============
+# Contribute to LemonadeJS
 
-LemonadeJS offers a lightweight, MIT-licensed micro-library for constructing reactive web interfaces efficiently and effectively. It helps developers create modular, maintainable, and reusable components without external dependencies. Your technical expertise can help improve the library's core functionality and expand its feature set.
-  
+LemonadeJS is a lightweight, MIT-licensed micro-library designed for building reactive web interfaces. It enables developers to create modular and maintainable components without requiring additional libraries or frameworks. By contributing, you can help enhance its functionality, introduce new features, and refine its capabilities.
 
-Github Repository
------------------
+## Installation & Code
 
-We welcome contributions through our [LemonadeJS Official](https://github.com/lemonadejs/lemonadejs){target="blank"} GitHub repository. If you have ideas for features, optimizations, or documentation enhancements, we encourage you to share them. For bug reports or pull requests, please follow our contribution guidelines to maintain the quality and coherence of the codebase.
+### GitHub Repository
 
- 
+Contribute through the [LemonadeJS Official GitHub Repository](https://github.com/lemonadejs/lemonadejs){target="blank"}. Whether you're suggesting new features, providing optimizations, or improving documentation, your input is invaluable.
 
-NPM
----
+### Install via NPM
 
-To include LemonadeJS in your project, you can install it via npm with the following command:
+LemonadeJS is available on npm for easy integration into your projects. Use the following command to install:
 
 ```bash
-% npm install lemonadejs
+npm install lemonadejs
 ```
 
-We appreciate contributions in all forms: code submissions, documentation improvements, or even community support. By contributing to LemonadeJS, you're helping to create a more robust and efficient tool for the entire developer community.
+## How You Can Contribute
+
+Your contributions go beyond code. Here’s how you can help:
+
+- Submit bug fixes or suggest feature enhancements.
+- Improve the documentation to make it more helpful for developers.
+- Engage with the community by answering questions and sharing your knowledge.
+
+By contributing to LemonadeJS, you’re helping to advance a growing JavaScript library and empowering developers to build more efficient, modular, and reactive web applications.

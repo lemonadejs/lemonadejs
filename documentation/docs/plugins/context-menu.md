@@ -1,6 +1,7 @@
 title: JavaScript Context Menu - LemonadeJS
 keywords: LemonadeJS Context Menu, versatile navigation component, customizable menu, Vue compatibility, React integration, Angular support, efficient decision-making, configurable options, responsive menu system, user-friendly interface, UI component for developers.
 description: Multi-use, flexible, reactive JavaScript context menu plugin. This component facilitates efficient decision-making with configurable options, making it a valuable addition to applications seeking a responsive and user-friendly menu system.
+canonical: https://lemonadejs.com/docs/plugins/context-menu
 
 JavaScript Context Menu
 ==================
@@ -21,22 +22,22 @@ npm install @lemonadejs/contextmenu
 
 ### Settings
 
-| Property   | Type     | Description                                                                                                                                 |
-|------------|----------|---------------------------------------------------------------------------------------------------------------------------------------------|
-| options    | option[] | An array of option objects describing the rendering options. Each item should follow the structure defined in the 'Option Details' section. |
+| Property          | Description                                                                                                                                 |
+|-------------------|---------------------------------------------------------------------------------------------------------------------------------------------|
+| options: Option[] | An array of option objects describing the rendering options. Each item should follow the structure defined in the 'Option Details' section. |
 
 ### Option Details
 
-| Property   | Type             | Description                                                                          |
-|------------|------------------|--------------------------------------------------------------------------------------|
-| submenu?   | array of options | An optional array containing options displayed as a sub-menu.                        |
-| title?     | string           | The title text associated with the option.                                           |
-| type?      | string           | The type of the current object, which can be utilized to display a line with 'line'. |
-| onclick?   | function         | The function executed upon selecting the option.                                     |
-| icon?      | string           | The name of the Material Icon associated with the option.                            |
-| render?    | function         | The function executed when rendering the option.                                     |
-| onopen?    | function         | The function executed when the submenu is opened.                                    |
-| onclose?   | function         | The function executed when the submenu is closed.                                    |
+| Property                    | Description                                                                          |
+|-----------------------------|--------------------------------------------------------------------------------------|
+| submenu?: Option[]  | An optional array containing options displayed as a sub-menu.                        |
+| title?: String              | The title text associated with the option.                                           |
+| type?: String               | The type of the current object, which can be utilized to display a line with 'line'. |
+| onclick?: () => void          | The function executed upon selecting the option.                                     |
+| icon?: String               | The name of the Material Icon associated with the option.                            |
+| render?: () => void           | The function executed when rendering the option.                                     |
+| onopen?: () => void           | The function executed when the submenu is opened.                                    |
+| onclose?: () => void          | The function executed when the submenu is closed.                                    |
 
 ## Examples
 
@@ -90,9 +91,8 @@ import '@lemonadejs/contextmenu/dist/style.css';
 import '@lemonadejs/modal/dist/style.css';
 
 export default function App() {
-    const self = this;
-
-    self.options = [
+    
+    const options = [
         {
             title: 'Console.log',
             onclick:function() {
@@ -107,8 +107,8 @@ export default function App() {
         },
     ];
 
-    return `<div style="background-color: #2222AA; width: 100px; height: 100px;">
-        <Contextmenu :options="self.options" :ref="self.contextmenu" />
+    return render => render`<div style="background-color: #2222AA; width: 100px; height: 100px;">
+        <Contextmenu options="${options}" :ref="self.contextmenu" />
     </div>`
 }
 ```
@@ -236,9 +236,8 @@ import '@lemonadejs/contextmenu/dist/style.css';
 import '@lemonadejs/modal/dist/style.css';
 
 export default function App() {
-    const self = this;
 
-    self.options = [
+    const options = [
         {
             title: 'Add',
             icon: 'add_box'
@@ -256,8 +255,8 @@ export default function App() {
         }
     ];
 
-    return `<div style="background-color: #2222AA; width: 100px; height: 100px;">
-        <Contextmenu :options="self.options" :ref="self.contextmenu" />
+    return render => render`<div style="background-color: #2222AA; width: 100px; height: 100px;">
+        <Contextmenu options="${options}" :ref="${this.contextmenu}" />
     </div>`
 }
 ```

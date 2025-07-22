@@ -1,9 +1,9 @@
-title: Reactive JavaScript Dropdown | LemonadeJS
+title: JavaScript Dropdown
 keywords: JavaScript dropdown plugin, LemonadeJS Dropdown, framework-agnostic JavaScript, Vue, React, Angular, customizable, autocomplete, lazy loading, efficient, UI component, web development.
 description: Explore LemonadeJS Dropdown, a JavaScript plugin compatible with Vue, React, and Angular. Features include autocomplete, smart loading, and easy integration for efficient option management.
+canonical: https://lemonadejs.com/docs/plugins/dropdown
 
-JavaScript Dropdown
-===============
+# JavaScript Dropdown
 
 The LemonadeJS Dropdown is a lightweight, high-performance JavaScript plugin with a reactive design. It offers various configurable options and integrates seamlessly with popular front-end frameworks like Vue, React, and Angular. The main key features include:
 
@@ -12,8 +12,8 @@ The LemonadeJS Dropdown is a lightweight, high-performance JavaScript plugin wit
 - **Smart Loading**: Optimizes performance by intelligently managing the DOM, ensuring exceptional responsiveness and efficiency, especially with large datasets.
 - **Framework Compatibility**: Its framework-neutral design guarantees easy integration across various technologies, ensuring a uniform platform experience.
 
-Documentation
--------------
+## Documentation
+
 
 ### Installation
 
@@ -23,44 +23,44 @@ npm install @lemonadejs/dropdown
 
 ### Settings
 
-| Attribute              | Description                                                                                                                                                                               |
-|------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| data: Item[]           | An array of options to be displayed. Each item should follow the structure defined in the 'Item Details' section.                                                                         |
-| multiple?: boolean     | If provided, enables the multiple selection mode, allowing users to select more than one option simultaneously.                                                                           |
-| autocomplete?: boolean | If provided, enables the autocomplete feature, displaying an input field that allows users to filter and quickly find options in the Dropdown.                                            |
-| value?: string         | Represents the current value or selected option in the Dropdown.                                                                                                                          |
-| type?: string          | Specifies the type of display the Dropdown will use. It can be "searchbar" for a search bar interface, "picker" for a selection picker, or "default" for the default dropdown appearance. |
-| insert?: boolean       | Enables the `insert` feature, allowing users to add a new option directly by typing the title text and clicking on the plus symbol.                                                       |
-| format?: number | Data format type, usually in the form of { id: name } or { value: text } |
-| width?: number | Specifies the width of the dropdown |
-| placeholder?: string | Placeholder text to guide users in the dropdown |
-| url?: string | Specifies the URL for fetching the data. Do not declare the `data` attribute for the url to function properly.  |
+| Attribute               | Description                                                                                                                                                                               |
+|-------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| data: Item[]            | An array of options to be displayed. Each item should follow the structure defined in the 'Item Details' section.                                                                         |
+| multiple?: Boolean      | If provided, enables the multiple selection mode, allowing users to select more than one option simultaneously.                                                                           |
+| autocomplete?: Boolean  | If provided, enables the autocomplete feature, displaying an input field that allows users to filter and quickly find options in the Dropdown.                                            |
+| value?: String          | Represents the current value or selected option in the Dropdown.                                                                                                                          |
+| type?: String           | Specifies the type of display the Dropdown will use. It can be "searchbar" for a search bar interface, "picker" for a selection picker, or "default" for the default dropdown appearance. |
+| insert?: Boolean        | Enables the `insert` feature, allowing users to add a new option directly by typing the title text and clicking on the plus symbol.                                                       |
+| format?: Number         | Data format type, usually in the form of { id: name } or { value: text } |
+| width?: Number          | Specifies the width of the dropdown |
+| placeholder?: String    | Placeholder text to guide users in the dropdown |
+| url?: String            | Specifies the URL for fetching the data. Do not declare the `data` attribute for the url to function properly.  |
 
 ### Item Details
 
-| Attribute                | Description                                                                                 |
-|--------------------------|---------------------------------------------------------------------------------------------|
-| value?: number or string | Represents the identifier or unique value associated with the option.                       |
-| group?: string           | Indicates the group to which the option belongs, allowing for segregation and organization. |
-| text?: string            | Displays the label or text associated with the option.                                      |
-| image?: string           | Specifies the image URL to be displayed alongside the option.                               |
-| synonyms?: string[] | Keywords for easier item identification |
-| disabled?: boolean | Indicates whether the item is currently disabled |
-| color?: string | Specifies the color associated with the item |
+| Attribute                 | Description                                                                                 |
+|---------------------------|---------------------------------------------------------------------------------------------|
+| value?: Number\|String  | Represents the identifier or unique value associated with the option.                       |
+| group?: String            | Indicates the group to which the option belongs, allowing for segregation and organization. |
+| text?: String             | Displays the label or text associated with the option.                                      |
+| image?: String            | Specifies the image URL to be displayed alongside the option.                               |
+| synonyms?: String[]       | Keywords for easier item identification |
+| disabled?: boolean        | Indicates whether the item is currently disabled |
+| color?: String            | Specifies the color associated with the item |
 
 
 ### Events
 
-| Event                                     | Trigger                                                                    |
-|-------------------------------------------|----------------------------------------------------------------------------|
-| onclose?: () => void                      | Invoked when the dropdown modal is closed.                                 |
-| onbeforeinsert?: (instance, Item) => void | Invoked before an item is added to the options through the insert feature. |
-| oninsert?: (instance, Item) => void       | Invoked after an item is added to the options through the insert feature.  |
-| onchange?: (instance, Item) => void       | Invoked when the value changes.                                            |
-| onload?: (instance, Item) => void         | Invoked when appended to the DOM.                                          |
-| onsearch?: (instance, Item) => void | Invoked when searching for an item. |
-| onbeforesearch?: (instance, Item) => void | Invoked before initiating a search. |
-| onopen?: (instance) => void | Invoked when the dropdown is opened. |
+| Event                                      | Trigger                                                                     |
+|--------------------------------------------|-----------------------------------------------------------------------------|
+| onclose?: () => void                       | Invoked when the dropdown modal is closed.                                  |
+| onbeforeinsert?: (instance, Item) => void  | Invoked before an item is added to the options through the insert feature.  |
+| oninsert?: (instance, Item) => void        | Invoked after an item is added to the options through the insert feature.   |
+| onchange?: (instance, Item) => void        | Invoked when the value changes.                                             |
+| onload?: (instance, Item) => void          | Invoked when appended to the DOM.                                           |
+| onsearch?: (instance, Item) => void        | Invoked when searching for an item.                                         |
+| onbeforesearch?: (instance, Item) => void  | Invoked before initiating a search.                                         |
+| onopen?: (instance) => void                | Invoked when the dropdown is opened.                                        |
 
 ## Dropdown Examples
 
@@ -115,7 +115,6 @@ import '@lemonadejs/dropdown/dist/style.css'
 import '@lemonadejs/modal/dist/style.css';
 
 export default function App() {
-    const self = this;
 
     let data = [];
 
@@ -125,11 +124,14 @@ export default function App() {
             text: faker.commerce.productName()
         });
     }
-    
-    self.data = data; 
 
-    return `<div>
-        <Dropdown :data="self.data" :value="1" />
+    // Default value
+    this.value = 1;
+    // load the data
+    this.data = data; 
+
+    return render => render`<div>
+        <Dropdown data="${this.data}" value="${this.value}" />
     </div>`
 }
 ```
@@ -232,9 +234,7 @@ import '@lemonadejs/dropdown/dist/style.css'
 import '@lemonadejs/modal/dist/style.css';
 
 export default function App() {
-    const self = this;
-
-    self.data = [
+    this.data = [
         { "text": "Red", "value": 1, "group": "Warm" },
         { "text": "Blue", "value": 2, "group": "Cool" },
         { "text": "Green", "value": 3, "group": "Cool" },
@@ -243,8 +243,8 @@ export default function App() {
         { "text": "Gray", "value": 6, "group": "Cool" }
     ]
 
-    return `<div>
-        <Dropdown :data="self.data" :value="1" :multiple="true" />
+    return render => render`<div>
+        <Dropdown data="${this.data}" value="${1}" multiple="${true}" />
     </div>`
 }
 ```
@@ -346,7 +346,6 @@ import '@lemonadejs/modal/dist/style.css';
 import { faker } from '@faker-js/faker';
 
 export default function App() {
-    const self = this;
 
     let d = [];
     for (let i = 0; i < 1000; i++) {
@@ -356,10 +355,10 @@ export default function App() {
         });
     }
 
-    self.data = d
+    this.data = d
 
-    return `<div>
-        <Dropdown :data="self.data" :value="1" :autocomplete="true" :insert="true" />
+    return render => render`<div>
+        <Dropdown data="{this.data}" value="${1}" autocomplete="${true}" insert="${true}" />
     </div>`
 }
 ```
@@ -372,7 +371,6 @@ import '@lemonadejs/dropdown/dist/style.css'
 import '@lemonadejs/modal/dist/style.css'
 
 import { faker } from '@faker-js/faker';
-
 
 let d = [];
 for (let i = 0; i < 1000; i++) {

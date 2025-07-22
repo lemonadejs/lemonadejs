@@ -1,6 +1,7 @@
-title: JavaScript Modal - LemonadeJS
+title: JavaScript Modal
 keywords: LemonadeJS Modal, responsive modal, reactive component, floating modals, Vue, React, Angular, draggable modals, closable modals, resizable modals, user interaction, UI optimization, web development, JavaScript UI components
 description: Discover LemonadeJS Modal, a dynamic and responsive JavaScript component for creating floating modals in web applications. It is designed for versatility and features configurable options like draggability, closability, and resizability, enhancing user interaction and integration across Vue, React, and Angular.
+canonical: https://lemonadejs.com/docs/plugins/modal
 
 ![JavaScript Modal](img/javascript-modal.jpg){.right style="width: initial; margin: 60px;"}
 
@@ -8,7 +9,7 @@ description: Discover LemonadeJS Modal, a dynamic and responsive JavaScript comp
 
 `JavaScript Components`{.jtag .black .framework-images}
 
-`Component size: 2.79KB gzipped`{.small}
+`Package size: 2.79KB gzipped`{.small}
 
 ## Overview
 
@@ -80,7 +81,7 @@ npm install @lemonadejs/modal
 Examples
 --------
 
-### Basic example
+### Basic Modal Example
 
 This example demonstrates the presentation of a centrally positioned modal and outlines procedures for managing its opening and closing.
 
@@ -120,13 +121,12 @@ import Modal from '@lemonadejs/modal';
 import '@lemonadejs/modal/dist/style.css';
 
 export default function App() {
-    const self = this;
 
-    self.toggle = function () {
+    toggle = () => {
         self.modal.closed = !self.modal.closed
     }
 
-    return `<>
+    return render => render`<>
         <Modal :ref="self.modal" :width="400" :height="200" title="My window modal" :closed="true"
             :closable="true" :draggable="true" position="center">
             <div style="padding: 10px;">
@@ -294,11 +294,12 @@ export default {
 };
 </script>
 ```
-## Advanced example
 
-### Reactive properties
+## Advanced Example
 
-Please open the modal and change the configuration. You can have a compreensive configuration that makes this plugin a very useful reusable JavaScript indepdent of the framework you are using.
+### Reactive Properties
+
+Open the modal to adjust the configuration. This allows you to create a comprehensive, reusable, and highly valuable plugin that is framework-agnostic.
 
 ```html
 <html>
@@ -319,10 +320,7 @@ function Component() {
     }
     
     self.onchange = function(prop) {
-        if (prop === 'position') {
-            self.modal.top = '0';
-            self.modal.left = '0';
-        }
+        console.log(prop)
     }
 
     // Default Properties
@@ -346,8 +344,8 @@ function Component() {
         </div>
         <div class="form-group">
             <label>Position:</label>
-            <select @bind="self.position">
-                <option value="default">Default</option>
+            <select :bind="self.position">
+                <option value="">Default</option>
                 <option value="center">Center</option>
                 <option value="right">Right</option>
                 <option value="left">Left</option>

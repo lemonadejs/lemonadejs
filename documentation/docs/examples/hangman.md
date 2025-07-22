@@ -21,92 +21,105 @@ The game show name of fruits in english.
   
 ```html
 <html>
-<script src="https://lemonadejs.com/v4/lemonade.js"></script>
+<script src="https://lemonadejs.com/v5/lemonade.js"></script>
 <div id='root'></div>
 <script>
+let { onload } = lemonade;
+
 function Hangman() {
-    // Initializing self.
-    const self = this;
-    // Possible words
-    self.words = ['apple', 'banana', 'orange', 'pear', 'lemon' ];
 
-    self.onload = function() {
+    onload(() => {
         // Reset game
-        self.reset();
-    }
+        reset();
+    })
 
-    self.reset = function() {
+    // Possible words
+    const words = ['apple', 'banana', 'orange', 'pear', 'lemon' ];
+
+    const reset = () => {
         // Make sure to restart the game
-        self.el.classList.remove('over');
-        // Hide figure elements
-        Array.from(self.figure.children).map(function(v) {
-            v.style.display = '';
+        this.gameOver = '';
+        // Reset answers
+        this.answer = [];
+        // Random index
+        let index = Math.floor(Math.random() * words.length);
+        // Letters
+        this.letters = words[index].split('').map((v, k) => {
+            return { answer: v.toUpperCase(), disabled: !! k };
         });
-        // Pick one word from the possible nes
-        let index = Math.floor(Math.random()*self.words.length);
-        // Reset answers given so far
-        self.answer = [];
-        // Secret word
-        self.secret = self.words[index].split('').map(function(v, k) {
-            return { letter: v.toUpperCase(), position: k };
-        });
+        // Make all parts of the figure hidden
+        this.figure.map((item) => {
+            item.visible = false;
+        })
         // Focus on the first element
-        self.secret[0].el.focus();
+        this.letters[0].el.focus();
     }
 
-    self.input = function(e, s) {
+    const input = (e, s) => {
         // Input letter
         let letter = e.target.value.toUpperCase();
         // Check letter
-        if (self.secret[s.position].letter == letter) {
-            // Correct word disabled element
-            e.target.setAttribute('disabled', true);
+        if (s.answer === letter) {
             // Make sure capital letter
             e.target.value = letter;
             // Focus on the next one
-            if (e.target.nextElementSibling) {
+            s.disabled = true;
+            // Current position
+            let index = this.letters.indexOf(s);
+            // Next
+            index++;
+            // Over?
+            if (this.letters[index]) {
+                // Disable
+                this.letters[index].disabled = false;
+                // Next
                 e.target.nextElementSibling.focus();
+            } else {
+                this.status = 'You win!';
             }
         } else {
             // Show figure
-            self.figure.children[self.answer.length].style.display = 'block';
+            this.figure[this.answer.length].visible = true;
             // Wrong answers
-            self.answer.push({letter});
+            this.answer.push({letter});
             // Refresh template
-            self.refresh('answer');
+            this.refresh('answer');
             // Reset input
             e.target.value = '';
             // Check end of the game
-            if (self.answer.length > 5) {
+            if (this.answer.length > 5) {
                 // Focus on the reset button
-                self.button.focus();
+                s.disabled = true;
                 // Game over
-                self.el.classList.add('over');
-                // Alert
-                alert('Game over');
+                this.status = 'Game Over';
             }
         }
     }
 
-    return `<div>
-        <div class="hangman">
-            <div class="figure" :ref="self.figure">
-                <div class="head"></div>
-                <div class="torso"></div>
-                <div class="arm left"></div>
-                <div class="arm right"></div>
-                <div class="leg left"></div>
-                <div class="leg right"></div>
+    // Figure representation
+    this.figure = [
+        { name: 'head' },
+        { name: 'torso' },
+        { name: 'arm left' },
+        { name: 'arm right' },
+        { name: 'leg left' },
+        { name: 'leg right'  }
+    ];
+    
+    return render => render`<div>
+        <div class="hangman" data-status="${this.status}">
+            <div class="figure" :loop="${this.figure}">
+                <div class="{{this.name}}" data-visible="{{this.visible}}"></div>
             </div><div>
-                <div :loop="self.answer" class="answers">
+                <div :loop="${this.answer}" class="answers">
                     <div>{{self.letter}}</div>
                 </div>
-                <div :loop="self.secret" class="word">
-                    <input type="text" value="" maxlength="1" oninput="self.parent.input" />
+                <div :loop="${this.letters}" class="word">
+                    <input type="text" maxlength="1" oninput="${input}" disabled="{{this.disabled}}" />
                 </div>
             </div>
         </div>
-        <input type="button" value="Reset game" onclick="self.reset" :ref="self.button" />
+        <input type="button" value="Reset game" onclick="${reset}" :ref="this.button" />
     </div>`;
 }
 lemonade.render(Hangman, document.getElementById('root'));
@@ -117,88 +130,99 @@ lemonade.render(Hangman, document.getElementById('root'));
 import lemonade from 'lemonadejs';
 
 export default function Hangman() {
-    // Initializing self.
-    const self = this;
-    // Possible words
-    self.words = ['apple', 'banana', 'orange', 'pear', 'lemon' ];
 
-    self.onload = function() {
+    onload(() => {
         // Reset game
-        self.reset();
-    }
+        reset();
+    })
 
-    self.reset = function() {
+    // Possible words
+    const words = ['apple', 'banana', 'orange', 'pear', 'lemon' ];
+
+    const reset = () => {
         // Make sure to restart the game
-        self.el.classList.remove('over');
-        // Hide figure elements
-        Array.from(self.figure.children).map(function(v) {
-            v.style.display = '';
+        this.gameOver = '';
+        // Reset answers
+        this.answer = [];
+        // Random index
+        let index = Math.floor(Math.random() * words.length);
+        // Letters
+        this.letters = words[index].split('').map((v, k) => {
+            return { answer: v.toUpperCase(), disabled: !! k };
         });
-        // Pick one word from the possible nes
-        let index = Math.floor(Math.random()*self.words.length);
-        // Reset answers given so far
-        self.answer = [];
-        // Secret word
-        self.secret = self.words[index].split('').map(function(v, k) {
-            return { letter: v.toUpperCase(), position: k };
-        });
+        // Make all parts of the figure hidden
+        this.figure.map((item) => {
+            item.visible = false;
+        })
         // Focus on the first element
-        self.secret[0].el.focus();
+        this.letters[0].el.focus();
     }
 
-    self.input = function(e, s) {
+    const input = (e, s) => {
         // Input letter
         let letter = e.target.value.toUpperCase();
         // Check letter
-        if (self.secret[s.position].letter == letter) {
-            // Correct word disabled element
-            e.target.setAttribute('disabled', true);
+        if (s.answer === letter) {
             // Make sure capital letter
             e.target.value = letter;
             // Focus on the next one
-            if (e.target.nextElementSibling) {
+            s.disabled = true;
+            // Current position
+            let index = this.letters.indexOf(s);
+            // Next
+            index++;
+            // Over?
+            if (this.letters[index]) {
+                // Disable
+                this.letters[index].disabled = false;
+                // Next
                 e.target.nextElementSibling.focus();
+            } else {
+                this.status = 'You win!';
             }
         } else {
             // Show figure
-            self.figure.children[self.answer.length].style.display = 'block';
+            this.figure[this.answer.length].visible = true;
             // Wrong answers
-            self.answer.push({letter});
+            this.answer.push({letter});
             // Refresh template
-            self.refresh('answer');
+            this.refresh('answer');
             // Reset input
             e.target.value = '';
             // Check end of the game
-            if (self.answer.length > 5) {
+            if (this.answer.length > 5) {
                 // Focus on the reset button
-                self.button.focus();
+                s.disabled = true;
                 // Game over
-                self.el.classList.add('over');
-                // Alert
-                alert('Game over');
+                this.status = 'Game Over';
             }
         }
     }
 
-    return `<div>
-        <div class="hangman">
-            <div class="figure" :ref="self.figure">
-                <div class="head"></div>
-                <div class="torso"></div>
-                <div class="arm left"></div>
-                <div class="arm right"></div>
-                <div class="leg left"></div>
-                <div class="leg right"></div>
+    // Figure representation
+    this.figure = [
+        { name: 'head' },
+        { name: 'torso' },
+        { name: 'arm left' },
+        { name: 'arm right' },
+        { name: 'leg left' },
+        { name: 'leg right'  }
+    ];
+
+    return render => render`<div>
+        <div class="hangman" data-status="${this.status}">
+            <div class="figure" :loop="${this.figure}">
+                <div class="{{this.name}}" data-visible="{{this.visible}}"></div>
             </div><div>
-                <div :loop="self.answer" class="answers">
+                <div :loop="${this.answer}" class="answers">
                     <div>{{self.letter}}</div>
                 </div>
-                <div :loop="self.secret" class="word">
-                    <input type="text" value="" maxlength="1" oninput="self.parent.input" />
+                <div :loop="${this.letters}" class="word">
+                    <input type="text" maxlength="1" oninput="${input}" disabled="{{this.disabled}}" />
                 </div>
             </div>
         </div>
-        <input type="button" value="Reset game" onclick="self.reset" :ref="self.button" />
+        <input type="button" value="Reset game" onclick="${reset}" :ref="this.button" />
     </div>`;
 }
 ```
@@ -209,6 +233,7 @@ export default function Hangman() {
 
   
 ```css
+
 .hangman {
     display: flex;
     padding: 40px;
@@ -325,5 +350,16 @@ export default function Hangman() {
 
 .hangman .over .word input {
     pointer-events: none;
+}
+
+.hangman div[data-visible=true] {
+    display: block;
+}
+
+.hangman[data-status]::before {
+    content: attr(data-status);
+    position: absolute;
+    margin: -40px 0 0 200px;
+    font-weight: bold;
 }
 ```

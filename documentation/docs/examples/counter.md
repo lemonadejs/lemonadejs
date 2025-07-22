@@ -1,41 +1,41 @@
 title: JavaScript Reactive Counter Example
-keywords: LemonadeJS, two-way data binding, frontend, javascript library, javascript plugin, javascript, reactive, react, examples,
+keywords: LemonadeJS, two-way data binding, frontend, JavaScript library, JavaScript, reactive, React, examples
 description: A basic counter reactive example using LemonadeJS.
 canonical: https://lemonadejs.com/docs/examples/counter
 
-Reactive Counter Example
-=======
+# Reactive Counter Example
 
-How to write a simple reactive counter using LemonadeJS. [See this example on codesandbox](https://codesandbox.io/s/lemonadejs-basic-reactive-counter-430pge)
+This example demonstrates how to create a simple reactive counter using LemonadeJS.
 
 ```html
 <html>
-<script src="https://lemonadejs.com/v4/lemonade.js"></script>
+<script src="https://lemonadejs.com/v5/lemonade.js"></script>
 <div id='root'></div>
 <script>
+let { state } = lemonade;
 function Counter() {
-    const self = this;
+    // Create a state object
+    let count = state(0);
 
-    self.count = 1;
-
-    self.add = function() {
-        self.count++;
+    // Update state methods
+    const add = function() {
+        count.value++;
     }
 
-    self.remove = function() {
-        self.count--;
+    const remove = function() {
+        count.value--;
     }
 
-    self.reset = function(element) {
-        self.count = 0;
+    const reset = function() {
+        count.value = 0;
     }
 
-    return `<div>
-        <p>Count {{self.count}}</p>
+    return render => render`<div>
+        <p>Count ${count}</p>
         <div>
-            <input type="button" onclick="self.add" value="+" />
-            <input type="button" onclick="self.remove" value="-" />
-            <input type="button" onclick="self.reset" value="Reset" />
+            <input type="button" onclick="${add}" value="+" />
+            <input type="button" onclick="${remove}" value="-" />
+            <input type="button" onclick="${reset}" value="Reset" />
         </div>
     </div>`;
 };
@@ -44,32 +44,31 @@ lemonade.render(Counter, document.getElementById('root'));
 </html>
 ```
 ```javascript
-import lemonade from 'lemonadejs';
+import { state } from 'lemonadejs';
 
 export default function Counter() {
-    const self = this;
+    let count = state(0);
 
-    self.count = 1;
-
-    self.add = function() {
-        self.count++;
+    const add = function() {
+        count++;
     }
 
-    self.remove = function() {
-        self.count--;
+    const remove = function() {
+        count--;
     }
 
-    self.reset = function(element) {
-        self.count = 0;
+    const reset = function() {
+        count = 0;
     }
 
-    return `<div class="counter">
-        <h1>Count {{self.count}}</h1>
+    return render => render`<div>
+        <p>Count ${count}</p>
         <div>
-            <input type="button" onclick="self.add" value="+" />
-            <input type="button" onclick="self.remove" value="-" />
-            <input type="button" onclick="self.reset" value="Reset" />
+            <input type="button" onclick="${add}" value="+" />
+            <input type="button" onclick="${remove}" value="-" />
+            <input type="button" onclick="${reset}" value="Reset" />
         </div>
     </div>`;
 };
 ```
+

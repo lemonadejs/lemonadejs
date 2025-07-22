@@ -1,46 +1,51 @@
-title: Documentation LemonadeJS v4
+title: LemonadeJS Documentation
 keywords: LemonadeJS, two-way data binding, frontend, javascript library, Reactive, React, Vue, Angular, micro library
 description: Discover more about LemonadeJS and how can help you build faster applications.
 canonical: https://lemonadejs.com/docs
 
-LemonadeJS micro library
-========
+# Documentation
 
 {.small}
-LemonadeJS is about 7 KBytes
+LemonadeJS is about 5 KBytes Compressed
 
-LemonadeJS is a micro JavaScript library to help developers to build amazing reactive web-based applications. The library is free and distribute under MIT license.
+LemonadeJS is a micro-reactive JavaScript library that empowers developers to create platform-agnostic components and applications. It is open-source and available under the MIT license.
 
-Learning Center
----------------
+## Index
 
 ### Documentation
 
 * [Getting started](/docs/getting-started)
-* [Attributes](/docs/attributes)
-* [Two-way data binding](/docs/two-way-data-binding)
-* [Arrays](/docs/arrays)
-* [Methods](/docs/methods)
-* [Events](/docs/events)
+* [Upgrades](/docs/upgrades)
+* [Quick reference](/docs/quick-reference)
+* [Changelog](/docs/changelog)
+* [Introduction](/docs/intro)
 * [Components](/docs/components)
-* [Classes](/docs/classes)
-* [Web-components](/docs/web-components)
-
-### Utilities
-
-* [Awesome](/docs/awesome)
+* [Props](/docs/props)
+* [Events](/docs/events)
+* [Onload](/docs/onload)
+* [Onchange](/docs/onchange)
+* [State](/docs/state)
+* [References](/docs/references)
+* [Ready](/docs/ready)
+* [Two-way data binding](/docs/two-way-data-binding)
+* [Render](/docs/render)
+* [Forms](/docs/forms)
+* [Arrays](/docs/arrays)
 * [Sugar](/docs/sugar)
 * [Testing](/docs/tests)
-* [Module (ESM)](/docs/module)
+* [Methods](/docs/methods)
+* [Classes](/docs/classes)
+* [Web-components](/docs/web-components)
+* [Module (ESM](/docs/module)
 
 ### Useful
 
+* [Playground](/playground)
 * [Quick reference](/docs/quick-reference)
 * [Debugging](/docs/debugging)
 * [Contributing](/docs/contributions)
 
-Libraries
----------
+## Libraries
 
 ### Pico Library
 
@@ -51,18 +56,20 @@ Libraries
 
 ### Components
 
-* [JavaScript Data Grid](/docs/plugins/data-grid)
-* [JavaScript Calendar](/docs/plugins/calendar)
-* [JavaScript Dropdown](/docs/plugins/dropdown)
-* [JavaScript Modal](/docs/plugins/modal)
-* [JavaScript Color Picker](/docs/plugins/color-picker)
-* [JavaScript Timeline](/docs/plugins/timeline)
-* [JavaScript Context Menu](/docs/plugins/context-menu)
-* [JavaScript Tabs](/docs/plugins/tabs)
-* [JavaScript Image Cropper](/docs/plugins/image-cropper "Photo cropper and filters component")
+* [Data grid](/docs/plugins/data-grid)
+* [Modal](/docs/plugins/modal)
+* [Calendar](/docs/plugins/calendar)
+* [Dropdown](/docs/plugins/dropdown)
+* [Color picker](/docs/plugins/color-picker)
+* [Timeline](/docs/plugins/timeline)
+* [Context Menu](/docs/plugins/context-menu)
+* [Tabs](/docs/plugins/tabs)
+* [Top Menu](/docs/plugins/top-menu)
+* [Image cropper](/docs/plugins/image-cropper)
+* [Switch](/docs/plugins/switch)
 
-Examples
---------
+
+## Examples
 
 ### Simple Examples
 
@@ -76,15 +83,13 @@ Examples
 * [Disable elements](/docs/examples/enable-disable-elements)
 * [Color picker](/docs/examples/color-picker)
 
-### Advanced Examples
 
-* [JavaScript Hangman Game](/docs/examples/hangman)
-* [JavaScript Tic-tac-toe implementation](/docs/examples/tic-tac-toe)
+ ### Advanced Examples
 
+* [Hangman game](/docs/examples/hangman)
+* [Tic tac toe](/docs/examples/tic-tac-toe)
 
-
-Featured
---------
+## Featured
 
 ### Other JavaScript tools
 
@@ -97,4 +102,4 @@ Featured
 
 Create great **JavaScript data grids** with spreadsheet controls using Jspreadsheet Pro.
 
-[Learn more](https://jspreadsheet.com)
+More about the Jspreadsheet [JavaScript Data Grid](https://jspreadsheet.com) component.

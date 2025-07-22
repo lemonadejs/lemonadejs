@@ -1,17 +1,18 @@
 title: LemonadeJS Signature Pad
 keywords: LemonadeJS, two-way binding, frontend, javascript library, javascript plugin, javascript, reactive, react, signature pad, plugins
 description: Delve into an optimized reactive JavaScript signature pad implementation using the power of LemonadeJS.
+canonical: https://lemonadejs.com/docs/plugins/signature
 
-JavaScript Signature Pad
-=============
+# JavaScript Signature Pad
+
 `Pico Library`{.jtag .black .framework-images}
 
+{.small}
 This library has less than 2 KBytes  
   
 The LemonadeJS JavaScript Signature Pad is a lightweight, reactive component that facilitates signature capture in web applications. Compatible with Vanilla, React, Vue, and Angular frameworks, it provides a canvas for capturing user signatures using mouse or touch input. With built-in methods for loading and retrieving signatures, developers can effortlessly build solutions that empower users to sign documents and securely store their signatures.  
 
-Documentation
--------------
+## Documentation
 
 ### Installation
 
@@ -21,31 +22,28 @@ npm install @lemonadejs/signature
 
 ### Attributes
 
-| Attribute | Type | Description |
-|  --- | --- | --- |
-| name? | String | Represents the identifier for the signature pad. |
-| line? | Number | The size of each painted point. |
-| value? | Array of Arrays | The value represents the painted point's position. |
-| width? | Number | The width of the signature pad. |
-| height? | Number | The height of the signature pad. |
-| instructions? | String | The instruction text. It appears at the bottom of the signature pad. |
-| getValue | Function | Gets the value array. |
-| setValue | Function | Sets the internal state value. |
-| getImage | Function | Gets the image based on the value. |
+| Attribute                 | Description                                                            |
+|---------------------------|------------------------------------------------------------------------|
+| `name?: String`           | Represents the identifier for the signature pad.                       |
+| `line?: Number`           | The size of each painted point.                                        |
+| `value?: Array of Arrays` | The value represents the painted point's position.                     |
+| `width?: Number`          | The width of the signature pad.                                        |
+| `height?: Number`         | The height of the signature pad.                                       |
+| `instructions?: String`   | The instruction text. It appears at the bottom of the signature pad.   |
+| `getValue: Function`      | Gets the value array.                                                  |
+| `setValue: Function`      | Sets the internal state value.                                         |
+| `getImage: Function`      | Gets the image based on the value.                                     |
 
 ### Events
 
-| Event | Description |
-| --- |---------------|
+| Event     | Description                             |
+|-----------|-----------------------------------------|
 | onchange? | When the value of the component changes |
-| onload? | When the component completes loading |
+| onload?   | When the component completes loading    |
 
 #### Codesandbox example
 
 [See this example on codesandbox.](https://codesandbox.io/s/javascript-signature-pad-hdzckq)
-
-Examples
---------
 
 ### Basic example
 
@@ -74,15 +72,12 @@ import lemonade from "lemonadejs";
 import Signature from "@lemonadejs/signature";
 
 export default function Component() {
-    const self = this;
-    self.width = 400;
-    self.height = 200;
-    self.value = [];
-    return `<Signature
-        value="{{self.value}}"
-        width="{{self.width}}"
-        height="{{self.height}}"
-        instructions="Please sign this document" />`;
+    // Value
+    this.value = [];
+    // 
+    return render => render`
+        <Signature value="${this.value}" width="${400}" height="${200}"
+            instructions="Please sign this document" />`;
 }
 ```
 ```jsx
@@ -131,8 +126,8 @@ The following example implement some programmatic changes in the JavaScript sign
 
 <div id="root"></div>
 
-<input type="button" value="Update width" id="updateWidth" />
-<input type="button" value="Update value" id="updateValue" />
+<input type="button" value="Update width" id="btn1" />
+<input type="button" value="Update value" id="btn2" />
 
 <script>
 // Call signature with the root element and the options object, saving its reference in a variable
@@ -146,7 +141,7 @@ const component = Signature(document.getElementById("root"), {
 });
 
 // Changes the value of the signature instance
-updateValue.addEventListener("click", () => {
+document.getElementById("btn1").addEventListener("click", () => {
     component.value = [
         [139,41],[139,45],[139,51],[139,56],[138,61],[138,65],[137,67],[137,69],[137,70],
         [137,71],[138,71],[142,66],[154,56],[171,45],[194,32],[220,21],[247,15],[270,10],
@@ -155,7 +150,7 @@ updateValue.addEventListener("click", () => {
     ];
 });
 
-updateWidth.addEventListener("click", () => {
+document.getElementById("btn2").addEventListener("click", () => {
     component.width = 800;
 });
 </script>
@@ -165,14 +160,15 @@ updateWidth.addEventListener("click", () => {
 import lemonade from "lemonadejs";
 import Signature from "@lemonadejs/signature";
 
+let { onchange } = lemonade;
+
 function Component() {
-    const self = this;
 
-    self.change = function() {
-        console.log(JSON.stringify(self.signRef.value));
-    }
+    onchange(() => {
+        console.log(JSON.stringify(this.signRef.value));
+    });
 
-    self.load = function() {
+    onload(() => {
         self.signRef.value = [
             [139,41],[139,45],[139,51],[139,56],[138,61],[138,65],[137,67],[137,69],[137,70],
             [137,71],[138,71],[142,66],[154,56],[171,45],[194,32],[220,21],[247,15],[270,10],
@@ -185,7 +181,7 @@ function Component() {
         self.signRef.width = 800
     }
 
-    return `<>
+    return render => render`<>
         <div class="signature">
             <Signature
                 :ref="self.signRef"

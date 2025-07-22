@@ -1,16 +1,16 @@
 title: JavaScript Calendar - LemonadeJS
 keywords: JavaScript Calendar, Date and Time Picker, Range Picker, Vue, React, Angular, Customizable, Lightweight, High Performance, User-Friendly, Modern Design, Web Development, UI Components
 description: Elevate web projects with our reactive JavaScript Calendar, which is compatible with Vue, React, and Angular. Effortlessly manage events and deadlines with this customizable, high-performance date and time or range picker. Enhance your application with our lightweight, user-friendly component.
+canonical: https://lemonadejs.com/docs/plugins/calendar
+
 
 ![JavaScript Calendar](img/javascript-calendar.jpg){.right style="width: initial; margin: 60px;"}
 
-JavaScript Calendar
-==================
+# JavaScript Calendar
 
 `JavaScript Components`{.jtag .black .framework-images}
 
 `Component size: 3.18KB gzipped`{.small}
-
 
 The LemonadeJS Calendar is a versatile JavaScript calendar component designed for seamless integration with popular frameworks like React, VueJS, and Angular. This component enhances your web applications by providing an embeddable calendar picker that can be easily incorporated into HTML forms, facilitating straightforward date, time, and range selections. It is engineered to support keyboard navigation, ensuring a superior user experience. Notably lightweight and built with a reactive and responsive design, the LemonadeJS Calendar offers:
 
@@ -22,9 +22,7 @@ The LemonadeJS Calendar is a versatile JavaScript calendar component designed fo
 - **High Customizable**: Tailor the calendar's appearance and functionality to fit your project's needs.
 
 
-Documentation
--------------
-
+## Documentation
 
 ### Installation
 
@@ -34,13 +32,13 @@ npm install @lemonadejs/calendar
 
 ### Settings
 
-| Attribute | Type             | Description                                                                                                       |
-| --------- |------------------|-------------------------------------------------------------------------------------------------------------------|
-| type?     | string           | Determines the rendering type for the calendar. Options: 'inline', 'default'.                                     |
-| range?    | boolean          | Enables the range mode for date selection.                                                                        |
-| value?    | number or string | Represents the currently selected date.                                                                           |
-| numeric?  | boolean          | Enables the use of numeric dates, treating them as serial numbers.                                                |
-| input?    | HTML element     | An optional reference to control the calendar opening. The value is automatically bound when using this property. |
+| Attribute                  | Description                                                                                                       |
+|----------------------------|-------------------------------------------------------------------------------------------------------------------|
+| `type?: String`            | Determines the rendering type for the calendar. Options: 'inline', 'default'.                                     |
+| `range?: Boolean`          | Enables the range mode for date selection.                                                                        |
+| `value?: Number\|String` | Represents the currently selected date.                                                                           |
+| `numeric?: Boolean`        | Enables the use of numeric dates, treating them as serial numbers.                                                |
+| `input?: HTML Element`     | An optional reference to control the calendar opening. The value is automatically bound when using this property. |
 
 
 ### Events
@@ -77,9 +75,7 @@ import "@lemonadejs/calendar/dist/style.css";
 import "@lemonadejs/modal/dist/style.css";
 
 export default function App() {
-    const self = this;
-
-    return `<div>
+    return render => render `<div>
         <Calendar type="inline" value="2023-11-11" />
     </div>`
 }
@@ -152,11 +148,9 @@ import "@lemonadejs/calendar/dist/style.css";
 import "@lemonadejs/modal/dist/style.css";
 
 export default function App() {
-    const self = this;
-
-    return `<div>
-        <input type="text" :ref="self.inputRef" />
-        <Calendar :input="self.inputRef" :range="true" />
+    return render => render`<div>
+        <input type="text" :ref="${this.input}" />
+        <Calendar :input="${this.input}" :range="true" />
     </div>`
 }
 ```

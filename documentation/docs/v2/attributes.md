@@ -164,7 +164,7 @@ var Loop = (function() {
             description: 'The alpha search engine...'
         },
         {
-            title:'Bind',
+            title:'Bing',
             description: 'The microsoft search engine...'
         },
     ];

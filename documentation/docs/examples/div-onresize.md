@@ -2,57 +2,47 @@ title: DIV onresize - LemonadeJS
 keywords: LemonadeJS, two-way data binding, frontend, javascript library, javascript plugin, javascript, reactive, react, examples
 description: Learn how to implement a custom DIV onresize event using LemonadeJS and JavaScript Vanilla.
 
-DIV onresize
-============
+# DIV onresize Example
 
-The following example shows a simple implementation to track the changes in dimensions of a DIV using LemonadeJS.  
+This Example demonstrates how to track changes in the dimensions of a `DIV` element using LemonadeJS.  
   
-
-Example
--------
+## Example
 
 Tracking changes in a DIV dimensions example.  
-  
-
-  
-
-### Source code
 
 ```html
 <html>
-<script src="https://lemonadejs.com/v4/lemonade.js"></script>
+<script src="https://lemonadejs.com/v5/lemonade.js"></script>
 <div id='root'></div>
 <script>
 function Width() {
-    const self = this;
+    const onresize = (e) => {
+        console.log('DIV has new dimensions');
+    }
 
-    self.init = function(element) {
+    const init = (element) => {
         // Initial values
-        var w = element.offsetWidth;
-        var h = element.offsetHeight;
+        let w = element.offsetWidth;
+        let h = element.offsetHeight;
 
         // Track the changes
-        element.onmousemove = function(e) {
+        element.onmousemove = (e) => {
             if (e.which) {
                 if (w !== element.offsetWidth || h !== element.offsetHeight) {
                     w = element.offsetWidth;
                     h = element.offsetHeight;
-                    self.onresize(element);
+                    onresize(element);
 
                     // Update dimensions label
-                    self.dimensions = w + ',' + h;
+                    this.dimensions = w + ',' + h;
                 }
             }
         }
     }
 
-    self.onresize = function(element) {
-        console.log('DIV has new dimensions');
-    }
-
     // Component template
-    return `<div class="resizable" :ready="self.init">
-        On resize on DIV elements: {{self.dimensions}}
+    return render => render`<div class="resizable" :ready="${init}">
+        On resize on DIV elements: <b>${this.dimensions}</b>
     </div>`;
 }
 lemonade.render(Width, document.getElementById('root'));
@@ -63,52 +53,46 @@ lemonade.render(Width, document.getElementById('root'));
 import lemonade from 'lemonadejs';
 
 export default function Width() {
-    const self = this;
+    const onresize = (e) => {
+        console.log('DIV has new dimensions');
+    }
 
-    self.init = function(element) {
+    const init = function(element) {
         // Initial values
-        var w = element.offsetWidth;
-        var h = element.offsetHeight;
+        let w = element.offsetWidth;
+        let h = element.offsetHeight;
 
         // Track the changes
-        element.onmousemove = function(e) {
+        element.onmousemove = (e) => {
             if (e.which) {
                 if (w !== element.offsetWidth || h !== element.offsetHeight) {
                     w = element.offsetWidth;
                     h = element.offsetHeight;
-                    self.onresize(element);
+                    onresize(element);
 
                     // Update dimensions label
-                    self.dimensions = w + ',' + h;
+                    this.dimensions = w + ',' + h;
                 }
             }
         }
     }
 
-    self.onresize = function(element) {
-        console.log('DIV has new dimensions');
-    }
-
     // Component template
-    return `<div class="resizable" :ready="self.init">
-        On resize on DIV elements: {{self.dimensions}}
+    return render => render`<div class="resizable" :ready="${init}">
+        On resize on DIV elements: <b>${this.dimensions}</b>
     </div>`;
 }
 ```
 
 [See this example on codesandbox](https://codesandbox.io/s/div-onresize-uzci2q)
 
-  
 
-A pure vanilla implementation
------------------------------
 
-Although this site is dedicated to LemonadeJS, for education purposes, we present you with a pure javascript vanilla implementation as follow.  
+## Pure JavaScript Implementation
+
+For educational purposes, here’s a vanilla JavaScript implementation:  
 
 [DIV onresize example on jsfiddle](https://jsfiddle.net/lemonadejs/ugj7tc0f/)  
-  
-
-### Source code
 
 {.ignore}
 ```html
@@ -131,9 +115,9 @@ Pure vanilla implementation
 </html>
 ```
 
-### The CSS used for this section
+### CSS for This Section
 
-If you wish to test the examples of this section, please copy this CSS to your project.  
+Add the following CSS to test these examples:
   
 ```css
 .resizable {

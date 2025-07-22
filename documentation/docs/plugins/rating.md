@@ -1,17 +1,18 @@
-title: LemonadeJS Rating: Engaging Rating Component for User Feedback
+title: JavaScript Rating
 keywords: LemonadeJS, rating, component, frontend, javascript library, javascript, interactive, user feedback
 description: LemonadeJS Rating Component is a user-friendly solution for quickly collecting user feedback and ratings in HTML forms.
+canonical: https://lemonadejs.com/docs/plugins/rating
 
-JavaScript Rating
-======
+# JavaScript Rating
+
 `Pico Library`{.jtag .black .framework-images}
 
-This library has less than 2 KBytes  
-  
-The LemonadeJS star rating plugin is a micro JavaScript component that implements the five star rating.  
+{.small}
+This library has less than 2 KBytes
 
-Documentation
--------------
+The LemonadeJS Star Rating plugin is a micro JavaScript component that provides a customizable five-star rating system. It enables expressive and flexible ratings for products or services, going beyond basic numeric feedback.  
+
+## Documentation
 
 ### Installation
 
@@ -19,25 +20,33 @@ Documentation
 npm install @lemonadejs/rating
 ```
 
+### Material icons
+
+It requires Google Material Icons.
+
+{.ignore}
+```html
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+```
+
 ### Attributes
 
-| Attribute | Type | Description |
-| --- | --- | --- |
-| name? | String | The name of the component |
-| number? | Number | The number of stars. Default 5. |
-| value? | Number | The initial value. Default null. |
+| Attribute         | Description                               |
+|-------------------|-------------------------------------------|
+| `name?: String`   | The name of the component.                |
+| `number?: Number` | The number of stars. The default is `5`.  |
+| `value?: Number`  | The initial value. The default is `null`. |
 
 ### Events
 
-| Attribute | Description |
-| --- | --- |
-| onchange? | When the value of the component changes. |
+| Event                | Description                                   |
+|----------------------|-----------------------------------------------|
+| `onchange: Function` | Triggered when the component's value changes. |
 
+## Examples
 
-Examples
---------
-
-Changing the `self.value` will trigger the view updates. If you set the `self.value` with the same current value, that will reset the value.  
+Updating `this.value` will automatically update the view. If you set `this.value` to its current value, the component will reset to its initial state.
+  
   
 ### Basic example
 
@@ -46,32 +55,36 @@ Changing the `self.value` will trigger the view updates. If you set the `self.va
 <script src="https://cdn.jsdelivr.net/npm/lemonadejs/dist/lemonade.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@lemonadejs/rating/dist/index.min.js"></script>
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-<div id='root'></div>
-<script>
-const Component = function() {
-    const self = this;
 
-    self.plus = () => {
-        self.number++;
+<div id='root'></div>
+
+<script>
+let { onchange } = lemonade;
+
+function Component() {
+
+    const plus = () => {
+        this.number++;
     }
-    self.minus = () => {
-        self.number--;
+    const minus = () => {
+        this.number--;
     }
-    self.reset = () => {
-        self.value = 1;
+    const reset = () => {
+        this.value = 1;
     }
-    self.change = (newValue) => {
+    const change = (newValue) => {
         console.log('New value', newValue);
     }
 
-    self.number = 5;
-    self.value = 3;
+    this.number = 5;
+    this.value = 3;
 
-    return `<>
-        <p><Rating :value="self.value" :number="self.number" onchange="self.change" /></p>
-        <input type="button" value="Value=1" onclick="self.reset" />
-        <input type="button" value="Add star" onclick="self.plus" />
-        <input type="button" value="Remove star" onclick="self.minus" />
+    return render => render`<>
+        <Rating value="${this.value}" number="${this.number}" onchange="${change}" />
+        <br>
+        <input type="button" value="Value=1" onclick="${reset}" />
+        <input type="button" value="Add star" onclick="${plus}" />
+        <input type="button" value="Remove star" onclick="${minus}" />
     </>`;
 }
 // Render component
@@ -80,36 +93,33 @@ lemonade.render(Component, document.getElementById('root'));
 </html>
 ```
 ```javascript
-// For installation: % npm install @lemonadejs/rating
-// Add to your HTML: <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 import lemonade from "lemonadejs";
 import Rating from "@lemonadejs/rating";
 
 export default function Component() {
-    const self = this;
-
-    self.plus = () => {
-        self.number++;
+    const plus = () => {
+        this.number++;
     }
-    self.minus = () => {
-        self.number--;
+    const minus = () => {
+        this.number--;
     }
-    self.reset = () => {
-        self.value = 1;
+    const reset = () => {
+        this.value = 1;
     }
-    self.change = (newValue) => {
+    const change = (newValue) => {
         console.log('New value', newValue);
     }
 
-    self.number = 5;
-    self.value = 3;
+    this.number = 5;
+    this.value = 3;
 
-    return `<div>
-        <p><Rating :value="self.value" :number="self.number" onchange="self.change" /></p>
-        <input type="button" value="Value=1" onclick="self.reset" />
-        <input type="button" value="Add star" onclick="self.plus" />
-        <input type="button" value="Remove star" onclick="self.minus" />
-    </div>`;
+    return render => render`<>
+        <Rating value="${this.value}" number="${this.number}" onchange="${change}" />
+        <br>
+        <input type="button" value="Value=1" onclick="${reset}" />
+        <input type="button" value="Add star" onclick="${plus}" />
+        <input type="button" value="Remove star" onclick="${minus}" />
+    </>`;
 }
 ```
 ```jsx
@@ -179,7 +189,7 @@ methods: {
 </script>
 ```
 
-Related content
----------------
+## Related content
 
-*   [Simple star rating implementation](/docs/examples/rating)
+
+* [Simple Star Rating Component Implementation](/docs/examples/rating)

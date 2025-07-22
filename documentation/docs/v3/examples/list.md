@@ -33,7 +33,7 @@ function Component() {
 
     self.data = [
         { title:'Google', description: 'The alpha search engine...' },
-        { title:'Bind', description: 'The microsoft search engine...' },
+        { title:'Bing', description: 'The microsoft search engine...' },
         { title:'Yahoo', description: 'The old stuff...' },
     ];
 

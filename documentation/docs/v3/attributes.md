@@ -186,7 +186,7 @@ function Loop() {
             description: 'The alpha search engine...'
         },
         {
-            title:'Bind',
+            title:'Bing',
             description: 'The microsoft search engine...'
         },
     ];
@@ -212,7 +212,7 @@ export default function Loop() {
             description: 'The alpha search engine...'
         },
         {
-            title:'Bind',
+            title:'Bing',
             description: 'The microsoft search engine...'
         },
     ];

@@ -17,72 +17,56 @@ Working example
 
 ```html
 <html>
-<script src="https://lemonadejs.com/v4/lemonade.js"></script>
+<script src="https://lemonadejs.com/v5/lemonade.js"></script>
 <div id='root'></div>
 <script>
 function Tictactoe() {
-    const self = this;
-
     let text = [
         'can start the game',
         'turn to play',
         'won the game',
-    ]
-    self.players = [ 'O','X' ];
+    ];
 
-    /**
-     * Checking if the span's id are the same as the playerSign.
-     * @param {number} a - Position of the item
-     * @param {number} b - Position of the item
-     * @param {number} c - Position of the item
-     * @returns Returns the id in win case.
-     */
-    const checkMatching = function(a, b, c) {
-        // If the three positions were picked by the same player
-        if (self.board[a].player &&
-            self.board[a].player === self.board[b].player &&
-            self.board[b].player === self.board[c].player) {
-            return true;
-        }
-        return false;
-    }
-
-    /**
-     * Check the board to see if there is a winner
-     */
-    const isWinner = function() {
-        return (checkMatching(0, 1, 2) || checkMatching(3, 4, 5) || checkMatching(6, 7, 8) ||
-                checkMatching(0, 3, 6) || checkMatching(1, 4, 7) || checkMatching(2, 5, 8) ||
-                checkMatching(0, 4, 8) || checkMatching(2, 4, 6));
+    // Check the board to see if there is a winner
+    const isWinner = () => {
+        return [
+            [0,1,2], [3,4,5], [6,7,8], // Rows
+            [0,3,6], [1,4,7], [2,5,8], // Columns
+            [0,4,8], [2,4,6]           // Diagonals
+        ].some(([a,b,c]) =>
+            this.board[a].player &&
+            this.board[a].player === this.board[b].player &&
+            this.board[b].player === this.board[c].player
+        );
     }
 
     /**
      * Click event handler
      * @param {MouseEvent} e
      */
-    self.click = function(e) {
+    const click = (e) => {
         // Valid item to be clicked - only SPAN
         if (e.target.tagName === 'SPAN') {
-            if (self.winner) {
-                alert(self.title.textContent);
+            if (this.winner) {
+                alert(this.title.textContent);
             } else {
                 // No one picked the position yet
-                if (!e.target.textContent) {
+                if (! e.target.textContent) {
                     // Get the position of the element clicked
                     let index = Array.prototype.indexOf.call(e.target.parentNode.children, e.target);
                     // Selected the board
-                    self.board[index].player = self.player;
+                    this.board[index].player = this.player;
                     // Switch the text element to refers the player's turn.
-                    self.text = text[1];
+                    this.text = text[1];
                     if (isWinner()) {
                         // Switch the text element to refers the winner.
-                        self.text = text[2];
-                        self.winner = true;
+                        this.text = text[2];
+                        this.winner = true;
                         // We have a winner
-                        alert(self.title.textContent);
+                        alert(this.title.textContent);
                     } else {
                         // Switch player's turn.
-                        self.player = self.player ? 0 : 1;
+                        this.player = this.player === 'o' ? 'x' : 'o';
                     }
                 }
             }
@@ -92,30 +76,28 @@ function Tictactoe() {
     /**
      * Reset the game variables
      */
-    self.reset = function() {
+    const reset = () => {
         // Player 0 (o) and Player 1 (x)
-        self.player = 0;
+        this.player = 'o';
         // Update the instruction to the user
-        self.text = text[0];
+        this.text = text[0];
         // Property to define if already reached a winner.
-        self.winner = false;
+        this.winner = false;
         // Reset the board with the 9 positions
-        self.board = [{},{},{},{},{},{},{},{},{}];
+        this.board = [{},{},{},{},{},{},{},{},{}];
     }
 
-    /**
-     * Create necessary variables
-     */
-    self.reset();
+    // Start the game
+    reset();
 
     // Game template
-    return `<div class="tictactoe">
-        <div class="title" :ref="self.title">{{self.players[self.player]}} {{self.text}}</div>
-        <div :loop="self.board" class="board" onclick="self.click">
-            <span>{{self.parent.players[self.player]}}</span>
+    return render => render`<div class="tictactoe">
+        <h4 :ref="this.title">${this.player} ${this.text}</h4>
+        <div :loop="${this.board}" class="board" onclick="${click}">
+            <span>{{this.player}}</span>
         </div><br/>
-        <input type="button" onclick="self.reset" value="Reset the game" />
-    </div>`;
+        <input type="button" onclick=${reset} value="Reset the game" />
+    </div>`
 }
 
 lemonade.render(Tictactoe, document.getElementById('root'));
@@ -125,68 +107,52 @@ lemonade.render(Tictactoe, document.getElementById('root'));
 import lemonade from 'lemonadejs';
 
 export default function Tictactoe() {
-    const self = this;
-
     let text = [
         'can start the game',
         'turn to play',
         'won the game',
-    ]
-    self.players = [ 'O','X' ];
+    ];
 
-    /**
-     * Checking if the span's id are the same as the playerSign.
-     * @param {number} a - Position of the item
-     * @param {number} b - Position of the item
-     * @param {number} c - Position of the item
-     * @returns Returns the id in win case.
-     */
-    const checkMatching = function(a, b, c) {
-        // If the three positions were picked by the same player
-        if (self.board[a].player &&
-            self.board[a].player === self.board[b].player &&
-            self.board[b].player === self.board[c].player) {
-            return true;
-        }
-        return false;
-    }
-
-    /**
-     * Check the board to see if there is a winner
-     */
-    const isWinner = function() {
-        return (checkMatching(0, 1, 2) || checkMatching(3, 4, 5) || checkMatching(6, 7, 8) ||
-            checkMatching(0, 3, 6) || checkMatching(1, 4, 7) || checkMatching(2, 5, 8) ||
-            checkMatching(0, 4, 8) || checkMatching(2, 4, 6));
+    // Check the board to see if there is a winner
+    const isWinner = () => {
+        return [
+            [0,1,2], [3,4,5], [6,7,8], // Rows
+            [0,3,6], [1,4,7], [2,5,8], // Columns
+            [0,4,8], [2,4,6]           // Diagonals
+        ].some(([a,b,c]) =>
+            this.board[a].player &&
+            this.board[a].player === this.board[b].player &&
+            this.board[b].player === this.board[c].player
+        );
     }
 
     /**
      * Click event handler
      * @param {MouseEvent} e
      */
-    self.click = function(e) {
+    const click = (e) => {
         // Valid item to be clicked - only SPAN
         if (e.target.tagName === 'SPAN') {
-            if (self.winner) {
-                alert(self.title.textContent);
+            if (this.winner) {
+                alert(this.title.textContent);
             } else {
                 // No one picked the position yet
-                if (!e.target.textContent) {
+                if (! e.target.textContent) {
                     // Get the position of the element clicked
                     let index = Array.prototype.indexOf.call(e.target.parentNode.children, e.target);
                     // Selected the board
-                    self.board[index].player = self.player;
+                    this.board[index].player = this.player;
                     // Switch the text element to refers the player's turn.
-                    self.text = text[1];
+                    this.text = text[1];
                     if (isWinner()) {
                         // Switch the text element to refers the winner.
-                        self.text = text[2];
-                        self.winner = true;
+                        this.text = text[2];
+                        this.winner = true;
                         // We have a winner
-                        alert(self.title.textContent);
+                        alert(this.title.textContent);
                     } else {
                         // Switch player's turn.
-                        self.player = self.player ? 0 : 1;
+                        this.player = this.player === 'o' ? 'x' : 'o';
                     }
                 }
             }
@@ -196,30 +162,28 @@ export default function Tictactoe() {
     /**
      * Reset the game variables
      */
-    self.reset = function() {
+    const reset = () => {
         // Player 0 (o) and Player 1 (x)
-        self.player = 0;
+        this.player = 'o';
         // Update the instruction to the user
-        self.text = text[0];
+        this.text = text[0];
         // Property to define if already reached a winner.
-        self.winner = false;
+        this.winner = false;
         // Reset the board with the 9 positions
-        self.board = [{},{},{},{},{},{},{},{},{}];
+        this.board = [{},{},{},{},{},{},{},{},{}];
     }
 
-    /**
-     * Create necessary variables
-     */
-    self.reset();
+    // Start the game
+    reset();
 
     // Game template
-    return `<div class="tictactoe">
-        <div class="title" :ref="self.title">{{self.players[self.player]}} {{self.text}}</div>
-        <div :loop="self.board" class="board" onclick="self.click">
-            <span>{{self.parent.players[self.player]}}</span>
+    return render => render`<div class="tictactoe">
+        <h4 :ref="this.title">${this.player} ${this.text}</h4>
+        <div :loop="${this.board}" class="board" onclick="${click}">
+            <span>{{this.player}}</span>
         </div><br/>
-        <input type="button" onclick="self.reset" value="Reset the game" />
-    </div>`;
+        <input type="button" onclick=${reset} value="Reset the game" />
+    </div>`
 }
 ```
 

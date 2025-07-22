@@ -1,56 +1,45 @@
-title: Star rating,
-keywords: LemonadeJS, two-way data binding, frontend, javascript library, javascript plugin, javascript, reactive, react, examples,
-description: How to implement a simple reactive javascript five star rating implementation using LemonadeJS.
+title: JavaScript Star Rating Component Example
+keywords: LemonadeJS, two-way data binding, frontend, JavaScript library, JavaScript plugin, JavaScript, reactive, React, examples
+description: Learn how to implement a simple reactive five-star rating component using LemonadeJS.
 
-Rating
-======
+# JavaScript Five-Star Rating Example
 
-A LemonadeJS `{self}` property can be bound to an HTML DOM element attribute. In this sense, the HTML elements will automatically update when a property value changes.  
-  
+This example demonstrates a basic `five-star rating` component built with LemonadeJS and a loop.
 
-Examples
---------
-
-A basic star rating implementation  
-
-### Source code
+{.green}
+> **Note**: Requires Material Icon\
+> \<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 
 ```html
 <html>
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-<script src="https://lemonadejs.com/v4/lemonade.js"></script>
+<script src="https://lemonadejs.com/v5/lemonade.js"></script>
 <div id='root'></div>
 <script>
 function Rating() {
-    const self = this;
-
-    // Five stars
-    self.stars = [{},{},{},{},{}];
-
     // Current clicked star self
     let current = null;
-
-    self.click = function(e, s) {
+    // Five stars
+    this.stars = [{},{},{},{},{}];
+    // Click event
+    this.click = (e, s) => {
         // If the self of the clicked item is not selected reset the null
         if (! s.selected) {
             current = null;
         }
         // Get the position of the self of the clicked item
-        let index = self.stars.indexOf(s);
+        let index = this.stars.indexOf(s);
         // Go through all stars and define select or non selected
-        for (let i = 0; i < self.stars.length; i++) {
-            // What is the value
-            let value = (i <= index && s !== current) ? 1 : 0;
+        for (let i = 0; i < this.stars.length; i++) {
             // Apply value to the self of the child
-            self.stars[i].selected = value;
-            self.stars[i].el.style.color = value ? 'red' : '';
+            this.stars[i].selected = (i <= index && s !== current);
         }
-        // Keep the the self of the last item clicked
+        // Keep the self of the last item clicked
         current = s;
     }
 
-    return `<div :loop="self.stars" style="cursor: pointer">
-        <i class="material-icons" onclick="self.parent.click">{{self.selected ? 'star' : 'star_outline'}}</i>
+    return render => render`<div :loop="${this.stars}" class="stars">
+        <i class="material-icons" onclick="this.parent.click" data-selected="{{self.selected}}"></i>
     </div>`;
 }
 lemonade.render(Rating, document.getElementById('root'));
@@ -58,39 +47,54 @@ lemonade.render(Rating, document.getElementById('root'));
 </html>
 ```
 ```javascript
-// Add to your HTML: <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 import lemonade from 'lemonadejs';
 
 export default function Rating() {
-    const self = this;
-
-    // Five stars
-    self.stars = [{},{},{},{},{}];
-
     // Current clicked star self
     let current = null;
-
-    self.click = function(e, s) {
+    // Five stars
+    this.stars = [{},{},{},{},{}];
+    // Click event
+    this.click = (e, s) => {
         // If the self of the clicked item is not selected reset the null
         if (! s.selected) {
             current = null;
         }
         // Get the position of the self of the clicked item
-        let index = self.stars.indexOf(s);
+        let index = this.stars.indexOf(s);
         // Go through all stars and define select or non selected
-        for (let i = 0; i < self.stars.length; i++) {
-            // What is the value
-            let value = (i <= index && s !== current) ? 1 : 0;
+        for (let i = 0; i < this.stars.length; i++) {
             // Apply value to the self of the child
-            self.stars[i].selected = value;
-            self.stars[i].el.style.color = value ? 'red' : '';
+            this.stars[i].selected = (i <= index && s !== current);
         }
-        // Keep the the self of the last item clicked
+        // Keep the self of the last item clicked
         current = s;
     }
 
-    return `<div :loop="self.stars" style="cursor: pointer">
-        <i class="material-icons" onclick="self.parent.click">{{self.selected ? 'star' : 'star_outline'}}</i>
+    return render => render`<div :loop="${this.stars}" class="stars">
+        <i class="material-icons" onclick="this.parent.click" data-selected="{{self.selected}}"></i>
     </div>`;
 }
 ```
+
+## CSS for This Section
+
+You need to include the following CSS.
+
+```css
+.stars > i::after {
+    font-family: 'material icons',serif;
+    font-size: 24px;
+    content: 'star_outline';
+    cursor: pointer;
+}
+
+.stars > i[data-selected='true']::after {
+    content: 'star';
+    color: red;
+}
+```
+
+# More Resources
+
+- [JS Rating Component](/docs/plugins/rating)

@@ -1,43 +1,34 @@
-title: Value persistence,
-keywords: LemonadeJS, two-way data binding, frontend, javascript library, javascript plugin, javascript, reactive, react, examples,
-description: Integrate a reactive LemonadeJS component with the JavaScript localStorage to persist a state value.
+title: LocalStorage Value Persistence
+keywords: LemonadeJS, two-way data binding, frontend, JavaScript library, JavaScript, reactive, React, examples
+description: Learn how to integrate a reactive LemonadeJS component with localStorage to persist state values.
+canonical: https://lemoandejs.com/docs/examples/value-persistence
 
-Local value persistence
-=======================
+# LocalStorage Value Persistence
 
-The following example shows a two-way binding dropdown with an event to save its value on the localStorage.  
-  
+This example demonstrates a dropdown component with two-way data binding. The selected value is saved to localStorage whenever the dropdown's value changes.
 
-Example
--------
+## Example
 
-The value is updated on the localStorage on the dropdown changes its value.  
-  
-
-  
-  
-
-### Source code
-
+The value is automatically updated in localStorage whenever the dropdown's selection changes.
 
 ```html
 <html>
-<script src="https://lemonadejs.com/v4/lemonade.js"></script>
+<script src="https://lemonadejs.com/v5/lemonade.js"></script>
 <div id='root'></div>
 <script>
-function Persistence() {
-    const self = this;
+let { onchange } = lemonade;
 
+function Persistence() {
     // Default value of the property which is bound to the value of the dropdown
-    self.language = localStorage.getItem('language');
+    this.language = localStorage.getItem('language');
 
     // Do something when the self.language changes using the onchange lemonadeJS native tracker
-    self.onchange = function() {
+    onchange((prop) => {
         // Persist language
-        localStorage.setItem('language', self.language);
-    }
+        localStorage.setItem('language', this.language);
+    });
 
-    return `<select :bind="self.language">
+    return render => render`<select :bind="${this.language}">
         <option value="">Choose one</option>
         <option value="en_GB">English</option>
         <option value="pt_BR">Portuguese</option>
@@ -48,22 +39,19 @@ lemonade.render(Persistence, document.getElementById('root'));
 </html>
 ```
 ```javascript
-import lemonade from 'lemonadejs';
+import { onchange } from 'lemonadejs';
 
 export default function Persistence() {
-    const self = this;
-
     // Default value of the property which is bound to the value of the dropdown
-    self.language = localStorage.getItem('language');
+    this.language = localStorage.getItem('language');
 
     // Do something when the self.language changes using the onchange lemonadeJS native tracker
-    self.onchange = function() {
+    onchange((prop) => {
         // Persist language
-        localStorage.setItem('language', self.language);
-        console.log(localStorage.getItem('language'))
-    }
+        localStorage.setItem('language', this.language);
+    });
 
-    return `<select :bind="self.language">
+    return render => render`<select :bind="this.language">
         <option value="">Choose one</option>
         <option value="en_GB">English</option>
         <option value="pt_BR">Portuguese</option>

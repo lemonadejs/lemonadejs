@@ -1,6 +1,7 @@
 title: JavaScript Data Grid - LemonadeJS
 keywords: LemonadeJS, two-way data binding, frontend, javascript library, javascript plugin, javascript, reactive, react, plugins
 description: A micro reactive javascript data grid with cell edition, search and pagination using LemonadeJS.
+canonical: https://lemonadejs.com/docs/plugins/data-grid
 
 ![JavaScript Data Grid](img/javascript-data-grid.jpg){.right style="width: initial; margin: 60px;"}
 
@@ -27,7 +28,7 @@ npm install @lemonadejs/data-grid
 
 | Attribute             | Description                                                                                                                                                  |
 |-----------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| data: object[]        | The data that will be displayed on the grid based on the columns attribute.                                                                                  |
+| data: Object[]        | The data that will be displayed on the grid based on the columns attribute.                                                                                  |
 | columns: columnItem[] | Each columnItem object represents a column of data to be displayed. For more information about this object, please refer to the 'Column Item' section below. |
 | pagination?: Number   | Enable the pagination and define the number of items per page.                                                                                               | 
 | search?: Boolean      | Enable the search. `Default: false`                                                                                                                          |
@@ -41,30 +42,30 @@ The columns property regulates the presentation of columns on the JavaScript dat
 
 | Option                 | Description                                                                                                                                                                                                                                            |
 |------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **name**?: string      | Determines the key of the data object to which the column refers.                                                                                                                                                                                      |
-| **title**: string      | Required. Determines the text that will be displayed in the column Header.                                                                                                                                                                             |
-| **width**?: string     | This option specifies the width of the column and should be provided as a string with the unit of measurement, such as '200px' or '2.5em'. By default, the width is set to '100px'.                                                                    |
-| **align**?: string     | This option determines the alignment of the text within the cells of the column. It should be provided as a string with a valid entry. The available options are 'left', 'right', 'center', and 'justify'. By default, the alignment is set to 'left'. |
-| **render**?: function  | render(cell, x, y, value, instance) => void<br>                                                                                                                                                                                                        | This option allows you to override the default rendering of the column and instead render a specific value. It is particularly useful for rendering HTML elements or components. In the context of this property, the keyword 'self' refers to the current row being rendered. |
+| **name**?: String      | Determines the key of the data object to which the column refers.                                                                                                                                                                                      |
+| **title**: String      | Required. Determines the text that will be displayed in the column Header.                                                                                                                                                                             |
+| **width**?: String     | This option specifies the width of the column and should be provided as a string with the unit of measurement, such as '200px' or '2.5em'. By default, the width is set to '100px'.                                                                    |
+| **align**?: String     | This option determines the alignment of the text within the cells of the column. It should be provided as a string with a valid entry. The available options are 'left', 'right', 'center', and 'justify'. By default, the alignment is set to 'left'. |
+| **render**?: Function  | render(cell, x, y, value, instance) => void<br>                                                                                                                                                                                                        | This option allows you to override the default rendering of the column and instead render a specific value. It is particularly useful for rendering HTML elements or components. In the context of this property, the keyword 'self' refers to the current row being rendered. |
 
 ### Instance
 
 | Property                                         | Description                       |
 |--------------------------------------------------|-----------------------------------|
-| data: object[]                                   | Change the state of data.         |
+| data: Object[]                                   | Change the state of data.         |
 | page: Number                                     | Change the page index.            |
 | pagination: Number                               | Enable pagination.                |
 | search: Boolean                                  | Enable search.                    |
 | sort: Function(sortBy: String, sortAsc: Boolean) | Sort the data.                    |
-| setValue: Function(x: Number                     | String, y: Number, value: String) | Set the value of a cell. |
+| setValue: Function(x: Number\|String, y: Number, value: String) | Set the value of a cell. |
 
 ### Events
 
 | Event                             | Description                            |
 |-----------------------------------|----------------------------------------|
-| onsearch?: (self) => void         | Called when a search happens.          |
-| onchangepage?: (self) => void     | Called when the user changes the page. |
-| onupdate?: (self, object) => void | Called when cell data is changed.      |
+| onsearch?: (this: Object) => void         | Called when a search happens.          |
+| onchangepage?: (this: Object) => void     | Called when the user changes the page. |
+| onupdate?: (this: Object, s: Object) => void | Called when cell data is changed.      |
 
 > ### Important points
 >
@@ -86,7 +87,7 @@ The LemonadeJS Data Grid component is designed for creating high-performance dat
 <div id='root'></div>
 <p>
     <input type="button" value="Go To Page 2" id="goToPage">
-    <input type="button" value="Change Value in 'Product' Second Line" id="updateProduct">
+    <input type="button" value="Change Value in `Product` Second Line" id="updateProduct">
 </p>
 <script>
 const datagrid = Datagrid(document.getElementById('root'), {
@@ -141,9 +142,7 @@ import Datagrid from '@lemonadejs/data-grid';
 import '@lemonadejs/data-grid/dist/style.css';
 
 export default function App() {
-    const self = this;
-
-    self.data = [
+    const data = [
         {
             id: 1,
             name: "T-Shirt",
@@ -170,32 +169,34 @@ export default function App() {
         },
     ]
 
-    self.columns = [
+    const columns = [
         { name: 'name', title: 'Product', width: '200px', align: 'left' },
         { name: 'price', title: 'Price', width: '100px', align: 'center' },
         { name: 'description', title: 'Description', width: '300px', align: 'left' },
     ]
 
     // This function update the current page in pagination to 2.
-    const goToPage2 = function () {
-        self.ref.page = 1;
+    const goToPage2 = () => {
+        this.ref.page = 1;
     }
 
     // This function assigns a value to the second cell of the column 'name'.
-    const setItemValue = function () {
-        self.ref.setValue('name', 2, 'Blue Jeans')
+    const setItemValue = () => {
+        this.ref.setValue('name', 2, 'Blue Jeans')
+    }
+    
+    const onUpdate = () => {
+        console.log('Data grid was updated')
     }
 
-    return `<div style="display: flex; justify-content: space-evenly">
-        <Datagrid
-            data="{{self.data}}"
-            columns="{{self.columns}}"
-            onupdate="console.log('Data grid was updated')"
-            onchangepage="console.log('Data grid page changed')"
-            :pagination="2"
-            :ref="self.ref" />
-        <input type="button" value="Go to Page 2" onclick="self.goToPage2()" />
-        <input type="button" value="Change Value in 'Name' Second Line" onclick="self.setItemValue()" />
+    const onChangePage = () => {
+        console.log('Data grid page changed')
+    }
+
+    return render => render`<div>
+        <Datagrid data="${data}" columns="${columns}" onupdate="${onUpdate}" onchangepage="${onChangePage}" pagination="2" :ref="${this.ref}" />
+        <input type="button" value="Go to Page 2" onclick="${goToPage2}" />
+        <input type="button" value="Change Value in 'Name' Second Line" onclick="${setItemValue}" />
     </div>`
 }
 ```
@@ -380,11 +381,10 @@ import Datagrid from '@lemonadejs/data-grid';
 import '@lemonadejs/data-grid/dist/style.css';
 
 export default function App() {
-    const self = this;
 
-    self.data = []
+    this.data = []
 
-    self.columns = [
+    const columns = [
         { name: 'firstname', title: 'First Name', width: '100px', align: 'center' },
         { name: 'lastname', title: 'Last Name', width: '100px', align: 'center' },
         { name: 'email', title: 'Email', width: '250px', align: 'left' },
@@ -398,7 +398,7 @@ export default function App() {
             self.data = body.data;
         })
 
-    return `<Datagrid :data="self.data" :columns="self.columns" :pagination="10" :search="true" />`;
+    return render => render `<Datagrid data="${this.data}" :columns="${columns}" :pagination="10" :search="true" />`;
 }
 ```
 ```jsx
@@ -526,15 +526,14 @@ import Datagrid from '@lemonadejs/data-grid';
 import '@lemonadejs/data-grid/dist/style.css';
 
 export default function App() {
-    const self = this;
 
-    self.data = [
+    const data = [
         { name: "Product A", price: 100, hasDiscount: false },
         { name: "Product B", price: 130, hasDiscount: true },
         { name: "Product C", price: 150, hasDiscount: true }
     ];
 
-    self.columns = [
+    const columns = [
         {
             name: 'name',
             title: 'Product',
@@ -551,9 +550,7 @@ export default function App() {
         },
     ];
 
-    return `<div>
-        <Datagrid :data="self.data" :columns="self.columns" />
-    </div>`;
+    return render => render `<Datagrid data="${data}" columns="${columns}" />`;
 }
 ```
 ```jsx
@@ -647,11 +644,10 @@ export default {
 </script>
 ```
 
-Enterprise Data Grid
---------------------
+## Enterprise Data Grid
 
-### Jspreadsheet
+### Jspreadsheet Pro
 
 Jspreadsheet is a remarkable commercial [data grid](https://jspreadsheet.com/) solution that offers a lightweight and efficient platform for building professional-grade data grids. It stands out with its Excel-like controls, providing users with a familiar and intuitive interface for data manipulation. With Jspreadsheet, developers can effortlessly create stunning and highly functional data grids that meet the highest standards of usability and aesthetics. Its lightweight design ensures optimal performance, allowing for seamless data rendering and interaction. Whether organizing, sorting, filtering, or performing complex calculations, Jspreadsheet empowers users to create fantastic, sophisticated data grids tailored to their needs.
 
-[Jspreadsheet Data Grid](https://jspreadsheet.com/)
+Enterprise [JavaScript Data Grid](https://jspreadsheet.com/)

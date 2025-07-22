@@ -1,39 +1,34 @@
 title: Testing LemonadeJS Components
 keywords: LemonadeJS, testing, frontend, JavaScript library, reactive components, automation
 description: How to create and automate tests for your LemonadeJS components, ensuring high-quality reliable web applications.
+canonical: https://lemonadejs.com/docs/tests
 
-![Getting started with LemonadeJS](img/lemonadejs-bike.jpg){.right style="width: initial;"}
+# Tests
 
-Tests
-=====
+LemonadeJS uses Mocha and Chai for unit testing, providing a streamlined way to test your components. You can run tests via `command line` or a browser environment.
 
-LemonadeJS has incorporated Mocha and Chai for its unit testing implementation. This section will provide additional details on effectively conducting tests for your LemonadeJS components. Whether you prefer running tests through the command line or in a browser environment, you can follow the instructions provided in this section to accomplish either approach.  
-  
+## Overview
 
-Blue print
-----------
+### Testing Blueprint
 
-As the example below, a test renders the component and shares the same `{self}` with a testing method. Then, it compares the result for the assertion.
+Tests in LemonadeJS follow a simple pattern where the test method shares the same context ('this') as the component, enabling direct access to component properties and state during assertions:
 
 {.ignore}
 ```javascript
 describe('Testing lemonadejs native events', () => {
     it('Onload event', function() {
         function Component() {
-            let self = this;
-            self.value = null;
-            self.test = 5;
-            self.onload = function () {
-                self.value = self.test;
+            this.value = null;
+            this.test = 5;
+            this.onload = () => {
+                this.value = this.test;
             }
-            return `<h1>{{self.value}}</h1>`;
+            return render => render`<h1>${this.value}</h1>`;
         }
 
         // Render the component and assert the return
         return render(Component).assert('5', function () {
-            let self = this;
-            // Return the value
-            return self.el.textContent;
+            return this.el.textContent;
         })
     });
 });
@@ -42,44 +37,17 @@ describe('Testing lemonadejs native events', () => {
 More examples in our [GitHub repository](https://github.com/lemonadejs/lemonadejs/tree/main/tests)  
   
 
-  
-
-Running your tests
-------------------
-
-  
+## Running your tests
 
 ### Via NPM
 
-Create a `./test` folder in your project root and include your test files, then you can execute:  
-
-To run those tests via command line you will need
+Create a `test`{.highlight} directory in your project root and add your test files. Run tests using:  
 
 ```bash
 npm run test
 ```
 
-Troubleshooting
----------------
+### Troubleshooting
 
-  
+When running tests via command line, you might encounter "Unable to Load a File Outside the Module" error. This occurs due to Node.js module system constraints when mixing ES Modules (ESM) and CommonJS modules. Make sure your testing configuration properly handles module imports according to your project's module system.
 
-### Not possible to load a file outside the module
-
-**Issue:** Unable to Load a File Outside the Module
-
-This problem occurs when attempting to use the 'import' statement to load your components, and it's a limitation of Node.js when dealing with the interaction between ES modules (ESM) and CommonJS.
-
-**Solution:**
-
-To address this issue, follow these steps:
-
-- Open your package.json file.
-- Add the 'type' field with the value 'module' as shown below:
-
-```{ "type": "module", // ... other package.json configurations }```
-- Save the package.json file.
-- Run your tests.
-- After running the tests, you can remove the 'type' field from package.json if needed.
-
-This solution allows for proper module loading when working with ES modules and CommonJS in Node.js.

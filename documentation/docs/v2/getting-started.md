@@ -1,4 +1,4 @@
-title: Getting started with LemonadeJS
+title: Getting started with LemonadeJS v2
 keywords: LemonadeJS, two-way binding, frontend, javascript library, javascript plugin, javascript, reactive, react, documentation
 description: Getting started with LemonadeJS, basic reactive concepts, install and documentation.
 
