@@ -26,8 +26,8 @@ describe('Render', () => {
 
     it('Render using states', function() {
         // Get the attributes from the tag
-        function Component() {
-            let data = lemonade.state(false);
+        function Component(children, { state }) {
+            let data = state(false);
             return render => render`
                 <div>
                     <div :render="${data}">

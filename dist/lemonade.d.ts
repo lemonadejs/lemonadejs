@@ -101,30 +101,6 @@ export const apply: (root: HTMLElement, self: Object, components?: Object) => vo
  */
 export const path: (str: string, config: boolean) => any;
 
-/**
- * Register a callback to be executed when component is loaded
- * @param callback Function to be called with root element when component loads
- */
-export const onload: (method: OnloadFunction<HTMLElement>) => void;
-
-/**
- * Register a method to track property changes
- * @param callback Function to be called when properties change
- */
-export const onchange: <T>(method: OnchangeFunction<T>) => void;
-
-/**
- * Force onchange when a property change value
- * @param {string} prop Property name
- */
-export const track: (prop: string) => void;
-
-/**
- * Create a reactive state container
- * @param value Initial value
- * @param callback Optional callback function when value changes
- */
-export const state: <T>(value: T, callback?: StateCallback<T>) => State<T>;
 
 /**
  * Add a custom component available across the whole application
@@ -161,17 +137,6 @@ export const dispatch: (alias: string, argument?: Object) => any;
  * @param {object?} options Options for your web component
  */
 export const createWebComponent: (name: string, handler: Component, options?: WebComponentOptions) => any;
-
-/**
- * Create a reactive state with a path setter function
- * @param {Object} initialData Initial object data
- * @param {Function} callback Optional callback function when data changes
- * @return {[Object, Function, Function]} Returns a tuple with the state object, a setter function, a getter function with filtered data by visibility
- */
-export const setPath: <T extends Record<string, any>>(
-    initialData: T,
-    callback?: () => void
-) => [T, (updates: Partial<T>) => void, () => T];
 
 /**
  * Custom event class for LemonadeJS with extended properties.

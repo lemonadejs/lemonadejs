@@ -40,9 +40,7 @@ describe('General', () => {
         function Component() {
             let self = this;
 
-            return (template) => template`
-                <div test="${test}"></div>
-            `;
+            return render => render`<div test="${test}"></div>`;
         }
 
         // Render the component and assert the return

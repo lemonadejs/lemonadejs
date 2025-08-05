@@ -1854,14 +1854,22 @@
         } else {
             R.currentLemon = lemon;
 
+            const tools = {
+                onload: (...args) => setOnload(lemon, ...args),
+                onchange: (...args) => setOnchange(lemon, ...args),
+                track: (...args) => setTrack(lemon, ...args),
+                state: (...args) => setState(lemon, ...args),
+                setPath: (...args) => setPath(lemon, ...args),
+            };
+
             if (isClass(component)) {
                 if (! (self instanceof component)) {
                     lemon.self = self = new component(self);
                 }
-                view = self.render(item.children);
+                view = self.render(item.children, tools);
             } else {
                 // Execute component
-                view = component.call(self, item.children);
+                view = component.call(self, item.children, tools);
             }
 
             // Resolve onchange scope conflict
@@ -2263,27 +2271,112 @@
 
     const wrongLevel = 'Hooks must be called at the top level of your component';
 
+    const setOnload = function(lemon, event) {
+        lemon.load = event;
+    }
+
+    const setOnchange = function(lemon, event) {
+        lemon.change.push(event);
+    }
+
+    const setTrack = function(lemon, prop) {
+        if (! lemon.events[prop]) {
+            lemon.events[prop] = [];
+        }
+    }
+
+    const setPath = function(lemon, initialValues, change) {
+        // My value object
+        let value = {};
+        // Create a method to update the state
+        const setValue = (newValue) => {
+            if (typeof(lemon.path.initial) === 'undefined') {
+                if (typeof (newValue) === 'object') {
+                    // If my has been declared
+                    let elements = lemon.path.elements;
+                    if (elements) {
+                        for (let i = 0; i < elements.length; i++) {
+                            let v = Path.call(newValue, elements[i].path)
+                            setAttribute(elements[i].element, 'value', v);
+                        }
+                    }
+                }
+            } else {
+                lemon.path.initial = newValue;
+            }
+        }
+
+        const getValue = () => {
+            let ret = {};
+            // If my has been declared
+            let elements = lemon.path.elements;
+            if (elements) {
+                for (let i = 0; i < elements.length; i++) {
+                    let v = getAttribute(elements[i].element, 'value');
+                    Path.call(ret, elements[i].path, v);
+                }
+            }
+            return ret;
+        }
+
+        lemon.path = {
+            setValue: setValue,
+            value: value,
+            change: change,
+            initial: initialValues || {}
+        };
+
+        return [value, setValue, getValue];
+    }
+
+    const setState = function(lemon, value, callback) {
+        // Create a state container
+        const s = new state();
+        // Create a method to update the state
+        const setValue = (newValue) => {
+            let oldValue = value;
+            // Update original value
+            value = typeof newValue === 'function' ? newValue(value) : newValue;
+            // Values from the view
+            runViewValues(lemon, s);
+            // Call back
+            callback?.(value, oldValue);
+        }
+        // Make the value attribute dynamic
+        Object.defineProperty(s, 'value', {
+            set: setValue,
+            get: () => value
+        });
+
+        return s;
+    }
+
     L.onload = function(event) {
         if (! R.currentLemon) {
             createError(wrongLevel);
         }
-        R.currentLemon.load = event;
+        return setOnload(R.currentLemon, event);
     }
 
     L.onchange = function(event) {
         if (! R.currentLemon) {
             createError(wrongLevel);
         }
-        R.currentLemon.change.push(event);
+        return setOnchange(R.currentLemon, event);
     }
 
     L.track = function(prop) {
         if (! R.currentLemon) {
             createError(wrongLevel);
         }
-        if (! R.currentLemon.events[prop]) {
-            R.currentLemon.events[prop] = [];
+        return setTrack(R.currentLemon, prop);
+    }
+
+    L.setPath = function(initialValues, change) {
+        if (! R.currentLemon) {
+            createError(wrongLevel);
         }
+        return setPath(R.currentLemon, initialValues, change);
     }
 
     /**
@@ -2331,77 +2424,8 @@
         if (! R.currentLemon) {
             createError(wrongLevel);
         }
-        // Keep lemon local
-        const lemon = R.currentLemon;
-        // Create state container
-        const s = new state();
-        // Create method to update the state
-        const setValue = (newValue) => {
-            let oldValue = value;
-            // Update original value
-            value = typeof newValue === 'function' ? newValue(value) : newValue;
-            // Values from the view
-            runViewValues(lemon, s);
-            // Call back
-            callback?.(value, oldValue);
-        }
-        // Make the value attribute dynamic
-        Object.defineProperty(s, 'value', {
-            set: setValue,
-            get: () => value
-        });
 
-        return s;
-    }
-
-    L.setPath = function(initialValues, change) {
-        if (! R.currentLemon) {
-            createError(wrongLevel);
-        }
-
-        // Lemon
-        const lemon = R.currentLemon;
-        // My value object
-        let value = {};
-        // Create a method to update the state
-        const setValue = (newValue) => {
-            if (typeof(lemon.path.initial) === 'undefined') {
-                if (typeof (newValue) === 'object') {
-                    // If my has been declared
-                    let elements = lemon.path.elements;
-                    if (elements) {
-                        for (let i = 0; i < elements.length; i++) {
-                            let v = Path.call(newValue, elements[i].path)
-                            setAttribute(elements[i].element, 'value', v);
-                        }
-                    }
-                }
-            } else {
-                lemon.path.initial = newValue;
-            }
-        }
-
-        const getValue = () => {
-            let ret = {};
-            // If my has been declared
-            let elements = lemon.path.elements;
-            if (elements) {
-                for (let i = 0; i < elements.length; i++) {
-                    let v = getAttribute(elements[i].element, 'value');
-                    Path.call(ret, elements[i].path, v);
-                }
-            }
-            return ret;
-        }
-
-        lemon.path = {
-            setValue: setValue,
-            value: value,
-            change: change,
-            initial: initialValues || {}
-        };
-
-        return [value, setValue, getValue];
+        return setState(R.currentLemon, value, callback);
     }
 
     L.helpers = {

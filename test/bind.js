@@ -2,16 +2,12 @@ describe('Bind', () => {
 
     it('Initial value in the custom component :bind property', function() {
         function Test() {
-            // This will bring all properties defined in the tag
-            let self = this;
             // Custom HTML components have the self.value as default
             return render => render`<b>{{self.value}}</b>`;
         }
 
         function Component() {
-            let self = this;
-            self.test = "Hello world";
-
+            this.test = "Hello world";
             return render => render`<Test :bind="self.test" :ref="self.component"/>`;
         }
 
@@ -20,8 +16,7 @@ describe('Bind', () => {
 
         // Render the component and assert the return
         return render(Component).assert('Hello world', function () {
-            let self = this;
-            return self.component.el.textContent;
+            return this.component.el.textContent;
         })
     });
 
@@ -38,13 +33,12 @@ describe('Bind', () => {
 
         // Get the attributes from the tag
         function Component() {
-            let self = this;
-            self.test = 120;
+            this.test = 120;
 
             return render => render`<div>
                 <h1 :ref="self.title">{{self.test}}</h1>
                 <Hello :bind="self.test" :ref="self.component" />
-                <input type="button" onclick="${()=>self.test++}" :ref="self.button"  />
+                <input type="button" onclick="${()=>this.test++}" :ref="self.button"  />
             </div>`;
         }
 
@@ -61,7 +55,7 @@ describe('Bind', () => {
 
     it('Testing :loop and :bind together.', function() {
         const Component = function () {
-            let self = Object.assign(this, {
+            Object.assign(this, {
                 value: 2,
                 options: [
                     {id: 1, name: "tex"},
@@ -98,8 +92,6 @@ describe('Bind', () => {
             let self = this;
             self.test = 120;
 
-            window.test = this;
-
             return render => render`<div class="p10">
                 <h1 :ref="self.title">{{self.test}}</h1>
                 <Test :bind="self.test" :ref="self.component" />
@@ -108,11 +100,10 @@ describe('Bind', () => {
 
         // Render the component and assert the return
         return render(Component).assert(121, function () {
-            let self = this;
             // Trigger click in the child element
-            self.component.button.click();
+            this.component.button.click();
             // Check for the title updates
-            return parseInt(self.title.textContent);
+            return parseInt(this.title.textContent);
         })
     });
 
@@ -122,8 +113,7 @@ describe('Bind', () => {
         }
 
         function Component() {
-            let self = this;
-            self.test = 1;
+            this.test = 1;
             return render => render`<Test :bind="self.test" :ref="self.component"/>`;
         }
 
@@ -132,11 +122,10 @@ describe('Bind', () => {
 
         // Render the component and assert the return
         return render(Component).assert('2', function () {
-            let self = this;
             // Trigger update
-            self.test++;
+            this.test++;
             // Check for the title updates
-            return self.component.el.textContent;
+            return this.component.el.textContent;
         })
     });
 

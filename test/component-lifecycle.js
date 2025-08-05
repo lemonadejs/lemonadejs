@@ -56,27 +56,6 @@ describe('Component lifecycle', () => {
         });
     });
 
-    it('onunload event should be called when component is destroyed', function() {
-        let unloadCalled = false;
-        
-        function Component() {
-            let self = this;
-            self.onunload = function() {
-                unloadCalled = true;
-            };
-            return `<div>Component</div>`;
-        }
-
-        return render(Component).assert(true, function() {
-            let self = this;
-            // Simulate component destruction
-            if (self.onunload) {
-                self.onunload();
-            }
-            return unloadCalled;
-        });
-    });
-
     it('Component with class syntax should call constructor', function() {
         let constructorCalled = false;
         

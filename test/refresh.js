@@ -49,7 +49,7 @@ describe('Refresh', () => {
                 {title: 'Duckduckgo', description: 'Privacy in the first place...', status: 1},
             ];
 
-            return `<><Test :loop="self.rows" /></>`;
+            return render => render`<><Test :loop="self.rows" /></>`;
         }
 
 

@@ -1,23 +1,21 @@
 describe('Events', () => {
 
     it('Updating a property from the onchange', function() {
-        function Component() {
-            let self = this;
-            self.value = null;
-            self.test = 5;
-            self.onchange = function () {
-                self.value = self.test;
-            }
-            return `<input type="text" value="{{self.test}}"/>`;
+        function Component(children, { onchange }) {
+            this.value = null;
+            this.test = 5;
+            onchange(() => {
+                this.value = this.test;
+            });
+            return render => render`<input type="text" value="${this.test}"/>`;
         }
 
         // Render the component and assert the return
         return render(Component).assert(2, function () {
-            let self = this;
             // Change the value to negative
-            self.test = 2;
+            this.test = 2;
             // Return the value
-            return self.value;
+            return this.value;
         })
     });
 
@@ -68,15 +66,15 @@ describe('Events', () => {
     let { events } = lemonade;
 
     it('CustomEvents: create and dispatch with custom props', function() {
-        function Component() {
+        function Component(children, { onload }) {
             const self = this;
 
-            self.onload = () => {
+            onload(() => {
                 // Add the event `test` to my root element
                 self.el.addEventListener('test', function(e) {
                     self.el.title = e.action;
                 });
-            };
+            })
 
             const click = () => {
                 events.dispatch(self.el, 'test', { action: 'cool' });
