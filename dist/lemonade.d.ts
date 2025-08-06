@@ -33,13 +33,23 @@ export type StateCallback<T> = (newValue: T, oldValue: T) => void;
 // Render types
 export type RenderTemplate = (strings: TemplateStringsArray, ...values: any[]) => HTMLElement;
 
+// Component utility tools interface
+export interface ComponentTools {
+    onload?: typeof onload;
+    onchange?: typeof onchange;
+    track?: typeof track;
+    state?: typeof state;
+    setPath?: typeof setPath;
+    [key: string]: any;
+}
+
 // Component types
 export interface ComponentThis {
     [key: string]: any;
 }
 
 export type FunctionComponent = {
-    (this: ComponentThis): (render: RenderTemplate) => HTMLElement;
+    (this: ComponentThis, children?: any, tools?: ComponentTools): (render: RenderTemplate) => HTMLElement;
     prototype: any;
 }
 
@@ -101,6 +111,32 @@ export const apply: (root: HTMLElement, self: Object, components?: Object) => vo
  */
 export const path: (str: string, config: boolean) => any;
 
+/**
+ * Track changes on an object or property
+ * @param {Object} target Object to track
+ * @param {Function} callback Function called when changes occur
+ */
+export const track: (target: Object) => void;
+
+/**
+ * Set a property value on a nested object using a string path
+ * @param {Object} initial Initial object
+ * @param {Function} callback Callback function
+ * @return {[Object, Function, Function]} Returns tuple with form, setForm, and getForm
+ */
+export const setPath: (initial: Object, callback: Function) => [form: Object, setForm: Function, getForm: Function];
+
+/**
+ * Register onload callback for component lifecycle
+ * @param {OnloadFunction} callback Function to call when component loads
+ */
+export const onload: <T extends HTMLElement>(callback: OnloadFunction<T>) => void;
+
+/**
+ * Register onchange callback for component lifecycle
+ * @param {OnchangeFunction} callback Function to call when component properties change
+ */
+export const onchange: <T>(callback: OnchangeFunction<T>) => void;
 
 /**
  * Add a custom component available across the whole application
