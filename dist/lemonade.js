@@ -886,7 +886,7 @@
                 node.textContent = value;
             } else {
                 // TODO: improve that
-                requestAnimationFrame(() => {
+                queueMicrotask(() => {
                     // Create a temporary container
                     const t = document.createElement('div');
                     t.innerHTML = value;
@@ -2240,7 +2240,7 @@
                         }
                     }
 
-                    requestAnimationFrame(() => {
+                    queueMicrotask(() => {
                         // Event
                         if (typeof(self.onconnect) === 'function') {
                             self.onconnect(self, state);
