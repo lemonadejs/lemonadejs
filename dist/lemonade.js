@@ -1426,12 +1426,12 @@
                                         // Bind event
                                         if (typeof(handler) === 'function') {
                                             eventHandler = function(e) {
-                                                handler.call(element, e, lemon.self);
+                                                return handler.call(element, e, lemon.self);
                                             }
                                         } else {
                                             // Legacy compatibility. Inline scripting is non-Compliance with Content Security Policy (CSP). TODO: unify order of arguments
                                             eventHandler = function (e) {
-                                                Function('self', 'e', value).call(element, lemon.self, e);
+                                                return Function('self', 'e', value).call(element, lemon.self, e);
                                             }
                                         }
 
