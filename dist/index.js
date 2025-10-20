@@ -1418,20 +1418,20 @@ function Lemonade() {
                                         let eventHandler;
                                         // Bind event
                                         if (typeof(handler) === 'function') {
-                                            eventHandler = function(e) {
-                                                return handler.call(element, e, lemon.self);
+                                            eventHandler = function(e, a, b) {
+                                                return handler.call(element, e, lemon.self, a, b);
                                             }
                                         } else {
                                             // Legacy compatibility. Inline scripting is non-Compliance with Content Security Policy (CSP). TODO: unify order of arguments
-                                            eventHandler = function (e) {
-                                                return Function('self', 'e', value).call(element, lemon.self, e);
+                                            eventHandler = function (e, a, b) {
+                                                return Function('self', 'e', value).call(element, e, lemon.self, a, b);
                                             }
                                         }
 
                                         if (isValidEventName(element, prop.name)) {
                                             element.addEventListener(event.substring(2), eventHandler);
                                         } else {
-                                            element[event] = eventHandler;
+                                            element[event] = handler;
                                         }
                                     } else {
                                         item.self[event] = handler || value;
