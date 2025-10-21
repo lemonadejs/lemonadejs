@@ -1422,7 +1422,7 @@ function Lemonade() {
                                                 return handler.call(element, e, lemon.self, a, b);
                                             }
                                         } else {
-                                            // Legacy compatibility. Inline scripting is non-Compliance with Content Security Policy (CSP). TODO: unify order of arguments
+                                            // Legacy compatibility. Inline scripting is non-Compliance with Content Security Policy (CSP).
                                             eventHandler = function (e, a, b) {
                                                 return Function('self', 'e', value).call(element, e, lemon.self, a, b);
                                             }
@@ -1431,7 +1431,11 @@ function Lemonade() {
                                         if (isValidEventName(element, prop.name)) {
                                             element.addEventListener(event.substring(2), eventHandler);
                                         } else {
-                                            element[event] = handler;
+                                            if (element.tagName?.includes('-')) {
+                                                element[event] = handler;
+                                            } else {
+                                                element[event] = eventHandler;
+                                            }
                                         }
                                     } else {
                                         item.self[event] = handler || value;
