@@ -1430,8 +1430,8 @@
                                             }
                                         } else {
                                             // Legacy compatibility. Inline scripting is non-Compliance with Content Security Policy (CSP).
-                                            eventHandler = function (e, a, b) {
-                                                return Function('self', 'e', value).call(element, e, lemon.self, a, b);
+                                            eventHandler = function (e) {
+                                                return Function('e', 'self', value).call(element, e, lemon.self); // TODO, quebra tudo se mudar
                                             }
                                         }
 
