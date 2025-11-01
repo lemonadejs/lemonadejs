@@ -2024,7 +2024,10 @@ function Lemonade() {
             let props = Object.keys(lemon.events);
             if (props.length) {
                 for (let i = 0; i <props.length; i++) {
-                    trackProperty(lemon, props[i]);
+                    let prop = props[i];
+                    if (prop != Number(prop)) {
+                        trackProperty(lemon, prop);
+                    }
                 }
             }
         }
