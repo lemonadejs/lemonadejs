@@ -967,13 +967,12 @@
 
                 // Event property to the element
                 event = () => {
-                    let value = getAttribute(getElement(item), 'value');
-                    if (lemon.self[prop] !== value) {
-                        setAttribute(getElement(item), 'value', lemon.self[prop]);
-                    }
+                    setAttribute(getElement(item), 'value', lemon.self[prop]);
                 }
                 // Append event
                 appendEvent(prop, event, true);
+            } else if (prop.value instanceof state) {
+                // TODO: implement :bind states
             }
         }
 
