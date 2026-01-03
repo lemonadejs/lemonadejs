@@ -2297,6 +2297,8 @@ function Lemonade() {
                         for (let i = 0; i < elements.length; i++) {
                             let v = Path.call(newValue, elements[i].path)
                             setAttribute(elements[i].element, 'value', v);
+                            // Also sync value to the data object (use '' for undefined to match form behavior)
+                            Path.call(lemon.path.value, elements[i].path, v !== undefined ? v : '');
                         }
                     }
                 }

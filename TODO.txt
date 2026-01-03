@@ -20,3 +20,11 @@ Check for wrong trim
     "SHEET2": [[10,20,30]]
 }</textarea><br>
 
+
+
+
+  const authUrl = API_URL + '/auth';
+
+  return render => render`<div>
+      <Login
+          url="${API_URL}/auth"
