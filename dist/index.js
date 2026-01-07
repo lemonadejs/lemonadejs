@@ -1129,6 +1129,8 @@ function Lemonade() {
                         } else {
                             // Register parent
                             register(self, 'parent', lemon.self);
+                            // Pass parent view for expressions in loop templates
+                            item.parentView = lemon.view;
                             // Render
                             L.render(method, root, self, item);
                         }
@@ -1847,6 +1849,10 @@ function Lemonade() {
         // New self
         if (component === Basic) {
             view = cloneChildren(item.children[0]);
+
+            if (item.parentView) {
+                lemon.view = item.parentView;
+            }
         } else {
             R.currentLemon = lemon;
 

@@ -1,5 +1,29 @@
 describe('Loop', () => {
 
+    it('Limitation for string injection on loops', function() {
+        // Get the attributes from the tag
+        function Component() {
+            let self = this;
+
+            self.data = [
+                {title: 'lemonadejs'},
+                {title: 'angular'}
+            ];
+
+            return render => render`<div>
+                <ul :loop="self.data" :ref="self.root">
+                    <button value="${123}"/>
+                </ul>
+            </div>`;
+        }
+
+        // Render the component and assert the return
+        return render(Component).assert(2, function () {
+            let self = this;
+            return self.data.length;
+        })
+    });
+
     it('Update the first element inside a loop', function() {
         // Get the attributes from the tag
         function Component() {
