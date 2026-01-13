@@ -1393,76 +1393,81 @@ function Lemonade() {
                         item.props = reorderProps(item.props);
                         // Order by priority
                         item.props.forEach(function(prop) {
-                            // If the property is an event
-                            let event = getAttributeEvent(prop.name);
-                            // When event for a DOM
-                            if (event) {
-                                // Element
-                                let element = item.element;
-                                // Value
-                                let value = prop.value;
-                                if (value) {
-                                    let handler = null; // Reset handler for each iteration
-                                    if (typeof (value) === 'function') {
-                                        handler = value;
-                                    } else {
-                                        let t = extractFromPath.call(lemon.self, value);
-                                        if (t) {
-                                            if (typeof (t) === 'function') {
-                                                prop.value = handler = t;
+                            try {
+                                // If the property is an event
+                                let event = getAttributeEvent(prop.name);
+                                // When event for a DOM
+                                if (event) {
+                                    // Element
+                                    let element = item.element;
+                                    // Value
+                                    let value = prop.value;
+                                    if (value) {
+                                        let handler = null; // Reset handler for each iteration
+                                        if (typeof (value) === 'function') {
+                                            handler = value;
+                                        } else {
+                                            let t = extractFromPath.call(lemon.self, value);
+                                            if (t) {
+                                                if (typeof (t) === 'function') {
+                                                    prop.value = handler = t;
+                                                }
                                             }
                                         }
-                                    }
-                                    // When the element is a DOM
-                                    if (isDOM(element)) {
-                                        // Create the event handler
-                                        let eventHandler;
-                                        // Bind event
-                                        if (typeof(handler) === 'function') {
-                                            eventHandler = function(e, a, b) {
-                                                return handler.call(element, e, lemon.self, a, b);
-                                            }
-                                        } else {
-                                            // Legacy compatibility. Inline scripting is non-Compliance with Content Security Policy (CSP).
-                                            eventHandler = function (e) {
-                                                return Function('e', 'self', value).call(element, e, lemon.self); // TODO, quebra tudo se mudar
-                                            }
-                                        }
-
-                                        if (isValidEventName(element, prop.name)) {
-                                            element.addEventListener(event.substring(2), eventHandler);
-                                        } else {
-                                            if (element.tagName?.includes('-')) {
-                                                element[event] = handler;
+                                        // When the element is a DOM
+                                        if (isDOM(element)) {
+                                            // Create the event handler
+                                            let eventHandler;
+                                            // Bind event
+                                            if (typeof(handler) === 'function') {
+                                                eventHandler = function(e, a, b) {
+                                                    return handler.call(element, e, lemon.self, a, b);
+                                                }
                                             } else {
-                                                element[event] = eventHandler;
+                                                // Legacy compatibility. Inline scripting is non-Compliance with Content Security Policy (CSP).
+                                                eventHandler = function (e) {
+                                                    return Function('e', 'self', value).call(element, e, lemon.self); // TODO, quebra tudo se mudar
+                                                }
                                             }
+
+                                            if (isValidEventName(element, prop.name)) {
+                                                element.addEventListener(event.substring(2), eventHandler);
+                                            } else {
+                                                if (element.tagName?.includes('-')) {
+                                                    element[event] = handler;
+                                                } else {
+                                                    element[event] = eventHandler;
+                                                }
+                                            }
+                                        } else {
+                                            item.self[event] = handler || value;
                                         }
-                                    } else {
-                                        item.self[event] = handler || value;
                                     }
-                                }
-                            } else if (prop.name.startsWith(':') || prop.name.startsWith('@') || prop.name.startsWith('lm-')) {
-                                // Special lemonade attribute name
-                                let attrName = getAttributeName(prop.name);
-                                // Special properties bound to the self
-                                if (attrName === 'ready') {
-                                    whenIsReady(item, prop);
-                                } else if (attrName === 'ref') {
-                                    createReference(item, prop);
-                                } else if (attrName === 'loop') {
-                                    registerLoop(item, prop);
-                                } else if (attrName === 'bind') {
-                                    applyBindHandler(item, prop);
-                                } else if (attrName === 'path') {
-                                    registerPath(item, prop);
-                                } else if (attrName === 'render') {
-                                    applyRenderHandler(item, prop);
+                                } else if (prop.name.startsWith(':') || prop.name.startsWith('@') || prop.name.startsWith('lm-')) {
+                                    // Special lemonade attribute name
+                                    let attrName = getAttributeName(prop.name);
+                                    // Special properties bound to the self
+                                    if (attrName === 'ready') {
+                                        whenIsReady(item, prop);
+                                    } else if (attrName === 'ref') {
+                                        createReference(item, prop);
+                                    } else if (attrName === 'loop') {
+                                        registerLoop(item, prop);
+                                    } else if (attrName === 'bind') {
+                                        applyBindHandler(item, prop);
+                                    } else if (attrName === 'path') {
+                                        registerPath(item, prop);
+                                    } else if (attrName === 'render') {
+                                        applyRenderHandler(item, prop);
+                                    } else {
+                                        setDynamicValue(item, prop, attrName);
+                                    }
                                 } else {
-                                    setDynamicValue(item, prop, attrName);
+                                    applyElementAttribute(item, prop);
                                 }
-                            } else {
-                                applyElementAttribute(item, prop);
+                            } catch (e) {
+                                let propValue = prop.expression || prop.value;
+                                console.error(`${prop.name}="${propValue}" - ${e.message}`, item);
                             }
                         })
                     }
@@ -1824,7 +1829,7 @@ function Lemonade() {
             self: self,
             ready: [],
             change: [],
-            events: [],
+            events: {},
             components: {},
             elements: [],
             root: root,
