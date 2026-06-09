@@ -1,0 +1,145 @@
+# LemonadeJS v6
+
+Reactive micro-library. React-like patterns, ~5 KB gzip, zero dependencies, zero build step.
+This file is the complete API. If something is not here, it does not exist.
+
+## Setup
+
+Zero-build (one file, one tag):
+    <script src="https://cdn.jsdelivr.net/npm/lemonadejs@6/dist/v6/lemonade.min.js"></script>
+    <!-- global: lemonade.render, lemonade.mount, ... -->
+
+Module:
+    import { render, mount, type Component, type State } from 'lemonadejs';
+
+## Components
+
+A component is a plain function: (props, tools) => render`...`. No classes, no this, no hooks rules.
+
+    import { render, mount, type Component } from 'lemonadejs';
+
+    const Counter: Component<{ start?: number }> = (props, { state }) => {
+        const count = state(props.start ?? 0);
+        return render`<div>
+            <p>${count}</p>
+            <button onclick="${() => count.value++}">+1</button>
+        </div>`;
+    };
+
+    mount(Counter, document.getElementById('app'));
+
+## The four template rules (everything else follows from these)
+
+1. ${state}            → live value; updates when the state changes
+2. ${() => expr}       → live expression; re-runs when any state it READS changes
+3. ${plainValue}       → one-time snapshot; plain strings are TEXT, never HTML (XSS-safe)
+4. Loops/conditionals are just expressions returning render`...` views or arrays of them:
+       ${() => items.value.map(x => render`<li>${x}</li>`)}
+       ${() => valid.value && render`<div>shown when valid</div>`}
+   Inside the inner template, plain snapshots (${x}) are correct: the outer arrow re-runs.
+
+Slot values: string|number (text), false/true/null/undefined (nothing), render`` view, Node, array of these.
+
+## State
+
+    const count = state(0);                         // State<number>, inferred
+    const user  = state({ name: 'Ana' });           // objects/arrays are FROZEN in dev
+    count.value++;                                  // assignment triggers updates
+    user.value = { ...user.value, name: 'Bia' };    // replace, never mutate (LJS-201)
+    const s = state(0, (val, old) => {...});        // optional change callback
+
+Updates fire on ASSIGNMENT only. state.value.push(x) throws in dev mode on purpose.
+
+## Events and refs
+
+    <button onclick="${() => save()}">         event = on* attribute + function (never strings; CSP-safe)
+    <input onkeydown="${(e) => ...}" />        handler receives the DOM event
+    <p ref="${(el) => { ... }}">               ref receives the created element
+
+## Attributes
+
+    <div class="btn ${active}">                mixed static + state → live string
+    <input value="${name}" />                  form values set as properties
+    <input disabled />                         boolean attributes work
+    checked="${boolState}"                     boolean property binding
+
+## Component composition
+
+Components are embedded BY VALUE (the imported function), never by name:
+
+    const Card: Component<{ title?: string; total?: State<number>; onsave?: (v: string) => void }> =
+        (props) => render`<div class="card">
+            <h3>${props.title}</h3>      <!-- literal attr → string snapshot -->
+            <b>${props.total}</b>        <!-- state passed by reference → live -->
+            ${props.children}            <!-- content between the tags -->
+        </div>`;
+
+    const App: Component = (props, { state }) => {
+        const count = state(0);
+        return render`<main>
+            <${Card} title="Hello" total="${count}" onsave="${(v) => console.log(v)}">
+                <p>children, bound to the PARENT scope: ${count}</p>
+            </${Card}>
+        </main>`;
+    };
+
+Props rules: literal attribute text → string; ${...} → passed by reference, untouched
+(states stay live, callbacks callable, objects unstringified); `flag` alone → true.
+Props are read-only (frozen in dev). Data flows up via callback props.
+
+## Lifecycle
+
+    const C: Component = (props, { state, onMount, onUnmount }) => {
+        onMount((el) => {
+            const id = setInterval(tick, 1000);
+            return () => clearInterval(id);     // cleanup, runs on unmount
+        });
+        onUnmount(() => {...});
+        return render`<div></div>`;
+    };
+
+    const handle = mount(C, root);  // { el, unmount() }
+    handle.unmount();               // removes DOM, disposes everything
+
+## Verify your own output (lemonadejs/test)
+
+    import { test } from 'lemonadejs/test';     // needs a DOM (browser or jsdom)
+
+    const t = test(Counter, { start: 5 });
+    t.query('button')!.click();                 // querySelector, scoped
+    t.query('p')!.textContent === '6';          // assert
+    t.queryAll('li');                           // array of elements
+    t.text();                                   // full visible text
+    t.snapshot();                               // deterministic indented DOM tree (diffable)
+    t.inspect();                                // { component, states: [...], children } JSON
+    t.unmount();
+
+## Debugging
+
+    import { inspect, explain, env } from 'lemonadejs';
+    inspect(element)        // live component tree for any element: names, state values, children
+    explain('LJS-202')      // long-form doc for any error code, offline
+    env.dev = false         // production: disables warnings and state freezing
+
+## Error codes (stable, pattern-matchable)
+
+    LJS-001 component is not a function          LJS-104 <Card> found — write <${Card} />
+    LJS-002 must return render`...`              LJS-105 ${} not allowed in that position
+    LJS-003 mount root must be an element        LJS-201 state contents frozen — assign, don't mutate
+    LJS-101 mismatched closing tag               LJS-202 slot is a snapshot — wrap: ${() => ...}
+    LJS-102 unclosed tag                         LJS-203 update loop — don't assign states in expressions
+    LJS-301 events need functions, not strings
+
+## Common mistakes
+
+WRONG  ${valid.value && render`...`}            evaluates once — frozen (LJS-202 warns)
+RIGHT  ${() => valid.value && render`...`}
+
+WRONG  items.value.push(x)                      throws in dev (LJS-201) — never triggers updates
+RIGHT  items.value = [...items.value, x]
+
+WRONG  <Card title="x" />                       LJS-104 — components are not registered by name
+RIGHT  <${Card} title="x" />
+
+WRONG  onclick="doSomething()"                  LJS-301 — string handlers don't exist
+RIGHT  onclick="${() => doSomething()}"

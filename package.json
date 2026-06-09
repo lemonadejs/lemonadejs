@@ -24,20 +24,37 @@
         "url": "https://github.com/lemonadejs/lemonadejs.git"
     },
     "scripts": {
-        "test": "mocha --recursive --require=mocha.config.js",
-        "test:watch": "mocha --recursive --watch --parallel --reporter min --require=mocha.config.js",
-        "test:browser": "mocha --recursive --reporter mochawesome --config mocha.config.js",
-        "test:coverage": "c8 mocha --recursive --config mocha.config.js"
+        "test": "vitest run",
+        "test:watch": "vitest",
+        "test:v5": "mocha --recursive --require=mocha.config.js",
+        "build": "node build.js",
+        "typecheck": "tsc --noEmit"
     },
     "devDependencies": {
         "c8": "^7.13.0",
         "chai": "^4.3.7",
+        "esbuild": "^0.24.0",
         "jsdom": "^22.0.0",
         "jsdom-global": "^3.0.2",
         "mocha": "^10.2.0",
-        "mochawesome": "^7.1.3"
+        "mochawesome": "^7.1.3",
+        "typescript": "^5.6.0",
+        "vitest": "^2.1.0"
     },
     "main": "dist/lemonade.js",
     "types": "dist/lemonade.d.ts",
-    "version": "5.3.6"
+    "exports": {
+        ".": {
+            "types": "./dist/v6/index.d.ts",
+            "import": "./dist/v6/lemonade.mjs",
+            "default": "./dist/v6/lemonade.js"
+        },
+        "./test": {
+            "types": "./dist/v6/test.d.ts",
+            "import": "./dist/v6/test.mjs",
+            "default": "./dist/v6/test.js"
+        },
+        "./v5": "./dist/lemonade.js"
+    },
+    "version": "6.0.0-beta.0"
 }
