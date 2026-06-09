@@ -26,35 +26,35 @@
     "scripts": {
         "test": "vitest run",
         "test:watch": "vitest",
-        "test:v5": "mocha --recursive --require=mocha.config.js",
         "build": "node build.js",
         "typecheck": "tsc --noEmit"
     },
     "devDependencies": {
-        "c8": "^7.13.0",
-        "chai": "^4.3.7",
         "esbuild": "^0.24.0",
         "jsdom": "^22.0.0",
-        "jsdom-global": "^3.0.2",
-        "mocha": "^10.2.0",
-        "mochawesome": "^7.1.3",
         "typescript": "^5.6.0",
         "vitest": "^2.1.0"
     },
     "main": "dist/lemonade.js",
-    "types": "dist/lemonade.d.ts",
+    "types": "dist/index.d.ts",
+    "unpkg": "dist/lemonade.min.js",
+    "jsdelivr": "dist/lemonade.min.js",
+    "files": [
+        "dist",
+        "llms.txt"
+    ],
     "exports": {
         ".": {
-            "types": "./dist/v6/index.d.ts",
-            "import": "./dist/v6/lemonade.mjs",
-            "default": "./dist/v6/lemonade.js"
+            "types": "./dist/index.d.ts",
+            "import": "./dist/lemonade.mjs",
+            "default": "./dist/lemonade.js"
         },
         "./test": {
-            "types": "./dist/v6/test.d.ts",
-            "import": "./dist/v6/test.mjs",
-            "default": "./dist/v6/test.js"
+            "types": "./dist/test.d.ts",
+            "import": "./dist/test.mjs",
+            "default": "./dist/test.js"
         },
-        "./v5": "./dist/lemonade.js"
+        "./llms.txt": "./llms.txt"
     },
     "version": "6.0.0-beta.0"
 }

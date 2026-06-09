@@ -1,7 +1,7 @@
 /**
  * LemonadeJS v6 build
  *
- * Produces zero-dependency artifacts in dist/v6:
+ * Produces zero-dependency artifacts in dist/:
  *   lemonade.mjs      ESM
  *   lemonade.js       CJS (node require)
  *   lemonade.min.js   IIFE for <script> tags (global: lemonade) — the zero-build path
@@ -15,7 +15,7 @@ const { gzipSync } = require('zlib');
 const fs = require('fs');
 const path = require('path');
 
-const out = path.join(__dirname, 'dist', 'v6');
+const out = path.join(__dirname, 'dist');
 
 const targets = [
     { entry: 'src/index.ts', format: 'esm', outfile: 'lemonade.mjs' },

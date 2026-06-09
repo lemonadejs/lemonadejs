@@ -1,5 +1,0 @@
-Inheritance
-===========
-
-Source code
------------

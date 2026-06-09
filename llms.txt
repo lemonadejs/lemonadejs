@@ -6,7 +6,7 @@ This file is the complete API. If something is not here, it does not exist.
 ## Setup
 
 Zero-build (one file, one tag):
-    <script src="https://cdn.jsdelivr.net/npm/lemonadejs@6/dist/v6/lemonade.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/lemonadejs@6/dist/lemonade.min.js"></script>
     <!-- global: lemonade.render, lemonade.mount, ... -->
 
 Module:

@@ -12,7 +12,7 @@
         "skipLibCheck": true,
         "declaration": true,
         "emitDeclarationOnly": true,
-        "outDir": "dist/v6",
+        "outDir": "dist",
         "types": []
     },
     "include": ["src"]
