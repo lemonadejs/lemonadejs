@@ -227,6 +227,12 @@ const run = async () => {
             vh: window.innerHeight,
         }
     );
+    // left/right are PANELS: full viewport height regardless of the height prop
+    log(
+        'side-positions-are-full-height-panels',
+        Math.round(right.height) === window.innerHeight && Math.round(right.top) === 0,
+        { panelH: Math.round(right.height), vh: window.innerHeight, top: Math.round(right.top) }
+    );
 
     const pre = document.createElement('pre');
     pre.id = 'lm-probe';

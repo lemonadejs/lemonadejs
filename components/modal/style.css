@@ -17,6 +17,15 @@
     justify-content: flex-end;
 }
 
+/* left/right are the side PANEL modes: full viewport height, square
+   corners; any width/height props keep controlling the panel width */
+.lm-modal-root[data-position='left'] .lm-modal:not(.lm-modal-minimized),
+.lm-modal-root[data-position='right'] .lm-modal:not(.lm-modal-minimized) {
+    height: 100% !important;
+    max-height: 100%;
+    border-radius: 0;
+}
+
 .lm-modal-root[data-position='bottom'] {
     align-items: flex-end;
 }
