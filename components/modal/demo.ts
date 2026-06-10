@@ -6,6 +6,56 @@ import Modal from './modal';
 
 type Api = { open(): void; close(): void; toggle(): void };
 
+const frame = () => new Promise((r) => requestAnimationFrame(r));
+const heap = () => (performance as unknown as { memory?: { usedJSHeapSize: number } }).memory?.usedJSHeapSize;
+const mb = (n: number) => (n / 1048576).toFixed(1) + ' MB';
+
+/** One disposable victim per cycle: opened, dragged, resized, destroyed */
+const Victim: Component = () => {
+    let api!: Api;
+    queueMicrotask(() => api.open());
+    return html`<div>
+        <${Modal} ref="${(a: Api) => (api = a)}" title="Stress" position="absolute"
+            top="160" left="160" width="340" height="200"
+            draggable resizable minimizable closable>
+            <p>cycle victim</p>
+        </${Modal}>
+    </div>`;
+};
+
+const stress = async (cycles: number, note: (m: string) => void) => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    const before = heap();
+    const t0 = performance.now();
+
+    for (let i = 0; i < cycles; i++) {
+        const handle = mount(Victim, host);
+        await frame(); // let the deferred per-open setup + paint happen
+
+        // poke the interactions so their listeners must come and go too
+        const el = host.querySelector('.lm-modal') as HTMLElement;
+        if (el) {
+            const r = el.getBoundingClientRect();
+            el.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, clientX: r.left + 50, clientY: r.top + 15 }));
+            document.dispatchEvent(new MouseEvent('mousemove', { bubbles: true, clientX: r.left + 90, clientY: r.top + 45 }));
+            document.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, clientX: r.left + 90, clientY: r.top + 45 }));
+        }
+        handle.unmount();
+    }
+
+    const ms = Math.round(performance.now() - t0);
+    const leftovers = document.querySelectorAll('.lm-modal').length;
+    host.remove();
+
+    note(`stress: ${cycles} create+open+drag+destroy cycles in ${ms}ms`);
+    note(`stress: leftover .lm-modal elements in DOM: ${leftovers}${leftovers ? '  ← LEAK' : ' ✓'}`);
+    const after = heap();
+    if (before !== undefined && after !== undefined) {
+        note(`stress: heap ${mb(before)} → ${mb(after)} (pre-GC; Chrome only, DevTools GC for the real number)`);
+    }
+};
+
 const App: Component = (props, { state }) => {
     const log = state<string[]>([]);
     const note = (m: string) => (log.value = [...log.value, m]);
@@ -22,6 +72,11 @@ const App: Component = (props, { state }) => {
         <button onclick="${() => full.open()}">Open: fullscreen</button>
         <button onclick="${() => edge.open()}">Open: autoadjust (placed off the edge, nudged back)</button>
         <button onclick="${() => panel.open()}">Open: headerless floating panel (header="false")</button>
+        <button onclick="${(e: MouseEvent) => {
+            const b = e.target as HTMLButtonElement;
+            b.disabled = true;
+            stress(100, note).finally(() => (b.disabled = false));
+        }}">Stress: create + destroy 100×</button>
 
         <${Modal} ref="${(a: Api) => (edge = a)}" title="Auto-adjusted" position="absolute"
             top="${window.innerHeight - 60}" left="${window.innerWidth - 80}"
