@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>LemonadeJS — component playground</title>
+    <style>
+        :root { color-scheme: light; }
+        body {
+            font-family: system-ui, sans-serif;
+            margin: 0;
+            background: #fafafa;
+            color: #18181b;
+        }
+        header {
+            padding: 36px 40px 8px;
+        }
+        h1 { margin: 0 0 4px; font-size: 26px; }
+        h1 span { color: #eab308; }
+        header p { margin: 0; color: #71717a; }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 16px;
+            padding: 28px 40px 48px;
+        }
+        a.card {
+            display: block;
+            background: #fff;
+            border: 1px solid #e4e4e7;
+            border-radius: 12px;
+            padding: 18px;
+            text-decoration: none;
+            color: inherit;
+            transition: box-shadow 0.15s ease, transform 0.15s ease;
+        }
+        a.card:hover {
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+            transform: translateY(-1px);
+        }
+        .card h2 { margin: 0 0 6px; font-size: 17px; text-transform: capitalize; }
+        .badge {
+            display: inline-block;
+            font-size: 11px;
+            font-weight: 600;
+            color: #166534;
+            background: #dcfce7;
+            border-radius: 99px;
+            padding: 2px 8px;
+            margin-bottom: 10px;
+        }
+        .badge[data-fail] { color: #991b1b; background: #fee2e2; }
+        .meta { font-size: 12.5px; color: #71717a; line-height: 1.6; }
+        .empty { padding: 40px; color: #71717a; }
+    </style>
+</head>
+<body>
+    <header>
+        <h1><span>●</span> LemonadeJS components</h1>
+        <p>Every block below passed the registry gate (contract + verify). Click to open its playground.</p>
+    </header>
+    <div class="grid" id="grid"><div class="empty">Loading components/registry.json…</div></div>
+    <script>
+        fetch('/components/registry.json')
+            .then((r) => r.json())
+            .then((registry) => {
+                const grid = document.getElementById('grid');
+                grid.innerHTML = '';
+                for (const block of registry) {
+                    const props = Object.keys(block.contract.props || {}).length;
+                    const events = (block.contract.events || []).length;
+                    const api = (block.contract.api || []).length;
+                    const a = document.createElement('a');
+                    a.className = 'card';
+                    a.href = '/' + block.path + '/demo.html';
+                    a.innerHTML =
+                        '<h2>' + block.name + '</h2>' +
+                        '<span class="badge"' + (block.verified ? '' : ' data-fail') + '>' +
+                        (block.verified ? 'verified · ' + block.checks + ' checks' : 'FAILED verify') + '</span>' +
+                        '<div class="meta">' + props + ' props · ' + events + ' events · ' + api + ' api methods</div>';
+                    grid.appendChild(a);
+                }
+            })
+            .catch(() => {
+                document.getElementById('grid').innerHTML =
+                    '<div class="empty">Could not load registry.json — run <code>npm run registry</code>.</div>';
+            });
+    </script>
+</body>
+</html>

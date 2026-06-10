@@ -33,7 +33,6 @@ const start = async function (entries) {
         outdir: path.join(root, '.dev'),
         bundle: true,
         format: 'iife',
-        sourcemap: true,
         target: 'es2020',
         define: { __DEV__: 'true' },
         plugins: [aliasPlugin],
