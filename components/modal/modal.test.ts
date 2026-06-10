@@ -202,6 +202,26 @@ describe('components/modal — behaviors', () => {
         firstHandle.unmount();
     });
 
+    it('autoadjust nudges the position back into the viewport on drag release (v5)', async () => {
+        const moves: [number, number][] = [];
+        const { el } = await openModal({
+            autoadjust: true,
+            draggable: true,
+            onmove: (top: number, left: number) => moves.push([top, left]),
+        });
+        // The modal hangs 276px past the right edge (jsdom window is 1024 wide)
+        setRect(el, { top: 100, left: 900, width: 400, height: 300 });
+
+        el.dispatchEvent(mouse('mousedown', 950, 110));
+        document.dispatchEvent(mouse('mousemove', 970, 130)); // -> top 120, left 920
+        document.dispatchEvent(mouse('mouseup', 970, 130));
+
+        // overflow 276 + 10 margin = 286 back; onmove reports the FINAL spot
+        expect(el.style.left).toBe('634px');
+        expect(el.style.top).toBe('120px');
+        expect(moves).toEqual([[120, 634]]);
+    });
+
     it('REOPEN runs per-open setup again: a dragged modal recenters', async () => {
         // Reopen reuses the cached branch (refs do not re-fire) — the open
         // subscription must re-arm setup or the modal reopens wherever it

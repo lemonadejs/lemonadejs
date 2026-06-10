@@ -198,15 +198,9 @@ export const Modal = component('modal', {
         refreshDock();
     };
 
-    // ---- v5 margin-based auto-adjust
-    const autoAdjust = (el: HTMLElement) => {
-        if (!props.autoadjust!.value) {
-            return;
-        }
-        el.style.marginLeft = '';
-        el.style.marginTop = '';
+    // ---- v5 auto-adjust: how far back inside the viewport (10px margin)?
+    const overflow = (r: DOMRect) => {
         const margin = 10;
-        const r = el.getBoundingClientRect();
         let dx = 0;
         let dy = 0;
         const overRight = window.innerWidth - (r.left + r.width);
@@ -223,11 +217,33 @@ export const Modal = component('modal', {
         if (r.top < 0) {
             dy = margin - r.top;
         }
+        return { dx, dy };
+    };
+
+    /** On open: margin-based (v5) — declared top/left stay authoritative */
+    const autoAdjust = (el: HTMLElement) => {
+        if (!props.autoadjust!.value) {
+            return;
+        }
+        el.style.marginLeft = '';
+        el.style.marginTop = '';
+        const { dx, dy } = overflow(el.getBoundingClientRect());
         if (dx) {
             el.style.marginLeft = dx + 'px';
         }
         if (dy) {
             el.style.marginTop = dy + 'px';
+        }
+    };
+
+    /** On drag release: nudge the position itself back into the viewport */
+    const adjustPosition = () => {
+        if (!props.autoadjust!.value || !root) {
+            return;
+        }
+        const { dx, dy } = overflow(root.getBoundingClientRect());
+        if (dx || dy) {
+            pos.value = { top: pos.value.top + dy, left: pos.value.left + dx, fixed: true };
         }
     };
 
@@ -341,6 +357,9 @@ export const Modal = component('modal', {
                 pos.value = { top, left, fixed: true };
             },
             () => {
+                // v5: releasing a drag re-adjusts — a modal dragged beyond
+                // the viewport nudges back in; onmove reports the final spot
+                adjustPosition();
                 (props.onmove as ((top: number, left: number) => void) | undefined)?.(
                     pos.value.top,
                     pos.value.left

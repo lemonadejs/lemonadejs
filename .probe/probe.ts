@@ -71,18 +71,22 @@ const run = async () => {
         new MouseEvent(type, { bubbles: true, clientX: x, clientY: y, buttons: 1 });
     el.dispatchEvent(mouse('mousedown', er.left + 100, er.top + 15)); // grab the bar
     document.dispatchEvent(mouse('mousemove', window.innerWidth + 500, er.top + 15)); // drag off right
+    await frame();
+    const midDrag = rect(); // clamped but allowed to hang off-screen while held
     document.dispatchEvent(mouse('mouseup', window.innerWidth + 500, er.top + 15));
     await frame();
-    const dragged = rect();
+    r = rect();
+    log(
+        'autoadjust-drag-release-nudges-back',
+        midDrag.overRight > 0 && r.overRight <= 0 && r.overBottom <= 0 && r.top >= 0 && r.left >= 0,
+        { midDrag, released: r }
+    );
     el.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
     await frame();
     edge.open();
     await frame();
     r = rect();
-    log('autoadjust-reopen-after-drag', r.overRight <= 0 && r.overBottom <= 0 && r.top >= 0 && r.left >= 0, {
-        dragged,
-        reopened: r,
-    });
+    log('autoadjust-reopen-after-drag', r.overRight <= 0 && r.overBottom <= 0 && r.top >= 0 && r.left >= 0, r);
     edge.close();
     await frame();
 
