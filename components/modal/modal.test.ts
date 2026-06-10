@@ -208,6 +208,19 @@ describe('components/modal — behaviors', () => {
         expect(origins).toEqual(['button', 'backdrop', 'escape', 'api']);
     });
 
+    it('autoclose: losing focus closes with origin focusout (v5 auto-close)', async () => {
+        const origins: string[] = [];
+        const { el } = await openModal({ autoclose: true, focus: true, onclose: (o: string) => origins.push(o) });
+        expect(document.activeElement).toBe(el); // the modal took focus on open
+
+        const input = document.createElement('input');
+        document.body.appendChild(input);
+        input.focus(); // user clicks elsewhere
+        expect(origins).toEqual(['focusout']);
+        expect(handle!.query('.lm-modal')).toBeNull();
+        input.remove();
+    });
+
     it('Escape is element-scoped: a second modal is untouched', async () => {
         const origins: string[] = [];
         const a = await openModal({ closable: true, onclose: (o: string) => origins.push(o) });

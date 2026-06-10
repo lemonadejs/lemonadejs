@@ -76,6 +76,10 @@ const App: Component = (props, { state }) => {
     const resizable = state(true);
     const closable = state(true);
     const minimizable = state(true);
+    const autoclose = state(false);
+    const backdrop = state(false);
+    const fullscreen = state(false);
+    const header = state(true);
 
     return html`<div>
         <h1>&lt;Modal /&gt;</h1>
@@ -114,12 +118,18 @@ const App: Component = (props, { state }) => {
             <span></span><${Switch} label="Resizable" bind="${resizable}" />
             <span></span><${Switch} label="Closable" bind="${closable}" />
             <span></span><${Switch} label="Minimizable" bind="${minimizable}" />
+            <span></span><${Switch} label="Autoclose (close on lost focus)" bind="${autoclose}" />
+            <span></span><${Switch} label="Backdrop" bind="${backdrop}" />
+            <span></span><${Switch} label="Fullscreen" bind="${fullscreen}" />
+            <span></span><${Switch} label="Header" bind="${header}" />
             <span></span><button onclick="${() => live.toggle()}">Toggle Modal</button>
         </div>
 
         <${Modal} ref="${(a: Api) => (live = a)}" title="${title}" position="${position}"
             draggable="${draggable}" resizable="${resizable}"
             closable="${closable}" minimizable="${minimizable}"
+            autoclose="${autoclose}" backdrop="${backdrop}"
+            fullscreen="${fullscreen}" header="${header}"
             width="380" height="220"
             onclose="${(origin: string) => note('reactive modal closed via ' + origin)}">
             <p>Quick example! Change anything on the panel — title, position and
