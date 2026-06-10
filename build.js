@@ -23,6 +23,8 @@ const targets = [
     { entry: 'src/index.ts', format: 'iife', outfile: 'lemonade.min.js', minify: true, globalName: 'lemonade' },
     { entry: 'src/test.ts', format: 'esm', outfile: 'test.mjs' },
     { entry: 'src/test.ts', format: 'cjs', outfile: 'test.js' },
+    { entry: 'src/forms.ts', format: 'esm', outfile: 'forms.mjs' },
+    { entry: 'src/forms.ts', format: 'cjs', outfile: 'forms.js' },
 ];
 
 const run = async function () {

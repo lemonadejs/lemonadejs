@@ -83,6 +83,13 @@ export interface InspectReport {
     children: InspectReport[];
 }
 /**
+ * The explicit escape hatch for TRUSTED markup. Plain strings in slots are
+ * always escaped; unsafe() parses a trusted HTML string into nodes:
+ *   render`<div>${unsafe(articleHtml)}</div>`
+ * Never call it on user input — the name is the warning.
+ */
+export declare const unsafe: (html: string) => Node[];
+/**
  * Programmatic DevTools: returns the live component tree (names, state
  * values, children) for the instance owning the given element. Plain JSON.
  */

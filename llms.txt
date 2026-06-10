@@ -40,6 +40,11 @@ A component is a plain function: (props, tools) => render`...`. No classes, no t
 
 Slot values: string|number (text), false/true/null/undefined (nothing), render`` view, Node, array of these.
 
+Trusted HTML (plain strings are ALWAYS escaped; this is the explicit opt-out):
+
+    import { unsafe } from 'lemonadejs';
+    render`<article>${unsafe(trustedHtmlFromCms)}</article>`   // never on user input
+
 ## State
 
     const count = state(0);                         // State<number>, inferred
@@ -49,6 +54,12 @@ Slot values: string|number (text), false/true/null/undefined (nothing), render``
     const s = state(0, (val, old) => {...});        // optional change callback
 
 Updates fire on ASSIGNMENT only. state.value.push(x) throws in dev mode on purpose.
+
+Shared state (outside components, module scope):
+
+    import { store } from 'lemonadejs';
+    export const session = store({ user: null });   // any component can use ${session}
+    export const theme = store('light', 'app-theme'); // persisted to localStorage
 
 ## Events and refs
 
@@ -138,6 +149,22 @@ Props are read-only (frozen in dev). Data flows up via callback props.
 
     const handle = mount(C, root);  // { el, unmount() }
     handle.unmount();               // removes DOM, disposes everything
+
+## Web components (interop with other stacks)
+
+    import { createWebComponent } from 'lemonadejs';
+    createWebComponent('switch', Switch);          // defines <lm-switch> for any HTML/framework
+    createWebComponent('card', Card, { prefix: 'app' });   // <app-card>
+    // attributes at connect time arrive as string props; el.props = {...} for rich values
+    // for composition INSIDE lemonade, use <Card /> or <${Card} /> instead
+
+## Forms (lemonadejs/forms)
+
+    import { form } from 'lemonadejs/forms';
+    const f = form({ name: '', address: { city: '' } });   // states mirroring the shape
+    render`<input bind="${f.name}" /><input bind="${f.address.city}" />`
+    f.$get()                        // plain data object, nested
+    f.$set({ name: 'Ana' })         // partial updates, nested supported
 
 ## Verify your own output (lemonadejs/test)
 

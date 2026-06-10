@@ -1008,6 +1008,11 @@ var report = function(inst) {
     children: children.map(report)
   };
 };
+var unsafe = function(html2) {
+  const template = document.createElement("template");
+  template.innerHTML = html2;
+  return [...template.content.childNodes];
+};
 var inspect = function(target) {
   let node = target;
   while (node) {
@@ -1018,6 +1023,64 @@ var inspect = function(target) {
     node = node.parentNode;
   }
   return null;
+};
+
+// src/store.ts
+var store = function(initial, storage) {
+  let value = initial;
+  if (storage && typeof localStorage !== "undefined") {
+    try {
+      const raw = localStorage.getItem(storage);
+      if (raw !== null) {
+        value = JSON.parse(raw);
+      }
+    } catch {
+    }
+  }
+  const persist = storage ? function(v) {
+    try {
+      localStorage.setItem(storage, JSON.stringify(v));
+    } catch {
+    }
+  } : void 0;
+  return new StateImpl(value, persist);
+};
+
+// src/webcomponents.ts
+var createWebComponent = function(name, component, options) {
+  if (typeof component !== "function") {
+    fail("LJS-001", "createWebComponent(" + name + ")");
+  }
+  const tag = (options && options.prefix ? options.prefix : "lm") + "-" + name;
+  if (typeof customElements !== "undefined" && !customElements.get(tag)) {
+    class LemonadeElement extends HTMLElement {
+      constructor() {
+        super(...arguments);
+        this.handle = null;
+      }
+      connectedCallback() {
+        if (!this.handle) {
+          const props = {};
+          for (const attr of this.getAttributeNames()) {
+            props[attr] = this.getAttribute(attr);
+          }
+          const rich = this.props;
+          if (rich && typeof rich === "object") {
+            Object.assign(props, rich);
+          }
+          this.handle = mount(component, this, props);
+        }
+      }
+      unmount() {
+        if (this.handle) {
+          this.handle.unmount();
+          this.handle = null;
+        }
+      }
+    }
+    customElements.define(tag, LemonadeElement);
+  }
+  return tag;
 };
 
 // src/index.ts
@@ -1037,12 +1100,16 @@ var lemonade = {
   mount,
   inspect,
   setComponents,
+  store,
+  unsafe,
+  createWebComponent,
   explain,
   env,
   version: 6
 };
 var index_default = lemonade;
 export {
+  createWebComponent,
   index_default as default,
   env,
   explain,
@@ -1050,5 +1117,7 @@ export {
   inspect,
   mount,
   render,
-  setComponents
+  setComponents,
+  store,
+  unsafe
 };

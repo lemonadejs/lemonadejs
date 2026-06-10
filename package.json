@@ -54,6 +54,11 @@
             "import": "./dist/test.mjs",
             "default": "./dist/test.js"
         },
+        "./forms": {
+            "types": "./dist/forms.d.ts",
+            "import": "./dist/forms.mjs",
+            "default": "./dist/forms.js"
+        },
         "./llms.txt": "./llms.txt"
     },
     "version": "6.0.0-beta.0"

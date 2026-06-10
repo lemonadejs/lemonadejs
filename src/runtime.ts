@@ -761,6 +761,18 @@ const report = function (inst: Instance): InspectReport {
 };
 
 /**
+ * The explicit escape hatch for TRUSTED markup. Plain strings in slots are
+ * always escaped; unsafe() parses a trusted HTML string into nodes:
+ *   render`<div>${unsafe(articleHtml)}</div>`
+ * Never call it on user input — the name is the warning.
+ */
+export const unsafe = function (html: string): Node[] {
+    const template = document.createElement('template');
+    template.innerHTML = html;
+    return [...template.content.childNodes];
+};
+
+/**
  * Programmatic DevTools: returns the live component tree (names, state
  * values, children) for the instance owning the given element. Plain JSON.
  */
