@@ -57,7 +57,7 @@ var MESSAGES = {
   "LJS-305": "Event and callback names are lowercase: onclick, onchange, onsave",
   "LJS-401": "Prop does not match its contract"
 };
-var EXPLAIN = {
+var EXPLAIN = !DEV ? {} : {
   "LJS-001": 'The value used as a component is not a function. Components are plain functions: const Card: Component = (props, { state }) => html`<div>...</div>`. When embedding, pass the function itself: <${Card} title="x" />.',
   "LJS-002": "A component must return the result of the html tag. Correct: return html`<div>${count}</div>`. Returning strings, DOM nodes or nothing is not supported.",
   "LJS-003": 'mount(Component, root) expects root to be an existing DOM element, e.g. document.getElementById("app").',
@@ -88,7 +88,13 @@ var warn = function(code, detail) {
   }
 };
 var explain = function(code) {
-  return EXPLAIN[code] || "Unknown code: " + code;
+  if (EXPLAIN[code]) {
+    return EXPLAIN[code];
+  }
+  if (MESSAGES[code]) {
+    return code + ": " + MESSAGES[code] + " \u2014 full docs in the dev build or llms.txt";
+  }
+  return "Unknown code: " + code;
 };
 
 // src/parser.ts

@@ -27,7 +27,8 @@ const MESSAGES: Record<string, string> = {
     'LJS-401': 'Prop does not match its contract',
 };
 
-const EXPLAIN: Record<string, string> = {
+// Long-form docs ship only in dev builds — DCE drops the whole table in prod
+const EXPLAIN: Record<string, string> = !DEV ? {} : {
     'LJS-001':
         'The value used as a component is not a function. Components are plain functions: ' +
         'const Card: Component = (props, { state }) => html`<div>...</div>`. ' +
@@ -110,5 +111,12 @@ export const warn = function (code: string, detail?: string): void {
 
 /** Long-form documentation for an error code, available offline */
 export const explain = function (code: string): string {
-    return EXPLAIN[code] || 'Unknown code: ' + code;
+    if (EXPLAIN[code]) {
+        return EXPLAIN[code];
+    }
+    if (MESSAGES[code]) {
+        // Production build: short message + pointer (long docs are dev-only)
+        return code + ': ' + MESSAGES[code] + ' — full docs in the dev build or llms.txt';
+    }
+    return 'Unknown code: ' + code;
 };
