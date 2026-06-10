@@ -94,7 +94,16 @@ Plain value.value = v writes silently (parent writes never echo onchange back).
 
 ## Component composition
 
-Components are embedded BY VALUE (the imported function), never by name:
+Two equivalent ways to use a component:
+
+    import { setComponents } from 'lemonadejs';
+    setComponents({ Card, Modal });        // register once (typed, by value)...
+    render`<Card title="x">...</Card>`     // ...then use by name anywhere (case-sensitive)
+
+    render`<${Card} title="x" /></...>`    // or embed by value, no registration needed
+
+Unknown/misspelled names raise LJS-104 at mount. Both forms take identical props.
+Embedded by value:
 
     const Card: Component<{ title?: string; total?: State<number>; onsave?: (v: string) => void }> =
         (props) => render`<div class="card">
@@ -145,7 +154,7 @@ Props are read-only (frozen in dev). Data flows up via callback props.
 
 ## Debugging
 
-    import { inspect, explain, env } from 'lemonadejs';
+    import { inspect, explain, env, setComponents } from 'lemonadejs';
     inspect(element)        // live component tree for any element: names, state values, children
     explain('LJS-202')      // long-form doc for any error code, offline
     env.dev = false         // production: disables warnings and state freezing
@@ -168,8 +177,8 @@ RIGHT  ${() => valid.value && render`...`}
 WRONG  items.value.push(x)                      throws in dev (LJS-201) — never triggers updates
 RIGHT  items.value = [...items.value, x]
 
-WRONG  <Card title="x" />                       LJS-104 — components are not registered by name
-RIGHT  <${Card} title="x" />
+WRONG  <Card title="x" />  without registering  LJS-104 — register first: setComponents({ Card })
+RIGHT  setComponents({ Card }) then <Card />, or <${Card} title="x" /> with no registration
 
 WRONG  onclick="doSomething()"                  LJS-301 — string handlers don't exist
 RIGHT  onclick="${() => doSomething()}"

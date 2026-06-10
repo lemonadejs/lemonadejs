@@ -41,7 +41,7 @@ var MESSAGES = {
   "LJS-003": "mount() requires a DOM element as root",
   "LJS-101": "Unexpected closing tag \u2014 check tag nesting",
   "LJS-102": "Unclosed tag at the end of the template",
-  "LJS-104": "Capitalized tag found \u2014 components are embedded by value: <${Card} />",
+  "LJS-104": "Unknown component \u2014 register it: setComponents({ Card }), or embed by value: <${Card} />",
   "LJS-105": "Expression ${...} is not allowed in this position",
   "LJS-201": "State contents are frozen in dev mode \u2014 assign a new value instead of mutating",
   "LJS-202": "Slot holds a snapshot \u2014 wrap dynamic expressions: ${() => ...}",
@@ -208,6 +208,7 @@ var SVG_TAGS = /* @__PURE__ */ new Set([
   "stop"
 ]);
 var registry = /* @__PURE__ */ new WeakMap();
+var components = {};
 var warned = /* @__PURE__ */ new WeakSet();
 var valuesEqual = function(a, b) {
   if (a.length !== b.length) {
@@ -526,10 +527,18 @@ var buildSlot = function(vnode, ctx) {
   return out;
 };
 var buildComponent = function(vnode, ctx) {
-  const slotIdx = vnode.type.slot;
-  const fn = ctx.holder.values[slotIdx];
-  if (typeof fn !== "function") {
-    fail("LJS-001", "value of type " + typeof fn + " used as a component tag");
+  const type = vnode.type;
+  let fn;
+  if ("slot" in type) {
+    fn = ctx.holder.values[type.slot];
+    if (typeof fn !== "function") {
+      fail("LJS-001", "value of type " + typeof fn + " used as a component tag");
+    }
+  } else {
+    fn = components[type.name];
+    if (typeof fn !== "function") {
+      fail("LJS-104", "<" + type.name + ">");
+    }
   }
   const props = {};
   for (const prop of vnode.props || []) {

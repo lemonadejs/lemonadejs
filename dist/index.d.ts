@@ -15,7 +15,7 @@
  */
 import type { SlotValue, View } from './types';
 export type { Bindable, Bound, Component, Handle, Props, SlotValue, State, Template, Tools, View } from './types';
-export { mount, inspect } from './runtime';
+export { mount, inspect, setComponents } from './runtime';
 export { explain, env } from './errors';
 /**
  * The template tag. Static parts are parsed on first use and cached forever;
@@ -29,6 +29,7 @@ declare const lemonade: {
     html: (strings: TemplateStringsArray, ...values: SlotValue[]) => View;
     mount: <P>(component: import("./types").Component<P>, root: Element, props?: P) => import("./types").Handle;
     inspect: (target: Node) => import("./runtime").InspectReport | null;
+    setComponents: (map: Record<string, import("./types").Component<never>>) => void;
     explain: (code: string) => string;
     env: {
         dev: boolean;

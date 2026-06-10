@@ -88,6 +88,22 @@ type Item =
 /** Element → Instance, for inspect() */
 const registry = new WeakMap<Node, Instance>();
 
+/** Registered components: <Card /> resolves here (case-sensitive) */
+const components: Record<string, Component<Record<string, unknown>>> = {};
+
+/**
+ * Register components for use by name: setComponents({ Card, Modal })
+ * enables <Card /> in templates. Names must start with a capital letter
+ * and match exactly. Embedding by value (<${Card} />) needs no registration.
+ */
+export const setComponents = function (map: Record<string, Component<never>>): void {
+    for (const name of Object.keys(map)) {
+        if (typeof map[name] === 'function') {
+            components[name] = map[name] as Component<Record<string, unknown>>;
+        }
+    }
+};
+
 /** Components already warned with LJS-202 (once per component type) */
 const warned = new WeakSet<Function>();
 
@@ -471,12 +487,20 @@ const buildSlot = function (vnode: VNode, ctx: BuildCtx): Node[] {
     return out;
 };
 
-/** Build an embedded component: <${Card} title="x">children</${Card}> */
+/** Build a component: <${Card} /> (by value) or <Card /> (registered) */
 const buildComponent = function (vnode: VNode, ctx: BuildCtx): Node[] {
-    const slotIdx = (vnode.type as { slot: number }).slot;
-    const fn = ctx.holder.values[slotIdx];
-    if (typeof fn !== 'function') {
-        fail('LJS-001', 'value of type ' + typeof fn + ' used as a component tag');
+    const type = vnode.type as { slot: number } | { name: string };
+    let fn: unknown;
+    if ('slot' in type) {
+        fn = ctx.holder.values[type.slot];
+        if (typeof fn !== 'function') {
+            fail('LJS-001', 'value of type ' + typeof fn + ' used as a component tag');
+        }
+    } else {
+        fn = components[type.name];
+        if (typeof fn !== 'function') {
+            fail('LJS-104', '<' + type.name + '>');
+        }
     }
 
     const props: Record<string, unknown> = {};

@@ -96,8 +96,9 @@ export const parse = function (strings: readonly string[]): Template {
     const openTag = function (): void {
         commitAttr();
         const node = tag!;
+        // Capitalized tags are registered components: resolved at build time
         if (typeof node.type === 'string' && /^[A-Z]/.test(node.type)) {
-            fail('LJS-104', '<' + node.type + '>');
+            node.type = { name: node.type };
         }
         children(parent()).push(node);
         const isVoid = typeof node.type === 'string' && VOID_TAGS.has(node.type);
@@ -115,8 +116,10 @@ export const parse = function (strings: readonly string[]): Template {
             fail('LJS-101', name ? '</' + name + '>' : '</...>');
         }
         const top = stack.pop()!;
-        if (name && top.type !== name) {
-            fail('LJS-101', '</' + name + '> (expected </' + String(top.type) + '>)');
+        const topName =
+            typeof top.type === 'string' ? top.type : 'name' in top.type ? top.type.name : null;
+        if (name && topName !== name) {
+            fail('LJS-101', '</' + name + '> (expected </' + String(topName ?? 'component') + '>)');
         }
         closeName = '';
         closeIsSlot = false;
@@ -293,7 +296,8 @@ export const parse = function (strings: readonly string[]): Template {
     flushText();
     if (stack.length > 1) {
         const top = stack[stack.length - 1];
-        const name = typeof top.type === 'string' ? top.type : 'component';
+        const name =
+            typeof top.type === 'string' ? top.type : 'name' in top.type ? top.type.name : 'component';
         fail('LJS-102', '<' + name + '>');
     }
 

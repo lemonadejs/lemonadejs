@@ -9,7 +9,7 @@ var MESSAGES = {
   "LJS-003": "mount() requires a DOM element as root",
   "LJS-101": "Unexpected closing tag \u2014 check tag nesting",
   "LJS-102": "Unclosed tag at the end of the template",
-  "LJS-104": "Capitalized tag found \u2014 components are embedded by value: <${Card} />",
+  "LJS-104": "Unknown component \u2014 register it: setComponents({ Card }), or embed by value: <${Card} />",
   "LJS-105": "Expression ${...} is not allowed in this position",
   "LJS-201": "State contents are frozen in dev mode \u2014 assign a new value instead of mutating",
   "LJS-202": "Slot holds a snapshot \u2014 wrap dynamic expressions: ${() => ...}",
@@ -25,7 +25,7 @@ var EXPLAIN = {
   "LJS-003": 'mount(Component, root) expects root to be an existing DOM element, e.g. document.getElementById("app").',
   "LJS-101": "A closing tag was found that does not match the currently open tag. Check the nesting of your template. Void elements (br, img, input...) must not be closed.",
   "LJS-102": "The template ended while a tag was still open. Every opened tag must be closed: <div>...</div>, or self-closed: <Component />.",
-  "LJS-104": "Tags starting with an uppercase letter are reserved for components, and components are embedded by value, not by name: write <${Card} /> (with the imported Card function), not <Card />.",
+  "LJS-104": "Tags starting with an uppercase letter are components. Either register the function once \u2014 setComponents({ Card }) \u2014 and use <Card /> anywhere (names are case-sensitive and must match exactly), or embed it by value with no registration: <${Card} />. A typo in a registered name raises this error at mount time.",
   "LJS-105": "Expressions can appear as text content, as a full attribute value, inside a quoted attribute value, or as a component tag: <${Card}>. They cannot be used as attribute names or partial tag names.",
   "LJS-201": "In development mode, objects and arrays stored in a state are frozen. Mutating them (state.value.push(x)) throws a TypeError on purpose: mutation does not trigger updates. Assign a new value instead: state.value = [...state.value, x].",
   "LJS-202": "A template slot received a plain value (string/number/boolean) while states were being read. Plain values are one-time snapshots. If the slot should update when states change, wrap it: ${() => valid.value && render`...`}. If the snapshot is intentional, ignore this warning.",
@@ -124,7 +124,7 @@ var parse = function(strings) {
     commitAttr();
     const node = tag;
     if (typeof node.type === "string" && /^[A-Z]/.test(node.type)) {
-      fail("LJS-104", "<" + node.type + ">");
+      node.type = { name: node.type };
     }
     children(parent()).push(node);
     const isVoid = typeof node.type === "string" && VOID_TAGS.has(node.type);
@@ -141,8 +141,9 @@ var parse = function(strings) {
       fail("LJS-101", name ? "</" + name + ">" : "</...>");
     }
     const top = stack.pop();
-    if (name && top.type !== name) {
-      fail("LJS-101", "</" + name + "> (expected </" + String(top.type) + ">)");
+    const topName = typeof top.type === "string" ? top.type : "name" in top.type ? top.type.name : null;
+    if (name && topName !== name) {
+      fail("LJS-101", "</" + name + "> (expected </" + String(topName ?? "component") + ">)");
     }
     closeName = "";
     closeIsSlot = false;
@@ -303,7 +304,7 @@ var parse = function(strings) {
   flushText();
   if (stack.length > 1) {
     const top = stack[stack.length - 1];
-    const name = typeof top.type === "string" ? top.type : "component";
+    const name = typeof top.type === "string" ? top.type : "name" in top.type ? top.type.name : "component";
     fail("LJS-102", "<" + name + ">");
   }
   return { nodes: root.children || [] };
@@ -458,6 +459,14 @@ var SVG_TAGS = /* @__PURE__ */ new Set([
   "stop"
 ]);
 var registry = /* @__PURE__ */ new WeakMap();
+var components = {};
+var setComponents = function(map) {
+  for (const name of Object.keys(map)) {
+    if (typeof map[name] === "function") {
+      components[name] = map[name];
+    }
+  }
+};
 var warned = /* @__PURE__ */ new WeakSet();
 var valuesEqual = function(a, b) {
   if (a.length !== b.length) {
@@ -776,10 +785,18 @@ var buildSlot = function(vnode, ctx) {
   return out;
 };
 var buildComponent = function(vnode, ctx) {
-  const slotIdx = vnode.type.slot;
-  const fn = ctx.holder.values[slotIdx];
-  if (typeof fn !== "function") {
-    fail("LJS-001", "value of type " + typeof fn + " used as a component tag");
+  const type = vnode.type;
+  let fn;
+  if ("slot" in type) {
+    fn = ctx.holder.values[type.slot];
+    if (typeof fn !== "function") {
+      fail("LJS-001", "value of type " + typeof fn + " used as a component tag");
+    }
+  } else {
+    fn = components[type.name];
+    if (typeof fn !== "function") {
+      fail("LJS-104", "<" + type.name + ">");
+    }
   }
   const props = {};
   for (const prop of vnode.props || []) {
@@ -1019,6 +1036,7 @@ var lemonade = {
   html,
   mount,
   inspect,
+  setComponents,
   explain,
   env,
   version: 6
@@ -1031,5 +1049,6 @@ export {
   html,
   inspect,
   mount,
-  render
+  render,
+  setComponents
 };

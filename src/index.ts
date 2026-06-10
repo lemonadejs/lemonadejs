@@ -17,10 +17,10 @@
 import type { SlotValue, Template, View } from './types';
 import { parse } from './parser';
 import { env, explain } from './errors';
-import { inspect, mount } from './runtime';
+import { inspect, mount, setComponents } from './runtime';
 
 export type { Bindable, Bound, Component, Handle, Props, SlotValue, State, Template, Tools, View } from './types';
-export { mount, inspect } from './runtime';
+export { mount, inspect, setComponents } from './runtime';
 export { explain, env } from './errors';
 
 /** Templates are parsed once per call site: the strings identity is the key */
@@ -47,6 +47,7 @@ const lemonade = {
     html,
     mount,
     inspect,
+    setComponents,
     explain,
     env,
     version: 6,

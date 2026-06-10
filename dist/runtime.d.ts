@@ -61,6 +61,12 @@ interface SlotState {
     detached: boolean;
 }
 /**
+ * Register components for use by name: setComponents({ Card, Modal })
+ * enables <Card /> in templates. Names must start with a capital letter
+ * and match exactly. Embedding by value (<${Card} />) needs no registration.
+ */
+export declare const setComponents: (map: Record<string, Component<never>>) => void;
+/**
  * Create a component instance: run setup once, materialize its template.
  * Mount callbacks run later, when the elements are attached (runMount).
  */

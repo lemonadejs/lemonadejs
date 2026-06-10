@@ -17,7 +17,7 @@ const MESSAGES: Record<string, string> = {
     'LJS-003': 'mount() requires a DOM element as root',
     'LJS-101': 'Unexpected closing tag — check tag nesting',
     'LJS-102': 'Unclosed tag at the end of the template',
-    'LJS-104': 'Capitalized tag found — components are embedded by value: <${Card} />',
+    'LJS-104': 'Unknown component — register it: setComponents({ Card }), or embed by value: <${Card} />',
     'LJS-105': 'Expression ${...} is not allowed in this position',
     'LJS-201': 'State contents are frozen in dev mode — assign a new value instead of mutating',
     'LJS-202': 'Slot holds a snapshot — wrap dynamic expressions: ${() => ...}',
@@ -46,8 +46,10 @@ const EXPLAIN: Record<string, string> = {
         'The template ended while a tag was still open. Every opened tag must be closed: <div>...</div>, ' +
         'or self-closed: <Component />.',
     'LJS-104':
-        'Tags starting with an uppercase letter are reserved for components, and components are embedded ' +
-        'by value, not by name: write <${Card} /> (with the imported Card function), not <Card />.',
+        'Tags starting with an uppercase letter are components. Either register the function once — ' +
+        'setComponents({ Card }) — and use <Card /> anywhere (names are case-sensitive and must match ' +
+        'exactly), or embed it by value with no registration: <${Card} />. ' +
+        'A typo in a registered name raises this error at mount time.',
     'LJS-105':
         'Expressions can appear as text content, as a full attribute value, inside a quoted attribute value, ' +
         'or as a component tag: <${Card}>. They cannot be used as attribute names or partial tag names.',

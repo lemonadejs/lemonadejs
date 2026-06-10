@@ -14,10 +14,11 @@ export interface VProp {
 /**
  * A node in a parsed template. Parsed once per tagged-template call site
  * and shared (read-only) by every component instance using it.
- * - type: tag name, '#text', '#slot', or { slot } for embedded components
+ * - type: tag name, '#text', '#slot', { slot } for embedded components,
+ *   or { name } for registered components (<Card />)
  */
 export interface VNode {
-    type: string | { slot: number };
+    type: string | { slot: number } | { name: string };
     text?: string;
     slot?: number;
     props?: VProp[];
