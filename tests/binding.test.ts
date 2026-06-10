@@ -257,6 +257,36 @@ describe('Component bind protocol (the bind() tool)', () => {
         expect(b.className).toBe('switch off');
     });
 
+    it('event casing is normalized on native elements (onClick works)', () => {
+        let clicks = 0;
+        const C: Component = () => render`<div><button onClick="${() => clicks++}">x</button></div>`;
+        handle = t(C);
+        handle.query('button')!.click();
+        expect(clicks).toBe(1);
+    });
+
+    it('warns LJS-305 when a component receives onChange instead of onchange', () => {
+        const spy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+        const App: Component = (p, { state }) => {
+            const on = state(false);
+            return render`<main><${Switch} bind="${on}" onChange="${() => {}}" /></main>`;
+        };
+        handle = t(App);
+        expect(spy.mock.calls.some((args) => String(args[0]).includes('LJS-305'))).toBe(true);
+        spy.mockRestore();
+    });
+
+    it('does not warn when onchange is correctly lowercase', () => {
+        const spy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+        const App: Component = (p, { state }) => {
+            const on = state(false);
+            return render`<main><${Switch} bind="${on}" onchange="${() => {}}" /></main>`;
+        };
+        handle = t(App);
+        expect(spy.mock.calls.some((args) => String(args[0]).includes('LJS-305'))).toBe(false);
+        spy.mockRestore();
+    });
+
     it('bound state works with the native bind directive inside the component', () => {
         // A custom input that decorates a native one — bind flows through
         const Field: Component<Bindable<string>> = (props, { bind }) => {

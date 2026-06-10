@@ -612,6 +612,14 @@ export const mountComponent = function (
         },
         bind: function <T>(p: Bindable<T>, fallback: T) {
             const raw = p ? (p.bind as State<T> | T | undefined) : undefined;
+            // Casing tripwire: props are case-sensitive, onChange would be ignored
+            if (env.dev && p && typeof p.onchange !== 'function') {
+                for (const key of Object.keys(p)) {
+                    if (key !== 'onchange' && key.toLowerCase() === 'onchange') {
+                        warn('LJS-305', key + ' in <' + inst.name + '>');
+                    }
+                }
+            }
             // External state → two-way; plain value → initial; nothing → fallback
             const target = isState(raw)
                 ? (raw as StateImpl<T>)

@@ -67,6 +67,11 @@ Shared state (outside components, module scope):
     <input onkeydown="${(e) => ...}" />        handler receives the DOM event
     <p ref="${(el) => { ... }}">               ref receives the created element
 
+Event names are lowercase, HTML-style: onclick, oninput, onchange (on elements any
+casing is normalized, but write lowercase). Component props are case-sensitive: the
+bind protocol callback is exactly `onchange` (LJS-305 warns about onChange); custom
+component callbacks (onSave, onItemClick) use whatever the component declares.
+
 ## Attributes
 
     <div class="btn ${active}">                mixed static + state → live string

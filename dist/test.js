@@ -49,7 +49,8 @@ var MESSAGES = {
   "LJS-301": 'Event attributes require a function: onclick="${() => ...}"',
   "LJS-302": 'bind requires a state: bind="${state}"',
   "LJS-303": "bind works on <input>, <textarea> and <select> \u2014 on components it is a prop",
-  "LJS-304": "bind owns the element value \u2014 remove the explicit value/checked attribute"
+  "LJS-304": "bind owns the element value \u2014 remove the explicit value/checked attribute",
+  "LJS-305": "Callback names are lowercase \u2014 did you mean onchange?"
 };
 var format = function(code, detail) {
   const message = MESSAGES[code] || "Unknown error";
@@ -626,6 +627,13 @@ var mountComponent = function(component, props, parent) {
     },
     bind: function(p, fallback) {
       const raw = p ? p.bind : void 0;
+      if (env.dev && p && typeof p.onchange !== "function") {
+        for (const key of Object.keys(p)) {
+          if (key !== "onchange" && key.toLowerCase() === "onchange") {
+            warn("LJS-305", key + " in <" + inst.name + ">");
+          }
+        }
+      }
       const target = isState(raw) ? raw : new StateImpl(raw !== void 0 ? raw : fallback);
       const bound = new BoundState(target, p ? p.onchange : void 0);
       inst.states.push(bound);
