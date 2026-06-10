@@ -746,6 +746,9 @@ var disposeEntry = function(entry) {
     for (const instance of entry.instances) {
       unmountInstance(instance);
     }
+    for (const cleanup of entry.cleanups) {
+      cleanup();
+    }
   }
   for (const node of entry.nodes) {
     remove(node);
@@ -753,7 +756,7 @@ var disposeEntry = function(entry) {
 };
 var buildViewEntry = function(view, inst) {
   const holder = { values: view.values };
-  const ctx = { inst, holder, live: true, bindings: [], instances: [] };
+  const ctx = { inst, holder, live: true, bindings: [], instances: [], cleanups: [] };
   const nodes = buildNodes(view.template.nodes, ctx, false);
   return {
     kind: "view",
@@ -761,7 +764,8 @@ var buildViewEntry = function(view, inst) {
     holder,
     bindings: ctx.bindings,
     instances: ctx.instances,
-    nodes
+    nodes,
+    cleanups: ctx.cleanups
   };
 };
 var applySlot = function(s, value, inst) {
@@ -841,15 +845,15 @@ var applySlot = function(s, value, inst) {
   s.detached = false;
   const parentNode = s.marker.parentNode;
   if (parentNode) {
-    let ref = s.marker;
+    let ref2 = s.marker;
     for (let i = next.length - 1; i >= 0; i--) {
       const nodes = next[i].nodes;
       for (let j = nodes.length - 1; j >= 0; j--) {
         const node = nodes[j];
-        if (node.nextSibling !== ref || node.parentNode !== parentNode) {
-          parentNode.insertBefore(node, ref);
+        if (node.nextSibling !== ref2 || node.parentNode !== parentNode) {
+          parentNode.insertBefore(node, ref2);
         }
-        ref = node;
+        ref2 = node;
       }
     }
     for (const instance of fresh) {
@@ -865,6 +869,12 @@ var applySlot = function(s, value, inst) {
   } else {
     inst.pending.push(...fresh);
   }
+};
+var isRefObject = function(v) {
+  return !!v && typeof v === "object" && "current" in v;
+};
+var ref = function(initial) {
+  return { current: initial === void 0 ? null : initial };
 };
 var applyAttr = function(el, name, v, svg) {
   if (v === false || v === null || v === void 0) {
@@ -970,6 +980,13 @@ var applyProp = function(el, prop, ctx, svg) {
     if (typeof fn === "function") {
       untracked(function() {
         fn(el);
+      });
+    } else if (isRefObject(fn)) {
+      fn.current = el;
+      ctx.cleanups.push(function() {
+        if (fn.current === el) {
+          fn.current = null;
+        }
       });
     }
     return;
@@ -1120,6 +1137,19 @@ var mountComponent = function(component2, props, parent) {
     mounted: false,
     dead: false
   };
+  if (isRefObject(props.ref)) {
+    const target = props.ref;
+    let assigned = null;
+    props.ref = function(api) {
+      assigned = api;
+      target.current = api;
+    };
+    inst.unmountCbs.push(function() {
+      if (target.current === assigned) {
+        target.current = null;
+      }
+    });
+  }
   const tools = {
     state: function(initial, onchange) {
       const s = new StateImpl(initial, onchange);
@@ -1165,7 +1195,9 @@ var mountComponent = function(component2, props, parent) {
     holder: { values: view.values },
     live: false,
     bindings: inst.bindings,
-    instances: inst.children
+    instances: inst.children,
+    // Root-level object refs are nulled when the component unmounts
+    cleanups: inst.unmountCbs
   };
   inst.elements = buildNodes(view.template.nodes, ctx, false);
   if (inst.elements[0]) {
@@ -1499,6 +1531,7 @@ export {
   html,
   inspect,
   mount,
+  ref,
   setComponents,
   store,
   unsafe,

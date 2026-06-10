@@ -23,8 +23,8 @@ import { batch } from './reactivity';
 import { component, contract, use } from './contract';
 import { createWebComponent } from './webcomponents';
 
-export type { Bindable, Bound, Component, Handle, Props, SlotValue, State, Template, Tools, View } from './types';
-export { mount, inspect, setComponents, unsafe } from './runtime';
+export type { Bindable, Bound, Component, Handle, Props, Ref, SlotValue, State, Template, Tools, View } from './types';
+export { mount, inspect, ref, setComponents, unsafe } from './runtime';
 export { store } from './store';
 export { batch } from './reactivity';
 export { component, contract, use } from './contract';

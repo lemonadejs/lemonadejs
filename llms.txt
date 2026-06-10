@@ -79,7 +79,10 @@ Shared state (outside components, module scope):
 
     <button onclick="${() => save()}">         event = on* attribute + function (never strings; CSP-safe)
     <input onkeydown="${(e) => ...}" />        handler receives the DOM event
-    <p ref="${(el) => { ... }}">               ref receives the created element
+    <p ref="${(el) => { ... }}">               callback ref: receives the created element
+    const box = ref<HTMLElement>();            object ref (useRef-style), import { ref }
+    <p ref="${box}">                           box.current = the element; components: .current = the api
+                                               .current is NULLED automatically when the DOM is disposed
 
 ONE RULE, NO EXCEPTIONS: all event and callback names are lowercase, HTML-style —
 onclick, oninput, onchange, onsave, onitemclick (like the platform's onmousedown).

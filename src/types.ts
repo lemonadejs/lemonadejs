@@ -85,6 +85,15 @@ export type SlotValue =
     | readonly SlotValue[]
     | object;
 
+/**
+ * Object ref (useRef-style): pass it as ref="${myRef}" and .current
+ * holds the element (or the component api). The runtime NULLS .current
+ * on unmount — a surviving ref never pins a dead subtree.
+ */
+export interface Ref<T> {
+    current: T | null;
+}
+
 /** Tools injected into every component */
 export interface Tools {
     /** Create a reactive state. Assignment to .value triggers updates. */

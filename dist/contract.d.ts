@@ -38,9 +38,13 @@ export type ContractInput<C> = {
 } ? Bindable<Widen<B>> : object) & (C extends {
     api: infer A;
 } ? {
-    ref?: (api: {
+    ref?: ((api: {
         [K in keyof A]: (...args: any[]) => any;
-    }) => void;
+    }) => void) | {
+        current: {
+            [K in keyof A]: (...args: any[]) => any;
+        } | null;
+    };
 } : object) & {
     expose?: boolean;
     children?: readonly Node[];

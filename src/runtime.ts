@@ -60,6 +60,8 @@ interface BuildCtx {
     live: boolean;
     bindings: Binding[];
     instances: Instance[];
+    /** Run when this build's DOM is disposed (e.g. object-ref nulling) */
+    cleanups: (() => void)[];
 }
 
 /** One unit of content produced by a slot */
@@ -70,6 +72,7 @@ interface ViewEntry {
     bindings: Binding[];
     instances: Instance[];
     nodes: Node[];
+    cleanups: (() => void)[];
 }
 
 type Entry =
@@ -177,6 +180,9 @@ const disposeEntry = function (entry: Entry): void {
         for (const instance of entry.instances) {
             unmountInstance(instance);
         }
+        for (const cleanup of entry.cleanups) {
+            cleanup();
+        }
     }
     for (const node of entry.nodes) {
         remove(node);
@@ -186,7 +192,7 @@ const disposeEntry = function (entry: Entry): void {
 /** Build the DOM for a View inside a branch entry (live mode) */
 const buildViewEntry = function (view: View, inst: Instance): ViewEntry {
     const holder: Holder = { values: view.values };
-    const ctx: BuildCtx = { inst, holder, live: true, bindings: [], instances: [] };
+    const ctx: BuildCtx = { inst, holder, live: true, bindings: [], instances: [], cleanups: [] };
     const nodes = buildNodes(view.template.nodes, ctx, false);
     return {
         kind: 'view',
@@ -195,6 +201,7 @@ const buildViewEntry = function (view: View, inst: Instance): ViewEntry {
         bindings: ctx.bindings,
         instances: ctx.instances,
         nodes,
+        cleanups: ctx.cleanups,
     };
 };
 
@@ -323,6 +330,17 @@ const applySlot = function (s: SlotState, value: unknown, inst: Instance): void 
     }
 };
 
+/** useRef-style object refs: anything with a writable `current` slot */
+const isRefObject = function (v: unknown): v is { current: unknown } {
+    return !!v && typeof v === 'object' && 'current' in v;
+};
+
+/** Create an object ref: <div ref="${r}"> — r.current is the element
+ *  (or the component api), nulled automatically on unmount. */
+export const ref = function <T>(initial?: T): { current: T | null } {
+    return { current: initial === undefined ? null : initial };
+};
+
 /** Apply a value to an element attribute/property */
 const applyAttr = function (el: Element, name: string, v: unknown, svg: boolean): void {
     if (v === false || v === null || v === undefined) {
@@ -444,7 +462,7 @@ const applyProp = function (el: Element, prop: VProp, ctx: BuildCtx, svg: boolea
         return;
     }
 
-    // Element reference: ref="${(el) => ...}"
+    // Element reference: ref="${(el) => ...}" or ref="${refObject}"
     if (name === 'ref' && whole >= 0) {
         const fn = ctx.holder.values[whole];
         if (typeof fn === 'function') {
@@ -452,6 +470,16 @@ const applyProp = function (el: Element, prop: VProp, ctx: BuildCtx, svg: boolea
             // subscribe the enclosing branch binding
             untracked(function () {
                 (fn as (el: Element) => void)(el);
+            });
+        } else if (isRefObject(fn)) {
+            fn.current = el;
+            // Destroy hygiene: a surviving ref must not pin a dead element.
+            // Owned by the BUILD (branch entry or component root), so a
+            // branch swap nulls it too — not only full unmount.
+            ctx.cleanups.push(function () {
+                if (fn.current === el) {
+                    fn.current = null;
+                }
             });
         }
         return;
@@ -641,6 +669,23 @@ export const mountComponent = function (
         dead: false,
     };
 
+    // Object ref sugar: the component always sees a CALLABLE props.ref
+    // (it writes props.ref?.(api)); an object ref becomes a setter and
+    // .current is nulled on unmount so it never pins a dead api/subtree
+    if (isRefObject(props.ref)) {
+        const target = props.ref;
+        let assigned: unknown = null;
+        props.ref = function (api: unknown) {
+            assigned = api;
+            target.current = api;
+        };
+        inst.unmountCbs.push(function () {
+            if (target.current === assigned) {
+                target.current = null;
+            }
+        });
+    }
+
     const tools: Tools = {
         state: function <T>(initial: T, onchange?: (v: T, o: T) => void) {
             const s = new StateImpl<T>(initial, onchange);
@@ -697,6 +742,8 @@ export const mountComponent = function (
         live: false,
         bindings: inst.bindings,
         instances: inst.children,
+        // Root-level object refs are nulled when the component unmounts
+        cleanups: inst.unmountCbs,
     };
     inst.elements = buildNodes(view.template.nodes, ctx, false);
 

@@ -62,9 +62,14 @@ export type ContractInput<C> = {
 } & (C extends { bind: infer B } ? Bindable<Widen<B>> : object) &
     (C extends { api: infer A }
         ? // any, not never[]: the CALLER's ref callback carries the real
-          // signatures; never[] rejects every concretely-typed callback
+          // signatures; never[] rejects every concretely-typed callback.
+          // Object refs (useRef-style) are accepted too: .current = api
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          { ref?: (api: { [K in keyof A]: (...args: any[]) => any }) => void }
+          {
+              ref?:
+                  | ((api: { [K in keyof A]: (...args: any[]) => any }) => void)
+                  | { current: { [K in keyof A]: (...args: any[]) => any } | null };
+          }
         : object) & {
         expose?: boolean;
         children?: readonly Node[];
@@ -83,8 +88,8 @@ export type ContractProps<C> = {
     [K in keyof C as K extends `on${string}` ? K & string : never]?: (...args: never[]) => unknown;
 } & (C extends { bind: infer B } ? Bindable<Widen<B>> : object) &
     (C extends { api: infer A }
-        ? // any, not never[]: the CALLER's ref callback carries the real
-          // signatures; never[] rejects every concretely-typed callback
+        ? // INSIDE the component props.ref is always CALLABLE — the
+          // runtime normalizes object refs into setters before setup
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           { ref?: (api: { [K in keyof A]: (...args: any[]) => any }) => void }
         : object) & {

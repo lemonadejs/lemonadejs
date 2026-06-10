@@ -70,6 +70,14 @@ export interface Bindable<T> {
 /** Values accepted by ${...} slots — `object` admits arbitrary data
  *  passed whole-value into component props (options, routes, items) */
 export type SlotValue = string | number | boolean | null | undefined | State<unknown> | View | Node | ((...args: never[]) => unknown) | readonly SlotValue[] | object;
+/**
+ * Object ref (useRef-style): pass it as ref="${myRef}" and .current
+ * holds the element (or the component api). The runtime NULLS .current
+ * on unmount — a surviving ref never pins a dead subtree.
+ */
+export interface Ref<T> {
+    current: T | null;
+}
 /** Tools injected into every component */
 export interface Tools {
     /** Create a reactive state. Assignment to .value triggers updates. */

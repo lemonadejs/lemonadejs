@@ -46,6 +46,7 @@ interface ViewEntry {
     bindings: Binding[];
     instances: Instance[];
     nodes: Node[];
+    cleanups: (() => void)[];
 }
 type Entry = {
     kind: 'text';
@@ -68,6 +69,11 @@ interface SlotState {
  * and match exactly. Embedding by value (<${Card} />) needs no registration.
  */
 export declare const setComponents: (map: Record<string, Component<never>>) => void;
+/** Create an object ref: <div ref="${r}"> — r.current is the element
+ *  (or the component api), nulled automatically on unmount. */
+export declare const ref: <T>(initial?: T) => {
+    current: T | null;
+};
 /**
  * Create a component instance: run setup once, materialize its template.
  * Mount callbacks run later, when the elements are attached (runMount).

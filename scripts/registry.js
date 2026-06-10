@@ -71,7 +71,7 @@ const generateDts = function (schema) {
         }
     }
     if (schema.api.length) {
-        lines.push('    ref?: (api: ' + n + 'Api) => void;');
+        lines.push('    ref?: ((api: ' + n + 'Api) => void) | { current: ' + n + 'Api | null };');
     }
     lines.push('}', '');
     lines.push('export declare const ' + n + ': Component<' + n + 'Props>;');
