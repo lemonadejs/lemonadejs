@@ -12,10 +12,10 @@
  *   t.unmount();
  */
 
+// Satellite entry: values come only from ./index so the built artifact
+// shares the app's engine instead of bundling a second copy
 import type { Component } from './types';
-import { mount, inspect } from './runtime';
-import { contract as contractOf } from './contract';
-import { StateImpl } from './reactivity';
+import { mount, inspect, contract as contractOf, store } from './index';
 
 export interface TestHandle {
     /** The container the component is mounted into */
@@ -178,7 +178,7 @@ export const verify = function (component: Component<never>): VerifyReport {
         });
         run('prop ' + key + ' (live state)', function () {
             const props: Record<string, unknown> = {};
-            const state = new StateImpl(SAMPLES[schema.props[key].type]);
+            const state = store(SAMPLES[schema.props[key].type]);
             props[key] = state;
             const t = render(component as Component<unknown>, props);
             state.touch();
@@ -196,7 +196,7 @@ export const verify = function (component: Component<never>): VerifyReport {
 
     if (schema.bind) {
         run('bind', function () {
-            const state = new StateImpl(schema.bind!.default);
+            const state = store(schema.bind!.default);
             const t = render(component as Component<unknown>, { bind: state });
             state.value = SAMPLES[schema.bind!.type];
             t.unmount();

@@ -19,6 +19,7 @@ const out = path.join(__dirname, 'dist');
 
 // dev: true keeps warnings and checks; dev: false inlines __DEV__ = false
 // and every dev-only branch is eliminated — production pays zero.
+// satellite: true → the core stays external (one shared engine in dist)
 const targets = [
     { entry: 'src/index.ts', format: 'esm', outfile: 'lemonade.mjs', dev: true },
     { entry: 'src/index.ts', format: 'esm', outfile: 'lemonade.prod.mjs', dev: false },
@@ -26,11 +27,25 @@ const targets = [
     { entry: 'src/index.ts', format: 'cjs', outfile: 'lemonade.prod.js', dev: false },
     { entry: 'src/index.ts', format: 'iife', outfile: 'lemonade.dev.js', globalName: 'lemonade', dev: true },
     { entry: 'src/index.ts', format: 'iife', outfile: 'lemonade.min.js', minify: true, globalName: 'lemonade', dev: false },
-    { entry: 'src/test.ts', format: 'esm', outfile: 'test.mjs', dev: true },
-    { entry: 'src/test.ts', format: 'cjs', outfile: 'test.js', dev: true },
-    { entry: 'src/forms.ts', format: 'esm', outfile: 'forms.mjs', dev: true },
-    { entry: 'src/forms.ts', format: 'cjs', outfile: 'forms.js', dev: true },
+    { entry: 'src/test.ts', format: 'esm', outfile: 'test.mjs', dev: true, satellite: './lemonade.mjs' },
+    { entry: 'src/test.ts', format: 'cjs', outfile: 'test.js', dev: true, satellite: './lemonade.js' },
+    { entry: 'src/forms.ts', format: 'esm', outfile: 'forms.mjs', dev: true, satellite: './lemonade.mjs' },
+    { entry: 'src/forms.ts', format: 'cjs', outfile: 'forms.js', dev: true, satellite: './lemonade.js' },
+    { entry: 'src/react.ts', format: 'esm', outfile: 'react.mjs', dev: true, satellite: './lemonade.mjs' },
+    { entry: 'src/react.ts', format: 'cjs', outfile: 'react.js', dev: true, satellite: './lemonade.js' },
 ];
+
+/** Satellites import the engine from ./index — rewrite to the dist core */
+const coreExternal = function (corePath) {
+    return {
+        name: 'core-external',
+        setup(build) {
+            build.onResolve({ filter: /^\.\/index$/ }, function () {
+                return { path: corePath, external: true };
+            });
+        },
+    };
+};
 
 const run = async function () {
     for (const t of targets) {
@@ -43,6 +58,8 @@ const run = async function () {
             outfile: path.join(out, t.outfile),
             target: 'es2020',
             define: { __DEV__: String(!!t.dev) },
+            external: ['react', 'react-dom'],
+            plugins: t.satellite ? [coreExternal(t.satellite)] : [],
         });
     }
 

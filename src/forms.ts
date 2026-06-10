@@ -13,7 +13,8 @@
  */
 
 import type { State } from './types';
-import { StateImpl } from './reactivity';
+// Satellite entry: values come only from ./index (one shared engine)
+import { store } from './index';
 
 export type Form<T> = {
     [K in keyof T]: T[K] extends Record<string, unknown> ? Form<T[K]> : State<T[K]>;
@@ -37,7 +38,7 @@ export const form = function <T extends Record<string, unknown>>(initial: T): Fo
 
     for (const key of Object.keys(initial)) {
         const v = initial[key];
-        fields[key] = isPlainObject(v) ? form(v) : new StateImpl(v);
+        fields[key] = isPlainObject(v) ? form(v) : store(v);
     }
 
     const isGroup = function (field: unknown): field is Form<Record<string, unknown>> {
@@ -49,7 +50,7 @@ export const form = function <T extends Record<string, unknown>>(initial: T): Fo
             const out: Record<string, unknown> = {};
             for (const key of Object.keys(fields)) {
                 const field = fields[key];
-                out[key] = isGroup(field) ? field.$get() : (field as StateImpl<unknown>).peek();
+                out[key] = isGroup(field) ? field.$get() : (field as State<unknown>).peek();
             }
             return out as T;
         },
@@ -69,7 +70,7 @@ export const form = function <T extends Record<string, unknown>>(initial: T): Fo
                 if (isGroup(field)) {
                     field.$set(v as Record<string, unknown>);
                 } else {
-                    (field as StateImpl<unknown>).value = v;
+                    (field as State<unknown>).value = v;
                 }
             }
         },
