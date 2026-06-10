@@ -1,8 +1,11 @@
 /**
  * Local playground for <Switch /> — served by `npm run dev`
  */
-import { html, mount, type Component } from '../../src/index';
+import { createWebComponent, html, mount, type Component } from '../../src/index';
 import Switch from './switch';
+
+// One call, zero options: the contract derives <lm-switch> entirely
+createWebComponent(Switch);
 
 const App: Component = (props, { state }) => {
     const enabled = state(false);
@@ -37,6 +40,20 @@ const App: Component = (props, { state }) => {
         <form>
             <${Switch} name="newsletter" value="yes" required label="name=newsletter value=yes required" />
         </form>
+
+        <h3>Web component — the same block as &lt;lm-switch&gt;</h3>
+        <lm-switch label="I am a real custom element" color="red" checked="true"
+            onchange="${(e: Event) =>
+                (log.value = [...log.value, 'lm-switch change event → ' + (e as CustomEvent).detail])}"></lm-switch>
+        <br />
+        <button onclick="${() => {
+            const el = document.querySelector('lm-switch') as HTMLElement & { value: boolean };
+            el.value = !el.value; // the core-of-HTML surface: a real element property
+        }}">toggle via el.value property</button>
+        <button onclick="${() => {
+            const el = document.querySelector('lm-switch') as HTMLElement;
+            el.setAttribute('color', el.getAttribute('color') === 'red' ? 'purple' : 'red');
+        }}">recolor via setAttribute (live after mount)</button>
 
         <h3>onchange log</h3>
         <pre>${() => log.value.join('\n')}</pre>
