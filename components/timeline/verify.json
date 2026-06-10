@@ -1,0 +1,134 @@
+{
+    "component": "timeline",
+    "pass": true,
+    "checks": [
+        {
+            "name": "mounts with defaults",
+            "pass": true
+        },
+        {
+            "name": "prop data",
+            "pass": true
+        },
+        {
+            "name": "prop data (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop type",
+            "pass": true
+        },
+        {
+            "name": "prop type (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop date",
+            "pass": true
+        },
+        {
+            "name": "prop date (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop format",
+            "pass": true
+        },
+        {
+            "name": "prop format (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop message",
+            "pass": true
+        },
+        {
+            "name": "prop message (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop order",
+            "pass": true
+        },
+        {
+            "name": "prop order (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop align",
+            "pass": true
+        },
+        {
+            "name": "prop align (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop position",
+            "pass": true
+        },
+        {
+            "name": "prop position (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop controls",
+            "pass": true
+        },
+        {
+            "name": "prop controls (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop editable",
+            "pass": true
+        },
+        {
+            "name": "prop editable (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop remote",
+            "pass": true
+        },
+        {
+            "name": "prop remote (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop url",
+            "pass": true
+        },
+        {
+            "name": "prop url (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop width",
+            "pass": true
+        },
+        {
+            "name": "prop width (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop height",
+            "pass": true
+        },
+        {
+            "name": "prop height (live state)",
+            "pass": true
+        },
+        {
+            "name": "event onupdate",
+            "pass": true
+        },
+        {
+            "name": "event onedition",
+            "pass": true
+        },
+        {
+            "name": "api via ref",
+            "pass": true
+        }
+    ]
+}

@@ -1,0 +1,86 @@
+{
+    "name": "dropdown",
+    "props": {
+        "data": {
+            "type": "array"
+        },
+        "multiple": {
+            "type": "boolean",
+            "default": false
+        },
+        "autocomplete": {
+            "type": "boolean",
+            "default": false
+        },
+        "remote": {
+            "type": "boolean",
+            "default": false
+        },
+        "url": {
+            "type": "string",
+            "default": ""
+        },
+        "insert": {
+            "type": "boolean",
+            "default": false
+        },
+        "type": {
+            "type": "string",
+            "default": ""
+        },
+        "placeholder": {
+            "type": "string",
+            "default": ""
+        },
+        "width": {
+            "type": "number",
+            "default": 0
+        },
+        "height": {
+            "type": "number",
+            "default": 300
+        },
+        "rowheight": {
+            "type": "number",
+            "default": 28
+        },
+        "divisor": {
+            "type": "string",
+            "default": ";"
+        },
+        "allowempty": {
+            "type": "boolean",
+            "default": true
+        },
+        "disabled": {
+            "type": "boolean",
+            "default": false
+        }
+    },
+    "bind": {
+        "type": "string"
+    },
+    "events": [
+        "onchange",
+        "onopen",
+        "onclose",
+        "onsearch",
+        "onbeforesearch",
+        "oninsert",
+        "onbeforeinsert",
+        "onload"
+    ],
+    "api": [
+        "open",
+        "close",
+        "toggle",
+        "isClosed",
+        "getValue",
+        "setValue",
+        "getText",
+        "getData",
+        "setData",
+        "add",
+        "reset"
+    ]
+}

@@ -1,0 +1,69 @@
+{
+    "name": "timeline",
+    "props": {
+        "data": {
+            "type": "array"
+        },
+        "type": {
+            "type": "string",
+            "default": ""
+        },
+        "date": {
+            "type": "string",
+            "default": ""
+        },
+        "format": {
+            "type": "string",
+            "default": ""
+        },
+        "message": {
+            "type": "string",
+            "default": "No records found"
+        },
+        "order": {
+            "type": "string",
+            "default": "asc"
+        },
+        "align": {
+            "type": "string",
+            "default": "left"
+        },
+        "position": {
+            "type": "string",
+            "default": ""
+        },
+        "controls": {
+            "type": "boolean",
+            "default": true
+        },
+        "editable": {
+            "type": "boolean",
+            "default": false
+        },
+        "remote": {
+            "type": "boolean",
+            "default": false
+        },
+        "url": {
+            "type": "string",
+            "default": ""
+        },
+        "width": {
+            "type": "number",
+            "default": 0
+        },
+        "height": {
+            "type": "number",
+            "default": 0
+        }
+    },
+    "bind": null,
+    "events": [
+        "onupdate",
+        "onedition"
+    ],
+    "api": [
+        "next",
+        "prev"
+    ]
+}

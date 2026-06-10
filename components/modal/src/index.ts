@@ -301,17 +301,20 @@ export const Modal = component('modal', {
             front();
         }
         if (!props.fullscreen!.value && p !== 'left' && p !== 'right' && p !== 'bottom') {
-            // Explicit coordinates: measure, then center unless given (v5)
-            const w = (size.value.w as number) || el.offsetWidth;
-            const h = (size.value.h as number) || el.offsetHeight;
-            if (w && !size.value.w) {
-                size.value = { w, h: size.value.h };
-            }
-            if (h && !size.value.h) {
-                size.value = { w: size.value.w, h };
+            // Explicit coordinates: measure, then center unless given (v5).
+            // Declared width/height/top/left are re-read EVERY open — they
+            // may be live states updated between opens (anchored panels)
+            const w = (props.width!.value as number) || (size.value.w as number) || el.offsetWidth;
+            const h = (props.height!.value as number) || (size.value.h as number) || el.offsetHeight;
+            if (w !== size.value.w || h !== size.value.h) {
+                size.value = { w, h };
             }
             if (p === 'absolute') {
-                pos.value = { ...pos.value, fixed: true };
+                pos.value = {
+                    top: (props.top!.value as number) || pos.value.top,
+                    left: (props.left!.value as number) || pos.value.left,
+                    fixed: true,
+                };
             } else {
                 const top = props.top!.value || Math.max(0, (window.innerHeight - h) / 2);
                 const left = props.left!.value || Math.max(0, (window.innerWidth - w) / 2);

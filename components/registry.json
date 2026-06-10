@@ -121,6 +121,98 @@
         }
     },
     {
+        "name": "dropdown",
+        "path": "components/dropdown",
+        "verified": true,
+        "checks": 39,
+        "contract": {
+            "name": "dropdown",
+            "props": {
+                "data": {
+                    "type": "array"
+                },
+                "multiple": {
+                    "type": "boolean",
+                    "default": false
+                },
+                "autocomplete": {
+                    "type": "boolean",
+                    "default": false
+                },
+                "remote": {
+                    "type": "boolean",
+                    "default": false
+                },
+                "url": {
+                    "type": "string",
+                    "default": ""
+                },
+                "insert": {
+                    "type": "boolean",
+                    "default": false
+                },
+                "type": {
+                    "type": "string",
+                    "default": ""
+                },
+                "placeholder": {
+                    "type": "string",
+                    "default": ""
+                },
+                "width": {
+                    "type": "number",
+                    "default": 0
+                },
+                "height": {
+                    "type": "number",
+                    "default": 300
+                },
+                "rowheight": {
+                    "type": "number",
+                    "default": 28
+                },
+                "divisor": {
+                    "type": "string",
+                    "default": ";"
+                },
+                "allowempty": {
+                    "type": "boolean",
+                    "default": true
+                },
+                "disabled": {
+                    "type": "boolean",
+                    "default": false
+                }
+            },
+            "bind": {
+                "type": "string"
+            },
+            "events": [
+                "onchange",
+                "onopen",
+                "onclose",
+                "onsearch",
+                "onbeforesearch",
+                "oninsert",
+                "onbeforeinsert",
+                "onload"
+            ],
+            "api": [
+                "open",
+                "close",
+                "toggle",
+                "isClosed",
+                "getValue",
+                "setValue",
+                "getText",
+                "getData",
+                "setData",
+                "add",
+                "reset"
+            ]
+        }
+    },
+    {
         "name": "modal",
         "path": "components/modal",
         "verified": true,
@@ -468,6 +560,81 @@
             "api": [
                 "open",
                 "create"
+            ]
+        }
+    },
+    {
+        "name": "timeline",
+        "path": "components/timeline",
+        "verified": true,
+        "checks": 32,
+        "contract": {
+            "name": "timeline",
+            "props": {
+                "data": {
+                    "type": "array"
+                },
+                "type": {
+                    "type": "string",
+                    "default": ""
+                },
+                "date": {
+                    "type": "string",
+                    "default": ""
+                },
+                "format": {
+                    "type": "string",
+                    "default": ""
+                },
+                "message": {
+                    "type": "string",
+                    "default": "No records found"
+                },
+                "order": {
+                    "type": "string",
+                    "default": "asc"
+                },
+                "align": {
+                    "type": "string",
+                    "default": "left"
+                },
+                "position": {
+                    "type": "string",
+                    "default": ""
+                },
+                "controls": {
+                    "type": "boolean",
+                    "default": true
+                },
+                "editable": {
+                    "type": "boolean",
+                    "default": false
+                },
+                "remote": {
+                    "type": "boolean",
+                    "default": false
+                },
+                "url": {
+                    "type": "string",
+                    "default": ""
+                },
+                "width": {
+                    "type": "number",
+                    "default": 0
+                },
+                "height": {
+                    "type": "number",
+                    "default": 0
+                }
+            },
+            "bind": null,
+            "events": [
+                "onupdate",
+                "onedition"
+            ],
+            "api": [
+                "next",
+                "prev"
             ]
         }
     },

@@ -1,0 +1,292 @@
+/* <Dropdown /> — default styling, lm-dropdown-* convention (v5 chrome) */
+.lm-dropdown {
+    user-select: none;
+    cursor: pointer;
+    box-sizing: border-box;
+    vertical-align: top;
+    font: 13.5px/1.4 system-ui, sans-serif;
+    color: #18181b;
+    position: relative;
+}
+
+.lm-dropdown[data-disabled='true'] {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+.lm-dropdown-header {
+    display: flex;
+    align-items: center;
+    position: relative;
+}
+
+.lm-dropdown-input {
+    padding: 7px 26px 7px 10px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: pointer;
+    box-sizing: border-box;
+    width: 100%;
+    min-height: 32px;
+    background: #fff;
+    border: 1px solid #d4d4d8;
+    border-radius: 6px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    font: inherit;
+    outline: none;
+}
+
+.lm-dropdown-input[contenteditable='true'] {
+    cursor: text;
+}
+
+.lm-dropdown-input:focus-visible,
+.lm-dropdown-input[contenteditable='true']:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+}
+
+.lm-dropdown-input > br {
+    display: none;
+}
+
+/* The chevron, rotating while open (v5) */
+.lm-dropdown-input::after {
+    content: '';
+    position: absolute;
+    width: 24px;
+    height: 24px;
+    top: calc(50% - 12px);
+    right: 2px;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-image: url("data:image/svg+xml,%0A%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2724%27 height=%2724%27 viewBox=%270 0 24 24%27%3E%3Cpath fill=%27none%27 d=%27M0 0h24v24H0V0z%27/%3E%3Cpath d=%27M7 10l5 5 5-5H7z%27 fill=%27gray%27/%3E%3C/svg%3E");
+    transition: transform 0.1s ease-in-out;
+}
+
+.lm-dropdown[data-state='true'] .lm-dropdown-input::after {
+    transform: rotate(-180deg);
+}
+
+.lm-dropdown-input:empty::before {
+    content: attr(placeholder);
+    color: #a1a1aa;
+}
+
+/* Insert (+) button, visible while open with insert enabled (v5) */
+.lm-dropdown-add {
+    position: absolute;
+    padding: 0;
+    margin: 0;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    right: 28px;
+    top: calc(50% - 9px);
+    width: 18px;
+    height: 18px;
+    line-height: 1;
+}
+
+.lm-dropdown-add::after {
+    content: '+';
+    font-size: 16px;
+    font-weight: 600;
+    color: #2563eb;
+}
+
+.lm-dropdown[data-insert='true'] .lm-dropdown-input {
+    padding-right: 46px;
+}
+
+/* The panel is a Modal: flush, list-ready. The WIDTH comes from the
+   width prop (>= the input width, computed at open) — min-width:100%
+   would resolve against the viewport on a fixed-position panel. */
+.lm-dropdown .lm-modal {
+    padding: 0;
+    min-width: 0;
+    min-height: 5px;
+    border: 1px solid #d4d4d8;
+    border-radius: 6px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.lm-dropdown .lm-modal-content {
+    padding: 0;
+}
+
+/* Virtualized list (datagrid pattern) */
+.lm-dropdown-lazy {
+    position: relative;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: thin;
+    box-sizing: border-box;
+}
+
+.lm-dropdown-canvas {
+    position: relative;
+}
+
+.lm-dropdown-window {
+    will-change: transform;
+}
+
+.lm-dropdown-item {
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 36px 0 10px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    position: relative;
+    cursor: pointer;
+}
+
+.lm-dropdown-item:hover {
+    background-color: #1e90ff;
+    color: #fff;
+}
+
+.lm-dropdown-item[data-selected='true'] {
+    background-color: #1e90ff;
+    color: #fff;
+}
+
+.lm-dropdown-item[data-selected='true']::after {
+    content: '✓';
+    position: absolute;
+    right: 10px;
+}
+
+.lm-dropdown-item[data-cursor='true'] {
+    background-color: #e0e7ff;
+}
+
+.lm-dropdown-item[data-cursor='true'][data-selected='true'] {
+    background-color: #1d86ed;
+}
+
+.lm-dropdown-item[data-disabled='true'] {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+.lm-dropdown-item > img {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+}
+
+.lm-dropdown-group {
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    padding: 0 10px;
+    font-weight: 700;
+    font-size: 12px;
+    color: #52525b;
+    background: #fafafa;
+}
+
+.lm-dropdown-empty {
+    padding: 14px;
+    text-align: center;
+    color: #a1a1aa;
+}
+
+/* Done/Reset controls — sheet modes only (v5) */
+.lm-dropdown-header-controls {
+    display: none;
+}
+
+.lm-dropdown-header-controls button {
+    background: transparent;
+    text-transform: uppercase;
+    cursor: pointer;
+    padding: 14px;
+    font-weight: 700;
+    border: 0;
+    color: #2563eb;
+    font: inherit;
+}
+
+/* Loading spinner replaces the chevron (v5) */
+.lm-dropdown-loading .lm-dropdown-input::after {
+    width: 12px;
+    height: 12px;
+    top: calc(50% - 7px);
+    right: 8px;
+    border: 1px solid #888;
+    border-top-color: transparent;
+    border-radius: 50%;
+    background-image: none;
+    animation: lm-dropdown-spin 0.8s linear infinite;
+}
+
+@keyframes lm-dropdown-spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Picker: bottom sheet (v5) */
+.lm-dropdown[data-type='picker'] .lm-modal {
+    width: 100% !important;
+    border-radius: 12px 12px 0 0;
+    border: 0;
+    box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.18);
+}
+
+.lm-dropdown[data-type='picker'][data-state='true'] .lm-dropdown-header-controls,
+.lm-dropdown[data-type='searchbar'][data-state='true'] .lm-dropdown-header-controls {
+    display: flex;
+}
+
+.lm-dropdown[data-type='picker'] .lm-dropdown-item,
+.lm-dropdown[data-type='searchbar'] .lm-dropdown-item {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    text-transform: uppercase;
+    font-size: 1.05em;
+}
+
+/* Searchbar: fullscreen take-over (v5) */
+.lm-dropdown[data-type='searchbar'][data-state='true'] {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100% !important;
+    height: 100% !important;
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+    z-index: 60;
+}
+
+.lm-dropdown[data-type='searchbar'][data-state='true'] .lm-dropdown-input {
+    font-size: 1.4em;
+    border: 0;
+    border-bottom: 1px solid #eee;
+    border-radius: 0;
+    height: 56px;
+    flex: 1;
+}
+
+.lm-dropdown[data-type='searchbar'][data-state='true'] .lm-dropdown-input::after {
+    background: none;
+}
+
+.lm-dropdown[data-type='searchbar'] .lm-modal {
+    width: 100% !important;
+    height: calc(100% - 56px) !important;
+    border: 0;
+    box-shadow: none;
+}

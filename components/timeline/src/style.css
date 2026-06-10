@@ -1,0 +1,265 @@
+.lm-timeline {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.5;
+    min-height: 200px;
+}
+
+.lm-timeline-data {
+    position: relative;
+    flex: 1;
+}
+
+/** Month navigation header — only ever visible in monthly mode (v5) */
+
+.lm-timeline-header {
+    display: none;
+    width: 100%;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 15px;
+    border-bottom: 1px solid var(--lm-border-color-light, #e9e9e9);
+    z-index: 1;
+    box-sizing: border-box;
+}
+
+.lm-timeline-header[data-type="monthly"] {
+    display: flex;
+}
+
+.lm-timeline-header[data-visible="false"] {
+    display: none;
+}
+
+.lm-timeline-label {
+    font-size: 1.4em;
+}
+
+.lm-timeline-year {
+    position: relative;
+    top: 8px;
+}
+
+.lm-timeline-month {
+    font-size: 1.6em;
+}
+
+.lm-timeline-navigation {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1px;
+}
+
+.lm-timeline .lm-timeline-icon {
+    font-family: "Material Symbols Outlined", "Material Icons", "FontAwesome";
+    font-size: 24px;
+    width: 40px;
+    height: 40px;
+    line-height: 24px;
+    box-sizing: border-box;
+    border-radius: 20px;
+    border: 0;
+    padding: 0;
+    margin: 0;
+    background: transparent;
+    cursor: pointer;
+}
+
+.lm-timeline-edit {
+    float: right;
+    margin-top: -8px;
+}
+
+.lm-timeline-edit .lm-timeline-icon {
+    color: gray;
+}
+
+/** Empty feed (v5 used :empty::before — v6 renders a real element) */
+
+.lm-timeline-message {
+    font-size: 1.2em;
+    text-align: center;
+    position: absolute;
+    left: 0;
+    width: 100%;
+}
+
+/** Items */
+
+.lm-timeline-item {
+    padding: 20px;
+    position: relative;
+    border-width: 0;
+    border-style: var(--lm-timeline-border-style, solid);
+    border-color: var(--lm-timeline-border-color, #ccc);
+}
+
+.lm-timeline-item[data-bullet]::before {
+    content: attr(data-bullet);
+    width: 100px;
+    height: 30px;
+    position: absolute;
+}
+
+.lm-timeline-item[data-bullet] .lm-timeline-title::before {
+    content: "";
+    width: 16px;
+    height: 16px;
+    border-radius: 16px;
+    border-width: 3px;
+    border-style: solid;
+    border-color: var(--lm-main-color-deep, #1f64e1);
+    display: inline-block;
+    box-sizing: border-box;
+    background-color: #fff;
+    margin: 1px;
+    position: absolute;
+}
+
+.lm-timeline-subtitle {
+    color: #aaa;
+    font-size: 0.8em;
+}
+
+.lm-timeline-data::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+}
+
+.lm-timeline-data::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+.lm-timeline-data::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+}
+
+/** Align to the left */
+
+.lm-timeline-data[data-align="left"] {
+    padding: 15px 0 15px 125px;
+    overflow-y: auto;
+}
+
+.lm-timeline-data[data-align="left"] .lm-timeline-item {
+    border-left-width: 2px;
+}
+
+.lm-timeline-data[data-align="left"] .lm-timeline-item[data-bullet]::before {
+    left: -20px;
+    margin: 0 0 0 -105px;
+    text-align: right;
+}
+
+.lm-timeline-data[data-align="left"] .lm-timeline-item[data-bullet] .lm-timeline-title::before {
+    left: -10px;
+}
+
+/** Align to the right */
+
+.lm-timeline-data[data-align="right"] {
+    text-align: right;
+    padding: 15px 125px 15px 0;
+    overflow-y: auto;
+}
+
+.lm-timeline-data[data-align="right"] .lm-timeline-item {
+    border-right-width: 2px;
+}
+
+.lm-timeline-data[data-align="right"] .lm-timeline-item[data-bullet]::before {
+    right: 0;
+    margin: 0 -105px 0 0;
+}
+
+.lm-timeline-data[data-align="right"] .lm-timeline-item[data-bullet] .lm-timeline-title::before {
+    right: -10px;
+}
+
+/** Top */
+
+.lm-timeline-data[data-align="top"] {
+    display: flex;
+    padding: 50px 0 0 0;
+    overflow-x: auto;
+}
+
+.lm-timeline-data[data-align="top"] .lm-timeline-item {
+    border-top-width: 2px;
+    min-width: 200px;
+}
+
+.lm-timeline-data[data-align="top"] .lm-timeline-item[data-bullet]::before {
+    left: 0;
+    top: 0;
+    margin: -30px 0 0 20px;
+}
+
+.lm-timeline-data[data-align="top"] .lm-timeline-item[data-bullet] .lm-timeline-title::before {
+    top: -10px;
+}
+
+/** Bottom */
+
+.lm-timeline-data[data-align="bottom"] {
+    display: flex;
+    padding: 0 0 50px 0;
+    overflow-x: auto;
+}
+
+.lm-timeline-data[data-align="bottom"] .lm-timeline-item {
+    display: flex;
+    justify-content: flex-end;
+    flex-direction: column;
+    border-bottom-width: 2px;
+    min-width: 200px;
+}
+
+.lm-timeline-data[data-align="bottom"] .lm-timeline-item[data-bullet]::before {
+    left: 0;
+    bottom: -40px;
+    margin: 0 0 0 20px;
+}
+
+.lm-timeline-data[data-align="bottom"] .lm-timeline-item[data-bullet] .lm-timeline-title::before {
+    bottom: -10px;
+}
+
+/** Tags */
+
+.lm-timeline-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
+}
+
+.lm-timeline-data[data-align="right"] .lm-timeline-tags {
+    justify-content: flex-end;
+}
+
+.lm-timeline-tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    font-size: 0.75em;
+    font-weight: 500;
+    border-radius: 12px;
+    background-color: #e5e7eb;
+    color: #374151;
+    white-space: nowrap;
+}
+
+.lm-timeline-tag[data-clickable] {
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.1s;
+}
+
+.lm-timeline-tag[data-clickable]:hover {
+    opacity: 0.85;
+    transform: scale(1.02);
+}
+
+.lm-timeline-tag[data-clickable]:active {
+    transform: scale(0.98);
+}
