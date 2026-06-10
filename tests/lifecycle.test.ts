@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach, vi } from 'vitest';
-import lemonade, { render, mount, explain, type Component, type State } from '../src/index';
+import lemonade, { render, mount, batch, explain, type Component, type State } from '../src/index';
 import { test as t } from '../src/test';
 
 let handle: ReturnType<typeof t> | null = null;
@@ -27,13 +27,73 @@ describe('Lifecycle, dev mode and errors', () => {
         expect(log).toEqual(['mounted:SECTION:true', 'unmounted', 'cleanup']);
     });
 
-    it('freezes state contents in dev mode so silent mutation throws', () => {
+    it('allows in-place mutation: silent until touch(), then delta-only updates', () => {
+        type Row = { id: number; title: string };
+        let rows!: State<Row[]>;
         const C: Component = (props, { state }) => {
-            const items = state([1, 2]);
-            expect(() => (items.value as number[]).push(3)).toThrow(TypeError);
-            return render`<div></div>`;
+            const data = state<Row[]>([
+                { id: 1, title: 'a' },
+                { id: 2, title: 'b' },
+                { id: 3, title: 'c' },
+            ]);
+            rows = data;
+            return render`<ul>${() => data.value.map((r) => render`<li>${r.title}</li>`)}</ul>`;
         };
         handle = t(C);
+        const before = handle.queryAll('li');
+
+        // Mutation alone is silent — no copy, no update
+        rows.value[1].title = 'B';
+        expect(handle.queryAll('li')[1].textContent).toBe('b');
+
+        // touch() notifies: same array, same row objects, no copies anywhere
+        rows.touch();
+        const after = handle.queryAll('li');
+        expect(after.map((li) => li.textContent)).toEqual(['a', 'B', 'c']);
+        // Every element instance is reused — only one text node was written
+        expect(after[0]).toBe(before[0]);
+        expect(after[1]).toBe(before[1]);
+        expect(after[2]).toBe(before[2]);
+    });
+
+    it('touch() fires the onchange callback', () => {
+        const calls: number[] = [];
+        let ref!: State<number[]>;
+        const C: Component = (props, { state }) => {
+            const data = state([1], () => calls.push(1));
+            ref = data;
+            return render`<div>${() => data.value.join(',')}</div>`;
+        };
+        handle = t(C);
+        ref.value.push(2);
+        ref.touch();
+        expect(calls).toHaveLength(1);
+        expect(handle.text()).toBe('1,2');
+    });
+
+    it('batch() coalesces many updates into one pass, deduped across states', () => {
+        let runs = 0;
+        let a!: State<number>, b!: State<number[]>;
+        const C: Component = (props, { state }) => {
+            const x = state(0);
+            const list = state([0]);
+            a = x;
+            b = list;
+            return render`<div>${() => (runs++, x.value + ':' + b.value.join(','))}</div>`;
+        };
+        handle = t(C);
+        const before = runs;
+
+        batch(() => {
+            a.value = 1;
+            a.value = 2;
+            b.value.push(9);
+            b.touch();
+            expect(handle.text()).toBe('0:0'); // nothing ran yet inside the batch
+        });
+
+        expect(runs).toBe(before + 1); // ONE re-run for four changes on two states
+        expect(handle.text()).toBe('2:0,9'); // and the mutation was honored (forcing)
     });
 
     it('state onchange callback receives new and old values', () => {

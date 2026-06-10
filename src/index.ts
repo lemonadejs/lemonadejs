@@ -19,11 +19,13 @@ import { parse } from './parser';
 import { env, explain } from './errors';
 import { inspect, mount, setComponents, unsafe } from './runtime';
 import { store } from './store';
+import { batch } from './reactivity';
 import { createWebComponent } from './webcomponents';
 
 export type { Bindable, Bound, Component, Handle, Props, SlotValue, State, Template, Tools, View } from './types';
 export { mount, inspect, setComponents, unsafe } from './runtime';
 export { store } from './store';
+export { batch } from './reactivity';
 export { createWebComponent } from './webcomponents';
 export { explain, env } from './errors';
 
@@ -53,6 +55,7 @@ const lemonade = {
     inspect,
     setComponents,
     store,
+    batch,
     unsafe,
     createWebComponent,
     explain,

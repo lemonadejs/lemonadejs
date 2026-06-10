@@ -39,6 +39,12 @@ export interface View {
 /** A reactive state container */
 export interface State<T> {
     value: T;
+    /**
+     * Notify after in-place mutation. State contents are NOT immutable:
+     * mutate freely (rows.value[i].total = 9) — silent and free — then
+     * touch() to update. No copies, no proxies; DOM writes are delta-only.
+     */
+    touch(): void;
 }
 
 /**

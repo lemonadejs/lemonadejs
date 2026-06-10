@@ -19,7 +19,7 @@ const MESSAGES: Record<string, string> = {
     'LJS-102': 'Unclosed tag at the end of the template',
     'LJS-104': 'Unknown component — register it: setComponents({ Card }), or embed by value: <${Card} />',
     'LJS-105': 'Expression ${...} is not allowed in this position',
-    'LJS-201': 'State contents are frozen in dev mode — assign a new value instead of mutating',
+    'LJS-201': 'In-place mutation is silent — call state.touch() after mutating, or assign a new value',
     'LJS-202': 'Slot holds a snapshot — wrap dynamic expressions: ${() => ...}',
     'LJS-203': 'Update loop detected — a state change keeps triggering itself',
     'LJS-301': 'Event attributes require a function: onclick="${() => ...}"',
@@ -55,9 +55,11 @@ const EXPLAIN: Record<string, string> = {
         'Expressions can appear as text content, as a full attribute value, inside a quoted attribute value, ' +
         'or as a component tag: <${Card}>. They cannot be used as attribute names or partial tag names.',
     'LJS-201':
-        'In development mode, objects and arrays stored in a state are frozen. Mutating them ' +
-        '(state.value.push(x)) throws a TypeError on purpose: mutation does not trigger updates. ' +
-        'Assign a new value instead: state.value = [...state.value, x].',
+        'State contents are NOT immutable (this is not React): mutating in place is allowed and free — ' +
+        'rows.value[i].total = 9 — but it does not notify by itself. Call rows.touch() after mutating to ' +
+        'run updates: no copies, no proxies, DOM writes are delta-only. For bulk operations wrap the work ' +
+        'in batch(() => {...}) so thousands of changes notify once. For small data, assignment also works: ' +
+        'state.value = [...state.value, x]. The footgun: mutate without touch() and nothing updates.',
     'LJS-202':
         'A template slot received a plain value (string/number/boolean) while states were being read. ' +
         'Plain values are one-time snapshots. If the slot should update when states change, wrap it: ' +

@@ -17,6 +17,7 @@ import type { SlotValue, View } from './types';
 export type { Bindable, Bound, Component, Handle, Props, SlotValue, State, Template, Tools, View } from './types';
 export { mount, inspect, setComponents, unsafe } from './runtime';
 export { store } from './store';
+export { batch } from './reactivity';
 export { createWebComponent } from './webcomponents';
 export { explain, env } from './errors';
 /**
@@ -33,6 +34,7 @@ declare const lemonade: {
     inspect: (target: Node) => import("./runtime").InspectReport | null;
     setComponents: (map: Record<string, import("./types").Component<never>>) => void;
     store: <T>(initial: T, storage?: string) => import("./types").State<T>;
+    batch: <R>(fn: () => R) => R;
     unsafe: (html: string) => Node[];
     createWebComponent: (name: string, component: import("./types").Component<Record<string, unknown>>, options?: import("./webcomponents").WebComponentOptions) => string;
     explain: (code: string) => string;

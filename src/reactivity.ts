@@ -6,10 +6,61 @@
  * changes, only the bindings that actually depend on it re-run.
  */
 
-import { env, fail } from './errors';
+import { fail } from './errors';
 
 let current: Binding | null = null;
 let depth = 0;
+
+/**
+ * True while touch() notifications run: reference-equality shortcuts must
+ * be skipped, because identical references may hold mutated contents.
+ */
+let forcing = false;
+
+export const isForcing = function (): boolean {
+    return forcing;
+};
+
+/** Pending bindings while a batch() is open (deduped across states) */
+let batching: Set<Binding> | null = null;
+let batchForcing = false;
+
+/**
+ * Coalesce many updates into one notification pass. Designed for bulk
+ * operations on big data (paste, sort, bulk delete): every state change
+ * inside the callback queues its bindings — deduped — and they run once
+ * at the end, not once per change.
+ *
+ *   batch(() => {
+ *       for (const cell of pasted) rows.value[cell.y][cell.x] = cell.v;
+ *       rows.touch();
+ *       selection.value = area;
+ *   });
+ */
+export const batch = function <R>(fn: () => R): R {
+    if (batching) {
+        // Nested batch: the outer flush covers it
+        return fn();
+    }
+    batching = new Set();
+    try {
+        return fn();
+    } finally {
+        const queue = batching;
+        const wasForcing = batchForcing;
+        batching = null;
+        batchForcing = false;
+        const previous = forcing;
+        forcing = forcing || wasForcing;
+        try {
+            for (const binding of queue) {
+                binding.run();
+            }
+        } finally {
+            forcing = previous;
+        }
+    }
+};
 
 /** Counts state reads — used by the dev-mode snapshot heuristic (LJS-202) */
 let reads = 0;
@@ -50,30 +101,20 @@ export class Binding {
 }
 
 /**
- * Freeze plain objects/arrays stored in states (dev mode only), so silent
- * mutation — which would never trigger an update — throws immediately.
- * See LJS-201.
- */
-const devFreeze = function <T>(value: T): T {
-    if (env.dev && value && typeof value === 'object') {
-        const proto = Object.getPrototypeOf(value);
-        if (Array.isArray(value) || proto === Object.prototype || proto === null) {
-            Object.freeze(value);
-        }
-    }
-    return value;
-};
-
-/**
  * State container. Reading .value inside a reactive computation subscribes
  * it; assigning .value notifies exactly the subscribed computations.
+ *
+ * NOT immutable by design: contents may be mutated in place freely —
+ * mutation is silent, and touch() notifies afterwards. No copies, no
+ * proxies, no freezing: a one-cell change in a 1M-row array is O(1) plus
+ * the bindings that actually re-run. See explain('LJS-201').
  */
 export class StateImpl<T> {
     subs = new Set<Binding>();
     private v: T;
 
     constructor(initial: T, private onchange?: (value: T, oldValue: T) => void) {
-        this.v = devFreeze(initial);
+        this.v = initial;
     }
 
     get value(): T {
@@ -90,18 +131,46 @@ export class StateImpl<T> {
             return;
         }
         const old = this.v;
-        this.v = devFreeze(next);
-        if (depth > 100) {
-            fail('LJS-203');
-        }
-        depth++;
+        this.v = next;
+        this.emit(old);
+    }
+
+    /**
+     * Notify after in-place mutation of the value's contents:
+     *   rows.value[i].total = 9; rows.touch();
+     */
+    touch(): void {
+        const previous = forcing;
+        forcing = true;
         try {
-            // Copy: a binding re-run mutates the subscription set
-            for (const binding of [...this.subs]) {
-                binding.run();
-            }
+            this.emit(this.v);
         } finally {
-            depth--;
+            forcing = previous;
+        }
+    }
+
+    private emit(old: T): void {
+        if (batching) {
+            // Inside batch(): queue (deduped), run once at the end
+            for (const binding of this.subs) {
+                batching.add(binding);
+            }
+            if (forcing) {
+                batchForcing = true;
+            }
+        } else {
+            if (depth > 100) {
+                fail('LJS-203');
+            }
+            depth++;
+            try {
+                // Copy: a binding re-run mutates the subscription set
+                for (const binding of [...this.subs]) {
+                    binding.run();
+                }
+            } finally {
+                depth--;
+            }
         }
         if (typeof this.onchange === 'function') {
             this.onchange(this.v, old);
@@ -140,6 +209,10 @@ export class BoundState<T> extends StateImpl<T> {
 
     override peek(): T {
         return this.target.peek();
+    }
+
+    override touch(): void {
+        this.target.touch();
     }
 
     set(next: T): void {

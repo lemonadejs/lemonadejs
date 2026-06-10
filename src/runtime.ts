@@ -19,7 +19,7 @@
 import type { Bindable, Component, Handle, State, Template, Tools, View, VNode, VProp } from './types';
 import { isView } from './types';
 import { env, fail, warn } from './errors';
-import { Binding, BoundState, isDynamic, isState, readCount, resolve, StateImpl } from './reactivity';
+import { Binding, BoundState, isDynamic, isForcing, isState, readCount, resolve, StateImpl } from './reactivity';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 const SVG_TAGS = new Set([
@@ -248,13 +248,15 @@ const applySlot = function (s: SlotState, value: unknown, inst: Instance): void 
         } else {
             const view = item.view;
             if (o && o.kind === 'view' && o.template === view.template) {
-                if (valuesEqual(o.holder.values, view.values)) {
+                const equal = valuesEqual(o.holder.values, view.values);
+                if (equal && !isForcing()) {
                     // Identical content — reuse as-is (reattaches if detached)
                     next.push(o);
                     continue;
                 }
-                if (!o.instances.length) {
-                    // Same template, new values — update in place, keep the DOM
+                // touch(): equal references may hold mutated contents, so
+                // re-run the bindings — appliers still skip unchanged output
+                if (!o.instances.length || equal) {
                     o.holder.values = view.values;
                     for (const binding of o.bindings) {
                         binding.run();
@@ -370,6 +372,7 @@ const bindForm = function (el: Element, state: StateImpl<unknown>, ctx: BuildCtx
     ctx.bindings.push(binding);
     binding.run();
 
+    const isNumeric = tag === 'input' && (input.type === 'number' || input.type === 'range');
     const event = isCheckbox || isRadio || tag === 'select' ? 'change' : 'input';
     el.addEventListener(event, function () {
         if (isCheckbox) {
@@ -378,6 +381,10 @@ const bindForm = function (el: Element, state: StateImpl<unknown>, ctx: BuildCtx
             if (input.checked) {
                 state.value = input.value;
             }
+        } else if (isNumeric) {
+            // Type honesty: a State<number> never silently becomes a string
+            const n = input.valueAsNumber;
+            state.value = Number.isNaN(n) ? null : n;
         } else {
             state.value = input.value;
         }

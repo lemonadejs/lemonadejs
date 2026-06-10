@@ -20,6 +20,7 @@ var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: tru
 // src/index.ts
 var index_exports = {};
 __export(index_exports, {
+  batch: () => batch,
   createWebComponent: () => createWebComponent,
   default: () => index_default,
   env: () => env,
@@ -47,7 +48,7 @@ var MESSAGES = {
   "LJS-102": "Unclosed tag at the end of the template",
   "LJS-104": "Unknown component \u2014 register it: setComponents({ Card }), or embed by value: <${Card} />",
   "LJS-105": "Expression ${...} is not allowed in this position",
-  "LJS-201": "State contents are frozen in dev mode \u2014 assign a new value instead of mutating",
+  "LJS-201": "In-place mutation is silent \u2014 call state.touch() after mutating, or assign a new value",
   "LJS-202": "Slot holds a snapshot \u2014 wrap dynamic expressions: ${() => ...}",
   "LJS-203": "Update loop detected \u2014 a state change keeps triggering itself",
   "LJS-301": 'Event attributes require a function: onclick="${() => ...}"',
@@ -64,7 +65,7 @@ var EXPLAIN = {
   "LJS-102": "The template ended while a tag was still open. Every opened tag must be closed: <div>...</div>, or self-closed: <Component />.",
   "LJS-104": "Tags starting with an uppercase letter are components. Either register the function once \u2014 setComponents({ Card }) \u2014 and use <Card /> anywhere (names are case-sensitive and must match exactly), or embed it by value with no registration: <${Card} />. A typo in a registered name raises this error at mount time.",
   "LJS-105": "Expressions can appear as text content, as a full attribute value, inside a quoted attribute value, or as a component tag: <${Card}>. They cannot be used as attribute names or partial tag names.",
-  "LJS-201": "In development mode, objects and arrays stored in a state are frozen. Mutating them (state.value.push(x)) throws a TypeError on purpose: mutation does not trigger updates. Assign a new value instead: state.value = [...state.value, x].",
+  "LJS-201": "State contents are NOT immutable (this is not React): mutating in place is allowed and free \u2014 rows.value[i].total = 9 \u2014 but it does not notify by itself. Call rows.touch() after mutating to run updates: no copies, no proxies, DOM writes are delta-only. For bulk operations wrap the work in batch(() => {...}) so thousands of changes notify once. For small data, assignment also works: state.value = [...state.value, x]. The footgun: mutate without touch() and nothing updates.",
   "LJS-202": "A template slot received a plain value (string/number/boolean) while states were being read. Plain values are one-time snapshots. If the slot should update when states change, wrap it: ${() => valid.value && render`...`}. If the snapshot is intentional, ignore this warning.",
   "LJS-203": "A state assignment inside a reactive expression triggered itself recursively more than 100 times. Do not assign to states inside template expressions; assign from event handlers or callbacks.",
   "LJS-301": 'Attributes starting with "on" are events and must receive a function: onclick="${() => count.value++}". String handlers are not supported (CSP-safe by design).',
@@ -356,6 +357,35 @@ function isView(v) {
 // src/reactivity.ts
 var current = null;
 var depth = 0;
+var forcing = false;
+var isForcing = function() {
+  return forcing;
+};
+var batching = null;
+var batchForcing = false;
+var batch = function(fn) {
+  if (batching) {
+    return fn();
+  }
+  batching = /* @__PURE__ */ new Set();
+  try {
+    return fn();
+  } finally {
+    const queue = batching;
+    const wasForcing = batchForcing;
+    batching = null;
+    batchForcing = false;
+    const previous = forcing;
+    forcing = forcing || wasForcing;
+    try {
+      for (const binding of queue) {
+        binding.run();
+      }
+    } finally {
+      forcing = previous;
+    }
+  }
+};
 var reads = 0;
 var readCount = function() {
   return reads;
@@ -385,20 +415,11 @@ var Binding = class {
     this.deps.clear();
   }
 };
-var devFreeze = function(value) {
-  if (env.dev && value && typeof value === "object") {
-    const proto = Object.getPrototypeOf(value);
-    if (Array.isArray(value) || proto === Object.prototype || proto === null) {
-      Object.freeze(value);
-    }
-  }
-  return value;
-};
 var StateImpl = class {
   constructor(initial, onchange) {
     this.onchange = onchange;
     this.subs = /* @__PURE__ */ new Set();
-    this.v = devFreeze(initial);
+    this.v = initial;
   }
   get value() {
     reads++;
@@ -413,17 +434,42 @@ var StateImpl = class {
       return;
     }
     const old = this.v;
-    this.v = devFreeze(next);
-    if (depth > 100) {
-      fail("LJS-203");
-    }
-    depth++;
+    this.v = next;
+    this.emit(old);
+  }
+  /**
+   * Notify after in-place mutation of the value's contents:
+   *   rows.value[i].total = 9; rows.touch();
+   */
+  touch() {
+    const previous = forcing;
+    forcing = true;
     try {
-      for (const binding of [...this.subs]) {
-        binding.run();
-      }
+      this.emit(this.v);
     } finally {
-      depth--;
+      forcing = previous;
+    }
+  }
+  emit(old) {
+    if (batching) {
+      for (const binding of this.subs) {
+        batching.add(binding);
+      }
+      if (forcing) {
+        batchForcing = true;
+      }
+    } else {
+      if (depth > 100) {
+        fail("LJS-203");
+      }
+      depth++;
+      try {
+        for (const binding of [...this.subs]) {
+          binding.run();
+        }
+      } finally {
+        depth--;
+      }
     }
     if (typeof this.onchange === "function") {
       this.onchange(this.v, old);
@@ -448,6 +494,9 @@ var BoundState = class extends StateImpl {
   }
   peek() {
     return this.target.peek();
+  }
+  touch() {
+    this.target.touch();
   }
   set(next) {
     const old = this.target.peek();
@@ -626,11 +675,12 @@ var applySlot = function(s, value, inst) {
     } else {
       const view = item.view;
       if (o && o.kind === "view" && o.template === view.template) {
-        if (valuesEqual(o.holder.values, view.values)) {
+        const equal = valuesEqual(o.holder.values, view.values);
+        if (equal && !isForcing()) {
           next.push(o);
           continue;
         }
-        if (!o.instances.length) {
+        if (!o.instances.length || equal) {
           o.holder.values = view.values;
           for (const binding of o.bindings) {
             binding.run();
@@ -726,6 +776,7 @@ var bindForm = function(el, state, ctx) {
   const binding = new Binding(write);
   ctx.bindings.push(binding);
   binding.run();
+  const isNumeric = tag === "input" && (input.type === "number" || input.type === "range");
   const event = isCheckbox || isRadio || tag === "select" ? "change" : "input";
   el.addEventListener(event, function() {
     if (isCheckbox) {
@@ -734,6 +785,9 @@ var bindForm = function(el, state, ctx) {
       if (input.checked) {
         state.value = input.value;
       }
+    } else if (isNumeric) {
+      const n = input.valueAsNumber;
+      state.value = Number.isNaN(n) ? null : n;
     } else {
       state.value = input.value;
     }
@@ -1151,6 +1205,7 @@ var lemonade = {
   inspect,
   setComponents,
   store,
+  batch,
   unsafe,
   createWebComponent,
   explain,

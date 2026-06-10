@@ -48,12 +48,26 @@ Trusted HTML (plain strings are ALWAYS escaped; this is the explicit opt-out):
 ## State
 
     const count = state(0);                         // State<number>, inferred
-    const user  = state({ name: 'Ana' });           // objects/arrays are FROZEN in dev
-    count.value++;                                  // assignment triggers updates
-    user.value = { ...user.value, name: 'Bia' };    // replace, never mutate (LJS-201)
+    count.value++;                                  // assignment notifies automatically
     const s = state(0, (val, old) => {...});        // optional change callback
 
-Updates fire on ASSIGNMENT only. state.value.push(x) throws in dev mode on purpose.
+NOT React: state is NOT immutable. Two notification paths, one rule —
+assignment notifies by itself; in-place mutation is allowed, free and SILENT
+until you call touch():
+
+    const rows = state(bigData);                    // 1M rows? fine
+    rows.value[500].total = 9;                      // mutate in place — no copy, no proxy
+    rows.touch();                                   // notify — DOM writes are delta-only
+    rows.value = [...rows.value, newRow];           // assignment style also works (small data)
+
+    import { batch } from 'lemonadejs';
+    batch(() => {                                   // bulk ops: paste, sort, bulk delete
+        for (const c of cells) rows.value[c.y][c.x] = c.v;
+        rows.touch();                               // thousands of changes, ONE update pass
+        selection.value = area;                     // bindings deduped across states
+    });
+
+The footgun (LJS-201): mutate without touch() and nothing updates.
 
 Shared state (outside components, module scope):
 
@@ -193,13 +207,14 @@ Props are read-only (frozen in dev). Data flows up via callback props.
 
 ## Error codes (stable, pattern-matchable)
 
-    LJS-001 component is not a function          LJS-104 <Card> found — write <${Card} />
-    LJS-002 must return render`...`              LJS-105 ${} not allowed in that position
-    LJS-003 mount root must be an element        LJS-201 state contents frozen — assign, don't mutate
-    LJS-101 mismatched closing tag               LJS-202 slot is a snapshot — wrap: ${() => ...}
-    LJS-102 unclosed tag                         LJS-203 update loop — don't assign states in expressions
-    LJS-301 events need functions, not strings   LJS-302 bind needs a state: bind="${state}"
-    LJS-303 bind: input/textarea/select only     LJS-304 bind owns value — drop the value attribute
+    LJS-001 component is not a function          LJS-201 mutation is silent — touch() or assign
+    LJS-002 must return render`...`              LJS-202 slot is a snapshot — wrap: ${() => ...}
+    LJS-003 mount root must be an element        LJS-203 update loop — don't assign states in expressions
+    LJS-101 mismatched closing tag               LJS-301 events need functions, not strings
+    LJS-102 unclosed tag                         LJS-302 bind needs a state: bind="${state}"
+    LJS-104 unknown component — setComponents    LJS-303 bind: input/textarea/select only
+    LJS-105 ${} not allowed in that position     LJS-304 bind owns value — drop the value attribute
+                                                 LJS-305 callbacks are lowercase: onclick, onsave
 
 ## Migrating from v5
 
@@ -216,15 +231,15 @@ Props are read-only (frozen in dev). Data flows up via callback props.
     setComponents({ Card }) + <Card/>    same — or embed by value: <${Card} />
     lm-path / setPath forms              form() from lemonadejs/forms ($get/$set)
     HTML strings in slots                escaped by default; unsafe(html) for trusted markup
-    el.refresh() / refresh(true)         not needed — assignment updates surgically
+    self.refresh('prop') / refresh()     state.touch() after in-place mutation; assignment otherwise
 
 ## Common mistakes
 
 WRONG  ${valid.value && render`...`}            evaluates once — frozen (LJS-202 warns)
 RIGHT  ${() => valid.value && render`...`}
 
-WRONG  items.value.push(x)                      throws in dev (LJS-201) — never triggers updates
-RIGHT  items.value = [...items.value, x]
+WRONG  items.value.push(x)  alone               silent (LJS-201) — nothing updates
+RIGHT  items.value.push(x); items.touch()       — or items.value = [...items.value, x]
 
 WRONG  <Card title="x" />  without registering  LJS-104 — register first: setComponents({ Card })
 RIGHT  setComponents({ Card }) then <Card />, or <${Card} title="x" /> with no registration

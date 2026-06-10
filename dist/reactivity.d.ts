@@ -5,6 +5,20 @@
  * every state .value it reads subscribes it to that state. When a state
  * changes, only the bindings that actually depend on it re-run.
  */
+export declare const isForcing: () => boolean;
+/**
+ * Coalesce many updates into one notification pass. Designed for bulk
+ * operations on big data (paste, sort, bulk delete): every state change
+ * inside the callback queues its bindings — deduped — and they run once
+ * at the end, not once per change.
+ *
+ *   batch(() => {
+ *       for (const cell of pasted) rows.value[cell.y][cell.x] = cell.v;
+ *       rows.touch();
+ *       selection.value = area;
+ *   });
+ */
+export declare const batch: <R>(fn: () => R) => R;
 export declare const readCount: () => number;
 /**
  * A reactive computation with automatic dependency tracking
@@ -19,6 +33,11 @@ export declare class Binding {
 /**
  * State container. Reading .value inside a reactive computation subscribes
  * it; assigning .value notifies exactly the subscribed computations.
+ *
+ * NOT immutable by design: contents may be mutated in place freely —
+ * mutation is silent, and touch() notifies afterwards. No copies, no
+ * proxies, no freezing: a one-cell change in a 1M-row array is O(1) plus
+ * the bindings that actually re-run. See explain('LJS-201').
  */
 export declare class StateImpl<T> {
     private onchange?;
@@ -27,6 +46,12 @@ export declare class StateImpl<T> {
     constructor(initial: T, onchange?: ((value: T, oldValue: T) => void) | undefined);
     get value(): T;
     set value(next: T);
+    /**
+     * Notify after in-place mutation of the value's contents:
+     *   rows.value[i].total = 9; rows.touch();
+     */
+    touch(): void;
+    private emit;
     /** Read without subscribing (used by inspect/tooling) */
     peek(): T;
 }
@@ -43,6 +68,7 @@ export declare class BoundState<T> extends StateImpl<T> {
     get value(): T;
     set value(next: T);
     peek(): T;
+    touch(): void;
     set(next: T): void;
 }
 export declare const isState: (v: unknown) => v is StateImpl<unknown>;

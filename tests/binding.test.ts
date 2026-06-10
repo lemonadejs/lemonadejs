@@ -115,6 +115,26 @@ describe('Native bind directive', () => {
         expect(area.value).toBe('changed');
     });
 
+    it('number inputs round-trip as numbers, null when empty (type honesty)', () => {
+        let ref!: State<number | null>;
+        const C: Component = (p, { state }) => {
+            const age = state<number | null>(30);
+            ref = age;
+            return render`<div><input type="number" bind="${age}" /></div>`;
+        };
+        handle = t(C);
+        const input = handle.query('input') as HTMLInputElement;
+        expect(input.value).toBe('30');
+
+        input.value = '42';
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+        expect(ref.value).toBe(42); // number, not "42"
+
+        input.value = '';
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+        expect(ref.value).toBeNull();
+    });
+
     it('never renders bind as a DOM attribute', () => {
         const C: Component = (p, { state }) => {
             const v = state('x');
