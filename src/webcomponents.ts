@@ -32,11 +32,12 @@ export interface WebComponentOptions {
 
 type AnyComponent = Component<Record<string, unknown>>;
 
-export function createWebComponent(component: AnyComponent, options?: WebComponentOptions): string;
-export function createWebComponent(name: string, component: AnyComponent, options?: WebComponentOptions): string;
+// Component<never> accepts any component type (props are contravariant)
+export function createWebComponent(component: Component<never>, options?: WebComponentOptions): string;
+export function createWebComponent(name: string, component: Component<never>, options?: WebComponentOptions): string;
 export function createWebComponent(
-    a: string | AnyComponent,
-    b?: AnyComponent | WebComponentOptions,
+    a: string | Component<never>,
+    b?: Component<never> | WebComponentOptions,
     c?: WebComponentOptions
 ): string {
     let name: string | undefined;
@@ -44,7 +45,7 @@ export function createWebComponent(
     let options: WebComponentOptions | undefined;
 
     if (typeof a === 'function') {
-        component = a;
+        component = a as AnyComponent;
         options = b as WebComponentOptions | undefined;
     } else {
         name = a;

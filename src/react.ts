@@ -36,8 +36,10 @@ const reactAlias = function (event: string): string {
 };
 
 export const adaptReact = function (
-    component: Component<AnyProps>
+    // Component<never> accepts any component type (props are contravariant)
+    target: Component<never>
 ): ForwardRefExoticComponent<PropsWithoutRef<AnyProps> & RefAttributes<Api>> {
+    const component = target as Component<AnyProps>;
     const schema = contract(component);
 
     return forwardRef<Api, AnyProps>(function (props, ref) {

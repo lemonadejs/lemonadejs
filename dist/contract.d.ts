@@ -25,9 +25,30 @@ import type { Bindable, Component, State } from './types';
 /** Widen literal defaults and map constructors to value types */
 type Widen<E> = E extends string ? string : E extends number ? number : E extends boolean ? boolean : E extends StringConstructor ? string : E extends NumberConstructor ? number : E extends BooleanConstructor ? boolean : E extends ArrayConstructor ? unknown[] : E extends ObjectConstructor ? Record<string, unknown> : E extends FunctionConstructor ? (...args: never[]) => unknown : E;
 /**
- * The props type a published component receives, derived from its
- * contract: declared props arrive as live states, on* keys are
- * callbacks, bind/onchange follow Bindable, api flows through ref.
+ * The props a CALLER may pass to a published component: plain values,
+ * live states, or attribute strings (coerced) — the contract layer
+ * normalizes them all. This is the public face of the component.
+ */
+export type ContractInput<C> = {
+    [K in keyof C as K extends 'bind' | 'api' ? never : K extends `on${string}` ? never : K & string]?: State<Widen<C[K]>> | Widen<C[K]>;
+} & {
+    [K in keyof C as K extends `on${string}` ? K & string : never]?: (...args: never[]) => unknown;
+} & (C extends {
+    bind: infer B;
+} ? Bindable<Widen<B>> : object) & (C extends {
+    api: infer A;
+} ? {
+    ref?: (api: {
+        [K in keyof A]: (...args: never[]) => unknown;
+    }) => void;
+} : object) & {
+    expose?: boolean;
+    children?: readonly Node[];
+};
+/**
+ * The props a published component RECEIVES, derived from its contract:
+ * declared props arrive as live states, on* keys are callbacks,
+ * bind/onchange follow Bindable, api flows through ref.
  */
 export type ContractProps<C> = {
     [K in keyof C as K extends 'bind' | 'api' ? never : K extends `on${string}` ? never : K & string]?: State<Widen<C[K]>>;
@@ -65,7 +86,7 @@ export declare const coerce: (v: unknown, p: PropSchema) => unknown;
  * and registers the schema for describe(), createWebComponent, adapters
  * and verify().
  */
-export declare const component: <C extends Record<string, unknown>, P = ContractProps<C>>(name: string, contractDef: C, fn: Component<P>) => Component<P>;
+export declare const component: <C extends Record<string, unknown>, P = ContractProps<C>>(name: string, contractDef: C, fn: Component<P>) => Component<ContractInput<C>>;
 /**
  * The machine-readable interface of a published component — what an agent
  * reads instead of the source. Plain JSON: name, props (type/default),

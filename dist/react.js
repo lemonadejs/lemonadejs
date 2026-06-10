@@ -29,7 +29,8 @@ var import_index = require("./lemonade.js");
 var reactAlias = function(event) {
   return "on" + event.charAt(2).toUpperCase() + event.slice(3);
 };
-var adaptReact = function(component) {
+var adaptReact = function(target) {
+  const component = target;
   const schema = (0, import_index.contract)(component);
   return (0, import_react.forwardRef)(function(props, ref) {
     const rootRef = (0, import_react.useRef)(null);
@@ -45,7 +46,10 @@ var adaptReact = function(component) {
           states[key] = (0, import_index.store)(props[key] !== void 0 ? props[key] : schema.props[key].default);
         }
         if (schema.bind) {
-          bindRef.current = (0, import_index.store)(props.value !== void 0 ? props.value : schema.bind.default);
+          const mapsValue = !("value" in schema.props);
+          bindRef.current = (0, import_index.store)(
+            mapsValue && props.value !== void 0 ? props.value : schema.bind.default
+          );
         }
       }
       statesRef.current = states;
@@ -94,7 +98,7 @@ var adaptReact = function(component) {
             states[key].value = props[key];
           }
         }
-        if (bindRef.current && props.value !== void 0) {
+        if (bindRef.current && props.value !== void 0 && !("value" in schema.props)) {
           bindRef.current.value = props.value;
         }
       }

@@ -20,7 +20,7 @@ export { mount, inspect, setComponents, unsafe } from './runtime';
 export { store } from './store';
 export { batch } from './reactivity';
 export { component, contract, use } from './contract';
-export type { ContractProps, Schema, PropSchema, ContractType } from './contract';
+export type { ContractInput, ContractProps, Schema, PropSchema, ContractType } from './contract';
 export { createWebComponent } from './webcomponents';
 export { explain } from './errors';
 /**
@@ -39,7 +39,7 @@ declare const lemonade: {
     store: <T>(initial: T, storage?: string) => import("./types").State<T>;
     batch: <R>(fn: () => R) => R;
     unsafe: (html: string) => Node[];
-    component: <C extends Record<string, unknown>, P = import("./contract").ContractProps<C>>(name: string, contractDef: C, fn: import("./types").Component<P>) => import("./types").Component<P>;
+    component: <C extends Record<string, unknown>, P = import("./contract").ContractProps<C>>(name: string, contractDef: C, fn: import("./types").Component<P>) => import("./types").Component<import("./contract").ContractInput<C>>;
     contract: (c: Function) => import("./contract").Schema | null;
     use: <T = Record<string, unknown>>(c: Function) => T | null;
     createWebComponent: typeof createWebComponent;

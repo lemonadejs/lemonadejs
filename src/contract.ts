@@ -49,9 +49,28 @@ type Widen<E> = E extends string
                     : E;
 
 /**
- * The props type a published component receives, derived from its
- * contract: declared props arrive as live states, on* keys are
- * callbacks, bind/onchange follow Bindable, api flows through ref.
+ * The props a CALLER may pass to a published component: plain values,
+ * live states, or attribute strings (coerced) — the contract layer
+ * normalizes them all. This is the public face of the component.
+ */
+export type ContractInput<C> = {
+    [K in keyof C as K extends 'bind' | 'api' ? never : K extends `on${string}` ? never : K & string]?:
+        | State<Widen<C[K]>>
+        | Widen<C[K]>;
+} & {
+    [K in keyof C as K extends `on${string}` ? K & string : never]?: (...args: never[]) => unknown;
+} & (C extends { bind: infer B } ? Bindable<Widen<B>> : object) &
+    (C extends { api: infer A }
+        ? { ref?: (api: { [K in keyof A]: (...args: never[]) => unknown }) => void }
+        : object) & {
+        expose?: boolean;
+        children?: readonly Node[];
+    };
+
+/**
+ * The props a published component RECEIVES, derived from its contract:
+ * declared props arrive as live states, on* keys are callbacks,
+ * bind/onchange follow Bindable, api flows through ref.
  */
 export type ContractProps<C> = {
     [K in keyof C as K extends 'bind' | 'api' ? never : K extends `on${string}` ? never : K & string]?: State<
@@ -164,7 +183,7 @@ export const component = function <C extends Record<string, unknown>, P = Contra
     name: string,
     contractDef: C,
     fn: Component<P>
-): Component<P> {
+): Component<ContractInput<C>> {
     const schema = buildSchema(name, contractDef);
 
     const wrapped = function (props: Props<P>, tools: Tools): View {
@@ -234,7 +253,7 @@ export const component = function <C extends Record<string, unknown>, P = Contra
 
     Object.defineProperty(wrapped, 'name', { value: fn.name || name });
     schemas.set(wrapped, schema);
-    return wrapped as Component<P>;
+    return wrapped as unknown as Component<ContractInput<C>>;
 };
 
 /**

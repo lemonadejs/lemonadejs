@@ -28,7 +28,7 @@ export { mount, inspect, setComponents, unsafe } from './runtime';
 export { store } from './store';
 export { batch } from './reactivity';
 export { component, contract, use } from './contract';
-export type { ContractProps, Schema, PropSchema, ContractType } from './contract';
+export type { ContractInput, ContractProps, Schema, PropSchema, ContractType } from './contract';
 export { createWebComponent } from './webcomponents';
 export { explain } from './errors';
 

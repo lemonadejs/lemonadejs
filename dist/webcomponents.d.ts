@@ -23,7 +23,5 @@ export interface WebComponentOptions {
     /** Tag prefix, default 'lm' → <lm-name> */
     prefix?: string;
 }
-type AnyComponent = Component<Record<string, unknown>>;
-export declare function createWebComponent(component: AnyComponent, options?: WebComponentOptions): string;
-export declare function createWebComponent(name: string, component: AnyComponent, options?: WebComponentOptions): string;
-export {};
+export declare function createWebComponent(component: Component<never>, options?: WebComponentOptions): string;
+export declare function createWebComponent(name: string, component: Component<never>, options?: WebComponentOptions): string;

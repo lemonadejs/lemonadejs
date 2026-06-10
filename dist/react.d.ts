@@ -25,5 +25,5 @@ import type { ForwardRefExoticComponent, PropsWithoutRef, RefAttributes } from '
 import type { Component } from './types';
 type AnyProps = Record<string, unknown>;
 type Api = Record<string, (...args: unknown[]) => unknown>;
-export declare const adaptReact: (component: Component<AnyProps>) => ForwardRefExoticComponent<PropsWithoutRef<AnyProps> & RefAttributes<Api>>;
+export declare const adaptReact: (target: Component<never>) => ForwardRefExoticComponent<PropsWithoutRef<AnyProps> & RefAttributes<Api>>;
 export default adaptReact;
