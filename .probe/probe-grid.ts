@@ -81,6 +81,31 @@ const run = async () => {
     const header = document.querySelector('.lm-datagrid-header') as HTMLElement;
     log('header-rendered', header !== null && header.getBoundingClientRect().height > 20, {});
 
+    // ---- 6. in-cell editing: contenteditable INSIDE the cell, focused,
+    // text selected, commit renders through the column formatter
+    const cell = document.querySelectorAll('.lm-datagrid-row')[2].querySelectorAll('.lm-datagrid-cell')[2] as HTMLElement;
+    const cellRect = cell.getBoundingClientRect();
+    cell.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+    await frame();
+    const editor = document.querySelector('.lm-datagrid-editor') as HTMLElement;
+    const editorRect = editor.getBoundingClientRect();
+    const selection = window.getSelection();
+    log(
+        'edit-in-cell-focused-and-selected',
+        editor.isContentEditable &&
+            editor.parentElement === cell &&
+            document.activeElement === editor &&
+            selection !== null && selection.toString() === editor.textContent &&
+            editorRect.top >= cellRect.top - 1 && editorRect.bottom <= cellRect.bottom + 1,
+        { active: document.activeElement?.className, selected: selection?.toString() }
+    );
+    editor.textContent = '123.4';
+    editor.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    await frame();
+    log('edit-commit-renders-in-place', cell.textContent === '123.4' && !document.querySelector('.lm-datagrid-editor'), {
+        text: cell.textContent,
+    });
+
     const pre = document.createElement('pre');
     pre.id = 'lm-probe';
     pre.textContent = '\nLM-PROBE-BEGIN\n' + out.join('\n') + '\nLM-PROBE-END\n';

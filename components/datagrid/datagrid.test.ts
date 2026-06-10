@@ -117,16 +117,20 @@ describe('components/datagrid — the virtualized grid', () => {
         expect(handle!.query('.lm-datagrid-count')!.textContent).toContain('1000 rows');
     });
 
-    it('inline edit: dblclick → input, Enter commits, mutates MY row and fires onchange', () => {
+    it('inline edit: dblclick edits IN the cell (contenteditable), Enter commits + onchange', () => {
         const changes: unknown[][] = [];
         const data = makeRows(10);
         open({ data, onchange: (...args: unknown[]) => changes.push(args) });
 
         const amountCell = renderedRows()[0].querySelectorAll('.lm-datagrid-cell')[2] as HTMLElement;
         amountCell.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
-        const editor = handle!.query('.lm-datagrid-editor') as HTMLInputElement;
+        const editor = handle!.query('.lm-datagrid-editor') as HTMLElement;
         expect(editor).not.toBeNull();
-        editor.value = '777';
+        expect(editor.getAttribute('contenteditable')).toBe('true');
+        expect(editor.parentElement).toBe(amountCell); // INSIDE the cell, not a swap
+        expect(editor.textContent).toBe('1'); // pre-filled with the raw value
+
+        editor.textContent = '777';
         editor.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
 
         expect(data[0].amount).toBe(777); // the CALLER's object was mutated
@@ -140,10 +144,23 @@ describe('components/datagrid — the virtualized grid', () => {
         open({ data });
         const cell = renderedRows()[0].querySelectorAll('.lm-datagrid-cell')[2] as HTMLElement;
         cell.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
-        const editor = handle!.query('.lm-datagrid-editor') as HTMLInputElement;
-        editor.value = '999';
+        const editor = handle!.query('.lm-datagrid-editor') as HTMLElement;
+        editor.textContent = '999';
         editor.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
         expect(data[0].amount).toBe(1);
+        expect(handle!.query('.lm-datagrid-editor')).toBeNull();
+        expect(cellTexts(renderedRows()[0])[2]).toBe('1'); // original text restored
+    });
+
+    it('blur commits the in-cell edit', () => {
+        const data = makeRows(5);
+        open({ data });
+        const cell = renderedRows()[0].querySelectorAll('.lm-datagrid-cell')[2] as HTMLElement;
+        cell.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+        const editor = handle!.query('.lm-datagrid-editor') as HTMLElement;
+        editor.textContent = '55';
+        editor.dispatchEvent(new FocusEvent('blur'));
+        expect(data[0].amount).toBe(55);
         expect(handle!.query('.lm-datagrid-editor')).toBeNull();
     });
 

@@ -105,8 +105,11 @@ export const Datagrid = component('datagrid', {
                 return String(va ?? '').localeCompare(String(vb ?? '')) * s.dir;
             });
         }
-        view.value = indices;
+        // Close any edit BEFORE the window re-renders: the engine blurs
+        // nodes it disposes, and a live editing state would turn that
+        // disposal blur into an unintended commit
         editing.value = null;
+        view.value = indices;
         if (props.pagination!.value) {
             page.value = Math.min(page.value, Math.max(0, pageCount() - 1));
         } else if (scroller) {
@@ -316,11 +319,35 @@ export const Datagrid = component('datagrid', {
             onclick="${() => (active.value = { r: entry.viewIndex, c })}"
             ondblclick="${() => startEdit(entry.dataIndex, col)}">${() =>
             editing.value && editing.value.index === entry.dataIndex && editing.value.name === col.name
-                ? html`<input class="lm-datagrid-editor" value="${String(row[col.name] ?? '')}"
-                      ref="${(el: Element) => (el as HTMLInputElement).focus()}"
+                ? // Edit IN the cell: a contenteditable span keeps the cell's
+                  // geometry and typography; focus + select-all on entry
+                  html`<span class="lm-datagrid-editor" contenteditable="true"
+                      ref="${(el: Element) => {
+                          // The branch builds detached; focus needs attachment
+                          queueMicrotask(() => {
+                              const span = el as HTMLElement;
+                              if (!span.isConnected) {
+                                  return;
+                              }
+                              // preventScroll: the cell is already visible
+                              // (it was just double-clicked); auto-scroll
+                              // would re-render the window and kill the edit
+                              span.focus({ preventScroll: true });
+                              try {
+                                  const range = document.createRange();
+                                  range.selectNodeContents(span);
+                                  const selection = window.getSelection();
+                                  selection?.removeAllRanges();
+                                  selection?.addRange(range);
+                              } catch {
+                                  // selection api unavailable (some test hosts)
+                              }
+                          });
+                      }}"
                       onkeydown="${(e: KeyboardEvent) => {
                           if (e.key === 'Enter') {
-                              commit(row, col, (e.target as HTMLInputElement).value);
+                              e.preventDefault(); // single-line cell, no <br>
+                              commit(row, col, (e.target as HTMLElement).textContent || '');
                           } else if (e.key === 'Escape') {
                               editing.value = null;
                           }
@@ -328,9 +355,9 @@ export const Datagrid = component('datagrid', {
                       }}"
                       onblur="${(e: FocusEvent) => {
                           if (editing.value) {
-                              commit(row, col, (e.target as HTMLInputElement).value);
+                              commit(row, col, (e.target as HTMLElement).textContent || '');
                           }
-                      }}" />`
+                      }}">${String(row[col.name] ?? '')}</span>`
                 : cellText(row, col)}</div>`;
     };
 
