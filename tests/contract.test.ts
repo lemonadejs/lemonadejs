@@ -6,7 +6,7 @@ import { describe as suite, it, expect, afterEach, vi } from 'vitest';
 import {
     html,
     component,
-    describe,
+    contract,
     use,
     createWebComponent,
     store,
@@ -14,7 +14,7 @@ import {
     type Component,
     type State,
 } from '../src/index';
-import { test as t, verify } from '../src/test';
+import { render as t, verify } from '../src/test';
 
 let handle: ReturnType<typeof t> | null = null;
 afterEach(() => {
@@ -43,7 +43,7 @@ const Switch = component<SwitchProps>(
 
 suite('Contracts: component() and describe()', () => {
     it('describe() returns the machine-readable schema', () => {
-        const schema = describe(Switch)!;
+        const schema = contract(Switch)!;
         expect(schema.name).toBe('switch');
         expect(schema.bind).toEqual({ type: 'boolean', default: false });
         expect(schema.props.label).toEqual({ type: 'string', default: '' });
@@ -53,7 +53,7 @@ suite('Contracts: component() and describe()', () => {
 
     it('describe() returns null for unpublished components', () => {
         const Plain: Component = () => html`<div></div>`;
-        expect(describe(Plain)).toBeNull();
+        expect(contract(Plain)).toBeNull();
     });
 
     it('infers types from constructors and defaults', () => {
@@ -64,7 +64,7 @@ suite('Contracts: component() and describe()', () => {
             config: { a: 1 },
             enabled: Boolean,
         }, () => html`<i></i>`);
-        const s = describe(C)!;
+        const s = contract(C)!;
         expect(s.props.title).toEqual({ type: 'string' });
         expect(s.props.count).toEqual({ type: 'number', default: 0 });
         expect(s.props.items).toEqual({ type: 'array' });

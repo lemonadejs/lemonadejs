@@ -498,8 +498,10 @@ var BoundState = class extends StateImpl {
     }
   }
 };
+var STATE_BRAND = Symbol.for("lemonadejs.state");
+StateImpl.prototype[STATE_BRAND] = true;
 var isState = function(v) {
-  return v instanceof StateImpl;
+  return !!v && typeof v === "object" && v[STATE_BRAND] === true;
 };
 var resolve = function(raw) {
   if (isState(raw)) {
@@ -512,6 +514,137 @@ var resolve = function(raw) {
 };
 var isDynamic = function(raw) {
   return isState(raw) || typeof raw === "function";
+};
+
+// src/contract.ts
+var schemas = /* @__PURE__ */ new WeakMap();
+var kindOf = function(v) {
+  if (v === String) return { type: "string" };
+  if (v === Number) return { type: "number" };
+  if (v === Boolean) return { type: "boolean" };
+  if (v === Array) return { type: "array" };
+  if (v === Object) return { type: "object" };
+  if (v === Function) return { type: "function" };
+  if (v === null || v === void 0) return { type: "any" };
+  if (Array.isArray(v)) return { type: "array", default: v };
+  const t = typeof v;
+  if (t === "string" || t === "number" || t === "boolean") {
+    return { type: t, default: v };
+  }
+  if (t === "object") return { type: "object", default: v };
+  return { type: "any", default: v };
+};
+var buildSchema = function(name, contract2) {
+  const schema = { name, props: {}, bind: null, events: [], api: [] };
+  for (const key of Object.keys(contract2)) {
+    const v = contract2[key];
+    if (key === "bind") {
+      schema.bind = kindOf(v);
+    } else if (key === "api" && v && typeof v === "object" && !Array.isArray(v)) {
+      schema.api = Object.keys(v);
+    } else if (key.length > 2 && key.startsWith("on")) {
+      schema.events.push(key);
+      if (DEV && /[A-Z]/.test(key)) {
+        warn("LJS-305", "use " + key.toLowerCase() + " in the contract of <" + name + ">");
+      }
+    } else {
+      schema.props[key] = kindOf(v);
+      if (DEV && /[A-Z]/.test(key)) {
+        warn("LJS-401", key + " in <" + name + "> \u2014 contract prop names must be lowercase (they become HTML attributes)");
+      }
+    }
+  }
+  return schema;
+};
+var coerce = function(v, p) {
+  if (v === null) {
+    return p.type === "boolean" ? false : p.default;
+  }
+  if (typeof v === "string") {
+    if (p.type === "number") {
+      const n = Number(v);
+      return Number.isNaN(n) ? v : n;
+    }
+    if (p.type === "boolean") {
+      return !(v === "false" || v === "0");
+    }
+  }
+  return v;
+};
+var matches = function(v, type) {
+  if (type === "any" || v === void 0 || v === null) {
+    return true;
+  }
+  if (type === "array") {
+    return Array.isArray(v);
+  }
+  return typeof v === type;
+};
+var component = function(name, contractDef, fn) {
+  const schema = buildSchema(name, contractDef);
+  const wrapped = function(props, tools) {
+    const incoming = props || {};
+    const final = { ...incoming };
+    for (const key of Object.keys(schema.props)) {
+      const p = schema.props[key];
+      const raw = incoming[key];
+      if (isState(raw)) {
+        final[key] = raw;
+        continue;
+      }
+      const v = raw === void 0 ? p.default : coerce(raw, p);
+      if (DEV && v !== void 0 && !matches(v, p.type)) {
+        warn("LJS-401", key + " expects " + p.type + ", got " + typeof v + " in <" + name + ">");
+      }
+      final[key] = new StateImpl(v);
+    }
+    if (schema.bind && incoming.bind === void 0 && schema.bind.default !== void 0) {
+      final.bind = schema.bind.default;
+    }
+    if (incoming.expose) {
+      const previousRef = incoming.ref;
+      final.ref = function(api) {
+        if (schema.api.length) {
+          const published = {};
+          for (const method of schema.api) {
+            published[method] = api[method];
+          }
+          if (DEV && exposed.has(wrapped)) {
+            warn("LJS-501", "<" + name + "> was already exposed \u2014 singleton overwritten");
+          }
+          exposed.set(wrapped, published);
+          tools.onUnmount(function() {
+            if (exposed.get(wrapped) === published) {
+              exposed.delete(wrapped);
+            }
+          });
+        } else if (DEV) {
+          warn("LJS-501", "<" + name + "> has no api in its contract \u2014 nothing to expose");
+        }
+        if (previousRef) {
+          previousRef(api);
+        }
+      };
+    }
+    if (DEV) {
+      for (const e of schema.events) {
+        if (incoming[e] !== void 0 && typeof incoming[e] !== "function") {
+          warn("LJS-401", e + " expects a function in <" + name + ">");
+        }
+      }
+    }
+    return fn(Object.freeze(final), tools);
+  };
+  Object.defineProperty(wrapped, "name", { value: fn.name || name });
+  schemas.set(wrapped, schema);
+  return wrapped;
+};
+var contract = function(c) {
+  return schemas.get(c) || null;
+};
+var exposed = /* @__PURE__ */ new Map();
+var use = function(c) {
+  return exposed.get(c) || null;
 };
 
 // src/runtime.ts
@@ -1096,8 +1229,10 @@ var report = function(inst) {
       }
     }
   }
+  const schema = contract(inst.component);
   return {
     component: inst.name,
+    contract: schema ? schema.name : null,
     states: inst.states.map(function(s) {
       return s.peek();
     }),
@@ -1142,137 +1277,6 @@ var store = function(initial, storage) {
   return new StateImpl(value, persist);
 };
 
-// src/contract.ts
-var schemas = /* @__PURE__ */ new WeakMap();
-var kindOf = function(v) {
-  if (v === String) return { type: "string" };
-  if (v === Number) return { type: "number" };
-  if (v === Boolean) return { type: "boolean" };
-  if (v === Array) return { type: "array" };
-  if (v === Object) return { type: "object" };
-  if (v === Function) return { type: "function" };
-  if (v === null || v === void 0) return { type: "any" };
-  if (Array.isArray(v)) return { type: "array", default: v };
-  const t = typeof v;
-  if (t === "string" || t === "number" || t === "boolean") {
-    return { type: t, default: v };
-  }
-  if (t === "object") return { type: "object", default: v };
-  return { type: "any", default: v };
-};
-var buildSchema = function(name, contract) {
-  const schema = { name, props: {}, bind: null, events: [], api: [] };
-  for (const key of Object.keys(contract)) {
-    const v = contract[key];
-    if (key === "bind") {
-      schema.bind = kindOf(v);
-    } else if (key === "api" && v && typeof v === "object" && !Array.isArray(v)) {
-      schema.api = Object.keys(v);
-    } else if (key.length > 2 && key.startsWith("on")) {
-      schema.events.push(key);
-      if (DEV && /[A-Z]/.test(key)) {
-        warn("LJS-305", "use " + key.toLowerCase() + " in the contract of <" + name + ">");
-      }
-    } else {
-      schema.props[key] = kindOf(v);
-      if (DEV && /[A-Z]/.test(key)) {
-        warn("LJS-401", key + " in <" + name + "> \u2014 contract prop names must be lowercase (they become HTML attributes)");
-      }
-    }
-  }
-  return schema;
-};
-var coerce = function(v, p) {
-  if (v === null) {
-    return p.type === "boolean" ? false : p.default;
-  }
-  if (typeof v === "string") {
-    if (p.type === "number") {
-      const n = Number(v);
-      return Number.isNaN(n) ? v : n;
-    }
-    if (p.type === "boolean") {
-      return !(v === "false" || v === "0");
-    }
-  }
-  return v;
-};
-var matches = function(v, type) {
-  if (type === "any" || v === void 0 || v === null) {
-    return true;
-  }
-  if (type === "array") {
-    return Array.isArray(v);
-  }
-  return typeof v === type;
-};
-var component = function(name, contract, fn) {
-  const schema = buildSchema(name, contract);
-  const wrapped = function(props, tools) {
-    const incoming = props || {};
-    const final = { ...incoming };
-    for (const key of Object.keys(schema.props)) {
-      const p = schema.props[key];
-      const raw = incoming[key];
-      if (isState(raw)) {
-        final[key] = raw;
-        continue;
-      }
-      const v = raw === void 0 ? p.default : coerce(raw, p);
-      if (DEV && v !== void 0 && !matches(v, p.type)) {
-        warn("LJS-401", key + " expects " + p.type + ", got " + typeof v + " in <" + name + ">");
-      }
-      final[key] = new StateImpl(v);
-    }
-    if (schema.bind && incoming.bind === void 0 && schema.bind.default !== void 0) {
-      final.bind = schema.bind.default;
-    }
-    if (incoming.expose) {
-      const previousRef = incoming.ref;
-      final.ref = function(api) {
-        if (schema.api.length) {
-          const published = {};
-          for (const method of schema.api) {
-            published[method] = api[method];
-          }
-          if (DEV && exposed.has(wrapped)) {
-            warn("LJS-501", "<" + name + "> was already exposed \u2014 singleton overwritten");
-          }
-          exposed.set(wrapped, published);
-          tools.onUnmount(function() {
-            if (exposed.get(wrapped) === published) {
-              exposed.delete(wrapped);
-            }
-          });
-        } else if (DEV) {
-          warn("LJS-501", "<" + name + "> has no api in its contract \u2014 nothing to expose");
-        }
-        if (previousRef) {
-          previousRef(api);
-        }
-      };
-    }
-    if (DEV) {
-      for (const e of schema.events) {
-        if (incoming[e] !== void 0 && typeof incoming[e] !== "function") {
-          warn("LJS-401", e + " expects a function in <" + name + ">");
-        }
-      }
-    }
-    return fn(Object.freeze(final), tools);
-  };
-  Object.defineProperty(wrapped, "name", { value: fn.name || name });
-  schemas.set(wrapped, schema);
-  return wrapped;
-};
-var describe = function(c) {
-  return schemas.get(c) || null;
-};
-var exposed = /* @__PURE__ */ new Map();
-var use = function(c) {
-  return exposed.get(c) || null;
-};
-
 // src/webcomponents.ts
 function createWebComponent(a, b, c) {
   let name;
@@ -1289,7 +1293,7 @@ function createWebComponent(a, b, c) {
   if (typeof component2 !== "function") {
     fail("LJS-001", "createWebComponent");
   }
-  const schema = describe(component2);
+  const schema = contract(component2);
   if (!name) {
     if (schema) {
       name = schema.name;
@@ -1437,7 +1441,7 @@ var lemonade = {
   batch,
   unsafe,
   component,
-  describe,
+  contract,
   use,
   createWebComponent,
   explain,
@@ -1447,9 +1451,9 @@ var index_default = lemonade;
 export {
   batch,
   component,
+  contract,
   createWebComponent,
   index_default as default,
-  describe,
   explain,
   html,
   inspect,

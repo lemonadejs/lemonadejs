@@ -5,7 +5,7 @@
  * Works anywhere a DOM exists (browser or jsdom). Designed so an agent can
  * close the loop on its own output:
  *
- *   const t = test(Counter, { start: 5 });
+ *   const t = render(Counter, { start: 5 });
  *   t.query('button')!.click();
  *   assert(t.query('p')!.textContent === '6');
  *   console.log(t.snapshot());
@@ -14,7 +14,7 @@
 
 import type { Component } from './types';
 import { mount, inspect } from './runtime';
-import { describe as contractOf } from './contract';
+import { contract as contractOf } from './contract';
 import { StateImpl } from './reactivity';
 
 export interface TestHandle {
@@ -63,7 +63,7 @@ const serialize = function (node: Node, depth: number): string[] {
  * Mount a component into a fresh detached-from-your-app container and
  * return query/snapshot helpers for assertions.
  */
-export const test = function <P>(component: Component<P>, props?: P): TestHandle {
+export const render = function <P>(component: Component<P>, props?: P): TestHandle {
     const root = document.createElement('div');
     document.body.appendChild(root);
     const handle = mount(component, root, props);
@@ -128,12 +128,26 @@ const SAMPLES: Record<string, unknown> = {
  */
 export const verify = function (component: Component<never>): VerifyReport {
     const checks: VerifyCheck[] = [];
+    // Conformance includes silence: any LJS-* dev warning during a check fails it
     const run = function (name: string, fn: () => void): void {
+        const originalWarn = console.warn;
+        const warnings: string[] = [];
+        console.warn = function (...args: unknown[]) {
+            warnings.push(String(args[0]));
+        };
         try {
             fn();
+            const offences = warnings.filter(function (w) {
+                return w.indexOf('LJS-') >= 0;
+            });
+            if (offences.length) {
+                throw new Error(offences.join('; '));
+            }
             checks.push({ name, pass: true });
         } catch (e) {
             checks.push({ name, pass: false, detail: (e as Error).message });
+        } finally {
+            console.warn = originalWarn;
         }
     };
 
@@ -153,20 +167,20 @@ export const verify = function (component: Component<never>): VerifyReport {
     }
 
     run('mounts with defaults', function () {
-        test(component as Component<unknown>).unmount();
+        render(component as Component<unknown>).unmount();
     });
 
     for (const key of Object.keys(schema.props)) {
         run('prop ' + key, function () {
             const props: Record<string, unknown> = {};
             props[key] = SAMPLES[schema.props[key].type];
-            test(component as Component<unknown>, props).unmount();
+            render(component as Component<unknown>, props).unmount();
         });
         run('prop ' + key + ' (live state)', function () {
             const props: Record<string, unknown> = {};
             const state = new StateImpl(SAMPLES[schema.props[key].type]);
             props[key] = state;
-            const t = test(component as Component<unknown>, props);
+            const t = render(component as Component<unknown>, props);
             state.touch();
             t.unmount();
         });
@@ -176,14 +190,14 @@ export const verify = function (component: Component<never>): VerifyReport {
         run('event ' + event, function () {
             const props: Record<string, unknown> = {};
             props[event] = function () {};
-            test(component as Component<unknown>, props).unmount();
+            render(component as Component<unknown>, props).unmount();
         });
     }
 
     if (schema.bind) {
         run('bind', function () {
             const state = new StateImpl(schema.bind!.default);
-            const t = test(component as Component<unknown>, { bind: state });
+            const t = render(component as Component<unknown>, { bind: state });
             state.value = SAMPLES[schema.bind!.type];
             t.unmount();
         });
@@ -192,7 +206,7 @@ export const verify = function (component: Component<never>): VerifyReport {
     if (schema.api.length) {
         run('api via ref', function () {
             let api: Record<string, unknown> | null = null;
-            const t = test(component as Component<unknown>, {
+            const t = render(component as Component<unknown>, {
                 ref: function (a: Record<string, unknown>) {
                     api = a;
                 },
@@ -215,4 +229,4 @@ export const verify = function (component: Component<never>): VerifyReport {
     };
 };
 
-export default test;
+export default render;

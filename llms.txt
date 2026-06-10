@@ -161,7 +161,7 @@ A plain function is a component. component(name, contract, fn) is for components
 become PRODUCTS — plugins, libraries, anything other frameworks or other agents consume.
 The contract is the interface as a runtime artifact; everything derives from it.
 
-    import { component, describe } from 'lemonadejs';
+    import { component, contract } from 'lemonadejs';
 
     export const Switch = component('switch', {
         bind: false,                 // bindable value — type and default inferred: boolean
@@ -182,7 +182,7 @@ RULE: declared props arrive as LIVE STATES — props.label is State<string> in e
 deployment. Templates: ${props.label}. Logic: props.label.value. Wrong types warn
 LJS-401 in dev; contract prop names must be lowercase (they become HTML attributes).
 
-    describe(Switch)    // → { name, props: {label: {type,default}}, bind, events, api }
+    contract(Switch)    // → { name, props: {label: {type,default}}, bind, events, api }
                         // the schema an agent reads INSTEAD of the source
 
     createWebComponent(Switch)   // <lm-switch>, zero options, ALL derived:
@@ -241,9 +241,9 @@ Interop with other reactive worlds (React, Svelte, Rx) — subscribe + peek:
 
 ## Verify your own output (lemonadejs/test)
 
-    import { test } from 'lemonadejs/test';     // needs a DOM (browser or jsdom)
+    import { render } from 'lemonadejs/test';     // needs a DOM (browser or jsdom)
 
-    const t = test(Counter, { start: 5 });
+    const t = render(Counter, { start: 5 });
     t.query('button')!.click();                 // querySelector, scoped
     t.query('p')!.textContent === '6';          // assert
     t.queryAll('li');                           // array of elements

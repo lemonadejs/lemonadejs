@@ -140,6 +140,8 @@ var StateImpl = class {
     };
   }
 };
+var STATE_BRAND = Symbol.for("lemonadejs.state");
+StateImpl.prototype[STATE_BRAND] = true;
 
 // src/forms.ts
 var isPlainObject = function(v) {

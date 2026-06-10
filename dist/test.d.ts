@@ -5,7 +5,7 @@
  * Works anywhere a DOM exists (browser or jsdom). Designed so an agent can
  * close the loop on its own output:
  *
- *   const t = test(Counter, { start: 5 });
+ *   const t = render(Counter, { start: 5 });
  *   t.query('button')!.click();
  *   assert(t.query('p')!.textContent === '6');
  *   console.log(t.snapshot());
@@ -32,7 +32,7 @@ export interface TestHandle {
  * Mount a component into a fresh detached-from-your-app container and
  * return query/snapshot helpers for assertions.
  */
-export declare const test: <P>(component: Component<P>, props?: P) => TestHandle;
+export declare const render: <P>(component: Component<P>, props?: P) => TestHandle;
 export interface VerifyCheck {
     name: string;
     pass: boolean;
@@ -52,4 +52,4 @@ export interface VerifyReport {
  *   report.pass === true;
  */
 export declare const verify: (component: Component<never>) => VerifyReport;
-export default test;
+export default render;

@@ -248,8 +248,15 @@ export class BoundState<T> extends StateImpl<T> {
     }
 }
 
+/**
+ * Brand-based check (not instanceof): states must be recognizable across
+ * bundle copies (app + lemonadejs/test) and realms.
+ */
+const STATE_BRAND = Symbol.for('lemonadejs.state');
+(StateImpl.prototype as unknown as Record<symbol, boolean>)[STATE_BRAND] = true;
+
 export const isState = function (v: unknown): v is StateImpl<unknown> {
-    return v instanceof StateImpl;
+    return !!v && typeof v === 'object' && (v as Record<symbol, unknown>)[STATE_BRAND] === true;
 };
 
 /**

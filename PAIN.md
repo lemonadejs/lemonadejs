@@ -23,7 +23,7 @@ Context is our only working memory and it is metered. Discovering how to use a
 component by reading its source is the single most wasteful thing agents do.
 
 **Answer:** `llms.txt` — the complete API in ~2k tokens, a release artifact.
-`describe(Component)` — the contract in ~40 tokens instead of 400 lines of
+`contract(Component)` — the contract in ~40 tokens instead of 400 lines of
 source. A framework whose entire surface fits in context is not minimalism
 aesthetics; it is *affordability*. React structurally cannot offer this.
 

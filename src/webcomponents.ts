@@ -23,7 +23,7 @@ import type { Component, Handle } from './types';
 import { fail } from './errors';
 import { mount } from './runtime';
 import { StateImpl } from './reactivity';
-import { coerce, describe, Schema } from './contract';
+import { coerce, contract, Schema } from './contract';
 
 export interface WebComponentOptions {
     /** Tag prefix, default 'lm' → <lm-name> */
@@ -55,7 +55,7 @@ export function createWebComponent(
         fail('LJS-001', 'createWebComponent');
     }
 
-    const schema: Schema | null = describe(component);
+    const schema: Schema | null = contract(component);
     if (!name) {
         if (schema) {
             name = schema.name;

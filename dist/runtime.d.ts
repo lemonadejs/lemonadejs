@@ -79,6 +79,7 @@ export declare const unmountInstance: (inst: Instance) => void;
 export declare const mount: <P>(component: Component<P>, root: Element, props?: P) => Handle;
 export interface InspectReport {
     component: string;
+    contract: string | null;
     states: unknown[];
     children: InspectReport[];
 }

@@ -21,7 +21,7 @@ var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: tru
 var test_exports = {};
 __export(test_exports, {
   default: () => test_default,
-  test: () => test,
+  render: () => render,
   verify: () => verify
 });
 module.exports = __toCommonJS(test_exports);
@@ -216,8 +216,10 @@ var BoundState = class extends StateImpl {
     }
   }
 };
+var STATE_BRAND = Symbol.for("lemonadejs.state");
+StateImpl.prototype[STATE_BRAND] = true;
 var isState = function(v) {
-  return v instanceof StateImpl;
+  return !!v && typeof v === "object" && v[STATE_BRAND] === true;
 };
 var resolve = function(raw) {
   if (isState(raw)) {
@@ -230,6 +232,12 @@ var resolve = function(raw) {
 };
 var isDynamic = function(raw) {
   return isState(raw) || typeof raw === "function";
+};
+
+// src/contract.ts
+var schemas = /* @__PURE__ */ new WeakMap();
+var contract = function(c) {
+  return schemas.get(c) || null;
 };
 
 // src/runtime.ts
@@ -807,8 +815,10 @@ var report = function(inst) {
       }
     }
   }
+  const schema = contract(inst.component);
   return {
     component: inst.name,
+    contract: schema ? schema.name : null,
     states: inst.states.map(function(s) {
       return s.peek();
     }),
@@ -825,12 +835,6 @@ var inspect = function(target) {
     node = node.parentNode;
   }
   return null;
-};
-
-// src/contract.ts
-var schemas = /* @__PURE__ */ new WeakMap();
-var describe = function(c) {
-  return schemas.get(c) || null;
 };
 
 // src/test.ts
@@ -854,7 +858,7 @@ var serialize = function(node, depth2) {
   }
   return lines;
 };
-var test = function(component, props) {
+var render = function(component, props) {
   const root = document.createElement("div");
   document.body.appendChild(root);
   const handle = mount(component, root, props);
@@ -898,14 +902,27 @@ var SAMPLES = {
 var verify = function(component) {
   const checks = [];
   const run = function(name, fn) {
+    const originalWarn = console.warn;
+    const warnings = [];
+    console.warn = function(...args) {
+      warnings.push(String(args[0]));
+    };
     try {
       fn();
+      const offences = warnings.filter(function(w) {
+        return w.indexOf("LJS-") >= 0;
+      });
+      if (offences.length) {
+        throw new Error(offences.join("; "));
+      }
       checks.push({ name, pass: true });
     } catch (e) {
       checks.push({ name, pass: false, detail: e.message });
+    } finally {
+      console.warn = originalWarn;
     }
   };
-  const schema = describe(component);
+  const schema = contract(component);
   if (!schema) {
     return {
       component: component.name || "Component",
@@ -920,19 +937,19 @@ var verify = function(component) {
     };
   }
   run("mounts with defaults", function() {
-    test(component).unmount();
+    render(component).unmount();
   });
   for (const key of Object.keys(schema.props)) {
     run("prop " + key, function() {
       const props = {};
       props[key] = SAMPLES[schema.props[key].type];
-      test(component, props).unmount();
+      render(component, props).unmount();
     });
     run("prop " + key + " (live state)", function() {
       const props = {};
       const state = new StateImpl(SAMPLES[schema.props[key].type]);
       props[key] = state;
-      const t = test(component, props);
+      const t = render(component, props);
       state.touch();
       t.unmount();
     });
@@ -942,13 +959,13 @@ var verify = function(component) {
       const props = {};
       props[event] = function() {
       };
-      test(component, props).unmount();
+      render(component, props).unmount();
     });
   }
   if (schema.bind) {
     run("bind", function() {
       const state = new StateImpl(schema.bind.default);
-      const t = test(component, { bind: state });
+      const t = render(component, { bind: state });
       state.value = SAMPLES[schema.bind.type];
       t.unmount();
     });
@@ -956,7 +973,7 @@ var verify = function(component) {
   if (schema.api.length) {
     run("api via ref", function() {
       let api = null;
-      const t = test(component, {
+      const t = render(component, {
         ref: function(a) {
           api = a;
         }
@@ -977,4 +994,4 @@ var verify = function(component) {
     checks
   };
 };
-var test_default = test;
+var test_default = render;

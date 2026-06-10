@@ -21,6 +21,7 @@ import { isView } from './types';
 import { fail, warn } from './errors';
 import { DEV } from './env';
 import { Binding, BoundState, isDynamic, isForcing, isState, readCount, resolve, StateImpl } from './reactivity';
+import { contract as contractOf } from './contract';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 const SVG_TAGS = new Set([
@@ -762,6 +763,7 @@ export const mount = function <P>(component: Component<P>, root: Element, props?
 
 export interface InspectReport {
     component: string;
+    contract: string | null;
     states: unknown[];
     children: InspectReport[];
 }
@@ -775,8 +777,10 @@ const report = function (inst: Instance): InspectReport {
             }
         }
     }
+    const schema = contractOf(inst.component);
     return {
         component: inst.name,
+        contract: schema ? schema.name : null,
         states: inst.states.map(function (s) {
             return s.peek();
         }),

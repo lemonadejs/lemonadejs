@@ -21,7 +21,30 @@
  * React adapter), props.label is a State<string> the component reads in
  * templates as ${props.label} and in logic as props.label.value.
  */
-import type { Component } from './types';
+import type { Bindable, Component, State } from './types';
+/** Widen literal defaults and map constructors to value types */
+type Widen<E> = E extends string ? string : E extends number ? number : E extends boolean ? boolean : E extends StringConstructor ? string : E extends NumberConstructor ? number : E extends BooleanConstructor ? boolean : E extends ArrayConstructor ? unknown[] : E extends ObjectConstructor ? Record<string, unknown> : E extends FunctionConstructor ? (...args: never[]) => unknown : E;
+/**
+ * The props type a published component receives, derived from its
+ * contract: declared props arrive as live states, on* keys are
+ * callbacks, bind/onchange follow Bindable, api flows through ref.
+ */
+export type ContractProps<C> = {
+    [K in keyof C as K extends 'bind' | 'api' ? never : K extends `on${string}` ? never : K & string]?: State<Widen<C[K]>>;
+} & {
+    [K in keyof C as K extends `on${string}` ? K & string : never]?: (...args: never[]) => unknown;
+} & (C extends {
+    bind: infer B;
+} ? Bindable<Widen<B>> : object) & (C extends {
+    api: infer A;
+} ? {
+    ref?: (api: {
+        [K in keyof A]: (...args: never[]) => unknown;
+    }) => void;
+} : object) & {
+    expose?: boolean;
+    children?: readonly Node[];
+};
 export type ContractType = 'string' | 'number' | 'boolean' | 'array' | 'object' | 'function' | 'any';
 export interface PropSchema {
     type: ContractType;
@@ -42,11 +65,13 @@ export declare const coerce: (v: unknown, p: PropSchema) => unknown;
  * and registers the schema for describe(), createWebComponent, adapters
  * and verify().
  */
-export declare const component: <P>(name: string, contract: Record<string, unknown>, fn: Component<P>) => Component<P>;
+export declare const component: <C extends Record<string, unknown>, P = ContractProps<C>>(name: string, contractDef: C, fn: Component<P>) => Component<P>;
 /**
  * The machine-readable interface of a published component — what an agent
  * reads instead of the source. Plain JSON: name, props (type/default),
  * bind, events, api. Returns null for unpublished components.
+ * (Named contract(), not describe(), to never collide with test runners.)
  */
-export declare const describe: (c: Function) => Schema | null;
+export declare const contract: (c: Function) => Schema | null;
 export declare const use: <T = Record<string, unknown>>(c: Function) => T | null;
+export {};

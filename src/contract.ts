@@ -22,10 +22,50 @@
  * templates as ${props.label} and in logic as props.label.value.
  */
 
-import type { Component, Props, Tools, View } from './types';
+import type { Bindable, Component, Props, State, Tools, View } from './types';
 import { isState, StateImpl } from './reactivity';
 import { DEV } from './env';
 import { warn } from './errors';
+
+/** Widen literal defaults and map constructors to value types */
+type Widen<E> = E extends string
+    ? string
+    : E extends number
+      ? number
+      : E extends boolean
+        ? boolean
+        : E extends StringConstructor
+          ? string
+          : E extends NumberConstructor
+            ? number
+            : E extends BooleanConstructor
+              ? boolean
+              : E extends ArrayConstructor
+                ? unknown[]
+                : E extends ObjectConstructor
+                  ? Record<string, unknown>
+                  : E extends FunctionConstructor
+                    ? (...args: never[]) => unknown
+                    : E;
+
+/**
+ * The props type a published component receives, derived from its
+ * contract: declared props arrive as live states, on* keys are
+ * callbacks, bind/onchange follow Bindable, api flows through ref.
+ */
+export type ContractProps<C> = {
+    [K in keyof C as K extends 'bind' | 'api' ? never : K extends `on${string}` ? never : K & string]?: State<
+        Widen<C[K]>
+    >;
+} & {
+    [K in keyof C as K extends `on${string}` ? K & string : never]?: (...args: never[]) => unknown;
+} & (C extends { bind: infer B } ? Bindable<Widen<B>> : object) &
+    (C extends { api: infer A }
+        ? { ref?: (api: { [K in keyof A]: (...args: never[]) => unknown }) => void }
+        : object) & {
+        expose?: boolean;
+        children?: readonly Node[];
+    };
 
 export type ContractType = 'string' | 'number' | 'boolean' | 'array' | 'object' | 'function' | 'any';
 
@@ -120,12 +160,12 @@ const matches = function (v: unknown, type: ContractType): boolean {
  * and registers the schema for describe(), createWebComponent, adapters
  * and verify().
  */
-export const component = function <P>(
+export const component = function <C extends Record<string, unknown>, P = ContractProps<C>>(
     name: string,
-    contract: Record<string, unknown>,
+    contractDef: C,
     fn: Component<P>
 ): Component<P> {
-    const schema = buildSchema(name, contract);
+    const schema = buildSchema(name, contractDef);
 
     const wrapped = function (props: Props<P>, tools: Tools): View {
         const incoming = (props || {}) as Record<string, unknown>;
@@ -201,8 +241,9 @@ export const component = function <P>(
  * The machine-readable interface of a published component — what an agent
  * reads instead of the source. Plain JSON: name, props (type/default),
  * bind, events, api. Returns null for unpublished components.
+ * (Named contract(), not describe(), to never collide with test runners.)
  */
-export const describe = function (c: Function): Schema | null {
+export const contract = function (c: Function): Schema | null {
     return schemas.get(c) || null;
 };
 

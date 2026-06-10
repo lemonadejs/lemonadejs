@@ -1,6 +1,6 @@
 import { describe, it, expect, afterEach } from 'vitest';
 import { html, type Component, type State } from '../src/index';
-import { test as t } from '../src/test';
+import { render as t } from '../src/test';
 
 let handle: ReturnType<typeof t> | null = null;
 afterEach(() => {
