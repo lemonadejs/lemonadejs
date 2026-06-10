@@ -12,6 +12,7 @@
 const esbuild = require('esbuild');
 const fs = require('fs');
 const path = require('path');
+const { aliasPlugin } = require('./lemonade-alias');
 
 const root = path.join(__dirname, '..');
 const componentsDir = path.join(root, 'components');
@@ -35,6 +36,7 @@ const start = async function (entries) {
         sourcemap: true,
         target: 'es2020',
         define: { __DEV__: 'true' },
+        plugins: [aliasPlugin],
     });
     await ctx.watch();
     const server = await ctx.serve({ servedir: root, port: 3000 });

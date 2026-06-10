@@ -70,7 +70,8 @@ export interface Bindable<T> {
     onchange?: (value: T, oldValue: T) => void;
 }
 
-/** Values accepted by ${...} slots */
+/** Values accepted by ${...} slots — `object` admits arbitrary data
+ *  passed whole-value into component props (options, routes, items) */
 export type SlotValue =
     | string
     | number
@@ -81,7 +82,8 @@ export type SlotValue =
     | View
     | Node
     | ((...args: never[]) => unknown)
-    | readonly SlotValue[];
+    | readonly SlotValue[]
+    | object;
 
 /** Tools injected into every component */
 export interface Tools {
@@ -93,8 +95,10 @@ export interface Tools {
      * a plain props.bind or the fallback). set() also fires props.onchange.
      */
     bind<T>(props: Bindable<T>, fallback: T): Bound<T>;
-    /** Called after the component DOM is attached. Return a cleanup function if needed. */
-    onMount(callback: (el: Node) => void | (() => void)): void;
+    /** Called after the component DOM is attached. Return a cleanup
+     *  FUNCTION to run on unmount; any other return value is ignored
+     *  (so `onMount(() => count++)` stays legal). */
+    onMount(callback: (el: Node) => unknown): void;
     /** Called when the component is unmounted. */
     onUnmount(callback: () => void): void;
     /**

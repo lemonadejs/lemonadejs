@@ -1,8 +1,8 @@
 /**
  * Local playground for <Router /> — served by `npm run dev`
  */
-import { html, mount, type Component } from '../../src/index';
-import Router, { type Route } from './router';
+import { html, mount, type Component } from 'lemonadejs';
+import Router, { type Route } from '@lemonadejs/router';
 
 type Api = { setPath(p: string, ignore?: boolean): Route | null; current(): Route | null };
 

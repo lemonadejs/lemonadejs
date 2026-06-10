@@ -6,13 +6,12 @@
 import { describe, it, expect, afterEach } from 'vitest';
 import { act, createElement as h, createRef, StrictMode, useState } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { html, component, type Bindable, type State } from '../src/index';
+import { html, component } from '../src/index';
 import { adaptReact } from '../src/react';
 
 (globalThis as Record<string, unknown>).IS_REACT_ACT_ENVIRONMENT = true;
 
-type SwitchProps = Bindable<boolean> & { label?: State<string>; ref?: (api: object) => void };
-const Switch = component<SwitchProps>(
+const Switch = component(
     'switch',
     {
         bind: false,

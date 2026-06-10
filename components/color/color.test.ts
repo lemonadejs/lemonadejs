@@ -8,9 +8,9 @@
  * is stubbed to null (the block guards it, like v5 guarded the context).
  */
 import { describe, it, expect, afterEach, beforeAll } from 'vitest';
-import { store } from '../../src/index';
-import { render as t, verify } from '../../src/test';
-import Color from './color';
+import { store } from 'lemonadejs';
+import { render as t, verify } from 'lemonadejs/test';
+import Color from '@lemonadejs/color';
 
 type Api = {
     open(): void;

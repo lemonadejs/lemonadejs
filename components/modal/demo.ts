@@ -1,9 +1,9 @@
 /**
  * Local playground for <Modal /> — served by `npm run dev`
  */
-import { html, mount, type Component } from '../../src/index';
-import Modal from './modal';
-import Switch from '../switch/switch';
+import { html, mount, type Component } from 'lemonadejs';
+import Modal from '@lemonadejs/modal';
+import Switch from '@lemonadejs/switch';
 
 type Api = { open(): void; close(): void; toggle(): void };
 

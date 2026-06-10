@@ -61,7 +61,10 @@ export type ContractInput<C> = {
     [K in keyof C as K extends `on${string}` ? K & string : never]?: (...args: never[]) => unknown;
 } & (C extends { bind: infer B } ? Bindable<Widen<B>> : object) &
     (C extends { api: infer A }
-        ? { ref?: (api: { [K in keyof A]: (...args: never[]) => unknown }) => void }
+        ? // any, not never[]: the CALLER's ref callback carries the real
+          // signatures; never[] rejects every concretely-typed callback
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          { ref?: (api: { [K in keyof A]: (...args: any[]) => any }) => void }
         : object) & {
         expose?: boolean;
         children?: readonly Node[];
@@ -80,7 +83,10 @@ export type ContractProps<C> = {
     [K in keyof C as K extends `on${string}` ? K & string : never]?: (...args: never[]) => unknown;
 } & (C extends { bind: infer B } ? Bindable<Widen<B>> : object) &
     (C extends { api: infer A }
-        ? { ref?: (api: { [K in keyof A]: (...args: never[]) => unknown }) => void }
+        ? // any, not never[]: the CALLER's ref callback carries the real
+          // signatures; never[] rejects every concretely-typed callback
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          { ref?: (api: { [K in keyof A]: (...args: any[]) => any }) => void }
         : object) & {
         expose?: boolean;
         children?: readonly Node[];

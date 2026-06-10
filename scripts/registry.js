@@ -16,6 +16,7 @@ const fs = require('fs');
 const path = require('path');
 const { pathToFileURL } = require('url');
 const { JSDOM } = require('jsdom');
+const { aliasPlugin } = require('./lemonade-alias');
 
 const root = path.join(__dirname, '..');
 const componentsDir = path.join(root, 'components');
@@ -102,7 +103,7 @@ const main = async function () {
             continue;
         }
         const name = dir.name;
-        const entry = path.join(componentsDir, name, name + '.ts');
+        const entry = path.join(componentsDir, name, 'src', 'index.ts');
         if (!fs.existsSync(entry)) {
             continue;
         }
@@ -123,6 +124,7 @@ const main = async function () {
             outfile: tmp,
             target: 'es2020',
             define: { __DEV__: 'true' },
+            plugins: [aliasPlugin],
         });
 
         try {
@@ -130,7 +132,11 @@ const main = async function () {
             const { schema, report } = mod.run();
             fs.writeFileSync(path.join(componentsDir, name, 'contract.json'), JSON.stringify(schema, null, 4) + '\n');
             fs.writeFileSync(path.join(componentsDir, name, 'verify.json'), JSON.stringify(report, null, 4) + '\n');
-            fs.writeFileSync(path.join(componentsDir, name, name + '.d.ts'), generateDts(schema));
+            // The generated d.ts ships with the package (dist/), while the
+            // monorepo itself gets real types from the source via tsconfig paths
+            const dist = path.join(componentsDir, name, 'dist');
+            fs.mkdirSync(dist, { recursive: true });
+            fs.writeFileSync(path.join(dist, 'index.d.ts'), generateDts(schema));
             registry.push({
                 name: schema.name,
                 path: 'components/' + name,

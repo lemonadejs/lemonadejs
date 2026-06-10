@@ -5,9 +5,9 @@
  * Escape, headerless panels.
  */
 import { describe, it, expect, afterEach } from 'vitest';
-import { store } from '../../src/index';
-import { render as t, verify } from '../../src/test';
-import Modal from './modal';
+import { store } from 'lemonadejs';
+import { render as t, verify } from 'lemonadejs/test';
+import Modal from '@lemonadejs/modal';
 
 type Api = { open(): void; close(): void; toggle(): void; front(): void; back(): void };
 

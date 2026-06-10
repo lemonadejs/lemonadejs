@@ -1,8 +1,8 @@
 /**
  * Local playground for <Topmenu /> — served by `npm run dev`
  */
-import { html, mount, type Component } from '../../src/index';
-import Topmenu, { type TopmenuItem } from './topmenu';
+import { html, mount, type Component } from 'lemonadejs';
+import Topmenu, { type TopmenuItem } from '@lemonadejs/topmenu';
 
 type Api = { open(index?: number): void; close(): void };
 

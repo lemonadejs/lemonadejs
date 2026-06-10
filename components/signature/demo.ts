@@ -1,8 +1,8 @@
 /**
  * Local playground for <Signature /> — served by `npm run dev`
  */
-import { createWebComponent, html, mount, type Component } from '../../src/index';
-import Signature from './signature';
+import { createWebComponent, html, mount, type Component } from 'lemonadejs';
+import Signature from '@lemonadejs/signature';
 
 // One call, zero options: the contract derives <lm-signature> entirely
 createWebComponent(Signature);

@@ -93,8 +93,12 @@ describe('Components and props', () => {
         let itemsRef!: State<string[]>;
 
         const Item: Component<{ label?: string }> = (props, { onMount, onUnmount }) => {
-            onMount(() => log.push('mount:' + props.label));
-            onUnmount(() => log.push('unmount:' + props.label));
+            onMount(() => {
+                log.push('mount:' + props.label);
+            });
+            onUnmount(() => {
+                log.push('unmount:' + props.label);
+            });
             return html`<li>${props.label}</li>`;
         };
 

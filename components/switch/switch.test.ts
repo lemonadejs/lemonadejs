@@ -4,9 +4,9 @@
  * disabled/position/onchange + api.toggle.
  */
 import { describe, it, expect, afterEach } from 'vitest';
-import { html, store, type Component } from '../../src/index';
-import { render as t, verify } from '../../src/test';
-import Switch from './switch';
+import { html, store, type Component } from 'lemonadejs';
+import { render as t, verify } from 'lemonadejs/test';
+import Switch from '@lemonadejs/switch';
 
 let handle: ReturnType<typeof t> | null = null;
 afterEach(() => {

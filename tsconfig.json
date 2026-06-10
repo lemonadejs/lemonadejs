@@ -3,7 +3,7 @@
         "target": "ES2020",
         "module": "ESNext",
         "moduleResolution": "bundler",
-        "lib": ["ES2020", "DOM", "DOM.Iterable"],
+        "lib": ["ES2021", "DOM", "DOM.Iterable"],
         "strict": true,
         "noUnusedLocals": true,
         "noUnusedParameters": false,
@@ -13,7 +13,16 @@
         "declaration": true,
         "emitDeclarationOnly": true,
         "outDir": "dist",
-        "types": []
+        "types": [],
+        "baseUrl": ".",
+        "paths": {
+            "lemonadejs": ["src/index.ts"],
+            "lemonadejs/test": ["src/test.ts"],
+            "lemonadejs/forms": ["src/forms.ts"],
+            "lemonadejs/react": ["src/react.ts"],
+            "@lemonadejs/*": ["components/*/src/index.ts"]
+        }
     },
-    "include": ["src"]
+    "include": ["src", "components/**/*.ts", "tests", ".probe"],
+    "exclude": ["components/*/dist", "node_modules"]
 }

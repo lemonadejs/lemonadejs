@@ -1,8 +1,8 @@
 /**
  * Local playground for <Color /> — served by `npm run dev`
  */
-import { createWebComponent, html, mount, type Component } from '../../src/index';
-import Color from './color';
+import { createWebComponent, html, mount, type Component } from 'lemonadejs';
+import Color from '@lemonadejs/color';
 
 // One call, zero options: the contract derives <lm-color> entirely
 createWebComponent(Color);

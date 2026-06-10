@@ -8,8 +8,8 @@
  * dropdown POSITION cannot be asserted here; structure and state are.
  */
 import { describe, it, expect, afterEach } from 'vitest';
-import { render as t, verify } from '../../src/test';
-import Topmenu, { type TopmenuItem } from './topmenu';
+import { render as t, verify } from 'lemonadejs/test';
+import Topmenu, { type TopmenuItem } from '@lemonadejs/topmenu';
 
 type Api = { open(index?: number): void; close(): void };
 
@@ -243,7 +243,7 @@ describe('components/topmenu — a menubar on the Contextmenu block', () => {
     it('options is live: replacing it re-renders the bar', async () => {
         mountBar();
         handle!.unmount();
-        const { store } = await import('../../src/index');
+        const { store } = await import('lemonadejs');
         const opts = store<TopmenuItem[]>([{ title: 'One' }]);
         handle = t(Topmenu as never, { options: opts } as never);
         expect(titles().map((el) => el.textContent)).toEqual(['One']);

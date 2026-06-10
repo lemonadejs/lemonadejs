@@ -5,9 +5,9 @@
  * keyboard, api open/create + the v5 event set.
  */
 import { describe, it, expect, afterEach, vi } from 'vitest';
-import { html, store, type Component } from '../../src/index';
-import { render as t, verify } from '../../src/test';
-import Tabs, { type TabItem } from './tabs';
+import { html, store, type Component } from 'lemonadejs';
+import { render as t, verify } from 'lemonadejs/test';
+import Tabs, { type TabItem } from '@lemonadejs/tabs';
 
 let handle: ReturnType<typeof t> | null = null;
 afterEach(() => {
@@ -155,7 +155,7 @@ describe('components/tabs', () => {
         const created: [TabItem, number][] = [];
         handle = t(Tabs, {
             data: data(),
-            ref: (a: never) => (api = a),
+            ref: (a: { create: (item: TabItem, position?: number | null, select?: boolean) => void }) => (api = a),
             oncreate: (item: TabItem, position: number) => created.push([item, position]),
         });
 
@@ -177,7 +177,7 @@ describe('components/tabs', () => {
         const created: TabItem[] = [];
         handle = t(Tabs, {
             data: data(),
-            ref: (a: never) => (api = a),
+            ref: (a: { create: (item: TabItem) => void }) => (api = a),
             onbeforecreate: () => false,
             oncreate: (item: TabItem) => created.push(item),
         });

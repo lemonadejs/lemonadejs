@@ -1,8 +1,8 @@
 /**
  * Local playground for <Switch /> — served by `npm run dev`
  */
-import { createWebComponent, html, mount, type Component } from '../../src/index';
-import Switch from './switch';
+import { createWebComponent, html, mount, type Component } from 'lemonadejs';
+import Switch from '@lemonadejs/switch';
 
 // One call, zero options: the contract derives <lm-switch> entirely
 createWebComponent(Switch);

@@ -27,9 +27,10 @@
         "test": "vitest run",
         "test:watch": "vitest",
         "dev": "node scripts/dev.js",
-        "probe": "esbuild .probe/probe.ts .probe/probe-menu.ts .probe/probe-router.ts --bundle --format=iife --target=es2020 --define:__DEV__=true --outdir=.probe --log-level=silent && node scripts/chrome-probe.mjs http://localhost:3000/.probe/probe.html && node scripts/chrome-probe.mjs http://localhost:3000/.probe/probe-menu.html && node scripts/chrome-probe.mjs http://localhost:3000/.probe/probe-router.html",
+        "probe": "node scripts/probe.mjs",
         "registry": "node scripts/registry.js",
         "build": "node build.js",
+        "build:components": "node scripts/registry.js && node scripts/build-components.js",
         "typecheck": "tsc --noEmit"
     },
     "devDependencies": {

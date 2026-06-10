@@ -22,9 +22,8 @@ afterEach(() => {
     handle = null;
 });
 
-/** The canonical published component */
-type SwitchProps = Bindable<boolean> & { label?: State<string>; ref?: (api: object) => void };
-const Switch = component<SwitchProps>(
+/** The canonical published component — props typed by contract inference */
+const Switch = component(
     'switch',
     {
         bind: false,

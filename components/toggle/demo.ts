@@ -1,8 +1,8 @@
 /**
  * Local playground for <Toggle /> — served by `npm run dev`
  */
-import { createWebComponent, html, mount, type Component } from '../../src/index';
-import Toggle from './toggle';
+import { createWebComponent, html, mount, type Component } from 'lemonadejs';
+import Toggle from '@lemonadejs/toggle';
 
 // One call, zero options: the contract derives <lm-toggle> entirely
 createWebComponent(Toggle);

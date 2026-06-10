@@ -5,8 +5,8 @@
  * Escape).
  */
 import { describe, it, expect, afterEach, vi } from 'vitest';
-import { render as t, verify } from '../../src/test';
-import Contextmenu, { type ContextItem } from './contextmenu';
+import { render as t, verify } from 'lemonadejs/test';
+import Contextmenu, { type ContextItem } from '@lemonadejs/contextmenu';
 
 type Api = {
     open(list: ContextItem[], x: number, y: number): void;

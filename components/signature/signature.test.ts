@@ -9,9 +9,9 @@
  * balanced after unmount.
  */
 import { describe, it, expect, afterEach, beforeEach, vi } from 'vitest';
-import { html, store, type Component } from '../../src/index';
-import { render as t, verify } from '../../src/test';
-import Signature from './signature';
+import { html, store, type Component } from 'lemonadejs';
+import { render as t, verify } from 'lemonadejs/test';
+import Signature from '@lemonadejs/signature';
 
 type Api = {
     getValue: () => unknown;

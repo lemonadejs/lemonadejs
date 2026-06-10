@@ -1,8 +1,8 @@
 /**
  * Local playground for <Contextmenu /> — served by `npm run dev`
  */
-import { html, mount, type Component } from '../../src/index';
-import Contextmenu, { type ContextItem } from './contextmenu';
+import { html, mount, type Component } from 'lemonadejs';
+import Contextmenu, { type ContextItem } from '@lemonadejs/contextmenu';
 
 type Api = { openAt(e: MouseEvent): void; close(): void };
 

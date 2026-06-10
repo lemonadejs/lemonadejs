@@ -3,8 +3,8 @@
  * slide both pages must be visible at FULL container width, with the
  * container transformed — the new page pushes the old completely out.
  */
-import { html, mount, type Component } from '../src/index';
-import Router, { type Route } from '../components/router/router';
+import { html, mount, type Component } from 'lemonadejs';
+import Router, { type Route } from '@lemonadejs/router';
 
 type Api = { setPath(p: string, ignore?: boolean): Route | null; current(): Route | null };
 

@@ -1,8 +1,8 @@
 /**
  * Local playground for <Rating /> — served by `npm run dev`
  */
-import { createWebComponent, html, mount, type Component } from '../../src/index';
-import Rating from './rating';
+import { createWebComponent, html, mount, type Component } from 'lemonadejs';
+import Rating from '@lemonadejs/rating';
 
 // One call, zero options: the contract derives <lm-rating> entirely
 createWebComponent(Rating);

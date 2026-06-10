@@ -45,7 +45,7 @@ export interface Instance {
     slots: SlotState[];
     elements: Node[];
     pending: Instance[];
-    mountCbs: ((el: Node) => void | (() => void))[];
+    mountCbs: ((el: Node) => unknown)[];
     unmountCbs: (() => void)[];
     mounted: boolean;
     /** Set by unmountInstance — dead instances are never reused or resurrected */
@@ -724,7 +724,7 @@ export const runMount = function (inst: Instance): void {
     for (const cb of inst.mountCbs) {
         const cleanup = cb(inst.elements[0]);
         if (typeof cleanup === 'function') {
-            inst.unmountCbs.push(cleanup);
+            inst.unmountCbs.push(cleanup as () => void);
         }
     }
 };

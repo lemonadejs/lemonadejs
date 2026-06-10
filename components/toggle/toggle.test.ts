@@ -4,9 +4,9 @@
  * icon/name/disabled/onchange + api.toggle.
  */
 import { describe, it, expect, afterEach } from 'vitest';
-import { html, store, type Component } from '../../src/index';
-import { render as t, verify } from '../../src/test';
-import Toggle from './toggle';
+import { html, store, type Component } from 'lemonadejs';
+import { render as t, verify } from 'lemonadejs/test';
+import Toggle from '@lemonadejs/toggle';
 
 let handle: ReturnType<typeof t> | null = null;
 afterEach(() => {

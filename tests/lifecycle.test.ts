@@ -89,7 +89,7 @@ describe('Lifecycle, dev mode and errors', () => {
             a.value = 2;
             b.value.push(9);
             b.touch();
-            expect(handle.text()).toBe('0:0'); // nothing ran yet inside the batch
+            expect(handle!.text()).toBe('0:0'); // nothing ran yet inside the batch
         });
 
         expect(runs).toBe(before + 1); // ONE re-run for four changes on two states

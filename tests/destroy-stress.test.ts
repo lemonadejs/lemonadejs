@@ -17,10 +17,11 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { html, store, type Component, type State } from '../src/index';
 import { render } from '../src/test';
-import Modal from '../components/modal/modal';
-import Contextmenu from '../components/contextmenu/contextmenu';
+import Modal from '@lemonadejs/modal';
+import Contextmenu from '@lemonadejs/contextmenu';
 
 declare const gc: undefined | (() => void);
+declare const process: { memoryUsage(): { heapUsed: number } };
 
 const subsOf = (s: State<unknown>): number => (s as unknown as { subs: Set<unknown> }).subs.size;
 

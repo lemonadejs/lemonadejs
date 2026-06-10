@@ -4,9 +4,9 @@
  * before-change cancel/redirect, remote views, title, destroy-clean.
  */
 import { describe, it, expect, afterEach, vi } from 'vitest';
-import { html, type Component } from '../../src/index';
-import { render as t, verify } from '../../src/test';
-import Router, { type Route } from './router';
+import { html, type Component } from 'lemonadejs';
+import { render as t, verify } from 'lemonadejs/test';
+import Router, { type Route } from '@lemonadejs/router';
 
 type Api = { setPath(p: string, ignore?: boolean): Route | null; current(): Route | null };
 

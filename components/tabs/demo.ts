@@ -1,8 +1,8 @@
 /**
  * Local playground for <Tabs /> — served by `npm run dev`
  */
-import { createWebComponent, html, mount, store, type Component } from '../../src/index';
-import Tabs, { type TabItem } from './tabs';
+import { createWebComponent, html, mount, store, type Component } from 'lemonadejs';
+import Tabs, { type TabItem } from '@lemonadejs/tabs';
 
 // One call, zero options: the contract derives <lm-tabs> entirely
 createWebComponent(Tabs);

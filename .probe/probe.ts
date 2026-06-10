@@ -3,8 +3,8 @@
  * --dump-dom, writes PASS/FAIL lines into a <pre>. jsdom cannot do
  * layout; this is the truth loop for autoadjust/centering/minimize.
  */
-import { html, mount, store, type Component } from '../src/index';
-import Modal from '../components/modal/modal';
+import { html, mount, store, type Component } from 'lemonadejs';
+import Modal from '@lemonadejs/modal';
 
 type Api = { open(): void; close(): void; toggle(): void };
 

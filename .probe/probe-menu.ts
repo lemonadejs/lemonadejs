@@ -3,8 +3,8 @@
  * opens, cursor anchoring, submenu flip at the right edge. Results in
  * #lm-probe for scripts/chrome-probe.mjs.
  */
-import { html, mount, type Component } from '../src/index';
-import Contextmenu, { type ContextItem } from '../components/contextmenu/contextmenu';
+import { html, mount, type Component } from 'lemonadejs';
+import Contextmenu, { type ContextItem } from '@lemonadejs/contextmenu';
 
 type Api = {
     open(list: ContextItem[], x: number, y: number): void;
