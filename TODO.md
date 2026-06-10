@@ -11,7 +11,9 @@ Agreed work, in rough priority order. Done items get removed, not checked.
 - [ ] Publish pipeline: version bump + `npm publish` across `components/*`
       (workspaces or a script), engine first.
 - [ ] More Studio blocks on the Modal primitive: dropdown, autocomplete,
-      calendar; then datagrid.
+      calendar.
+- [ ] Datagrid v2 candidates (v1 shipped): column resize/reorder, fixed
+      columns, horizontal virtualization, row grouping, CSV export.
 
 ## Modal (platform primitive)
 

@@ -1,0 +1,94 @@
+{
+    "component": "datagrid",
+    "pass": true,
+    "checks": [
+        {
+            "name": "mounts with defaults",
+            "pass": true
+        },
+        {
+            "name": "prop data",
+            "pass": true
+        },
+        {
+            "name": "prop data (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop columns",
+            "pass": true
+        },
+        {
+            "name": "prop columns (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop height",
+            "pass": true
+        },
+        {
+            "name": "prop height (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop rowheight",
+            "pass": true
+        },
+        {
+            "name": "prop rowheight (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop selectable",
+            "pass": true
+        },
+        {
+            "name": "prop selectable (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop editable",
+            "pass": true
+        },
+        {
+            "name": "prop editable (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop search",
+            "pass": true
+        },
+        {
+            "name": "prop search (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop pagination",
+            "pass": true
+        },
+        {
+            "name": "prop pagination (live state)",
+            "pass": true
+        },
+        {
+            "name": "event onchange",
+            "pass": true
+        },
+        {
+            "name": "event onselect",
+            "pass": true
+        },
+        {
+            "name": "event onsort",
+            "pass": true
+        },
+        {
+            "name": "event onrowclick",
+            "pass": true
+        },
+        {
+            "name": "api via ref",
+            "pass": true
+        }
+    ]
+}

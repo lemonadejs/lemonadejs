@@ -1,0 +1,49 @@
+{
+    "name": "datagrid",
+    "props": {
+        "data": {
+            "type": "array"
+        },
+        "columns": {
+            "type": "array"
+        },
+        "height": {
+            "type": "number",
+            "default": 360
+        },
+        "rowheight": {
+            "type": "number",
+            "default": 36
+        },
+        "selectable": {
+            "type": "string",
+            "default": ""
+        },
+        "editable": {
+            "type": "boolean",
+            "default": false
+        },
+        "search": {
+            "type": "boolean",
+            "default": false
+        },
+        "pagination": {
+            "type": "number",
+            "default": 0
+        }
+    },
+    "bind": null,
+    "events": [
+        "onchange",
+        "onselect",
+        "onsort",
+        "onrowclick"
+    ],
+    "api": [
+        "getSelected",
+        "setSearch",
+        "sort",
+        "page",
+        "refresh"
+    ]
+}
