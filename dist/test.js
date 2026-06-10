@@ -21,7 +21,8 @@ var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: tru
 var test_exports = {};
 __export(test_exports, {
   default: () => test_default,
-  test: () => test
+  test: () => test,
+  verify: () => verify
 });
 module.exports = __toCommonJS(test_exports);
 
@@ -49,7 +50,8 @@ var MESSAGES = {
   "LJS-302": 'bind requires a state: bind="${state}"',
   "LJS-303": "bind works on <input>, <textarea> and <select> \u2014 on components it is a prop",
   "LJS-304": "bind owns the element value \u2014 remove the explicit value/checked attribute",
-  "LJS-305": "Event and callback names are lowercase: onclick, onchange, onsave"
+  "LJS-305": "Event and callback names are lowercase: onclick, onchange, onsave",
+  "LJS-401": "Prop does not match its contract"
 };
 var format = function(code, detail) {
   const message = MESSAGES[code] || "Unknown error";
@@ -166,6 +168,23 @@ var StateImpl = class {
   peek() {
     return this.v;
   }
+  /**
+   * Plain subscription: cb runs after every notification (assignment or
+   * touch). Returns the unsubscribe function. The universal adapter to
+   * other reactive worlds without adopting the renderer:
+   *   React:  useSyncExternalStore(rows.subscribe, rows.peek)
+   */
+  subscribe(cb) {
+    const self = this;
+    const binding = new Binding(function() {
+      cb(self.value);
+    });
+    this.subs.add(binding);
+    binding.deps.add(this);
+    return function() {
+      binding.dispose();
+    };
+  }
 };
 var BoundState = class extends StateImpl {
   constructor(target, notify) {
@@ -184,6 +203,9 @@ var BoundState = class extends StateImpl {
   }
   touch() {
     this.target.touch();
+  }
+  subscribe(cb) {
+    return this.target.subscribe(cb);
   }
   set(next) {
     const old = this.target.peek();
@@ -804,6 +826,12 @@ var inspect = function(target) {
   return null;
 };
 
+// src/contract.ts
+var schemas = /* @__PURE__ */ new WeakMap();
+var describe = function(c) {
+  return schemas.get(c) || null;
+};
+
 // src/test.ts
 var serialize = function(node, depth2) {
   const pad = "  ".repeat(depth2);
@@ -854,6 +882,98 @@ var test = function(component, props) {
       handle.unmount();
       root.remove();
     }
+  };
+};
+var SAMPLES = {
+  string: "sample",
+  number: 1,
+  boolean: true,
+  array: [],
+  object: {},
+  function: function() {
+  },
+  any: "sample"
+};
+var verify = function(component) {
+  const checks = [];
+  const run = function(name, fn) {
+    try {
+      fn();
+      checks.push({ name, pass: true });
+    } catch (e) {
+      checks.push({ name, pass: false, detail: e.message });
+    }
+  };
+  const schema = describe(component);
+  if (!schema) {
+    return {
+      component: component.name || "Component",
+      pass: false,
+      checks: [
+        {
+          name: "has contract",
+          pass: false,
+          detail: "not published \u2014 wrap it: component(name, contract, fn)"
+        }
+      ]
+    };
+  }
+  run("mounts with defaults", function() {
+    test(component).unmount();
+  });
+  for (const key of Object.keys(schema.props)) {
+    run("prop " + key, function() {
+      const props = {};
+      props[key] = SAMPLES[schema.props[key].type];
+      test(component, props).unmount();
+    });
+    run("prop " + key + " (live state)", function() {
+      const props = {};
+      const state = new StateImpl(SAMPLES[schema.props[key].type]);
+      props[key] = state;
+      const t = test(component, props);
+      state.touch();
+      t.unmount();
+    });
+  }
+  for (const event of schema.events) {
+    run("event " + event, function() {
+      const props = {};
+      props[event] = function() {
+      };
+      test(component, props).unmount();
+    });
+  }
+  if (schema.bind) {
+    run("bind", function() {
+      const state = new StateImpl(schema.bind.default);
+      const t = test(component, { bind: state });
+      state.value = SAMPLES[schema.bind.type];
+      t.unmount();
+    });
+  }
+  if (schema.api.length) {
+    run("api via ref", function() {
+      let api = null;
+      const t = test(component, {
+        ref: function(a) {
+          api = a;
+        }
+      });
+      t.unmount();
+      for (const method of schema.api) {
+        if (!api || typeof api[method] !== "function") {
+          throw new Error("api." + method + " not exposed through props.ref");
+        }
+      }
+    });
+  }
+  return {
+    component: schema.name,
+    pass: checks.every(function(c) {
+      return c.pass;
+    }),
+    checks
   };
 };
 var test_default = test;

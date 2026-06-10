@@ -14,10 +14,13 @@
  * mount(Counter, document.getElementById('app'));
  */
 import type { SlotValue, View } from './types';
+import { createWebComponent } from './webcomponents';
 export type { Bindable, Bound, Component, Handle, Props, SlotValue, State, Template, Tools, View } from './types';
 export { mount, inspect, setComponents, unsafe } from './runtime';
 export { store } from './store';
 export { batch } from './reactivity';
+export { component, describe } from './contract';
+export type { Schema, PropSchema, ContractType } from './contract';
 export { createWebComponent } from './webcomponents';
 export { explain } from './errors';
 /**
@@ -36,7 +39,9 @@ declare const lemonade: {
     store: <T>(initial: T, storage?: string) => import("./types").State<T>;
     batch: <R>(fn: () => R) => R;
     unsafe: (html: string) => Node[];
-    createWebComponent: (name: string, component: import("./types").Component<Record<string, unknown>>, options?: import("./webcomponents").WebComponentOptions) => string;
+    component: <P>(name: string, contract: Record<string, unknown>, fn: import("./types").Component<P>) => import("./types").Component<P>;
+    describe: (c: Function) => import("./contract").Schema | null;
+    createWebComponent: typeof createWebComponent;
     explain: (code: string) => string;
     version: number;
 };

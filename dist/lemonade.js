@@ -21,8 +21,10 @@ var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: tru
 var index_exports = {};
 __export(index_exports, {
   batch: () => batch,
+  component: () => component,
   createWebComponent: () => createWebComponent,
   default: () => index_default,
+  describe: () => describe,
   explain: () => explain,
   html: () => html,
   inspect: () => inspect,
@@ -52,7 +54,8 @@ var MESSAGES = {
   "LJS-302": 'bind requires a state: bind="${state}"',
   "LJS-303": "bind works on <input>, <textarea> and <select> \u2014 on components it is a prop",
   "LJS-304": "bind owns the element value \u2014 remove the explicit value/checked attribute",
-  "LJS-305": "Event and callback names are lowercase: onclick, onchange, onsave"
+  "LJS-305": "Event and callback names are lowercase: onclick, onchange, onsave",
+  "LJS-401": "Prop does not match its contract"
 };
 var EXPLAIN = {
   "LJS-001": 'The value used as a component is not a function. Components are plain functions: const Card: Component = (props, { state }) => html`<div>...</div>`. When embedding, pass the function itself: <${Card} title="x" />.',
@@ -69,7 +72,8 @@ var EXPLAIN = {
   "LJS-302": 'The bind directive needs the state object itself: bind="${name}" (not bind="name", which is a string, and not bind="${name.value}", which is a one-time snapshot). Create it with const name = state("").',
   "LJS-303": 'On native elements, bind is engine sugar and only <input>, <textarea> and <select> have a defined wiring. On components, bind is a plain prop: implement it with the bind() tool \u2014 const value = bind(props, fallback) \u2014 and pass <${Comp} bind="${state}" />.',
   "LJS-304": "An element has both bind and an explicit value/checked attribute. bind drives that property in both directions, so the explicit attribute fights it. Remove value/checked and set the state instead.",
-  "LJS-305": "One rule, no exceptions: every event and callback name is lowercase, HTML-style \u2014 onclick, oninput, onchange, onsave, onitemclick \u2014 exactly like the platform names onmousedown or onbeforeunload. On native elements other casings still attach (the event name is normalized) but warn; on components, props are case-sensitive JavaScript keys, so onChange would be silently ignored by a component reading onchange. Declare and pass component callbacks in lowercase."
+  "LJS-305": "One rule, no exceptions: every event and callback name is lowercase, HTML-style \u2014 onclick, oninput, onchange, onsave, onitemclick \u2014 exactly like the platform names onmousedown or onbeforeunload. On native elements other casings still attach (the event name is normalized) but warn; on components, props are case-sensitive JavaScript keys, so onChange would be silently ignored by a component reading onchange. Declare and pass component callbacks in lowercase.",
+  "LJS-401": 'A published component received a prop that violates its contract: wrong type, a non-function for a declared event, or a contract key that cannot work (prop names must be lowercase because they become HTML attributes). Check describe(Component) for the expected interface. Attribute strings are coerced to the declared type automatically ("5" \u2192 5 for numbers, presence semantics for booleans).'
 };
 var format = function(code, detail) {
   const message = MESSAGES[code] || "Unknown error";
@@ -476,6 +480,23 @@ var StateImpl = class {
   peek() {
     return this.v;
   }
+  /**
+   * Plain subscription: cb runs after every notification (assignment or
+   * touch). Returns the unsubscribe function. The universal adapter to
+   * other reactive worlds without adopting the renderer:
+   *   React:  useSyncExternalStore(rows.subscribe, rows.peek)
+   */
+  subscribe(cb) {
+    const self = this;
+    const binding = new Binding(function() {
+      cb(self.value);
+    });
+    this.subs.add(binding);
+    binding.deps.add(this);
+    return function() {
+      binding.dispose();
+    };
+  }
 };
 var BoundState = class extends StateImpl {
   constructor(target, notify) {
@@ -494,6 +515,9 @@ var BoundState = class extends StateImpl {
   }
   touch() {
     this.target.touch();
+  }
+  subscribe(cb) {
+    return this.target.subscribe(cb);
   }
   set(next) {
     const old = this.target.peek();
@@ -959,13 +983,13 @@ var buildNodes = function(vnodes, ctx, svg) {
   }
   return out;
 };
-var mountComponent = function(component, props, parent) {
-  if (typeof component !== "function") {
+var mountComponent = function(component2, props, parent) {
+  if (typeof component2 !== "function") {
     fail("LJS-001");
   }
   const inst = {
-    name: component.name || "Component",
-    component,
+    name: component2.name || "Component",
+    component: component2,
     props,
     states: [],
     bindings: [],
@@ -999,16 +1023,16 @@ var mountComponent = function(component, props, parent) {
   };
   const finalProps = DEV ? Object.freeze({ ...props }) : props;
   const before = readCount();
-  const view = component(finalProps, tools);
+  const view = component2(finalProps, tools);
   if (!isView(view)) {
     fail("LJS-002", inst.name);
   }
-  if (DEV && readCount() > before && !warned.has(component)) {
+  if (DEV && readCount() > before && !warned.has(component2)) {
     const primitive = view.values.some(function(v) {
       return typeof v === "string" || typeof v === "number" || typeof v === "boolean";
     });
     if (primitive) {
-      warned.add(component);
+      warned.add(component2);
       warn("LJS-202", "in component <" + inst.name + ">");
     }
   }
@@ -1070,12 +1094,12 @@ var unmountInstance = function(inst) {
   }
   inst.mounted = false;
 };
-var mount = function(component, root, props) {
+var mount = function(component2, root, props) {
   if (!root || root.nodeType !== 1) {
     fail("LJS-003");
   }
   const inst = mountComponent(
-    component,
+    component2,
     props || {},
     null
   );
@@ -1147,42 +1171,252 @@ var store = function(initial, storage) {
   return new StateImpl(value, persist);
 };
 
-// src/webcomponents.ts
-var createWebComponent = function(name, component, options) {
-  if (typeof component !== "function") {
-    fail("LJS-001", "createWebComponent(" + name + ")");
+// src/contract.ts
+var schemas = /* @__PURE__ */ new WeakMap();
+var kindOf = function(v) {
+  if (v === String) return { type: "string" };
+  if (v === Number) return { type: "number" };
+  if (v === Boolean) return { type: "boolean" };
+  if (v === Array) return { type: "array" };
+  if (v === Object) return { type: "object" };
+  if (v === Function) return { type: "function" };
+  if (v === null || v === void 0) return { type: "any" };
+  if (Array.isArray(v)) return { type: "array", default: v };
+  const t = typeof v;
+  if (t === "string" || t === "number" || t === "boolean") {
+    return { type: t, default: v };
   }
-  const tag = (options && options.prefix ? options.prefix : "lm") + "-" + name;
-  if (typeof customElements !== "undefined" && !customElements.get(tag)) {
-    class LemonadeElement extends HTMLElement {
-      constructor() {
-        super(...arguments);
-        this.handle = null;
+  if (t === "object") return { type: "object", default: v };
+  return { type: "any", default: v };
+};
+var buildSchema = function(name, contract) {
+  const schema = { name, props: {}, bind: null, events: [], api: [] };
+  for (const key of Object.keys(contract)) {
+    const v = contract[key];
+    if (key === "bind") {
+      schema.bind = kindOf(v);
+    } else if (key === "api" && v && typeof v === "object" && !Array.isArray(v)) {
+      schema.api = Object.keys(v);
+    } else if (key.length > 2 && key.startsWith("on")) {
+      schema.events.push(key);
+      if (DEV && /[A-Z]/.test(key)) {
+        warn("LJS-305", "use " + key.toLowerCase() + " in the contract of <" + name + ">");
       }
-      connectedCallback() {
-        if (!this.handle) {
-          const props = {};
-          for (const attr of this.getAttributeNames()) {
-            props[attr] = this.getAttribute(attr);
-          }
-          const rich = this.props;
-          if (rich && typeof rich === "object") {
-            Object.assign(props, rich);
-          }
-          this.handle = mount(component, this, props);
-        }
+    } else {
+      schema.props[key] = kindOf(v);
+      if (DEV && /[A-Z]/.test(key)) {
+        warn("LJS-401", key + " in <" + name + "> \u2014 contract prop names must be lowercase (they become HTML attributes)");
       }
-      unmount() {
-        if (this.handle) {
-          this.handle.unmount();
-          this.handle = null;
+    }
+  }
+  return schema;
+};
+var coerce = function(v, p) {
+  if (v === null) {
+    return p.type === "boolean" ? false : p.default;
+  }
+  if (typeof v === "string") {
+    if (p.type === "number") {
+      const n = Number(v);
+      return Number.isNaN(n) ? v : n;
+    }
+    if (p.type === "boolean") {
+      return !(v === "false" || v === "0");
+    }
+  }
+  return v;
+};
+var matches = function(v, type) {
+  if (type === "any" || v === void 0 || v === null) {
+    return true;
+  }
+  if (type === "array") {
+    return Array.isArray(v);
+  }
+  return typeof v === type;
+};
+var component = function(name, contract, fn) {
+  const schema = buildSchema(name, contract);
+  const wrapped = function(props, tools) {
+    const incoming = props || {};
+    const final = { ...incoming };
+    for (const key of Object.keys(schema.props)) {
+      const p = schema.props[key];
+      const raw = incoming[key];
+      if (isState(raw)) {
+        final[key] = raw;
+        continue;
+      }
+      const v = raw === void 0 ? p.default : coerce(raw, p);
+      if (DEV && v !== void 0 && !matches(v, p.type)) {
+        warn("LJS-401", key + " expects " + p.type + ", got " + typeof v + " in <" + name + ">");
+      }
+      final[key] = new StateImpl(v);
+    }
+    if (schema.bind && incoming.bind === void 0 && schema.bind.default !== void 0) {
+      final.bind = schema.bind.default;
+    }
+    if (DEV) {
+      for (const e of schema.events) {
+        if (incoming[e] !== void 0 && typeof incoming[e] !== "function") {
+          warn("LJS-401", e + " expects a function in <" + name + ">");
         }
       }
     }
-    customElements.define(tag, LemonadeElement);
-  }
-  return tag;
+    return fn(Object.freeze(final), tools);
+  };
+  Object.defineProperty(wrapped, "name", { value: fn.name || name });
+  schemas.set(wrapped, schema);
+  return wrapped;
 };
+var describe = function(c) {
+  return schemas.get(c) || null;
+};
+
+// src/webcomponents.ts
+function createWebComponent(a, b, c) {
+  let name;
+  let component2;
+  let options;
+  if (typeof a === "function") {
+    component2 = a;
+    options = b;
+  } else {
+    name = a;
+    component2 = b;
+    options = c;
+  }
+  if (typeof component2 !== "function") {
+    fail("LJS-001", "createWebComponent");
+  }
+  const schema = describe(component2);
+  if (!name) {
+    if (schema) {
+      name = schema.name;
+    } else {
+      fail("LJS-001", "createWebComponent(Component) needs a contract \u2014 or pass a name");
+    }
+  }
+  const tag = (options && options.prefix ? options.prefix : "lm") + "-" + name;
+  if (typeof customElements === "undefined" || customElements.get(tag)) {
+    return tag;
+  }
+  const propNames = schema ? Object.keys(schema.props) : [];
+  class LemonadeElement extends HTMLElement {
+    constructor() {
+      super(...arguments);
+      this.handle = null;
+      this._states = null;
+      this._bind = null;
+    }
+    _ensure() {
+      if (!this._states) {
+        this._states = {};
+        if (schema) {
+          for (const key of propNames) {
+            this._states[key] = new StateImpl(schema.props[key].default);
+          }
+          if (schema.bind) {
+            this._bind = new StateImpl(schema.bind.default);
+          }
+        }
+      }
+      return this._states;
+    }
+    static get observedAttributes() {
+      const attrs = propNames.map(function(k) {
+        return k.toLowerCase();
+      });
+      if (schema && schema.bind) {
+        attrs.push("value");
+      }
+      return attrs;
+    }
+    attributeChangedCallback(attr, _old, value) {
+      if (!schema) {
+        return;
+      }
+      const states = this._ensure();
+      const key = propNames.find(function(k) {
+        return k.toLowerCase() === attr;
+      });
+      if (key) {
+        states[key].value = coerce(value, schema.props[key]);
+      } else if (attr === "value" && this._bind) {
+        this._bind.value = coerce(value, schema.bind);
+      }
+    }
+    connectedCallback() {
+      if (this.handle) {
+        return;
+      }
+      const props = {};
+      if (schema) {
+        const states = this._ensure();
+        for (const attr of this.getAttributeNames()) {
+          this.attributeChangedCallback(attr, null, this.getAttribute(attr));
+        }
+        Object.assign(props, states);
+        if (this._bind) {
+          props.bind = this._bind;
+        }
+        const host = this;
+        for (const event of schema.events) {
+          const type = event.slice(2);
+          props[event] = function(detail) {
+            host.dispatchEvent(new CustomEvent(type, { detail, bubbles: true, composed: true }));
+          };
+        }
+        if (schema.bind && schema.events.indexOf("onchange") < 0) {
+          props.onchange = function(detail) {
+            host.dispatchEvent(new CustomEvent("change", { detail, bubbles: true, composed: true }));
+          };
+        }
+      } else {
+        for (const attr of this.getAttributeNames()) {
+          props[attr] = this.getAttribute(attr);
+        }
+      }
+      const rich = this.props;
+      if (rich && typeof rich === "object") {
+        Object.assign(props, rich);
+      }
+      this.handle = mount(component2, this, props);
+    }
+    unmount() {
+      if (this.handle) {
+        this.handle.unmount();
+        this.handle = null;
+      }
+    }
+  }
+  if (schema) {
+    for (const key of propNames) {
+      Object.defineProperty(LemonadeElement.prototype, key, {
+        get() {
+          return this._ensure()[key].peek();
+        },
+        set(v) {
+          this._ensure()[key].value = v;
+        }
+      });
+    }
+    if (schema.bind) {
+      Object.defineProperty(LemonadeElement.prototype, "value", {
+        get() {
+          this._ensure();
+          return this._bind.peek();
+        },
+        set(v) {
+          this._ensure();
+          this._bind.value = v;
+        }
+      });
+    }
+  }
+  customElements.define(tag, LemonadeElement);
+  return tag;
+}
 
 // src/index.ts
 var templates = /* @__PURE__ */ new WeakMap();
@@ -1202,6 +1436,8 @@ var lemonade = {
   store,
   batch,
   unsafe,
+  component,
+  describe,
   createWebComponent,
   explain,
   version: 6

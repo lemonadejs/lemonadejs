@@ -33,4 +33,23 @@ export interface TestHandle {
  * return query/snapshot helpers for assertions.
  */
 export declare const test: <P>(component: Component<P>, props?: P) => TestHandle;
+export interface VerifyCheck {
+    name: string;
+    pass: boolean;
+    detail?: string;
+}
+export interface VerifyReport {
+    component: string;
+    pass: boolean;
+    checks: VerifyCheck[];
+}
+/**
+ * Conformance: check that a published component honors its contract.
+ * The contract is the promise; the component is an implementation of it.
+ * An agent generates a component and its proof in one breath:
+ *
+ *   const report = verify(Switch);
+ *   report.pass === true;
+ */
+export declare const verify: (component: Component<never>) => VerifyReport;
 export default test;

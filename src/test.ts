@@ -14,6 +14,8 @@
 
 import type { Component } from './types';
 import { mount, inspect } from './runtime';
+import { describe as contractOf } from './contract';
+import { StateImpl } from './reactivity';
 
 export interface TestHandle {
     /** The container the component is mounted into */
@@ -91,6 +93,125 @@ export const test = function <P>(component: Component<P>, props?: P): TestHandle
             handle.unmount();
             root.remove();
         },
+    };
+};
+
+export interface VerifyCheck {
+    name: string;
+    pass: boolean;
+    detail?: string;
+}
+
+export interface VerifyReport {
+    component: string;
+    pass: boolean;
+    checks: VerifyCheck[];
+}
+
+const SAMPLES: Record<string, unknown> = {
+    string: 'sample',
+    number: 1,
+    boolean: true,
+    array: [],
+    object: {},
+    function: function () {},
+    any: 'sample',
+};
+
+/**
+ * Conformance: check that a published component honors its contract.
+ * The contract is the promise; the component is an implementation of it.
+ * An agent generates a component and its proof in one breath:
+ *
+ *   const report = verify(Switch);
+ *   report.pass === true;
+ */
+export const verify = function (component: Component<never>): VerifyReport {
+    const checks: VerifyCheck[] = [];
+    const run = function (name: string, fn: () => void): void {
+        try {
+            fn();
+            checks.push({ name, pass: true });
+        } catch (e) {
+            checks.push({ name, pass: false, detail: (e as Error).message });
+        }
+    };
+
+    const schema = contractOf(component);
+    if (!schema) {
+        return {
+            component: component.name || 'Component',
+            pass: false,
+            checks: [
+                {
+                    name: 'has contract',
+                    pass: false,
+                    detail: 'not published — wrap it: component(name, contract, fn)',
+                },
+            ],
+        };
+    }
+
+    run('mounts with defaults', function () {
+        test(component as Component<unknown>).unmount();
+    });
+
+    for (const key of Object.keys(schema.props)) {
+        run('prop ' + key, function () {
+            const props: Record<string, unknown> = {};
+            props[key] = SAMPLES[schema.props[key].type];
+            test(component as Component<unknown>, props).unmount();
+        });
+        run('prop ' + key + ' (live state)', function () {
+            const props: Record<string, unknown> = {};
+            const state = new StateImpl(SAMPLES[schema.props[key].type]);
+            props[key] = state;
+            const t = test(component as Component<unknown>, props);
+            state.touch();
+            t.unmount();
+        });
+    }
+
+    for (const event of schema.events) {
+        run('event ' + event, function () {
+            const props: Record<string, unknown> = {};
+            props[event] = function () {};
+            test(component as Component<unknown>, props).unmount();
+        });
+    }
+
+    if (schema.bind) {
+        run('bind', function () {
+            const state = new StateImpl(schema.bind!.default);
+            const t = test(component as Component<unknown>, { bind: state });
+            state.value = SAMPLES[schema.bind!.type];
+            t.unmount();
+        });
+    }
+
+    if (schema.api.length) {
+        run('api via ref', function () {
+            let api: Record<string, unknown> | null = null;
+            const t = test(component as Component<unknown>, {
+                ref: function (a: Record<string, unknown>) {
+                    api = a;
+                },
+            });
+            t.unmount();
+            for (const method of schema.api) {
+                if (!api || typeof (api as Record<string, unknown>)[method] !== 'function') {
+                    throw new Error('api.' + method + ' not exposed through props.ref');
+                }
+            }
+        });
+    }
+
+    return {
+        component: schema.name,
+        pass: checks.every(function (c) {
+            return c.pass;
+        }),
+        checks,
     };
 };
 

@@ -155,6 +155,52 @@ Props rules: literal attribute text → string; ${...} → passed by reference, 
 (states stay live, callbacks callable, objects unstringified); `flag` alone → true.
 Props are read-only (frozen in dev). Data flows up via callback props.
 
+## Publishing components (contracts)
+
+A plain function is a component. component(name, contract, fn) is for components that
+become PRODUCTS — plugins, libraries, anything other frameworks or other agents consume.
+The contract is the interface as a runtime artifact; everything derives from it.
+
+    import { component, describe } from 'lemonadejs';
+
+    export const Switch = component('switch', {
+        bind: false,                 // bindable value — type and default inferred: boolean
+        label: '',                   // prop: string, default ''
+        count: 0,                    // prop: number — attribute "5" auto-coerced to 5
+        data: Array,                 // constructor = type only, no default
+        onchange: Function,          // event out
+        api: { toggle: Function },   // imperative surface, exposed via props.ref
+    }, (props, { bind }) => {
+        const value = bind(props, false);
+        const toggle = () => value.set(!value.value);
+        props.ref?.({ toggle });     // fulfill the declared api
+        return html`<div class="${() => value.value ? 'on' : 'off'}"
+            onclick="${toggle}">${props.label}</div>`;
+    });
+
+RULE: declared props arrive as LIVE STATES — props.label is State<string> in every
+deployment. Templates: ${props.label}. Logic: props.label.value. Wrong types warn
+LJS-401 in dev; contract prop names must be lowercase (they become HTML attributes).
+
+    describe(Switch)    // → { name, props: {label: {type,default}}, bind, events, api }
+                        // the schema an agent reads INSTEAD of the source
+
+    createWebComponent(Switch)   // <lm-switch>, zero options, ALL derived:
+                                 // live attributes (coerced), element properties
+                                 // (el.label = 'x'), bind as el.value, declared
+                                 // events dispatched as real CustomEvents
+
+    import { verify } from 'lemonadejs/test';
+    verify(Switch)      // → { pass, checks } — conformance against the contract:
+                        // mounts, every prop (plain + live state), events, bind,
+                        // api actually exposed. Generate a component and its
+                        // proof in one breath.
+
+Interop with other reactive worlds (React, Svelte, Rx) — subscribe + peek:
+
+    const value = useSyncExternalStore(rows.subscribe, rows.peek);   // React reads
+    useEffect(() => { rows.value = props.data; }, [props.data]);     // React writes
+
 ## Lifecycle
 
     const C: Component = (props, { state, onMount, onUnmount }) => {

@@ -2,16 +2,28 @@
  * LemonadeJS v6 — web components (interop boundary)
  *
  * Wraps a component as a real custom element, usable in plain HTML or any
- * framework: createWebComponent('switch', Switch) defines <lm-switch>.
+ * framework. With a contract, everything derives automatically:
  *
- * Attributes present at connect time are passed as string props (plus an
- * optional `props` object property set before connecting). For rich props
- * and live states, compose inside LemonadeJS instead — this boundary is
- * for crossing into other stacks.
+ *   createWebComponent(Switch);          // <lm-switch> — zero options
+ *
+ *   - observed attributes = declared props, LIVE: change an attribute,
+ *     the component updates (attributes are coerced to declared types)
+ *   - property accessors = declared props: el.label = 'x' works — the
+ *     core-of-HTML surface, derived from the contract
+ *   - declared events dispatch real CustomEvents on the host (bubbling,
+ *     composed) — @change / (change) / addEventListener all work
+ *   - bind is exposed as the element's value property + 'change' event
+ *
+ * Without a contract, the legacy form stays: createWebComponent(name, fn)
+ * passes connect-time attributes as string props, plus el.props for rich
+ * values.
  */
 import type { Component } from './types';
 export interface WebComponentOptions {
     /** Tag prefix, default 'lm' → <lm-name> */
     prefix?: string;
 }
-export declare const createWebComponent: (name: string, component: Component<Record<string, unknown>>, options?: WebComponentOptions) => string;
+type AnyComponent = Component<Record<string, unknown>>;
+export declare function createWebComponent(component: AnyComponent, options?: WebComponentOptions): string;
+export declare function createWebComponent(name: string, component: AnyComponent, options?: WebComponentOptions): string;
+export {};

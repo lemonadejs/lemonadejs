@@ -54,6 +54,13 @@ export declare class StateImpl<T> {
     private emit;
     /** Read without subscribing (used by inspect/tooling) */
     peek(): T;
+    /**
+     * Plain subscription: cb runs after every notification (assignment or
+     * touch). Returns the unsubscribe function. The universal adapter to
+     * other reactive worlds without adopting the renderer:
+     *   React:  useSyncExternalStore(rows.subscribe, rows.peek)
+     */
+    subscribe(cb: (value: T) => void): () => void;
 }
 /**
  * The state returned by the bind() tool. Delegates to a target state (the
@@ -69,6 +76,7 @@ export declare class BoundState<T> extends StateImpl<T> {
     set value(next: T);
     peek(): T;
     touch(): void;
+    subscribe(cb: (value: T) => void): () => void;
     set(next: T): void;
 }
 export declare const isState: (v: unknown) => v is StateImpl<unknown>;

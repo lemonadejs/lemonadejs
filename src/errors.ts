@@ -24,6 +24,7 @@ const MESSAGES: Record<string, string> = {
     'LJS-303': 'bind works on <input>, <textarea> and <select> — on components it is a prop',
     'LJS-304': 'bind owns the element value — remove the explicit value/checked attribute',
     'LJS-305': 'Event and callback names are lowercase: onclick, onchange, onsave',
+    'LJS-401': 'Prop does not match its contract',
 };
 
 const EXPLAIN: Record<string, string> = {
@@ -83,6 +84,11 @@ const EXPLAIN: Record<string, string> = {
         'On native elements other casings still attach (the event name is normalized) but warn; on components, ' +
         'props are case-sensitive JavaScript keys, so onChange would be silently ignored by a component reading ' +
         'onchange. Declare and pass component callbacks in lowercase.',
+    'LJS-401':
+        'A published component received a prop that violates its contract: wrong type, a non-function for a ' +
+        'declared event, or a contract key that cannot work (prop names must be lowercase because they become ' +
+        'HTML attributes). Check describe(Component) for the expected interface. Attribute strings are coerced ' +
+        'to the declared type automatically ("5" → 5 for numbers, presence semantics for booleans).',
 };
 
 const format = function (code: string, detail?: string): string {

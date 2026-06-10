@@ -41,7 +41,8 @@ var MESSAGES = {
   "LJS-302": 'bind requires a state: bind="${state}"',
   "LJS-303": "bind works on <input>, <textarea> and <select> \u2014 on components it is a prop",
   "LJS-304": "bind owns the element value \u2014 remove the explicit value/checked attribute",
-  "LJS-305": "Event and callback names are lowercase: onclick, onchange, onsave"
+  "LJS-305": "Event and callback names are lowercase: onclick, onchange, onsave",
+  "LJS-401": "Prop does not match its contract"
 };
 var format = function(code, detail) {
   const message = MESSAGES[code] || "Unknown error";
@@ -58,6 +59,31 @@ var forcing = false;
 var batching = null;
 var batchForcing = false;
 var reads = 0;
+var Binding = class {
+  constructor(fn) {
+    this.fn = fn;
+    this.deps = /* @__PURE__ */ new Set();
+  }
+  run() {
+    for (const dep of this.deps) {
+      dep.subs.delete(this);
+    }
+    this.deps.clear();
+    const previous = current;
+    current = this;
+    try {
+      this.fn();
+    } finally {
+      current = previous;
+    }
+  }
+  dispose() {
+    for (const dep of this.deps) {
+      dep.subs.delete(this);
+    }
+    this.deps.clear();
+  }
+};
 var StateImpl = class {
   constructor(initial, onchange) {
     this.onchange = onchange;
@@ -121,6 +147,23 @@ var StateImpl = class {
   /** Read without subscribing (used by inspect/tooling) */
   peek() {
     return this.v;
+  }
+  /**
+   * Plain subscription: cb runs after every notification (assignment or
+   * touch). Returns the unsubscribe function. The universal adapter to
+   * other reactive worlds without adopting the renderer:
+   *   React:  useSyncExternalStore(rows.subscribe, rows.peek)
+   */
+  subscribe(cb) {
+    const self = this;
+    const binding = new Binding(function() {
+      cb(self.value);
+    });
+    this.subs.add(binding);
+    binding.deps.add(this);
+    return function() {
+      binding.dispose();
+    };
   }
 };
 

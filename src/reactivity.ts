@@ -181,6 +181,26 @@ export class StateImpl<T> {
     peek(): T {
         return this.v;
     }
+
+    /**
+     * Plain subscription: cb runs after every notification (assignment or
+     * touch). Returns the unsubscribe function. The universal adapter to
+     * other reactive worlds without adopting the renderer:
+     *   React:  useSyncExternalStore(rows.subscribe, rows.peek)
+     */
+    subscribe(cb: (value: T) => void): () => void {
+        const self = this;
+        const binding = new Binding(function () {
+            // Tracked read: every run re-subscribes (Binding re-tracks deps)
+            cb(self.value);
+        });
+        // Initial wiring without running cb
+        this.subs.add(binding);
+        binding.deps.add(this as StateImpl<unknown>);
+        return function () {
+            binding.dispose();
+        };
+    }
 }
 
 /**
@@ -213,6 +233,10 @@ export class BoundState<T> extends StateImpl<T> {
 
     override touch(): void {
         this.target.touch();
+    }
+
+    override subscribe(cb: (value: T) => void): () => void {
+        return this.target.subscribe(cb);
     }
 
     set(next: T): void {

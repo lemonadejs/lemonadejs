@@ -45,6 +45,10 @@ export interface State<T> {
      * touch() to update. No copies, no proxies; DOM writes are delta-only.
      */
     touch(): void;
+    /** Read without subscribing (tooling, snapshots) */
+    peek(): T;
+    /** Run cb after every notification; returns the unsubscribe function */
+    subscribe(cb: (value: T) => void): () => void;
 }
 
 /**
