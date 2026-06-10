@@ -1,0 +1,85 @@
+/* <Contextmenu /> — default styling, lm-contextmenu-* convention */
+.lm-contextmenu {
+    position: fixed;
+    z-index: 60;
+    min-width: 220px;
+    background: #fff;
+    border: 1px solid #e4e4e7;
+    border-radius: 10px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.18);
+    padding: 6px;
+    font: 13px/1.5 system-ui, sans-serif;
+    user-select: none;
+}
+
+.lm-contextmenu-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.lm-contextmenu-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    position: relative;
+}
+
+.lm-contextmenu-item:hover {
+    background: #f4f4f5;
+}
+
+.lm-contextmenu-disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.lm-contextmenu-line {
+    border-top: 1px solid #e4e4e7;
+    margin: 6px 4px;
+}
+
+.lm-contextmenu-icon {
+    width: 18px;
+    font-size: 16px;
+    text-align: center;
+}
+
+.lm-contextmenu-icon:empty {
+    visibility: hidden;
+}
+
+.lm-contextmenu-title {
+    flex: 1;
+    white-space: nowrap;
+}
+
+.lm-contextmenu-shortcut {
+    color: #a1a1aa;
+    font-size: 0.9em;
+}
+
+.lm-contextmenu-arrow {
+    color: #a1a1aa;
+}
+
+/* Pure CSS nested submenus */
+.lm-contextmenu-submenu {
+    display: none;
+    position: absolute;
+    left: calc(100% - 4px);
+    top: -7px;
+    min-width: 200px;
+    background: #fff;
+    border: 1px solid #e4e4e7;
+    border-radius: 10px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.18);
+    padding: 6px;
+}
+
+.lm-contextmenu-parent:hover > .lm-contextmenu-submenu {
+    display: block;
+}

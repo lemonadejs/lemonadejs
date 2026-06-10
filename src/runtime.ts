@@ -48,6 +48,8 @@ export interface Instance {
     mountCbs: ((el: Node) => void | (() => void))[];
     unmountCbs: (() => void)[];
     mounted: boolean;
+    /** Set by unmountInstance — dead instances are never reused or resurrected */
+    dead: boolean;
 }
 
 /** Build context: who owns the bindings/instances created while building */
@@ -250,15 +252,20 @@ const applySlot = function (s: SlotState, value: unknown, inst: Instance): void 
         } else {
             const view = item.view;
             if (o && o.kind === 'view' && o.template === view.template) {
+                // A self-unmounted (dead) instance is never resurrected:
+                // its entry rebuilds fresh
+                const hasDead = o.instances.some(function (i) {
+                    return i.dead;
+                });
                 const equal = valuesEqual(o.holder.values, view.values);
-                if (equal && !isForcing()) {
+                if (equal && !isForcing() && !hasDead) {
                     // Identical content — reuse as-is (reattaches if detached)
                     next.push(o);
                     continue;
                 }
                 // touch(): equal references may hold mutated contents, so
                 // re-run the bindings — appliers still skip unchanged output
-                if (!o.instances.length || equal) {
+                if (!hasDead && (!o.instances.length || equal)) {
                     o.holder.values = view.values;
                     for (const binding of o.bindings) {
                         binding.run();
@@ -627,6 +634,7 @@ export const mountComponent = function (
         mountCbs: [],
         unmountCbs: [],
         mounted: false,
+        dead: false,
     };
 
     const tools: Tools = {
@@ -650,6 +658,9 @@ export const mountComponent = function (
         },
         onUnmount: function (cb) {
             inst.unmountCbs.push(cb);
+        },
+        unmount: function () {
+            unmountInstance(inst);
         },
     };
 
@@ -712,6 +723,10 @@ export const runMount = function (inst: Instance): void {
 
 /** Unmount: children first, dispose every binding, remove the DOM */
 export const unmountInstance = function (inst: Instance): void {
+    if (inst.dead) {
+        return; // formally idempotent
+    }
+    inst.dead = true;
     for (const child of [...inst.children]) {
         unmountInstance(child);
     }
@@ -728,6 +743,17 @@ export const unmountInstance = function (inst: Instance): void {
         cb();
     }
     inst.unmountCbs = [];
+    // Never leave focus on a node being removed: correct UX, and the
+    // document's last-focused reference would otherwise retain the subtree
+    if (typeof document !== 'undefined' && document.activeElement) {
+        const active = document.activeElement as HTMLElement;
+        for (const node of inst.elements) {
+            if (node === active || node.contains(active)) {
+                active.blur?.();
+                break;
+            }
+        }
+    }
     for (const node of inst.elements) {
         remove(node);
     }

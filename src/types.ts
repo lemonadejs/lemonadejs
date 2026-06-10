@@ -97,6 +97,14 @@ export interface Tools {
     onMount(callback: (el: Node) => void | (() => void)): void;
     /** Called when the component is unmounted. */
     onUnmount(callback: () => void): void;
+    /**
+     * Unmount this component instance imperatively: full destroy —
+     * children, bindings, cleanups, DOM. Call it from handlers or
+     * lifecycle callbacks (toasts, self-dismissing banners). If the owner
+     * re-renders the position with the same data, a FRESH instance is
+     * created — permanent removal belongs to the owner's data.
+     */
+    unmount(): void;
 }
 
 /** Props as a component receives them: read-only, plus children nodes */
