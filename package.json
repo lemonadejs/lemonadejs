@@ -27,6 +27,7 @@
         "test": "vitest run",
         "test:watch": "vitest",
         "dev": "node scripts/dev.js",
+        "probe": "esbuild .probe/probe.ts --bundle --format=iife --target=es2020 --define:__DEV__=true --outfile=.probe/probe.js --log-level=silent && esbuild .probe/probe-menu.ts --bundle --format=iife --target=es2020 --define:__DEV__=true --outfile=.probe/probe-menu.js --log-level=silent && node scripts/chrome-probe.mjs http://localhost:3000/.probe/probe.html && node scripts/chrome-probe.mjs http://localhost:3000/.probe/probe-menu.html",
         "registry": "node scripts/registry.js",
         "build": "node build.js",
         "typecheck": "tsc --noEmit"

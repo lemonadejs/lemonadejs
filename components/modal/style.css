@@ -57,20 +57,31 @@
     font-weight: 600;
 }
 
+.lm-modal-controls {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
 .lm-modal-controls button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     border: 0;
     background: transparent;
     font-size: 18px;
     line-height: 1;
-    width: 28px;
-    height: 28px;
+    width: 30px;
+    height: 30px;
+    padding: 0;
     border-radius: 6px;
     cursor: pointer;
     color: #52525b;
 }
 
 .lm-modal-controls button:hover {
-    background: #f4f4f5;
+    background: #e4e4e7;
+    color: #18181b;
 }
 
 .lm-modal-content {

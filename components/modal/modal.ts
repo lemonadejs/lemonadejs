@@ -232,20 +232,30 @@ export const Modal = component('modal', {
     };
 
     // ---- per-open setup (v5 onload behavior)
+    // Always deferred one microtask: on first open the branch builds
+    // detached and attaches right after; measurements need layout.
+    let pendingSetup = false;
+    const scheduleSetup = () => {
+        if (pendingSetup) {
+            return;
+        }
+        pendingSetup = true;
+        queueMicrotask(() => {
+            pendingSetup = false;
+            if (root && root.isConnected && open.value) {
+                setup();
+            }
+        });
+    };
+
     const onOpened = (el: Element) => {
         root = el as HTMLElement;
-        if (!el.isConnected) {
-            // First open: the branch builds detached, then attaches —
-            // measurements need the attached element (v5 measured onload)
-            queueMicrotask(() => {
-                if (root === el && el.isConnected && open.value) {
-                    setup();
-                }
-            });
-        } else {
-            setup();
-        }
+        scheduleSetup();
     };
+
+    // Reopen reuses the cached branch — refs do NOT re-fire, so setup is
+    // re-armed by watching the open state itself (api, bind or backdrop)
+    onMount(() => open.subscribe((v) => v && scheduleSetup()));
 
     const setup = () => {
         const el = root!;

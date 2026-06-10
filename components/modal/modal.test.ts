@@ -202,6 +202,24 @@ describe('components/modal — behaviors', () => {
         firstHandle.unmount();
     });
 
+    it('REOPEN runs per-open setup again: a dragged modal recenters', async () => {
+        // Reopen reuses the cached branch (refs do not re-fire) — the open
+        // subscription must re-arm setup or the modal reopens wherever it
+        // was left, even off-screen (the real-Chrome probe pins geometry)
+        const { api, el } = await openModal({ draggable: true, width: 400, height: 300 });
+        el.dispatchEvent(mouse('mousedown', 150, 110));
+        document.dispatchEvent(mouse('mousemove', 700, 400));
+        document.dispatchEvent(mouse('mouseup', 700, 400));
+        expect(el.style.top).not.toBe(Math.max(0, (window.innerHeight - 300) / 2) + 'px');
+
+        api.close();
+        await flush();
+        api.open();
+        await flush();
+        expect(el.style.top).toBe(Math.max(0, (window.innerHeight - 300) / 2) + 'px');
+        expect(el.style.left).toBe(Math.max(0, (window.innerWidth - 400) / 2) + 'px');
+    });
+
     it('opens with explicit centered coordinates (v5 model)', async () => {
         const { el } = await openModal({ width: 400, height: 300 });
         expect(el.style.top).toBe(Math.max(0, (window.innerHeight - 300) / 2) + 'px');

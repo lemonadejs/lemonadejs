@@ -3,3 +3,5 @@
 **/package-lock.json
 
 .dev
+.probe/*.js
+.probe/*.js.map
