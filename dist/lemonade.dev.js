@@ -1425,6 +1425,14 @@ var lemonade = (() => {
         }
         this.handle = mount(component2, this, props);
       }
+      disconnectedCallback() {
+        const host = this;
+        queueMicrotask(function() {
+          if (!host.isConnected) {
+            host.unmount();
+          }
+        });
+      }
       unmount() {
         if (this.handle) {
           this.handle.unmount();

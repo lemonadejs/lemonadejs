@@ -157,6 +157,21 @@ export function createWebComponent(
             this.handle = mount(component, this, props);
         }
 
+        disconnectedCallback(): void {
+            // Destroy-by-default: hosts (React, Vue, plain DOM) remove
+            // elements without calling unmount(), and a kept-alive instance
+            // subscribed to a store would pin its whole tree forever — the
+            // v5 leak, reborn. The microtask grace keeps same-tick MOVES
+            // (reparenting) alive; a real removal unmounts. Reconnecting
+            // remounts fresh from the element's preserved attribute states.
+            const host = this;
+            queueMicrotask(function () {
+                if (!host.isConnected) {
+                    host.unmount();
+                }
+            });
+        }
+
         unmount(): void {
             if (this.handle) {
                 this.handle.unmount();
