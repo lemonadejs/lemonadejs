@@ -16,7 +16,7 @@
 
 import type { SlotValue, Template, View } from './types';
 import { parse } from './parser';
-import { env, explain } from './errors';
+import { explain } from './errors';
 import { inspect, mount, setComponents, unsafe } from './runtime';
 import { store } from './store';
 import { batch } from './reactivity';
@@ -27,7 +27,7 @@ export { mount, inspect, setComponents, unsafe } from './runtime';
 export { store } from './store';
 export { batch } from './reactivity';
 export { createWebComponent } from './webcomponents';
-export { explain, env } from './errors';
+export { explain } from './errors';
 
 /** Templates are parsed once per call site: the strings identity is the key */
 const templates = new WeakMap<TemplateStringsArray, Template>();
@@ -58,7 +58,6 @@ const lemonade = {
     unsafe,
     createWebComponent,
     explain,
-    env,
     version: 6,
 };
 

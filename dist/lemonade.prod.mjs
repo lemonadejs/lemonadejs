@@ -1,5 +1,5 @@
 // src/env.ts
-var DEV = false ? true : true;
+var DEV = false ? true : false;
 
 // src/errors.ts
 var MESSAGES = {

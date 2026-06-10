@@ -19,7 +19,7 @@ export { mount, inspect, setComponents, unsafe } from './runtime';
 export { store } from './store';
 export { batch } from './reactivity';
 export { createWebComponent } from './webcomponents';
-export { explain, env } from './errors';
+export { explain } from './errors';
 /**
  * The template tag — html`...` describes what it returns: a parsed HTML
  * template plus this call's values. It renders nothing; mount() renders.
@@ -38,9 +38,6 @@ declare const lemonade: {
     unsafe: (html: string) => Node[];
     createWebComponent: (name: string, component: import("./types").Component<Record<string, unknown>>, options?: import("./webcomponents").WebComponentOptions) => string;
     explain: (code: string) => string;
-    env: {
-        dev: boolean;
-    };
     version: number;
 };
 export default lemonade;

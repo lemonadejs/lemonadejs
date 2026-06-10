@@ -46,8 +46,15 @@
     "exports": {
         ".": {
             "types": "./dist/index.d.ts",
-            "import": "./dist/lemonade.mjs",
-            "default": "./dist/lemonade.js"
+            "import": {
+                "development": "./dist/lemonade.mjs",
+                "default": "./dist/lemonade.prod.mjs"
+            },
+            "require": {
+                "development": "./dist/lemonade.js",
+                "default": "./dist/lemonade.prod.js"
+            },
+            "default": "./dist/lemonade.prod.mjs"
         },
         "./test": {
             "types": "./dist/test.d.ts",

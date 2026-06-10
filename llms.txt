@@ -200,10 +200,14 @@ Props are read-only (frozen in dev). Data flows up via callback props.
 
 ## Debugging
 
-    import { inspect, explain, env, setComponents } from 'lemonadejs';
+    import { inspect, explain, setComponents } from 'lemonadejs';
     inspect(element)        // live component tree for any element: names, state values, children
     explain('LJS-202')      // long-form doc for any error code, offline
-    env.dev = false         // production: disables warnings and state freezing
+
+Dev vs production is decided by the BUILD you load, not a runtime flag:
+dist/lemonade.dev.js (script tag) and the bundler "development" condition give
+warnings + checks; dist/lemonade.min.js and production bundles have all dev
+code eliminated — production pays zero.
 
 ## Error codes (stable, pattern-matchable)
 

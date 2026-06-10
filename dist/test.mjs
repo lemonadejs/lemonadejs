@@ -3,11 +3,10 @@ function isView(v) {
   return typeof v === "object" && v !== null && Array.isArray(v.values) && typeof v.template === "object" && Array.isArray(v.template?.nodes);
 }
 
+// src/env.ts
+var DEV = false ? true : true;
+
 // src/errors.ts
-var env = {
-  /** Development mode: warnings + state freezing. Set to false for production. */
-  dev: true
-};
 var MESSAGES = {
   "LJS-001": "Component is not a function",
   "LJS-002": "Component must return a template created with html`...`",
@@ -33,7 +32,7 @@ var fail = function(code, detail) {
   throw new Error(format(code, detail));
 };
 var warn = function(code, detail) {
-  if (env.dev && typeof console !== "undefined") {
+  if (DEV && typeof console !== "undefined") {
     console.warn(format(code, detail));
   }
 };
@@ -211,7 +210,7 @@ var components = {};
 var warned = /* @__PURE__ */ new WeakSet();
 var warnedCasing = /* @__PURE__ */ new Set();
 var checkCasing = function(name, context) {
-  if (env.dev && name.length > 2 && name.startsWith("on") && /[A-Z]/.test(name)) {
+  if (DEV && name.length > 2 && name.startsWith("on") && /[A-Z]/.test(name)) {
     const key = name + "|" + context;
     if (!warnedCasing.has(key)) {
       warnedCasing.add(key);
@@ -580,7 +579,7 @@ var buildElement = function(vnode, ctx, svg) {
   const tag = vnode.type;
   const isSvg = svg || SVG_TAGS.has(tag);
   const el = isSvg ? document.createElementNS(SVG_NS, tag) : document.createElement(tag);
-  if (env.dev && vnode.props && vnode.props.some((p) => p.name === "bind")) {
+  if (DEV && vnode.props && vnode.props.some((p) => p.name === "bind")) {
     if (vnode.props.some((p) => p.name === "value" || p.name === "checked")) {
       warn("LJS-304", "<" + tag + ">");
     }
@@ -654,13 +653,13 @@ var mountComponent = function(component, props, parent) {
       inst.unmountCbs.push(cb);
     }
   };
-  const finalProps = env.dev ? Object.freeze({ ...props }) : props;
+  const finalProps = DEV ? Object.freeze({ ...props }) : props;
   const before = readCount();
   const view = component(finalProps, tools);
   if (!isView(view)) {
     fail("LJS-002", inst.name);
   }
-  if (env.dev && readCount() > before && !warned.has(component)) {
+  if (DEV && readCount() > before && !warned.has(component)) {
     const primitive = view.values.some(function(v) {
       return typeof v === "string" || typeof v === "number" || typeof v === "boolean";
     });

@@ -18,7 +18,8 @@
 
 import type { Bindable, Component, Handle, State, Template, Tools, View, VNode, VProp } from './types';
 import { isView } from './types';
-import { env, fail, warn } from './errors';
+import { fail, warn } from './errors';
+import { DEV } from './env';
 import { Binding, BoundState, isDynamic, isForcing, isState, readCount, resolve, StateImpl } from './reactivity';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -112,7 +113,7 @@ const warnedCasing = new Set<string>();
 
 /** One rule, no exceptions: on* names are lowercase (onclick, onsave) */
 const checkCasing = function (name: string, context: string): void {
-    if (env.dev && name.length > 2 && name.startsWith('on') && /[A-Z]/.test(name)) {
+    if (DEV && name.length > 2 && name.startsWith('on') && /[A-Z]/.test(name)) {
         const key = name + '|' + context;
         if (!warnedCasing.has(key)) {
             warnedCasing.add(key);
@@ -555,7 +556,7 @@ const buildElement = function (vnode: VNode, ctx: BuildCtx, svg: boolean): Node[
     const isSvg = svg || SVG_TAGS.has(tag);
     const el = isSvg ? document.createElementNS(SVG_NS, tag) : document.createElement(tag);
 
-    if (env.dev && vnode.props && vnode.props.some((p) => p.name === 'bind')) {
+    if (DEV && vnode.props && vnode.props.some((p) => p.name === 'bind')) {
         if (vnode.props.some((p) => p.name === 'value' || p.name === 'checked')) {
             warn('LJS-304', '<' + tag + '>');
         }
@@ -651,7 +652,7 @@ export const mountComponent = function (
         },
     };
 
-    const finalProps = env.dev ? Object.freeze({ ...props }) : props;
+    const finalProps = DEV ? Object.freeze({ ...props }) : props;
     const before = readCount();
     const view = component(finalProps as never, tools);
     if (!isView(view)) {
@@ -660,7 +661,7 @@ export const mountComponent = function (
 
     // Dev heuristic: states were read while the template was being built and
     // some slots hold primitives — likely a frozen snapshot (see explain LJS-202)
-    if (env.dev && readCount() > before && !warned.has(component)) {
+    if (DEV && readCount() > before && !warned.has(component)) {
         const primitive = view.values.some(function (v) {
             return typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean';
         });

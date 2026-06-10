@@ -6,10 +6,7 @@
  * agents. explain(code) returns the long-form documentation offline.
  */
 
-export const env = {
-    /** Development mode: warnings + state freezing. Set to false for production. */
-    dev: true,
-};
+import { DEV } from './env';
 
 const MESSAGES: Record<string, string> = {
     'LJS-001': 'Component is not a function',
@@ -100,7 +97,7 @@ export const fail = function (code: string, detail?: string): never {
 
 /** Print a development-mode warning with a stable code */
 export const warn = function (code: string, detail?: string): void {
-    if (env.dev && typeof console !== 'undefined') {
+    if (DEV && typeof console !== 'undefined') {
         console.warn(format(code, detail));
     }
 };

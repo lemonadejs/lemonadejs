@@ -17,14 +17,19 @@ const path = require('path');
 
 const out = path.join(__dirname, 'dist');
 
+// dev: true keeps warnings and checks; dev: false inlines __DEV__ = false
+// and every dev-only branch is eliminated — production pays zero.
 const targets = [
-    { entry: 'src/index.ts', format: 'esm', outfile: 'lemonade.mjs' },
-    { entry: 'src/index.ts', format: 'cjs', outfile: 'lemonade.js' },
-    { entry: 'src/index.ts', format: 'iife', outfile: 'lemonade.min.js', minify: true, globalName: 'lemonade' },
-    { entry: 'src/test.ts', format: 'esm', outfile: 'test.mjs' },
-    { entry: 'src/test.ts', format: 'cjs', outfile: 'test.js' },
-    { entry: 'src/forms.ts', format: 'esm', outfile: 'forms.mjs' },
-    { entry: 'src/forms.ts', format: 'cjs', outfile: 'forms.js' },
+    { entry: 'src/index.ts', format: 'esm', outfile: 'lemonade.mjs', dev: true },
+    { entry: 'src/index.ts', format: 'esm', outfile: 'lemonade.prod.mjs', dev: false },
+    { entry: 'src/index.ts', format: 'cjs', outfile: 'lemonade.js', dev: true },
+    { entry: 'src/index.ts', format: 'cjs', outfile: 'lemonade.prod.js', dev: false },
+    { entry: 'src/index.ts', format: 'iife', outfile: 'lemonade.dev.js', globalName: 'lemonade', dev: true },
+    { entry: 'src/index.ts', format: 'iife', outfile: 'lemonade.min.js', minify: true, globalName: 'lemonade', dev: false },
+    { entry: 'src/test.ts', format: 'esm', outfile: 'test.mjs', dev: true },
+    { entry: 'src/test.ts', format: 'cjs', outfile: 'test.js', dev: true },
+    { entry: 'src/forms.ts', format: 'esm', outfile: 'forms.mjs', dev: true },
+    { entry: 'src/forms.ts', format: 'cjs', outfile: 'forms.js', dev: true },
 ];
 
 const run = async function () {
@@ -37,6 +42,7 @@ const run = async function () {
             globalName: t.globalName,
             outfile: path.join(out, t.outfile),
             target: 'es2020',
+            define: { __DEV__: String(!!t.dev) },
         });
     }
 
