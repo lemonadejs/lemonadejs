@@ -125,6 +125,8 @@ describe('components/modal — behaviors', () => {
 
     it('minimize DOCKS to the taskbar and restore returns home at FULL size', async () => {
         const a = await openModal({ minimizable: true, draggable: true, top: 120, left: 130, position: 'absolute' });
+        // restore returns to the EFFECTIVE position — keep the rect honest
+        setRect(a.el, { top: 120, left: 130, width: 400, height: 300 });
         const minBtn = handle!.query('.lm-modal-minimize')!;
 
         minBtn.click();
@@ -140,6 +142,24 @@ describe('components/modal — behaviors', () => {
         // The exact pre-minimize dimensions return (recorded from the rect)
         expect(a.el.style.width).toBe('400px');
         expect(a.el.style.height).toBe('300px');
+    });
+
+    it('mousedown on a docked bar never moves it (layers front() must not wipe the dock position)', async () => {
+        // The bug: front() re-ran styles(), which omitted top/left while
+        // minimized — wiping the dock placement, so the bar jumped out
+        // from under the cursor and the restore click never landed
+        const a = await openModal({ minimizable: true, layers: true, position: 'absolute', top: 50, left: 60 });
+        handle!.query('.lm-modal-minimize')!.click();
+        expect(a.el.style.left).toBe('10px');
+        const top = a.el.style.top;
+
+        a.el.dispatchEvent(mouse('mousedown', 50, window.innerHeight - 40));
+        expect(a.el.style.left).toBe('10px'); // still docked
+        expect(a.el.style.top).toBe(top);
+        document.dispatchEvent(mouse('mouseup', 50, window.innerHeight - 40));
+
+        (handle!.query('.lm-modal-header') as HTMLElement).click(); // the click now lands
+        expect(a.el.className).not.toContain('lm-modal-minimized');
     });
 
     it('clicking the minimized bar restores it', async () => {

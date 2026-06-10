@@ -29,6 +29,8 @@ const rect = () => {
 let edge!: Api;
 let plain!: Api;
 let fancy!: Api;
+let chat2!: Api;
+let chat3!: Api;
 
 const App: Component = () => html`<div>
     <${Modal} ref="${(a: Api) => (edge = a)}" title="Edge" position="absolute"
@@ -39,7 +41,11 @@ const App: Component = () => html`<div>
     </${Modal}>
     <${Modal} ref="${(a: Api) => (fancy = a)}" title="Fancy" position="absolute"
         top="120" left="120" width="380" height="240"
-        draggable resizable minimizable closable></${Modal}>
+        draggable resizable minimizable closable layers></${Modal}>
+    <${Modal} ref="${(a: Api) => (chat2 = a)}" title="Chat 2" position="absolute"
+        top="180" left="220" width="300" height="200" draggable minimizable closable layers></${Modal}>
+    <${Modal} ref="${(a: Api) => (chat3 = a)}" title="Chat 3" position="absolute"
+        top="240" left="320" width="300" height="200" draggable minimizable closable layers></${Modal}>
 </div>`;
 
 const run = async () => {
@@ -133,6 +139,42 @@ const run = async () => {
         h: Math.round(br.height),
         display: cs.display,
     });
+
+    // ---- 7. mousedown on a docked bar must NOT move it (layers front()
+    // used to wipe the dock position, so the restore click never landed)
+    (document.querySelector('.lm-modal-minimize') as HTMLElement).click();
+    await frame();
+    const bar = document.querySelector('.lm-modal') as HTMLElement;
+    const slot = { top: bar.style.top, left: bar.style.left };
+    bar.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, clientX: 50, clientY: window.innerHeight - 40, buttons: 1 }));
+    document.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
+    log('docked-bar-survives-mousedown', slot.left === '10px' && bar.style.left === slot.left && bar.style.top === slot.top, {
+        slot,
+        after: { top: bar.style.top, left: bar.style.left },
+    });
+    (bar.querySelector('.lm-modal-header') as HTMLElement).click();
+    await frame();
+    log('bar-click-restores-fully', !bar.className.includes('lm-modal-minimized'), { cls: bar.className });
+
+    // ---- 8. three modals docked in successive slots; restore reflows
+    chat2.open();
+    chat3.open();
+    await frame();
+    const bars = [...document.querySelectorAll('.lm-modal')] as HTMLElement[]; // fancy, chat2, chat3
+    for (const x of bars) {
+        (x.querySelector('.lm-modal-minimize') as HTMLElement).click();
+    }
+    await frame();
+    const lefts = bars.map((x) => x.style.left);
+    log('three-docked-slots', lefts.join(',') === '10px,215px,420px', { lefts });
+
+    (bars[1].querySelector('.lm-modal-header') as HTMLElement).click(); // restore the middle
+    await frame();
+    log(
+        'dock-reflows-on-restore',
+        bars[0].style.left === '10px' && bars[2].style.left === '215px' && !bars[1].className.includes('lm-modal-minimized'),
+        { first: bars[0].style.left, third: bars[2].style.left }
+    );
 
     const pre = document.createElement('pre');
     pre.id = 'lm-probe';

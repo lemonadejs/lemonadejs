@@ -31,15 +31,18 @@ const MIN_H = 80;
 /** Shared z-index across all modals (layers mode) */
 let layerIndex = 20;
 
-/** The minimize dock: a module-level taskbar shared by all modals */
-const dock: HTMLElement[] = [];
+/**
+ * The minimize dock: a module-level taskbar shared by all modals.
+ * Placement goes through each modal's own pos state (place) — never
+ * imperative styles, which any reactive style re-run would wipe.
+ */
+const dock: { el: HTMLElement; place: (top: number, left: number) => void }[] = [];
 
 const refreshDock = () => {
     let left = 10;
     let bottom = 55;
-    for (const el of dock) {
-        el.style.top = window.innerHeight - bottom + 'px';
-        el.style.left = left + 'px';
+    for (const entry of dock) {
+        entry.place(window.innerHeight - bottom, left);
         left += 205;
         if (window.innerWidth - left < 205) {
             left = 10;
@@ -107,7 +110,7 @@ export const Modal = component('modal', {
     onUnmount(() => {
         releaseInteraction?.();
         if (root) {
-            const i = dock.indexOf(root);
+            const i = dock.findIndex((entry) => entry.el === root);
             if (i >= 0) {
                 dock.splice(i, 1);
                 refreshDock();
@@ -172,29 +175,36 @@ export const Modal = component('modal', {
         if (!root || minimized.value) {
             return;
         }
-        // Remember position AND exact dimensions: restore must return the
-        // modal precisely as it was
+        // Remember the EFFECTIVE position (margins consolidated — v5
+        // removeMargin) and exact dimensions: restore must return the
+        // modal precisely as it looked
         const rect = root.getBoundingClientRect();
-        restoreTo = { top: pos.value.top, left: pos.value.left };
+        restoreTo = { top: rect.top, left: rect.left };
         if (rect.width && !size.value.w) {
             size.value = { w: rect.width, h: rect.height };
         }
+        // Consolidate before docking so the bar animates from where the
+        // modal visually is, not from a pre-margin position
+        pos.value = { top: rect.top, left: rect.left, fixed: true };
         minimized.value = true;
-        dock.push(root);
+        dock.push({
+            el: root,
+            place: (top, left) => {
+                pos.value = { top, left, fixed: true };
+            },
+        });
         refreshDock();
     };
     const restore = () => {
         if (!root || !minimized.value) {
             return;
         }
-        const i = dock.indexOf(root);
+        const i = dock.findIndex((entry) => entry.el === root);
         if (i >= 0) {
             dock.splice(i, 1);
         }
         minimized.value = false;
         pos.value = { top: restoreTo.top, left: restoreTo.left, fixed: true };
-        root.style.top = restoreTo.top + 'px';
-        root.style.left = restoreTo.left + 'px';
         refreshDock();
     };
 
@@ -449,10 +459,8 @@ export const Modal = component('modal', {
         }
         const p = pos.value;
         const s = size.value;
-        if (minimized.value) {
-            // The dock owns top/left while minimized (set imperatively)
-            parts.push('position:fixed');
-        } else if (p.fixed) {
+        if (p.fixed) {
+            // One source of truth for top/left — open, dragged or docked
             parts.push('position:fixed', 'top:' + p.top + 'px', 'left:' + p.left + 'px', 'margin:0');
         }
         if (s.w && !minimized.value) {

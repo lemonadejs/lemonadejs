@@ -64,6 +64,7 @@ const App: Component = (props, { state }) => {
     let full!: Api;
     let edge!: Api;
     let panel!: Api;
+    const chats: Api[] = [];
 
     return html`<div>
         <h1>&lt;Modal /&gt;</h1>
@@ -77,6 +78,15 @@ const App: Component = (props, { state }) => {
             b.disabled = true;
             stress(100, note).finally(() => (b.disabled = false));
         }}">Stress: create + destroy 100×</button>
+        <button onclick="${() => chats.forEach((c) => c.open())}">Open: 3 minimizable chats (dock test)</button>
+
+        ${[1, 2, 3].map(
+            (n) => html`<${Modal} ref="${(a: Api) => (chats[n - 1] = a)}" title="${'Chat ' + n}"
+                position="absolute" top="${80 + n * 50}" left="${80 + n * 70}"
+                width="300" height="200" draggable minimizable closable layers>
+                <p>Chat window ${n} — minimize me to the dock.</p>
+            </${Modal}>`
+        )}
 
         <${Modal} ref="${(a: Api) => (edge = a)}" title="Auto-adjusted" position="absolute"
             top="${window.innerHeight - 60}" left="${window.innerWidth - 80}"
