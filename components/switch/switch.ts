@@ -43,7 +43,7 @@ export const Switch = component('switch', {
         class="lm-switch ${() => (current.value ? 'lm-switch-on' : 'lm-switch-off')} ${() =>
             props.disabled!.value ? 'lm-switch-disabled' : ''} ${() =>
             props.size!.value ? 'lm-switch-' + props.size!.value : ''}"
-        position="${() => props.position!.value || false}"
+        data-position="${() => props.position!.value || false}"
         data-color="${() => props.color!.value || false}">
         <input type="checkbox" class="lm-switch-input"
             name="${props.name}"

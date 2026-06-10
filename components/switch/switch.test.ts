@@ -89,12 +89,12 @@ describe('components/switch', () => {
     it('exposes color and position as styling attributes', () => {
         handle = t(Switch, { color: 'purple', position: 'right' });
         expect(root().getAttribute('data-color')).toBe('purple');
-        expect(root().getAttribute('position')).toBe('right');
+        expect(root().getAttribute('data-position')).toBe('right');
         handle.unmount();
 
         handle = t(Switch);
         expect(root().hasAttribute('data-color')).toBe(false); // empty → no attribute
-        expect(root().hasAttribute('position')).toBe(false);
+        expect(root().hasAttribute('data-position')).toBe(false);
     });
 
     it('exposes toggle() through the api, honoring disabled', () => {

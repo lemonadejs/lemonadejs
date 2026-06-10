@@ -70,7 +70,7 @@
     font: 14px/1.4 system-ui, sans-serif;
 }
 
-.lm-switch[position='right'] {
+.lm-switch[data-position='right'] {
     flex-direction: row-reverse;
 }
 

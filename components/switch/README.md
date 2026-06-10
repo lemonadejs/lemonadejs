@@ -47,8 +47,8 @@ types: [switch.d.ts](switch.d.ts) (generated from the contract)
 
 All hooks follow the `lm-switch-*` convention: `.lm-switch`, states
 `.lm-switch-on/off/disabled`, sizes `.lm-switch-small/large`, parts
-`.lm-switch-input/track/thumb/label`, plus `[data-color]` and `[position]`
-attributes.
+`.lm-switch-input/track/thumb/label`. Styling variants render as valid
+`data-*` attributes: `[data-color]` and `[data-position]`.
 
 ## Deployments
 
