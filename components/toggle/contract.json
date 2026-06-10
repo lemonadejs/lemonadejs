@@ -1,0 +1,34 @@
+{
+    "name": "toggle",
+    "props": {
+        "checked": {
+            "type": "boolean",
+            "default": false
+        },
+        "text": {
+            "type": "string",
+            "default": ""
+        },
+        "icon": {
+            "type": "string",
+            "default": ""
+        },
+        "name": {
+            "type": "string",
+            "default": ""
+        },
+        "disabled": {
+            "type": "boolean",
+            "default": false
+        }
+    },
+    "bind": {
+        "type": "boolean"
+    },
+    "events": [
+        "onchange"
+    ],
+    "api": [
+        "toggle"
+    ]
+}

@@ -1,0 +1,86 @@
+{
+    "component": "rating",
+    "pass": true,
+    "checks": [
+        {
+            "name": "mounts with defaults",
+            "pass": true
+        },
+        {
+            "name": "prop value",
+            "pass": true
+        },
+        {
+            "name": "prop value (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop number",
+            "pass": true
+        },
+        {
+            "name": "prop number (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop tooltip",
+            "pass": true
+        },
+        {
+            "name": "prop tooltip (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop name",
+            "pass": true
+        },
+        {
+            "name": "prop name (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop size",
+            "pass": true
+        },
+        {
+            "name": "prop size (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop color",
+            "pass": true
+        },
+        {
+            "name": "prop color (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop disabled",
+            "pass": true
+        },
+        {
+            "name": "prop disabled (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop readonly",
+            "pass": true
+        },
+        {
+            "name": "prop readonly (live state)",
+            "pass": true
+        },
+        {
+            "name": "event onchange",
+            "pass": true
+        },
+        {
+            "name": "bind",
+            "pass": true
+        },
+        {
+            "name": "api via ref",
+            "pass": true
+        }
+    ]
+}

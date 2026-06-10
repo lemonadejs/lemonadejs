@@ -1,0 +1,47 @@
+{
+    "name": "rating",
+    "props": {
+        "value": {
+            "type": "number",
+            "default": 0
+        },
+        "number": {
+            "type": "number",
+            "default": 5
+        },
+        "tooltip": {
+            "type": "string",
+            "default": ""
+        },
+        "name": {
+            "type": "string",
+            "default": ""
+        },
+        "size": {
+            "type": "string",
+            "default": ""
+        },
+        "color": {
+            "type": "string",
+            "default": ""
+        },
+        "disabled": {
+            "type": "boolean",
+            "default": false
+        },
+        "readonly": {
+            "type": "boolean",
+            "default": false
+        }
+    },
+    "bind": {
+        "type": "number"
+    },
+    "events": [
+        "onchange"
+    ],
+    "api": [
+        "getValue",
+        "setValue"
+    ]
+}

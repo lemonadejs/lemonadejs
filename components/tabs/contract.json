@@ -1,0 +1,38 @@
+{
+    "name": "tabs",
+    "props": {
+        "data": {
+            "type": "array"
+        },
+        "selected": {
+            "type": "number",
+            "default": 0
+        },
+        "position": {
+            "type": "string",
+            "default": ""
+        },
+        "round": {
+            "type": "boolean",
+            "default": false
+        },
+        "allowcreate": {
+            "type": "boolean",
+            "default": false
+        }
+    },
+    "bind": {
+        "type": "number"
+    },
+    "events": [
+        "onchange",
+        "onopen",
+        "onbeforecreate",
+        "oncreate",
+        "onchangeposition"
+    ],
+    "api": [
+        "open",
+        "create"
+    ]
+}

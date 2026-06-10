@@ -1,0 +1,67 @@
+/* <Rating /> — default styling, lm-rating-* convention */
+.lm-rating {
+    display: inline-flex;
+    align-items: center;
+    user-select: none;
+}
+
+.lm-rating .lm-rating-star {
+    color: lightgray;
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-drag: none;
+    font-style: normal;
+    font-size: 24px;
+    line-height: 1;
+}
+
+/* Hover preview (selected wins below, as in v5) */
+.lm-rating .lm-rating-star[data-hover='1'] {
+    color: gray;
+}
+
+/* Selected — red is the v5 default */
+.lm-rating .lm-rating-star[data-selected='1'] {
+    color: red;
+}
+
+/* Color variants */
+.lm-rating[data-color='yellow'] .lm-rating-star[data-selected='1'] {
+    color: #faaf00;
+}
+
+.lm-rating[data-color='orange'] .lm-rating-star[data-selected='1'] {
+    color: #ea580c;
+}
+
+.lm-rating[data-color='green'] .lm-rating-star[data-selected='1'] {
+    color: #16a34a;
+}
+
+.lm-rating[data-color='purple'] .lm-rating-star[data-selected='1'] {
+    color: #9333ea;
+}
+
+/* Sizes (v5 had small) */
+.lm-rating[data-size='small'] {
+    height: 16px;
+    line-height: 16px;
+}
+
+.lm-rating[data-size='small'] .lm-rating-star {
+    font-size: 16px;
+}
+
+.lm-rating[data-size='large'] .lm-rating-star {
+    font-size: 34px;
+}
+
+/* Disabled / readonly */
+.lm-rating[data-disabled] .lm-rating-star {
+    cursor: not-allowed;
+    opacity: 0.45;
+}
+
+.lm-rating[data-readonly] .lm-rating-star {
+    cursor: default;
+}

@@ -1,0 +1,90 @@
+{
+    "component": "signature",
+    "pass": true,
+    "checks": [
+        {
+            "name": "mounts with defaults",
+            "pass": true
+        },
+        {
+            "name": "prop value",
+            "pass": true
+        },
+        {
+            "name": "prop value (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop width",
+            "pass": true
+        },
+        {
+            "name": "prop width (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop height",
+            "pass": true
+        },
+        {
+            "name": "prop height (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop line",
+            "pass": true
+        },
+        {
+            "name": "prop line (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop color",
+            "pass": true
+        },
+        {
+            "name": "prop color (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop name",
+            "pass": true
+        },
+        {
+            "name": "prop name (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop instructions",
+            "pass": true
+        },
+        {
+            "name": "prop instructions (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop disabled",
+            "pass": true
+        },
+        {
+            "name": "prop disabled (live state)",
+            "pass": true
+        },
+        {
+            "name": "event onchange",
+            "pass": true
+        },
+        {
+            "name": "event onload",
+            "pass": true
+        },
+        {
+            "name": "bind",
+            "pass": true
+        },
+        {
+            "name": "api via ref",
+            "pass": true
+        }
+    ]
+}

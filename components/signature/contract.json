@@ -1,0 +1,49 @@
+{
+    "name": "signature",
+    "props": {
+        "value": {
+            "type": "array"
+        },
+        "width": {
+            "type": "number",
+            "default": 0
+        },
+        "height": {
+            "type": "number",
+            "default": 0
+        },
+        "line": {
+            "type": "number",
+            "default": 0
+        },
+        "color": {
+            "type": "string",
+            "default": ""
+        },
+        "name": {
+            "type": "string",
+            "default": ""
+        },
+        "instructions": {
+            "type": "string",
+            "default": ""
+        },
+        "disabled": {
+            "type": "boolean",
+            "default": false
+        }
+    },
+    "bind": {
+        "type": "array"
+    },
+    "events": [
+        "onchange",
+        "onload"
+    ],
+    "api": [
+        "getValue",
+        "setValue",
+        "getImage",
+        "clear"
+    ]
+}

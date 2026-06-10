@@ -1,0 +1,36 @@
+{
+    "name": "color",
+    "props": {
+        "palette": {
+            "type": "array"
+        },
+        "type": {
+            "type": "string",
+            "default": ""
+        },
+        "placeholder": {
+            "type": "string",
+            "default": ""
+        },
+        "closeonchange": {
+            "type": "boolean",
+            "default": false
+        }
+    },
+    "bind": {
+        "type": "string"
+    },
+    "events": [
+        "onopen",
+        "onclose",
+        "onchange"
+    ],
+    "api": [
+        "open",
+        "close",
+        "isClosed",
+        "reset",
+        "setValue",
+        "getValue"
+    ]
+}

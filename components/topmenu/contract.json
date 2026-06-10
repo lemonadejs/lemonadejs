@@ -1,0 +1,14 @@
+{
+    "name": "topmenu",
+    "props": {
+        "options": {
+            "type": "array"
+        }
+    },
+    "bind": null,
+    "events": [],
+    "api": [
+        "open",
+        "close"
+    ]
+}

@@ -1,0 +1,27 @@
+/* <Signature /> — default styling, lm-signature-* convention */
+.lm-signature {
+    display: inline-block;
+}
+
+.lm-signature .lm-signature-canvas {
+    display: block;
+    background: #fff;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    cursor: crosshair;
+    touch-action: none; /* the pad owns touch gestures while drawing */
+    user-select: none;
+}
+
+.lm-signature.lm-signature-disabled .lm-signature-canvas {
+    cursor: not-allowed;
+    opacity: 0.45;
+    background: #f8fafc;
+}
+
+.lm-signature .lm-signature-instructions {
+    font: 12px/1.4 system-ui, sans-serif;
+    color: #64748b;
+    margin-top: 6px;
+    text-align: center;
+}

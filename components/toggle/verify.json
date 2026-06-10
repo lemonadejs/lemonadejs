@@ -1,0 +1,62 @@
+{
+    "component": "toggle",
+    "pass": true,
+    "checks": [
+        {
+            "name": "mounts with defaults",
+            "pass": true
+        },
+        {
+            "name": "prop checked",
+            "pass": true
+        },
+        {
+            "name": "prop checked (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop text",
+            "pass": true
+        },
+        {
+            "name": "prop text (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop icon",
+            "pass": true
+        },
+        {
+            "name": "prop icon (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop name",
+            "pass": true
+        },
+        {
+            "name": "prop name (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop disabled",
+            "pass": true
+        },
+        {
+            "name": "prop disabled (live state)",
+            "pass": true
+        },
+        {
+            "name": "event onchange",
+            "pass": true
+        },
+        {
+            "name": "bind",
+            "pass": true
+        },
+        {
+            "name": "api via ref",
+            "pass": true
+        }
+    ]
+}

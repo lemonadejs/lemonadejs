@@ -1,0 +1,62 @@
+{
+    "component": "color",
+    "pass": true,
+    "checks": [
+        {
+            "name": "mounts with defaults",
+            "pass": true
+        },
+        {
+            "name": "prop palette",
+            "pass": true
+        },
+        {
+            "name": "prop palette (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop type",
+            "pass": true
+        },
+        {
+            "name": "prop type (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop placeholder",
+            "pass": true
+        },
+        {
+            "name": "prop placeholder (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop closeonchange",
+            "pass": true
+        },
+        {
+            "name": "prop closeonchange (live state)",
+            "pass": true
+        },
+        {
+            "name": "event onopen",
+            "pass": true
+        },
+        {
+            "name": "event onclose",
+            "pass": true
+        },
+        {
+            "name": "event onchange",
+            "pass": true
+        },
+        {
+            "name": "bind",
+            "pass": true
+        },
+        {
+            "name": "api via ref",
+            "pass": true
+        }
+    ]
+}

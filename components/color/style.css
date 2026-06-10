@@ -1,0 +1,151 @@
+/* <Color /> — lm-color-* only. Compose with ../modal/style.css. */
+
+.lm-color {
+    position: relative;
+    display: inline-block;
+    line-height: initial;
+    box-sizing: border-box;
+}
+
+/* The popup is a compact panel, not a dialog */
+.lm-color .lm-modal {
+    min-width: initial;
+    min-height: initial;
+}
+
+.lm-color .lm-modal-content {
+    padding: 0;
+}
+
+.lm-color-panel {
+    background-color: #fff;
+    box-sizing: border-box;
+}
+
+/* Reset / Done bar (v5: visible only on the popup, never inline) */
+.lm-color-options {
+    display: flex;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--lm-border-color, #ccc);
+}
+
+.lm-color-options button {
+    border: 0;
+    background-color: transparent;
+    text-transform: uppercase;
+    cursor: pointer;
+    padding: 12px 15px;
+    font-weight: bold;
+}
+
+.lm-color[data-type="inline"] .lm-color-options {
+    display: none;
+}
+
+/* Grid / Spectrum tab strip (v5 used @lemonadejs/tabs) */
+.lm-color-tabs {
+    display: flex;
+    justify-content: center;
+    gap: 4px;
+    margin-top: 10px;
+}
+
+.lm-color-tab {
+    border: 0;
+    background-color: transparent;
+    cursor: pointer;
+    padding: 8px 16px;
+    border-bottom: 2px solid transparent;
+}
+
+.lm-color-tab[data-active] {
+    border-bottom-color: var(--lm-color-accent, #2196f3);
+    font-weight: bold;
+}
+
+.lm-color-content {
+    padding: 10px;
+    min-width: 260px;
+    min-height: 150px;
+    box-sizing: border-box;
+}
+
+/* The palette grid */
+.lm-color-grid {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+}
+
+.lm-color-row {
+    display: flex;
+    flex-grow: 1;
+}
+
+.lm-color-cell {
+    flex: 1 1 auto;
+    min-width: 14px;
+    height: 15px;
+    cursor: pointer;
+}
+
+.lm-color-row:first-child > .lm-color-cell:first-child {
+    border-top-left-radius: 3px;
+}
+
+.lm-color-row:first-child > .lm-color-cell:last-child {
+    border-top-right-radius: 3px;
+}
+
+.lm-color-row:last-child > .lm-color-cell:first-child {
+    border-bottom-left-radius: 3px;
+}
+
+.lm-color-row:last-child > .lm-color-cell:last-child {
+    border-bottom-right-radius: 3px;
+}
+
+.lm-color-selected {
+    background-repeat: no-repeat;
+    background-size: 14px;
+    background-position: center;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath d='M0 0h24v24H0z' fill='none'/%3E%3Cpath d='M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z' fill='black'/%3E%3C/svg%3E");
+}
+
+/* The spectrum tab */
+.lm-color-spectrum {
+    position: relative;
+    display: inline-block;
+    width: 240px;
+    height: 140px;
+}
+
+.lm-color-canvas {
+    display: block;
+    border-radius: 3px;
+    -webkit-user-drag: none;
+}
+
+.lm-color-point {
+    height: 4px;
+    width: 4px;
+    background-color: #000;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    outline: 1px solid white;
+    pointer-events: none;
+}
+
+/* The toggle input (v5 .lm-color-input, palette icon on the right) */
+.lm-color-input {
+    padding: 6px;
+    padding-right: 24px;
+    box-sizing: border-box;
+    border: 1px solid var(--lm-border-color, #ccc);
+    border-radius: 4px;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" enable-background="new 0 0 24 24" height="24px" viewBox="0 0 24 24" width="24px" fill="gray"><g><rect fill="none" height="24" width="24"/></g><g><g><g><g><path d="M12,22C6.49,22,2,17.51,2,12S6.49,2,12,2s10,4.04,10,9c0,3.31-2.69,6-6,6h-1.77c-0.28,0-0.5,0.22-0.5,0.5 c0,0.12,0.05,0.23,0.13,0.33c0.41,0.47,0.64,1.06,0.64,1.67C14.5,20.88,13.38,22,12,22z M12,4c-4.41,0-8,3.59-8,8s3.59,8,8,8 c0.28,0,0.5-0.22,0.5-0.5c0-0.16-0.08-0.28-0.14-0.35c-0.41-0.46-0.63-1.05-0.63-1.65c0-1.38,1.12-2.5,2.5-2.5H16 c2.21,0,4-1.79,4-4C20,7.14,16.41,4,12,4z"/><circle cx="6.5" cy="11.5" r="1.5"/><circle cx="9.5" cy="7.5" r="1.5"/><circle cx="14.5" cy="7.5" r="1.5"/><circle cx="17.5" cy="11.5" r="1.5"/></g></g></g></g></svg>') top 50% right 1px no-repeat;
+}
