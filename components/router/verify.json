@@ -1,0 +1,50 @@
+{
+    "component": "router",
+    "pass": true,
+    "checks": [
+        {
+            "name": "mounts with defaults",
+            "pass": true
+        },
+        {
+            "name": "prop routes",
+            "pass": true
+        },
+        {
+            "name": "prop routes (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop single",
+            "pass": true
+        },
+        {
+            "name": "prop single (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop animation",
+            "pass": true
+        },
+        {
+            "name": "prop animation (live state)",
+            "pass": true
+        },
+        {
+            "name": "event onchangepage",
+            "pass": true
+        },
+        {
+            "name": "event onbeforechangepage",
+            "pass": true
+        },
+        {
+            "name": "event onbeforecreatepage",
+            "pass": true
+        },
+        {
+            "name": "api via ref",
+            "pass": true
+        }
+    ]
+}

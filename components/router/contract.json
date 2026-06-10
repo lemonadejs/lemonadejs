@@ -1,0 +1,26 @@
+{
+    "name": "router",
+    "props": {
+        "routes": {
+            "type": "array"
+        },
+        "single": {
+            "type": "boolean",
+            "default": false
+        },
+        "animation": {
+            "type": "boolean",
+            "default": false
+        }
+    },
+    "bind": null,
+    "events": [
+        "onchangepage",
+        "onbeforechangepage",
+        "onbeforecreatepage"
+    ],
+    "api": [
+        "setPath",
+        "current"
+    ]
+}

@@ -135,6 +135,38 @@
         }
     },
     {
+        "name": "router",
+        "path": "components/router",
+        "verified": true,
+        "checks": 11,
+        "contract": {
+            "name": "router",
+            "props": {
+                "routes": {
+                    "type": "array"
+                },
+                "single": {
+                    "type": "boolean",
+                    "default": false
+                },
+                "animation": {
+                    "type": "boolean",
+                    "default": false
+                }
+            },
+            "bind": null,
+            "events": [
+                "onchangepage",
+                "onbeforechangepage",
+                "onbeforecreatepage"
+            ],
+            "api": [
+                "setPath",
+                "current"
+            ]
+        }
+    },
+    {
         "name": "switch",
         "path": "components/switch",
         "verified": true,
