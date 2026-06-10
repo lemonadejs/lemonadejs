@@ -129,6 +129,7 @@ export const Dropdown = component('dropdown', {
     let root: HTMLElement | null = null;
     let scroller: HTMLElement | null = null;
     let modalApi: { open(): void; close(): void } | null = null;
+    let muteFocusOut = false; // the label→search swap blurs a disposed node
 
     onUnmount(() => {
         if (searchTimer) {
@@ -361,6 +362,13 @@ export const Dropdown = component('dropdown', {
         query.value = '';
         cursor.value = null;
         localSearch('');
+        // Opening swaps the focused label for the search field: the blur
+        // of the disposed label must not read as the user leaving. The
+        // mute window closes after the search field takes focus.
+        muteFocusOut = true;
+        setTimeout(() => {
+            muteFocusOut = false;
+        }, 0);
         // Anchor the panel under the input; width from the longest text (v5)
         const input = root?.querySelector('.lm-dropdown-header') as HTMLElement | null;
         if (input && kind() === 'default') {
@@ -547,9 +555,14 @@ export const Dropdown = component('dropdown', {
     };
 
     const onFocusOut = (e: FocusEvent) => {
-        if (opened.value && root && !(e.relatedTarget && root.contains(e.relatedTarget as Node))) {
-            close('focusout');
+        if (muteFocusOut || !opened.value || !root) {
+            return;
         }
+        // Focus landing inside the dropdown (search field, panel) stays
+        if (e.relatedTarget && root.contains(e.relatedTarget as Node)) {
+            return;
+        }
+        close('focusout');
     };
 
     const onPaste = (e: ClipboardEvent) => {

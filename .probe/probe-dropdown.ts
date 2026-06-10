@@ -16,9 +16,13 @@ const frame = () => new Promise((r) => requestAnimationFrame(() => requestAnimat
 const big = Array.from({ length: 10000 }, (_, i) => ({ value: i, text: 'Option ' + (i + 1) }));
 
 let api!: Api;
+let second!: Api;
 const App: Component = () => html`<div style="padding:60px 0 0 80px;width:280px">
     <${Dropdown} ref="${(a: Api) => (api = a)}" data="${big}" autocomplete
         placeholder="probe"></${Dropdown}>
+    <div style="height:20px"></div>
+    <${Dropdown} ref="${(a: Api) => (second = a)}" data="${['One', 'Two', 'Three']}" multiple autocomplete
+        placeholder="second"></${Dropdown}>
 </div>`;
 
 const run = async () => {
@@ -68,6 +72,22 @@ const run = async () => {
     log('select-commits-and-closes', api.getValue() === 9998 && !document.querySelector('.lm-modal'), {
         value: api.getValue(),
     });
+
+    // ---- 6. the USER click flow on a SECOND dropdown: mousedown focuses
+    // the label, opening swaps the branch — the panel must survive
+    const field2 = document.querySelectorAll('.lm-dropdown-input')[1] as HTMLElement;
+    field2.focus(); // what a real mousedown's default action does
+    const r2 = field2.getBoundingClientRect();
+    field2.dispatchEvent(
+        new MouseEvent('mousedown', { bubbles: true, clientX: r2.left + 30, clientY: r2.top + 10, buttons: 1 })
+    );
+    await frame();
+    await frame();
+    log(
+        'second-dropdown-opens-via-click',
+        !!second && !second.isClosed() && !!document.querySelector('.lm-modal'),
+        { closed: second.isClosed(), panel: !!document.querySelector('.lm-modal'), active: document.activeElement?.className }
+    );
 
     const pre = document.createElement('pre');
     pre.id = 'lm-probe';

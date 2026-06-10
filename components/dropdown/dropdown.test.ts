@@ -157,6 +157,19 @@ describe('components/dropdown — the select on the Modal primitive', () => {
         expect(api.isClosed()).toBe(false);
     });
 
+    it('autocomplete: opening from a FOCUSED label stays open (disposal blur is not a focusout)', async () => {
+        // The browser flow: mousedown focuses the label (tabindex), open()
+        // swaps the branch to the search field, the engine blurs the
+        // disposed label — that synthetic focusout must NOT close
+        const api = await open({ autocomplete: true });
+        input().focus();
+        expect(document.activeElement).toBe(input());
+        api.open();
+        await flush();
+        expect(api.isClosed()).toBe(false); // still open
+        expect(input().getAttribute('contenteditable')).toBe('true');
+    });
+
     it('autocomplete: open swaps the label for a contenteditable search field', async () => {
         const api = await open({ autocomplete: true, bind: '1' });
         expect(input().getAttribute('contenteditable')).toBeNull();
