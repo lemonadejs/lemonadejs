@@ -24,6 +24,60 @@ const slash = function (p) {
     return p.replace(/\\/g, '/');
 };
 
+const TS_TYPES = {
+    string: 'string',
+    number: 'number',
+    boolean: 'boolean',
+    array: 'unknown[]',
+    object: 'Record<string, unknown>',
+    function: '(...args: unknown[]) => unknown',
+    any: 'unknown',
+};
+
+const cap = function (s) {
+    return s.charAt(0).toUpperCase() + s.slice(1);
+};
+
+/**
+ * The .d.ts is a PROJECTION of the contract — generated, never written
+ * by hand. TS humans get editor types, agents get contract.json, both
+ * from the same source of truth.
+ */
+const generateDts = function (schema) {
+    const n = cap(schema.name);
+    const lines = [
+        '/**',
+        ' * GENERATED from contract.json by `npm run registry` — do not edit.',
+        ' */',
+        "import type { Bindable, Component, State } from 'lemonadejs';",
+        '',
+    ];
+    if (schema.api.length) {
+        lines.push('export interface ' + n + 'Api {');
+        for (const method of schema.api) {
+            lines.push('    ' + method + ': (...args: unknown[]) => unknown;');
+        }
+        lines.push('}', '');
+    }
+    const ext = schema.bind ? ' extends Bindable<' + TS_TYPES[schema.bind.type] + '>' : '';
+    lines.push('export interface ' + n + 'Props' + ext + ' {');
+    for (const key of Object.keys(schema.props)) {
+        lines.push('    ' + key + '?: State<' + TS_TYPES[schema.props[key].type] + '> | ' + TS_TYPES[schema.props[key].type] + ';');
+    }
+    for (const event of schema.events) {
+        if (event !== 'onchange' || !schema.bind) {
+            lines.push('    ' + event + '?: (...args: unknown[]) => void;');
+        }
+    }
+    if (schema.api.length) {
+        lines.push('    ref?: (api: ' + n + 'Api) => void;');
+    }
+    lines.push('}', '');
+    lines.push('export declare const ' + n + ': Component<' + n + 'Props>;');
+    lines.push('export default ' + n + ';');
+    return lines.join('\n') + '\n';
+};
+
 const main = async function () {
     // verify() needs a DOM
     const dom = new JSDOM('<!doctype html><body></body>', { url: 'https://localhost' });
@@ -76,6 +130,7 @@ const main = async function () {
             const { schema, report } = mod.run();
             fs.writeFileSync(path.join(componentsDir, name, 'contract.json'), JSON.stringify(schema, null, 4) + '\n');
             fs.writeFileSync(path.join(componentsDir, name, 'verify.json'), JSON.stringify(report, null, 4) + '\n');
+            fs.writeFileSync(path.join(componentsDir, name, name + '.d.ts'), generateDts(schema));
             registry.push({
                 name: schema.name,
                 path: 'components/' + name,

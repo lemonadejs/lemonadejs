@@ -93,9 +93,9 @@ describe('Registered components (<Card /> syntax)', () => {
 
     it('implements the bind protocol identically to by-value components', () => {
         const Toggle: Component<Bindable<boolean>> = (props, { bind }) => {
-            const value = bind(props, false);
-            return html`<button class="${() => (value.value ? 'on' : 'off')}"
-                onclick="${() => value.set(!value.value)}">t</button>`;
+            const checked = bind(props, false);
+            return html`<button class="${() => (checked.value ? 'on' : 'off')}"
+                onclick="${() => checked.set(!checked.value)}">t</button>`;
         };
         setComponents({ Toggle });
         let ref!: State<boolean>;

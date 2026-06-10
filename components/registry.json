@@ -3,22 +3,49 @@
         "name": "switch",
         "path": "components/switch",
         "verified": true,
-        "checks": 8,
+        "checks": 22,
         "contract": {
             "name": "switch",
             "props": {
+                "checked": {
+                    "type": "boolean",
+                    "default": false
+                },
                 "label": {
                     "type": "string",
                     "default": ""
                 },
+                "color": {
+                    "type": "string",
+                    "default": ""
+                },
+                "size": {
+                    "type": "string",
+                    "default": ""
+                },
+                "name": {
+                    "type": "string",
+                    "default": ""
+                },
+                "value": {
+                    "type": "string",
+                    "default": ""
+                },
+                "required": {
+                    "type": "boolean",
+                    "default": false
+                },
                 "disabled": {
                     "type": "boolean",
                     "default": false
+                },
+                "position": {
+                    "type": "string",
+                    "default": ""
                 }
             },
             "bind": {
-                "type": "boolean",
-                "default": false
+                "type": "boolean"
             },
             "events": [
                 "onchange"

@@ -55,8 +55,13 @@ export const adaptReact = function (
                 for (const key of Object.keys(schema.props)) {
                     states[key] = store(props[key] !== undefined ? props[key] : schema.props[key].default);
                 }
+                // React's value prop maps to bind — unless the contract
+                // declares its own value prop (e.g. form submit values)
                 if (schema.bind) {
-                    bindRef.current = store(props.value !== undefined ? props.value : schema.bind.default);
+                    const mapsValue = !('value' in schema.props);
+                    bindRef.current = store(
+                        mapsValue && props.value !== undefined ? props.value : schema.bind.default
+                    );
                 }
             }
             statesRef.current = states;
@@ -109,7 +114,7 @@ export const adaptReact = function (
                         states[key].value = props[key];
                     }
                 }
-                if (bindRef.current && props.value !== undefined) {
+                if (bindRef.current && props.value !== undefined && !('value' in schema.props)) {
                     bindRef.current.value = props.value;
                 }
             }

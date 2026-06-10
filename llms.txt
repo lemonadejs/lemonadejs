@@ -110,9 +110,9 @@ Components — bind is a plain prop, implemented with the bind() tool:
     import { html, type Component, type Bindable } from 'lemonadejs';
 
     const Switch: Component<Bindable<boolean>> = (props, { bind }) => {
-        const value = bind(props, false);   // external state if bound, local otherwise
-        return html`<div class="${() => (value.value ? 'on' : 'off')}"
-            onclick="${() => value.set(!value.value)}"></div>`;
+        const checked = bind(props, false);   // external state if bound, local otherwise
+        return html`<div class="${() => (checked.value ? 'on' : 'off')}"
+            onclick="${() => checked.set(!checked.value)}"></div>`;
     };
 
     <${Switch} bind="${enabled}" onchange="${(v) => ...}" />   two-way
@@ -171,8 +171,8 @@ The contract is the interface as a runtime artifact; everything derives from it.
         onchange: Function,          // event out
         api: { toggle: Function },   // imperative surface, exposed via props.ref
     }, (props, { bind }) => {
-        const value = bind(props, false);
-        const toggle = () => value.set(!value.value);
+        const checked = bind(props, false);
+        const toggle = () => checked.set(!checked.value);
         props.ref?.({ toggle });     // fulfill the declared api
         return html`<div class="${() => value.value ? 'on' : 'off'}"
             onclick="${toggle}">${props.label}</div>`;

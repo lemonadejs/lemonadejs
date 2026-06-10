@@ -1,14 +1,20 @@
-/* <Switch /> — default styling */
+/* <Switch /> — default styling, lm-switch-* convention */
 .lm-switch {
     display: inline-flex;
     align-items: center;
     gap: 8px;
     cursor: pointer;
     user-select: none;
-    outline-offset: 2px;
 }
 
-.lm-switch .lm-track {
+.lm-switch .lm-switch-input {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.lm-switch .lm-switch-track {
     display: inline-block;
     width: 40px;
     height: 22px;
@@ -18,7 +24,7 @@
     transition: background 0.15s ease;
 }
 
-.lm-switch .lm-thumb {
+.lm-switch .lm-switch-thumb {
     position: absolute;
     top: 2px;
     left: 2px;
@@ -30,19 +36,71 @@
     transition: left 0.15s ease;
 }
 
-.lm-switch.lm-on .lm-track {
+.lm-switch .lm-switch-input:focus-visible ~ .lm-switch-track {
+    outline: 2px solid #2563eb;
+    outline-offset: 2px;
+}
+
+.lm-switch.lm-switch-on .lm-switch-track {
     background: #16a34a;
 }
 
-.lm-switch.lm-on .lm-thumb {
+.lm-switch.lm-switch-on[data-color='orange'] .lm-switch-track {
+    background: #ea580c;
+}
+
+.lm-switch.lm-switch-on[data-color='red'] .lm-switch-track {
+    background: #dc2626;
+}
+
+.lm-switch.lm-switch-on[data-color='purple'] .lm-switch-track {
+    background: #9333ea;
+}
+
+.lm-switch.lm-switch-on .lm-switch-thumb {
     left: 20px;
 }
 
-.lm-switch.lm-disabled {
+.lm-switch.lm-switch-disabled {
     opacity: 0.45;
     cursor: not-allowed;
 }
 
-.lm-switch .lm-label {
+.lm-switch .lm-switch-label {
     font: 14px/1.4 system-ui, sans-serif;
+}
+
+.lm-switch[position='right'] {
+    flex-direction: row-reverse;
+}
+
+/* Sizes */
+.lm-switch.lm-switch-small .lm-switch-track {
+    width: 30px;
+    height: 16px;
+    border-radius: 8px;
+}
+
+.lm-switch.lm-switch-small .lm-switch-thumb {
+    width: 12px;
+    height: 12px;
+}
+
+.lm-switch.lm-switch-small.lm-switch-on .lm-switch-thumb {
+    left: 16px;
+}
+
+.lm-switch.lm-switch-large .lm-switch-track {
+    width: 52px;
+    height: 28px;
+    border-radius: 14px;
+}
+
+.lm-switch.lm-switch-large .lm-switch-thumb {
+    width: 24px;
+    height: 24px;
+}
+
+.lm-switch.lm-switch-large.lm-switch-on .lm-switch-thumb {
+    left: 26px;
 }

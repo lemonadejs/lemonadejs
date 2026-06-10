@@ -21,10 +21,10 @@ const Switch = component<SwitchProps>(
         api: { toggle: Function },
     },
     (props, { bind }) => {
-        const value = bind(props, false);
-        const toggle = () => value.set(!value.value);
+        const checked = bind(props, false);
+        const toggle = () => checked.set(!checked.value);
         props.ref?.({ toggle });
-        return html`<div class="switch ${() => (value.value ? 'on' : 'off')}"
+        return html`<div class="switch ${() => (checked.value ? 'on' : 'off')}"
             onclick="${toggle}">${props.label}</div>`;
     }
 );

@@ -33,10 +33,10 @@ const Switch = component<SwitchProps>(
         api: { toggle: Function },
     },
     (props, { bind }) => {
-        const value = bind(props, false);
-        const toggle = () => value.set(!value.value);
+        const checked = bind(props, false);
+        const toggle = () => checked.set(!checked.value);
         props.ref?.({ toggle });
-        return html`<div class="switch ${() => (value.value ? 'on' : 'off')}"
+        return html`<div class="switch ${() => (checked.value ? 'on' : 'off')}"
             onclick="${toggle}">${props.label}</div>`;
     }
 );
@@ -109,8 +109,8 @@ suite('Contracts: component() and describe()', () => {
 
     it('contract bind default applies when unbound', () => {
         const On = component('defon', { bind: true }, (props: Bindable<boolean>, { bind }) => {
-            const value = bind(props, false); // contract default (true) wins over code fallback
-            return html`<i>${() => (value.value ? 'on' : 'off')}</i>`;
+            const checked = bind(props, false); // contract default (true) wins over code fallback
+            return html`<i>${() => (checked.value ? 'on' : 'off')}</i>`;
         });
         handle = t(On);
         expect(handle.query('i')!.textContent).toBe('on');

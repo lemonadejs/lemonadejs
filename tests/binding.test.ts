@@ -14,9 +14,9 @@ afterEach(() => {
 
 /** The canonical protocol component, built with the bind() tool */
 const Switch: Component<Bindable<boolean>> = (props, { bind }) => {
-    const value = bind(props, false);
-    return html`<div class="switch ${() => (value.value ? 'on' : 'off')}"
-        onclick="${() => value.set(!value.value)}"></div>`;
+    const checked = bind(props, false);
+    return html`<div class="switch ${() => (checked.value ? 'on' : 'off')}"
+        onclick="${() => checked.set(!checked.value)}"></div>`;
 };
 
 describe('Native bind directive', () => {
@@ -313,8 +313,8 @@ describe('Component bind protocol (the bind() tool)', () => {
     it('bound state works with the native bind directive inside the component', () => {
         // A custom input that decorates a native one — bind flows through
         const Field: Component<Bindable<string>> = (props, { bind }) => {
-            const value = bind(props, '');
-            return html`<label class="field"><input bind="${value}" /></label>`;
+            const text = bind(props, '');
+            return html`<label class="field"><input bind="${text}" /></label>`;
         };
         let ref!: State<string>;
         const App: Component = (p, { state }) => {
