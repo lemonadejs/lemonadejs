@@ -26,7 +26,7 @@ const MESSAGES: Record<string, string> = {
     'LJS-302': 'bind requires a state: bind="${state}"',
     'LJS-303': 'bind works on <input>, <textarea> and <select> — on components it is a prop',
     'LJS-304': 'bind owns the element value — remove the explicit value/checked attribute',
-    'LJS-305': 'Callback names are lowercase — did you mean onchange?',
+    'LJS-305': 'Event and callback names are lowercase: onclick, onchange, onsave',
 };
 
 const EXPLAIN: Record<string, string> = {
@@ -79,10 +79,11 @@ const EXPLAIN: Record<string, string> = {
         'An element has both bind and an explicit value/checked attribute. bind drives that property in both ' +
         'directions, so the explicit attribute fights it. Remove value/checked and set the state instead.',
     'LJS-305':
-        'LemonadeJS event and protocol callback names are lowercase, HTML-style: onclick, oninput, onchange. ' +
-        'On native elements any casing works (the event name is normalized), but component props are ' +
-        'case-sensitive JavaScript keys: the bind protocol reads exactly props.onchange, so onChange would be ' +
-        'silently ignored. Custom component callbacks (onSave, onItemClick) may use any casing the component declares.',
+        'One rule, no exceptions: every event and callback name is lowercase, HTML-style — onclick, oninput, ' +
+        'onchange, onsave, onitemclick — exactly like the platform names onmousedown or onbeforeunload. ' +
+        'On native elements other casings still attach (the event name is normalized) but warn; on components, ' +
+        'props are case-sensitive JavaScript keys, so onChange would be silently ignored by a component reading ' +
+        'onchange. Declare and pass component callbacks in lowercase.',
 };
 
 const format = function (code: string, detail?: string): string {

@@ -18,7 +18,7 @@ var MESSAGES = {
   "LJS-302": 'bind requires a state: bind="${state}"',
   "LJS-303": "bind works on <input>, <textarea> and <select> \u2014 on components it is a prop",
   "LJS-304": "bind owns the element value \u2014 remove the explicit value/checked attribute",
-  "LJS-305": "Callback names are lowercase \u2014 did you mean onchange?"
+  "LJS-305": "Event and callback names are lowercase: onclick, onchange, onsave"
 };
 var EXPLAIN = {
   "LJS-001": 'The value used as a component is not a function. Components are plain functions: const Card: Component = (props, { state }) => render`<div>...</div>`. When embedding, pass the function itself: <${Card} title="x" />.',
@@ -35,7 +35,7 @@ var EXPLAIN = {
   "LJS-302": 'The bind directive needs the state object itself: bind="${name}" (not bind="name", which is a string, and not bind="${name.value}", which is a one-time snapshot). Create it with const name = state("").',
   "LJS-303": 'On native elements, bind is engine sugar and only <input>, <textarea> and <select> have a defined wiring. On components, bind is a plain prop: implement it with the bind() tool \u2014 const value = bind(props, fallback) \u2014 and pass <${Comp} bind="${state}" />.',
   "LJS-304": "An element has both bind and an explicit value/checked attribute. bind drives that property in both directions, so the explicit attribute fights it. Remove value/checked and set the state instead.",
-  "LJS-305": "LemonadeJS event and protocol callback names are lowercase, HTML-style: onclick, oninput, onchange. On native elements any casing works (the event name is normalized), but component props are case-sensitive JavaScript keys: the bind protocol reads exactly props.onchange, so onChange would be silently ignored. Custom component callbacks (onSave, onItemClick) may use any casing the component declares."
+  "LJS-305": "One rule, no exceptions: every event and callback name is lowercase, HTML-style \u2014 onclick, oninput, onchange, onsave, onitemclick \u2014 exactly like the platform names onmousedown or onbeforeunload. On native elements other casings still attach (the event name is normalized) but warn; on components, props are case-sensitive JavaScript keys, so onChange would be silently ignored by a component reading onchange. Declare and pass component callbacks in lowercase."
 };
 var format = function(code, detail) {
   const message = MESSAGES[code] || "Unknown error";
@@ -470,6 +470,16 @@ var setComponents = function(map) {
   }
 };
 var warned = /* @__PURE__ */ new WeakSet();
+var warnedCasing = /* @__PURE__ */ new Set();
+var checkCasing = function(name, context) {
+  if (env.dev && name.length > 2 && name.startsWith("on") && /[A-Z]/.test(name)) {
+    const key = name + "|" + context;
+    if (!warnedCasing.has(key)) {
+      warnedCasing.add(key);
+      warn("LJS-305", "use " + name.toLowerCase() + " in " + context);
+    }
+  }
+};
 var valuesEqual = function(a, b) {
   if (a.length !== b.length) {
     return false;
@@ -715,6 +725,7 @@ var applyProp = function(el, prop, ctx, svg) {
     return;
   }
   if (name.length > 2 && name.startsWith("on")) {
+    checkCasing(name, "<" + el.tagName.toLowerCase() + ">");
     if (whole < 0 || typeof ctx.holder.values[whole] !== "function") {
       fail("LJS-301", name + " in <" + el.tagName.toLowerCase() + ">");
     }
@@ -802,6 +813,7 @@ var buildComponent = function(vnode, ctx) {
   }
   const props = {};
   for (const prop of vnode.props || []) {
+    checkCasing(prop.name, "<" + (fn.name || "component") + ">");
     const parts = prop.parts;
     if (!parts.length) {
       props[prop.name] = true;
@@ -886,13 +898,6 @@ var mountComponent = function(component, props, parent) {
     },
     bind: function(p, fallback) {
       const raw = p ? p.bind : void 0;
-      if (env.dev && p && typeof p.onchange !== "function") {
-        for (const key of Object.keys(p)) {
-          if (key !== "onchange" && key.toLowerCase() === "onchange") {
-            warn("LJS-305", key + " in <" + inst.name + ">");
-          }
-        }
-      }
       const target = isState(raw) ? raw : new StateImpl(raw !== void 0 ? raw : fallback);
       const bound = new BoundState(target, p ? p.onchange : void 0);
       inst.states.push(bound);

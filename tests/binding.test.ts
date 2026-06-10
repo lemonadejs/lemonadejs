@@ -257,12 +257,15 @@ describe('Component bind protocol (the bind() tool)', () => {
         expect(b.className).toBe('switch off');
     });
 
-    it('event casing is normalized on native elements (onClick works)', () => {
+    it('non-lowercase event names still attach on elements, but warn LJS-305', () => {
+        const spy = vi.spyOn(console, 'warn').mockImplementation(() => {});
         let clicks = 0;
         const C: Component = () => render`<div><button onClick="${() => clicks++}">x</button></div>`;
         handle = t(C);
         handle.query('button')!.click();
-        expect(clicks).toBe(1);
+        expect(clicks).toBe(1); // normalized: still works
+        expect(spy.mock.calls.some((args) => String(args[0]).includes('LJS-305'))).toBe(true);
+        spy.mockRestore();
     });
 
     it('warns LJS-305 when a component receives onChange instead of onchange', () => {

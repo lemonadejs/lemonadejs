@@ -50,7 +50,7 @@ var MESSAGES = {
   "LJS-302": 'bind requires a state: bind="${state}"',
   "LJS-303": "bind works on <input>, <textarea> and <select> \u2014 on components it is a prop",
   "LJS-304": "bind owns the element value \u2014 remove the explicit value/checked attribute",
-  "LJS-305": "Callback names are lowercase \u2014 did you mean onchange?"
+  "LJS-305": "Event and callback names are lowercase: onclick, onchange, onsave"
 };
 var format = function(code, detail) {
   const message = MESSAGES[code] || "Unknown error";
@@ -211,6 +211,16 @@ var SVG_TAGS = /* @__PURE__ */ new Set([
 var registry = /* @__PURE__ */ new WeakMap();
 var components = {};
 var warned = /* @__PURE__ */ new WeakSet();
+var warnedCasing = /* @__PURE__ */ new Set();
+var checkCasing = function(name, context) {
+  if (env.dev && name.length > 2 && name.startsWith("on") && /[A-Z]/.test(name)) {
+    const key = name + "|" + context;
+    if (!warnedCasing.has(key)) {
+      warnedCasing.add(key);
+      warn("LJS-305", "use " + name.toLowerCase() + " in " + context);
+    }
+  }
+};
 var valuesEqual = function(a, b) {
   if (a.length !== b.length) {
     return false;
@@ -456,6 +466,7 @@ var applyProp = function(el, prop, ctx, svg) {
     return;
   }
   if (name.length > 2 && name.startsWith("on")) {
+    checkCasing(name, "<" + el.tagName.toLowerCase() + ">");
     if (whole < 0 || typeof ctx.holder.values[whole] !== "function") {
       fail("LJS-301", name + " in <" + el.tagName.toLowerCase() + ">");
     }
@@ -543,6 +554,7 @@ var buildComponent = function(vnode, ctx) {
   }
   const props = {};
   for (const prop of vnode.props || []) {
+    checkCasing(prop.name, "<" + (fn.name || "component") + ">");
     const parts = prop.parts;
     if (!parts.length) {
       props[prop.name] = true;
@@ -627,13 +639,6 @@ var mountComponent = function(component, props, parent) {
     },
     bind: function(p, fallback) {
       const raw = p ? p.bind : void 0;
-      if (env.dev && p && typeof p.onchange !== "function") {
-        for (const key of Object.keys(p)) {
-          if (key !== "onchange" && key.toLowerCase() === "onchange") {
-            warn("LJS-305", key + " in <" + inst.name + ">");
-          }
-        }
-      }
       const target = isState(raw) ? raw : new StateImpl(raw !== void 0 ? raw : fallback);
       const bound = new BoundState(target, p ? p.onchange : void 0);
       inst.states.push(bound);

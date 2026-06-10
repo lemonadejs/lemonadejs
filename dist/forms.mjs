@@ -18,7 +18,7 @@ var MESSAGES = {
   "LJS-302": 'bind requires a state: bind="${state}"',
   "LJS-303": "bind works on <input>, <textarea> and <select> \u2014 on components it is a prop",
   "LJS-304": "bind owns the element value \u2014 remove the explicit value/checked attribute",
-  "LJS-305": "Callback names are lowercase \u2014 did you mean onchange?"
+  "LJS-305": "Event and callback names are lowercase: onclick, onchange, onsave"
 };
 var format = function(code, detail) {
   const message = MESSAGES[code] || "Unknown error";

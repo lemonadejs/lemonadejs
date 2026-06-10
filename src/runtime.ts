@@ -107,6 +107,20 @@ export const setComponents = function (map: Record<string, Component<never>>): v
 /** Components already warned with LJS-202 (once per component type) */
 const warned = new WeakSet<Function>();
 
+/** Casing warnings already issued (once per name + context) */
+const warnedCasing = new Set<string>();
+
+/** One rule, no exceptions: on* names are lowercase (onclick, onsave) */
+const checkCasing = function (name: string, context: string): void {
+    if (env.dev && name.length > 2 && name.startsWith('on') && /[A-Z]/.test(name)) {
+        const key = name + '|' + context;
+        if (!warnedCasing.has(key)) {
+            warnedCasing.add(key);
+            warn('LJS-305', 'use ' + name.toLowerCase() + ' in ' + context);
+        }
+    }
+};
+
 const valuesEqual = function (a: unknown[], b: unknown[]): boolean {
     if (a.length !== b.length) {
         return false;
@@ -400,6 +414,7 @@ const applyProp = function (el: Element, prop: VProp, ctx: BuildCtx, svg: boolea
     // Events: onclick="${() => ...}" — always read through the holder, so
     // branch updates replace the handler without re-attaching the listener
     if (name.length > 2 && name.startsWith('on')) {
+        checkCasing(name, '<' + el.tagName.toLowerCase() + '>');
         if (whole < 0 || typeof ctx.holder.values[whole] !== 'function') {
             fail('LJS-301', name + ' in <' + el.tagName.toLowerCase() + '>');
         }
@@ -505,6 +520,7 @@ const buildComponent = function (vnode: VNode, ctx: BuildCtx): Node[] {
 
     const props: Record<string, unknown> = {};
     for (const prop of vnode.props || []) {
+        checkCasing(prop.name, '<' + ((fn as Function).name || 'component') + '>');
         const parts = prop.parts;
         if (!parts.length) {
             props[prop.name] = true;
@@ -612,14 +628,6 @@ export const mountComponent = function (
         },
         bind: function <T>(p: Bindable<T>, fallback: T) {
             const raw = p ? (p.bind as State<T> | T | undefined) : undefined;
-            // Casing tripwire: props are case-sensitive, onChange would be ignored
-            if (env.dev && p && typeof p.onchange !== 'function') {
-                for (const key of Object.keys(p)) {
-                    if (key !== 'onchange' && key.toLowerCase() === 'onchange') {
-                        warn('LJS-305', key + ' in <' + inst.name + '>');
-                    }
-                }
-            }
             // External state → two-way; plain value → initial; nothing → fallback
             const target = isState(raw)
                 ? (raw as StateImpl<T>)
