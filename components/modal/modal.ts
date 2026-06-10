@@ -78,6 +78,7 @@ export const Modal = component('modal', {
     minimizable: false,
     minimized: false,
     fullscreen: false,            // MUI
+    header: true,                 // false: headerless floating panel (menus, chips)
     autoclose: false,             // v5: auto-close
     autoadjust: false,            // v5: auto-adjust
     focus: true,
@@ -171,7 +172,13 @@ export const Modal = component('modal', {
         if (!root || minimized.value) {
             return;
         }
+        // Remember position AND exact dimensions: restore must return the
+        // modal precisely as it was
+        const rect = root.getBoundingClientRect();
         restoreTo = { top: pos.value.top, left: pos.value.left };
+        if (rect.width && !size.value.w) {
+            size.value = { w: rect.width, h: rect.height };
+        }
         minimized.value = true;
         dock.push(root);
         refreshDock();
@@ -227,6 +234,21 @@ export const Modal = component('modal', {
     // ---- per-open setup (v5 onload behavior)
     const onOpened = (el: Element) => {
         root = el as HTMLElement;
+        if (!el.isConnected) {
+            // First open: the branch builds detached, then attaches —
+            // measurements need the attached element (v5 measured onload)
+            queueMicrotask(() => {
+                if (root === el && el.isConnected && open.value) {
+                    setup();
+                }
+            });
+        } else {
+            setup();
+        }
+    };
+
+    const setup = () => {
+        const el = root!;
         const p = props.position!.value as string;
         if (props.layers!.value) {
             front();
@@ -440,18 +462,29 @@ export const Modal = component('modal', {
                         }
                     }
                 }}">
-                <header class="lm-modal-header">
-                    <span class="lm-modal-title">${props.title}</span>
-                    <span class="lm-modal-controls">
-                        ${() =>
-                            props.minimizable!.value &&
-                            html`<button class="lm-modal-minimize"
-                                onclick="${() => (minimized.value ? restore() : minimize())}">–</button>`}
-                        ${() =>
-                            props.closable!.value &&
-                            html`<button class="lm-modal-close" onclick="${() => doClose('button')}">×</button>`}
-                    </span>
-                </header>
+                ${() =>
+                    props.header!.value &&
+                    html`<header class="lm-modal-header"
+                        onclick="${() => minimized.value && restore()}">
+                        <span class="lm-modal-title">${props.title}</span>
+                        <span class="lm-modal-controls">
+                            ${() =>
+                                props.minimizable!.value &&
+                                html`<button class="lm-modal-minimize" title="${() =>
+                                    minimized.value ? 'Restore' : 'Minimize'}"
+                                    onclick="${(e: MouseEvent) => {
+                                        e.stopPropagation();
+                                        if (minimized.value) {
+                                            restore();
+                                        } else {
+                                            minimize();
+                                        }
+                                    }}">${() => (minimized.value ? '□' : '–')}</button>`}
+                            ${() =>
+                                props.closable!.value &&
+                                html`<button class="lm-modal-close" onclick="${() => doClose('button')}">×</button>`}
+                        </span>
+                    </header>`}
                 <div class="lm-modal-content">${props.children}${() => remote.value}</div>
             </div>
         </div>`}`;

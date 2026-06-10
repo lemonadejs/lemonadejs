@@ -27,7 +27,7 @@
         "name": "modal",
         "path": "components/modal",
         "verified": true,
-        "checks": 47,
+        "checks": 49,
         "contract": {
             "name": "modal",
             "props": {
@@ -82,6 +82,10 @@
                 "fullscreen": {
                     "type": "boolean",
                     "default": false
+                },
+                "header": {
+                    "type": "boolean",
+                    "default": true
                 },
                 "autoclose": {
                     "type": "boolean",

@@ -53,6 +53,10 @@
             "type": "boolean",
             "default": false
         },
+        "header": {
+            "type": "boolean",
+            "default": true
+        },
         "autoclose": {
             "type": "boolean",
             "default": false

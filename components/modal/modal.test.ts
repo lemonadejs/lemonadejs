@@ -1,10 +1,11 @@
 /**
  * <Modal /> behavior tests — the v5 capabilities, verified: 8-direction
  * resize with shift-aspect, drag with viewport clamping (better than v5),
- * the minimize dock, close origins, element-scoped Escape.
+ * the minimize dock with exact-size restore, close origins, element-scoped
+ * Escape, headerless panels.
  */
 import { describe, it, expect, afterEach } from 'vitest';
-import { store, type State } from '../../src/index';
+import { store } from '../../src/index';
 import { render as t, verify } from '../../src/test';
 import Modal from './modal';
 
@@ -16,6 +17,8 @@ afterEach(() => {
     handle = null;
 });
 
+const flush = () => new Promise((r) => setTimeout(r, 0));
+
 const setRect = (el: HTMLElement, r: { top: number; left: number; width: number; height: number }) => {
     el.getBoundingClientRect = () =>
         ({ ...r, right: r.left + r.width, bottom: r.top + r.height, x: r.left, y: r.top, toJSON: () => '' }) as DOMRect;
@@ -24,10 +27,11 @@ const setRect = (el: HTMLElement, r: { top: number; left: number; width: number;
 const mouse = (type: string, x: number, y: number, extra: MouseEventInit = {}) =>
     new MouseEvent(type, { bubbles: true, clientX: x, clientY: y, buttons: 1, ...extra });
 
-const openModal = (props: Record<string, unknown>) => {
+const openModal = async (props: Record<string, unknown>) => {
     let api: Api | null = null;
     handle = t(Modal as never, { focus: false, ...props, ref: (a: Api) => (api = a) } as never);
     api!.open();
+    await flush(); // per-open setup defers until the branch is attached
     const el = handle.query('.lm-modal') as HTMLElement;
     setRect(el, { top: 100, left: 100, width: 400, height: 300 });
     return { api: api!, el };
@@ -38,9 +42,12 @@ describe('components/modal — behaviors', () => {
         expect(verify(Modal as never).pass).toBe(true);
     });
 
-    it('drags by the top bar and reports onmove(top, left) on release', () => {
+    it('drags by the top bar and reports onmove(top, left) on release', async () => {
         const moves: [number, number][] = [];
-        const { el } = openModal({ draggable: true, onmove: (top: number, left: number) => moves.push([top, left]) });
+        const { el } = await openModal({
+            draggable: true,
+            onmove: (top: number, left: number) => moves.push([top, left]),
+        });
 
         el.dispatchEvent(mouse('mousedown', 150, 110)); // y within the 40px bar
         document.dispatchEvent(mouse('mousemove', 200, 160)); // +50, +50
@@ -51,8 +58,8 @@ describe('components/modal — behaviors', () => {
         expect(moves).toEqual([[150, 150]]);
     });
 
-    it('CLAMPS dragging — the grab bar can never leave the screen (better than v5)', () => {
-        const { el } = openModal({ draggable: true });
+    it('CLAMPS dragging — the grab bar can never leave the screen (better than v5)', async () => {
+        const { el } = await openModal({ draggable: true });
 
         el.dispatchEvent(mouse('mousedown', 150, 110));
         document.dispatchEvent(mouse('mousemove', 150, -5000)); // way above
@@ -63,8 +70,8 @@ describe('components/modal — behaviors', () => {
         document.dispatchEvent(mouse('mouseup', 0, 0));
     });
 
-    it('does not drag from below the bar', () => {
-        const { el } = openModal({ draggable: true });
+    it('does not drag from below the bar', async () => {
+        const { el } = await openModal({ draggable: true });
         const before = el.style.top; // centering sets explicit coordinates
         el.dispatchEvent(mouse('mousedown', 150, 200)); // y - top = 100 > 40
         document.dispatchEvent(mouse('mousemove', 250, 300));
@@ -72,9 +79,12 @@ describe('components/modal — behaviors', () => {
         document.dispatchEvent(mouse('mouseup', 0, 0));
     });
 
-    it('resizes from the east edge', () => {
+    it('resizes from the east edge', async () => {
         const sizes: [number, number][] = [];
-        const { el } = openModal({ resizable: true, onresize: (w: number, h: number) => sizes.push([w, h]) });
+        const { el } = await openModal({
+            resizable: true,
+            onresize: (w: number, h: number) => sizes.push([w, h]),
+        });
 
         el.dispatchEvent(mouse('mousedown', 495, 250)); // within 10px of right edge (500)
         document.dispatchEvent(mouse('mousemove', 545, 250)); // +50
@@ -85,8 +95,8 @@ describe('components/modal — behaviors', () => {
         expect(sizes).toEqual([[450, 300]]);
     });
 
-    it('resizes from the north-west corner, moving the origin', () => {
-        const { el } = openModal({ resizable: true });
+    it('resizes from the north-west corner, moving the origin', async () => {
+        const { el } = await openModal({ resizable: true });
         el.dispatchEvent(mouse('mousedown', 103, 103)); // nw corner
         document.dispatchEvent(mouse('mousemove', 83, 73)); // -20, -30
         expect(el.style.left).toBe('80px');
@@ -96,8 +106,8 @@ describe('components/modal — behaviors', () => {
         document.dispatchEvent(mouse('mouseup', 0, 0));
     });
 
-    it('Shift preserves the aspect ratio while resizing east (v5)', () => {
-        const { el } = openModal({ resizable: true });
+    it('Shift preserves the aspect ratio while resizing east (v5)', async () => {
+        const { el } = await openModal({ resizable: true });
         el.dispatchEvent(mouse('mousedown', 495, 250));
         document.dispatchEvent(mouse('mousemove', 595, 250, { shiftKey: true })); // +100 → h scales by 300/400
         expect(el.style.width).toBe('500px');
@@ -105,37 +115,50 @@ describe('components/modal — behaviors', () => {
         document.dispatchEvent(mouse('mouseup', 0, 0));
     });
 
-    it('respects minimum dimensions', () => {
-        const { el } = openModal({ resizable: true });
+    it('respects minimum dimensions', async () => {
+        const { el } = await openModal({ resizable: true });
         el.dispatchEvent(mouse('mousedown', 495, 250));
         document.dispatchEvent(mouse('mousemove', -1000, 250));
         expect(parseInt(el.style.width)).toBeGreaterThanOrEqual(140);
         document.dispatchEvent(mouse('mouseup', 0, 0));
     });
 
-    it('minimize DOCKS to the bottom taskbar row and restore returns home', () => {
-        const a = openModal({ minimizable: true, draggable: true, top: 120, left: 130, position: 'absolute' });
+    it('minimize DOCKS to the taskbar and restore returns home at FULL size', async () => {
+        const a = await openModal({ minimizable: true, draggable: true, top: 120, left: 130, position: 'absolute' });
         const minBtn = handle!.query('.lm-modal-minimize')!;
 
         minBtn.click();
         expect(a.el.className).toContain('lm-modal-minimized');
         expect(a.el.style.left).toBe('10px'); // first dock slot
         expect(parseInt(a.el.style.top)).toBe(window.innerHeight - 55);
+        expect(minBtn.textContent).toBe('□'); // restore affordance
 
         minBtn.click(); // restore
         expect(a.el.className).not.toContain('lm-modal-minimized');
         expect(a.el.style.top).toBe('120px');
         expect(a.el.style.left).toBe('130px');
+        // The exact pre-minimize dimensions return (recorded from the rect)
+        expect(a.el.style.width).toBe('400px');
+        expect(a.el.style.height).toBe('300px');
     });
 
-    it('two minimized modals occupy successive dock slots', () => {
-        const first = openModal({ minimizable: true });
+    it('clicking the minimized bar restores it', async () => {
+        const a = await openModal({ minimizable: true, position: 'absolute', top: 50, left: 50 });
+        handle!.query('.lm-modal-minimize')!.click();
+        expect(a.el.className).toContain('lm-modal-minimized');
+
+        (handle!.query('.lm-modal-header') as HTMLElement).click();
+        expect(a.el.className).not.toContain('lm-modal-minimized');
+    });
+
+    it('two minimized modals occupy successive dock slots', async () => {
+        const first = await openModal({ minimizable: true });
         const firstHandle = handle!;
         firstHandle.query('.lm-modal-minimize')!.click();
         const firstEl = first.el;
 
         handle = null;
-        const second = openModal({ minimizable: true });
+        const second = await openModal({ minimizable: true });
         handle!.query('.lm-modal-minimize')!.click();
 
         expect(firstEl.style.left).toBe('10px');
@@ -145,32 +168,32 @@ describe('components/modal — behaviors', () => {
         expect(second.el.style.left).toBe('10px');
     });
 
-    it('close origins: button, backdrop, escape (element-scoped), api', () => {
+    it('close origins: button, backdrop, escape (element-scoped), api', async () => {
         const origins: string[] = [];
-        const make = () => {
+        const make = async () => {
             handle?.unmount();
             handle = null;
             return openModal({ closable: true, backdrop: true, onclose: (o: string) => origins.push(o) });
         };
 
-        let m = make();
+        let m = await make();
         handle!.query('.lm-modal-close')!.click();
-        m = make();
+        m = await make();
         (handle!.query('.lm-modal-backdrop') as HTMLElement).click();
-        m = make();
+        m = await make();
         m.el.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
-        m = make();
+        m = await make();
         m.api.close();
 
         expect(origins).toEqual(['button', 'backdrop', 'escape', 'api']);
     });
 
-    it('Escape is element-scoped: a second modal is untouched', () => {
+    it('Escape is element-scoped: a second modal is untouched', async () => {
         const origins: string[] = [];
-        const a = openModal({ closable: true, onclose: (o: string) => origins.push(o) });
+        const a = await openModal({ closable: true, onclose: (o: string) => origins.push(o) });
         const firstHandle = handle!;
         handle = null;
-        const b = openModal({ closable: true, onclose: (o: string) => origins.push(o) });
+        const b = await openModal({ closable: true, onclose: (o: string) => origins.push(o) });
 
         a.el.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
         expect(origins).toEqual(['escape']); // only the targeted modal closed
@@ -179,10 +202,16 @@ describe('components/modal — behaviors', () => {
         firstHandle.unmount();
     });
 
-    it('opens with explicit centered coordinates (v5 model)', () => {
-        const { el } = openModal({ width: 400, height: 300 });
+    it('opens with explicit centered coordinates (v5 model)', async () => {
+        const { el } = await openModal({ width: 400, height: 300 });
         expect(el.style.top).toBe(Math.max(0, (window.innerHeight - 300) / 2) + 'px');
         expect(el.style.left).toBe(Math.max(0, (window.innerWidth - 400) / 2) + 'px');
+    });
+
+    it('header="false" renders a headerless floating panel', async () => {
+        await openModal({ header: false });
+        expect(handle!.query('.lm-modal-header')).toBeNull();
+        expect(handle!.query('.lm-modal-content')).not.toBeNull();
     });
 
     it('bind stays the controlled open state', () => {
@@ -195,17 +224,11 @@ describe('components/modal — behaviors', () => {
         expect(handle.query('.lm-modal')).toBeNull();
     });
 
-    it('layers: front() raises above other modals', () => {
-        const a = openModal({ layers: true });
+    it('layers: front() raises above other modals', async () => {
+        const a = await openModal({ layers: true });
         const za = parseInt(a.el.style.zIndex || '0');
         a.el.dispatchEvent(mouse('mousedown', 300, 250)); // below bar: just front()
         document.dispatchEvent(mouse('mouseup', 0, 0));
         expect(parseInt(a.el.style.zIndex)).toBeGreaterThanOrEqual(za);
     });
 });
-
-declare global {
-    interface Window {
-        __unused__?: State<unknown>;
-    }
-}

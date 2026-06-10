@@ -111,6 +111,14 @@
             "pass": true
         },
         {
+            "name": "prop header",
+            "pass": true
+        },
+        {
+            "name": "prop header (live state)",
+            "pass": true
+        },
+        {
             "name": "prop autoclose",
             "pass": true
         },

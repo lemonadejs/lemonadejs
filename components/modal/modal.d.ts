@@ -25,6 +25,7 @@ export interface ModalProps extends Bindable<boolean> {
     minimizable?: State<boolean> | boolean;
     minimized?: State<boolean> | boolean;
     fullscreen?: State<boolean> | boolean;
+    header?: State<boolean> | boolean;
     autoclose?: State<boolean> | boolean;
     autoadjust?: State<boolean> | boolean;
     focus?: State<boolean> | boolean;

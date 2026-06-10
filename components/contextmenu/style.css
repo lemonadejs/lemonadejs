@@ -1,15 +1,18 @@
-/* <Contextmenu /> — default styling, lm-contextmenu-* convention */
+/* <Contextmenu /> — built on Modal; lm-contextmenu-* convention */
 .lm-contextmenu {
-    position: fixed;
-    z-index: 60;
+    outline: none;
+}
+
+/* Menu chrome scoped onto the Modal panels this component owns */
+.lm-contextmenu .lm-modal {
     min-width: 220px;
-    background: #fff;
-    border: 1px solid #e4e4e7;
     border-radius: 10px;
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.18);
-    padding: 6px;
     font: 13px/1.5 system-ui, sans-serif;
     user-select: none;
+}
+
+.lm-contextmenu .lm-modal-content {
+    padding: 6px;
 }
 
 .lm-contextmenu-list {
@@ -25,10 +28,10 @@
     padding: 7px 10px;
     border-radius: 6px;
     cursor: pointer;
-    position: relative;
 }
 
-.lm-contextmenu-item:hover {
+.lm-contextmenu-item:hover,
+.lm-contextmenu-cursor {
     background: #f4f4f5;
 }
 
@@ -64,22 +67,4 @@
 
 .lm-contextmenu-arrow {
     color: #a1a1aa;
-}
-
-/* Pure CSS nested submenus */
-.lm-contextmenu-submenu {
-    display: none;
-    position: absolute;
-    left: calc(100% - 4px);
-    top: -7px;
-    min-width: 200px;
-    background: #fff;
-    border: 1px solid #e4e4e7;
-    border-radius: 10px;
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.18);
-    padding: 6px;
-}
-
-.lm-contextmenu-parent:hover > .lm-contextmenu-submenu {
-    display: block;
 }
