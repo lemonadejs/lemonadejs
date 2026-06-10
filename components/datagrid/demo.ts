@@ -5,6 +5,7 @@
  */
 import { html, mount, store, type Component } from 'lemonadejs';
 import Datagrid, { type Column } from '@lemonadejs/datagrid';
+import Switch from '@lemonadejs/switch';
 
 type Row = Record<string, unknown>;
 type Api = { getSelected(): Row[]; setSearch(q: string): void; sort(n: string): void; refresh(): void };
@@ -30,7 +31,19 @@ const columns: Column[] = [
     { name: 'name', title: 'Name', width: '2fr', editable: true },
     { name: 'country', title: 'Country', width: '90px', align: 'center' },
     { name: 'amount', title: 'Amount', type: 'number', editable: true, render: (v) => '$' + Number(v).toFixed(1) },
-    { name: 'active', title: 'Active', type: 'checkbox', width: '80px', editable: true },
+    {
+        // ANY block can live in a cell: render returns an html`` view
+        name: 'active',
+        title: 'Active',
+        width: '110px',
+        align: 'center',
+        render: (value, row) =>
+            html`<${Switch} checked="${!!value}" size="small"
+                onchange="${(on: boolean) => {
+                    row.active = on;
+                    big.touch();
+                }}" />`,
+    },
 ];
 
 const App: Component = (props, { state }) => {
@@ -70,7 +83,12 @@ const App: Component = (props, { state }) => {
         </${Datagrid}>
 
         <h3>Paginated flavor (no virtualization)</h3>
-        <${Datagrid} data="${makeRows(45)}" columns="${columns}" pagination="10" selectable="single"></${Datagrid}>
+        <${Datagrid} data="${makeRows(45)}" columns="${[
+            { name: 'id', title: 'ID', type: 'number', width: '80px' },
+            { name: 'name', title: 'Name', width: '2fr', editable: true },
+            { name: 'country', title: 'Country', width: '90px', align: 'center' },
+            { name: 'active', title: 'Active', type: 'checkbox', width: '80px', editable: true },
+        ] as Column[]}" pagination="10" selectable="single"></${Datagrid}>
 
         <h3>Event log</h3>
         <pre style="font-size:12px">${() => log.value.join('\n')}</pre>

@@ -5,7 +5,7 @@
  * height, plus sort/search/select/edit/touch() semantics.
  */
 import { describe, it, expect, afterEach } from 'vitest';
-import { store } from 'lemonadejs';
+import { html, store } from 'lemonadejs';
 import { render as t, verify } from 'lemonadejs/test';
 import Datagrid, { type Column } from '@lemonadejs/datagrid';
 
@@ -231,15 +231,51 @@ describe('components/datagrid — the virtualized grid', () => {
         expect(api.getSelected()).toEqual([]);
     });
 
-    it('pagination mode slices pages with footer controls', () => {
+    it('pagination: numbered pages, range info, prev/next', () => {
         const api = open({ data: makeRows(45), pagination: 20 });
         expect(renderedRows()).toHaveLength(20);
-        expect(handle!.query('.lm-datagrid-footer')!.textContent).toContain('1 / 3');
+        expect(handle!.query('.lm-datagrid-pageinfo')!.textContent).toBe('1–20 of 45 rows');
 
-        handle!.queryAll('.lm-datagrid-footer button')[1].click(); // next
+        const buttons = () => handle!.queryAll('.lm-datagrid-pages button');
+        expect(buttons().map((b) => b.textContent)).toEqual(['‹', '1', '2', '3', '›']);
+        expect(buttons()[1].hasAttribute('data-current')).toBe(true);
+
+        buttons()[2].click(); // page "2"
         expect(firstName()).toBe('Person 21');
+        expect(handle!.query('.lm-datagrid-pageinfo')!.textContent).toBe('21–40 of 45 rows');
+        expect(buttons()[2].hasAttribute('data-current')).toBe(true);
+
         api.page(2);
         expect(renderedRows()).toHaveLength(5); // last page remainder
+        expect(handle!.query('.lm-datagrid-pageinfo')!.textContent).toBe('41–45 of 45 rows');
+    });
+
+    it('pagination: many pages collapse into ellipsis windows', () => {
+        const api = open({ data: makeRows(1000), pagination: 10 }); // 100 pages
+        const texts = () => handle!.queryAll('.lm-datagrid-pages button, .lm-datagrid-gap').map((el) => el.textContent);
+        expect(texts()).toEqual(['‹', '1', '2', '…', '100', '›']);
+        api.page(49);
+        expect(texts()).toEqual(['‹', '1', '…', '49', '50', '51', '…', '100', '›']);
+    });
+
+    it('column.render can return a VIEW — blocks live inside cells', () => {
+        const data = makeRows(3);
+        open({
+            data,
+            columns: [
+                { name: 'name', title: 'Name' },
+                {
+                    name: 'active',
+                    title: 'Active',
+                    render: (value: unknown, row: Record<string, unknown>) =>
+                        html`<button class="cell-block" onclick="${() => (row.flipped = true)}">${value ? 'on' : 'off'}</button>`,
+                },
+            ] as Column[],
+        });
+        const block = renderedRows()[0].querySelector('.cell-block') as HTMLElement;
+        expect(block.textContent).toBe('on');
+        block.click();
+        expect((data[0] as Record<string, unknown>).flipped).toBe(true);
     });
 
     it('keyboard: arrows move the active cell, Enter opens the editor', () => {

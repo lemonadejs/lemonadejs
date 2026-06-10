@@ -18,7 +18,7 @@
  * Not a spreadsheet: no formulas, no merged cells — that is jspreadsheet.
  */
 
-import { component, html } from 'lemonadejs';
+import { component, html, type View } from 'lemonadejs';
 
 export interface Column {
     /** Key into each row object */
@@ -30,8 +30,9 @@ export interface Column {
     align?: 'left' | 'center' | 'right';
     /** number: numeric sort + right align; checkbox: boolean cell */
     type?: 'text' | 'number' | 'checkbox';
-    /** Custom cell text (return a string; called on every render) */
-    render?: (value: unknown, row: Record<string, unknown>) => string;
+    /** Custom cell content: a string, or an html`` view — ANY block can
+     *  live in a cell (<${Switch} />, <${Rating} />, buttons...) */
+    render?: (value: unknown, row: Record<string, unknown>) => string | View;
     sortable?: boolean;
     editable?: boolean;
 }
@@ -137,6 +138,36 @@ export const Datagrid = component('datagrid', {
     };
 
     const pageCount = () => Math.max(1, Math.ceil(view.value.length / ((props.pagination!.value as number) || 1)));
+
+    /** "21–40 of 45 rows" */
+    const pageInfo = () => {
+        const size = props.pagination!.value as number;
+        const total = view.value.length;
+        if (!total) {
+            return '0 rows';
+        }
+        const start = page.value * size + 1;
+        return start + '–' + Math.min(start + size - 1, total) + ' of ' + total + ' rows';
+    };
+
+    /** Numbered pages with ellipsis windows: 1 … 4 [5] 6 … 12 (-1 = gap) */
+    const pageItems = (): number[] => {
+        const total = pageCount();
+        const current = page.value;
+        const shown = new Set<number>([0, total - 1, current - 1, current, current + 1]);
+        const items: number[] = [];
+        let previous = -1;
+        for (let i = 0; i < total; i++) {
+            if (shown.has(i)) {
+                if (previous >= 0 && i - previous > 1) {
+                    items.push(-1); // gap
+                }
+                items.push(i);
+                previous = i;
+            }
+        }
+        return items;
+    };
 
     // Initial pipeline run — after every helper above exists
     refresh();
@@ -295,7 +326,7 @@ export const Datagrid = component('datagrid', {
         return tracks.join(' ');
     };
 
-    const cellText = (row: Row, col: Column): string => {
+    const cellContent = (row: Row, col: Column): string | View => {
         const value = row[col.name];
         if (col.render) {
             return col.render(value, row);
@@ -358,7 +389,7 @@ export const Datagrid = component('datagrid', {
                               commit(row, col, (e.target as HTMLElement).textContent || '');
                           }
                       }}">${String(row[col.name] ?? '')}</span>`
-                : cellText(row, col)}</div>`;
+                : cellContent(row, col)}</div>`;
     };
 
     const rowView = (entry: { dataIndex: number; viewIndex: number }) => {
@@ -437,11 +468,20 @@ export const Datagrid = component('datagrid', {
         ${() =>
             props.pagination!.value
                 ? html`<div class="lm-datagrid-footer">
-                      <button onclick="${() => (page.value = Math.max(0, page.value - 1))}"
-                          disabled="${() => page.value === 0}">‹</button>
-                      <span>${() => page.value + 1} / ${() => pageCount()}</span>
-                      <button onclick="${() => (page.value = Math.min(pageCount() - 1, page.value + 1))}"
-                          disabled="${() => page.value >= pageCount() - 1}">›</button>
+                      <span class="lm-datagrid-pageinfo">${() => pageInfo()}</span>
+                      <nav class="lm-datagrid-pages" aria-label="Pagination">
+                          <button onclick="${() => (page.value = Math.max(0, page.value - 1))}"
+                              disabled="${() => page.value === 0}" aria-label="Previous page">‹</button>
+                          ${() =>
+                              pageItems().map((item) =>
+                                  item < 0
+                                      ? html`<span class="lm-datagrid-gap">…</span>`
+                                      : html`<button data-current="${() => (page.value === item ? 'true' : false)}"
+                                            onclick="${() => (page.value = item)}">${item + 1}</button>`
+                              )}
+                          <button onclick="${() => (page.value = Math.min(pageCount() - 1, page.value + 1))}"
+                              disabled="${() => page.value >= pageCount() - 1}" aria-label="Next page">›</button>
+                      </nav>
                   </div>`
                 : ''}
     </div>`;
