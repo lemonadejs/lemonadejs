@@ -59,9 +59,38 @@ Updates fire on ASSIGNMENT only. state.value.push(x) throws in dev mode on purpo
 ## Attributes
 
     <div class="btn ${active}">                mixed static + state → live string
-    <input value="${name}" />                  form values set as properties
+    <input value="${name}" />                  form values set as properties (one-way)
     <input disabled />                         boolean attributes work
     checked="${boolState}"                     boolean property binding
+
+## Two-way binding
+
+Native form elements — engine directive (consumed, never a DOM attribute):
+
+    <input bind="${name}" />                   value ⇄ state (input event)
+    <input type="checkbox" bind="${on}" />     checked ⇄ boolean state (change)
+    <input type="radio" value="a" bind="${pick}" />   radio groups share one state
+    <select bind="${choice}">...</select>      <textarea bind="${text}">
+
+bind requires the STATE OBJECT (bind="${name}", never bind="name" or bind="${name.value}").
+Only input/textarea/select. Do not combine bind with value/checked (LJS-304).
+
+Components — bind is a plain prop, implemented with the bind() tool:
+
+    import { render, type Component, type Bindable } from 'lemonadejs';
+
+    const Switch: Component<Bindable<boolean>> = (props, { bind }) => {
+        const value = bind(props, false);   // external state if bound, local otherwise
+        return render`<div class="${() => (value.value ? 'on' : 'off')}"
+            onclick="${() => value.set(!value.value)}"></div>`;
+    };
+
+    <${Switch} bind="${enabled}" onchange="${(v) => ...}" />   two-way
+    <${Switch} />                                              standalone (local state)
+    <${Switch} bind="${true}" />                               plain value = initial only
+
+value.set(v) commits a component-initiated change: writes AND fires props.onchange.
+Plain value.value = v writes silently (parent writes never echo onchange back).
 
 ## Component composition
 
@@ -128,7 +157,8 @@ Props are read-only (frozen in dev). Data flows up via callback props.
     LJS-003 mount root must be an element        LJS-201 state contents frozen — assign, don't mutate
     LJS-101 mismatched closing tag               LJS-202 slot is a snapshot — wrap: ${() => ...}
     LJS-102 unclosed tag                         LJS-203 update loop — don't assign states in expressions
-    LJS-301 events need functions, not strings
+    LJS-301 events need functions, not strings   LJS-302 bind needs a state: bind="${state}"
+    LJS-303 bind: input/textarea/select only     LJS-304 bind owns value — drop the value attribute
 
 ## Common mistakes
 
@@ -143,3 +173,6 @@ RIGHT  <${Card} title="x" />
 
 WRONG  onclick="doSomething()"                  LJS-301 — string handlers don't exist
 RIGHT  onclick="${() => doSomething()}"
+
+WRONG  <input bind="${name.value}" />           LJS-302 — that's a snapshot, not a state
+RIGHT  <input bind="${name}" />

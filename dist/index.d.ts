@@ -14,7 +14,7 @@
  * mount(Counter, document.getElementById('app'));
  */
 import type { SlotValue, View } from './types';
-export type { Component, Handle, Props, SlotValue, State, Template, Tools, View } from './types';
+export type { Bindable, Bound, Component, Handle, Props, SlotValue, State, Template, Tools, View } from './types';
 export { mount, inspect } from './runtime';
 export { explain, env } from './errors';
 /**

@@ -16,10 +16,10 @@
  *   array                 → flattened, each item by the same rules
  */
 
-import type { Component, Handle, Template, Tools, View, VNode, VProp } from './types';
+import type { Bindable, Component, Handle, State, Template, Tools, View, VNode, VProp } from './types';
 import { isView } from './types';
 import { env, fail, warn } from './errors';
-import { Binding, isDynamic, readCount, resolve, StateImpl } from './reactivity';
+import { Binding, BoundState, isDynamic, isState, readCount, resolve, StateImpl } from './reactivity';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 const SVG_TAGS = new Set([
@@ -315,6 +315,47 @@ const resolveProp = function (parts: VProp['parts'], holder: Holder): unknown {
     return out;
 };
 
+/**
+ * Native two-way binding: bind="${state}" on form elements. The directive
+ * is consumed here — it never reaches the DOM as an attribute. Element →
+ * state uses the input/change event; state → element uses a binding.
+ */
+const bindForm = function (el: Element, state: StateImpl<unknown>, ctx: BuildCtx): void {
+    const input = el as HTMLInputElement;
+    const tag = el.tagName.toLowerCase();
+    const isCheckbox = tag === 'input' && input.type === 'checkbox';
+    const isRadio = tag === 'input' && input.type === 'radio';
+
+    const write = function (): void {
+        const v = state.value; // tracked: re-runs when the state changes
+        if (isCheckbox) {
+            input.checked = !!v;
+        } else if (isRadio) {
+            input.checked = toText(v) === input.value;
+        } else if (input.value !== toText(v)) {
+            input.value = toText(v);
+        }
+    };
+    const binding = new Binding(write);
+    ctx.bindings.push(binding);
+    binding.run();
+
+    const event = isCheckbox || isRadio || tag === 'select' ? 'change' : 'input';
+    el.addEventListener(event, function () {
+        if (isCheckbox) {
+            state.value = input.checked;
+        } else if (isRadio) {
+            if (input.checked) {
+                state.value = input.value;
+            }
+        } else {
+            state.value = input.value;
+        }
+    });
+};
+
+const BINDABLE_TAGS = new Set(['input', 'textarea', 'select']);
+
 const applyProp = function (el: Element, prop: VProp, ctx: BuildCtx, svg: boolean): void {
     const name = prop.name;
     const parts = prop.parts;
@@ -323,6 +364,20 @@ const applyProp = function (el: Element, prop: VProp, ctx: BuildCtx, svg: boolea
     // Boolean attribute: <input disabled />
     if (!parts.length) {
         applyAttr(el, name, name, svg);
+        return;
+    }
+
+    // Two-way binding directive (validated, never rendered as an attribute)
+    if (name === 'bind') {
+        const raw = whole >= 0 ? ctx.holder.values[whole] : parts.join('');
+        if (isState(raw)) {
+            if (!BINDABLE_TAGS.has(el.tagName.toLowerCase())) {
+                fail('LJS-303', '<' + el.tagName.toLowerCase() + '>');
+            }
+            bindForm(el, raw, ctx);
+        } else {
+            fail('LJS-302', 'got ' + typeof raw + ' in <' + el.tagName.toLowerCase() + '>');
+        }
         return;
     }
 
@@ -453,16 +508,24 @@ const buildElement = function (vnode: VNode, ctx: BuildCtx, svg: boolean): Node[
     const isSvg = svg || SVG_TAGS.has(tag);
     const el = isSvg ? document.createElementNS(SVG_NS, tag) : document.createElement(tag);
 
-    for (const prop of vnode.props || []) {
-        applyProp(el, prop, ctx, isSvg);
+    if (env.dev && vnode.props && vnode.props.some((p) => p.name === 'bind')) {
+        if (vnode.props.some((p) => p.name === 'value' || p.name === 'checked')) {
+            warn('LJS-304', '<' + tag + '>');
+        }
     }
 
+    // Children first: directives like bind (e.g. on <select>) and ref must
+    // see the complete element
     if (vnode.children) {
         for (const child of vnode.children) {
             for (const node of buildNode(child, ctx, isSvg)) {
                 el.appendChild(node);
             }
         }
+    }
+
+    for (const prop of vnode.props || []) {
+        applyProp(el, prop, ctx, isSvg);
     }
 
     return [el];
@@ -522,6 +585,16 @@ export const mountComponent = function (
             const s = new StateImpl<T>(initial, onchange);
             inst.states.push(s as StateImpl<unknown>);
             return s;
+        },
+        bind: function <T>(p: Bindable<T>, fallback: T) {
+            const raw = p ? (p.bind as State<T> | T | undefined) : undefined;
+            // External state → two-way; plain value → initial; nothing → fallback
+            const target = isState(raw)
+                ? (raw as StateImpl<T>)
+                : new StateImpl<T>(raw !== undefined ? (raw as T) : fallback);
+            const bound = new BoundState<T>(target, p ? p.onchange : undefined);
+            inst.states.push(bound as unknown as StateImpl<unknown>);
+            return bound;
         },
         onMount: function (cb) {
             inst.mountCbs.push(cb);

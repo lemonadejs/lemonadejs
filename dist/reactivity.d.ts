@@ -30,6 +30,21 @@ export declare class StateImpl<T> {
     /** Read without subscribing (used by inspect/tooling) */
     peek(): T;
 }
+/**
+ * The state returned by the bind() tool. Delegates to a target state (the
+ * external bound state, or a local one), and adds set(): a component-
+ * initiated write that also notifies the owner's onchange callback —
+ * while plain .value writes (e.g. by the parent) stay silent.
+ */
+export declare class BoundState<T> extends StateImpl<T> {
+    private target;
+    private notify?;
+    constructor(target: StateImpl<T>, notify?: (value: T, oldValue: T) => void);
+    get value(): T;
+    set value(next: T);
+    peek(): T;
+    set(next: T): void;
+}
 export declare const isState: (v: unknown) => v is StateImpl<unknown>;
 /**
  * Resolve a slot value reactively: states are unwrapped (and tracked),

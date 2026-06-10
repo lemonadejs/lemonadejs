@@ -46,7 +46,10 @@ var MESSAGES = {
   "LJS-201": "State contents are frozen in dev mode \u2014 assign a new value instead of mutating",
   "LJS-202": "Slot holds a snapshot \u2014 wrap dynamic expressions: ${() => ...}",
   "LJS-203": "Update loop detected \u2014 a state change keeps triggering itself",
-  "LJS-301": 'Event attributes require a function: onclick="${() => ...}"'
+  "LJS-301": 'Event attributes require a function: onclick="${() => ...}"',
+  "LJS-302": 'bind requires a state: bind="${state}"',
+  "LJS-303": "bind works on <input>, <textarea> and <select> \u2014 on components it is a prop",
+  "LJS-304": "bind owns the element value \u2014 remove the explicit value/checked attribute"
 };
 var EXPLAIN = {
   "LJS-001": 'The value used as a component is not a function. Components are plain functions: const Card: Component = (props, { state }) => render`<div>...</div>`. When embedding, pass the function itself: <${Card} title="x" />.',
@@ -59,7 +62,10 @@ var EXPLAIN = {
   "LJS-201": "In development mode, objects and arrays stored in a state are frozen. Mutating them (state.value.push(x)) throws a TypeError on purpose: mutation does not trigger updates. Assign a new value instead: state.value = [...state.value, x].",
   "LJS-202": "A template slot received a plain value (string/number/boolean) while states were being read. Plain values are one-time snapshots. If the slot should update when states change, wrap it: ${() => valid.value && render`...`}. If the snapshot is intentional, ignore this warning.",
   "LJS-203": "A state assignment inside a reactive expression triggered itself recursively more than 100 times. Do not assign to states inside template expressions; assign from event handlers or callbacks.",
-  "LJS-301": 'Attributes starting with "on" are events and must receive a function: onclick="${() => count.value++}". String handlers are not supported (CSP-safe by design).'
+  "LJS-301": 'Attributes starting with "on" are events and must receive a function: onclick="${() => count.value++}". String handlers are not supported (CSP-safe by design).',
+  "LJS-302": 'The bind directive needs the state object itself: bind="${name}" (not bind="name", which is a string, and not bind="${name.value}", which is a one-time snapshot). Create it with const name = state("").',
+  "LJS-303": 'On native elements, bind is engine sugar and only <input>, <textarea> and <select> have a defined wiring. On components, bind is a plain prop: implement it with the bind() tool \u2014 const value = bind(props, fallback) \u2014 and pass <${Comp} bind="${state}" />.',
+  "LJS-304": "An element has both bind and an explicit value/checked attribute. bind drives that property in both directions, so the explicit attribute fights it. Remove value/checked and set the state instead."
 };
 var format = function(code, detail) {
   const message = MESSAGES[code] || "Unknown error";
@@ -421,6 +427,29 @@ var StateImpl = class {
     return this.v;
   }
 };
+var BoundState = class extends StateImpl {
+  constructor(target, notify) {
+    super(void 0);
+    this.target = target;
+    this.notify = notify;
+  }
+  get value() {
+    return this.target.value;
+  }
+  set value(next) {
+    this.target.value = next;
+  }
+  peek() {
+    return this.target.peek();
+  }
+  set(next) {
+    const old = this.target.peek();
+    this.target.value = next;
+    if (!Object.is(next, old) && typeof this.notify === "function") {
+      this.notify(next, old);
+    }
+  }
+};
 var isState = function(v) {
   return v instanceof StateImpl;
 };
@@ -654,12 +683,56 @@ var resolveProp = function(parts, holder) {
   }
   return out;
 };
+var bindForm = function(el, state, ctx) {
+  const input = el;
+  const tag = el.tagName.toLowerCase();
+  const isCheckbox = tag === "input" && input.type === "checkbox";
+  const isRadio = tag === "input" && input.type === "radio";
+  const write = function() {
+    const v = state.value;
+    if (isCheckbox) {
+      input.checked = !!v;
+    } else if (isRadio) {
+      input.checked = toText(v) === input.value;
+    } else if (input.value !== toText(v)) {
+      input.value = toText(v);
+    }
+  };
+  const binding = new Binding(write);
+  ctx.bindings.push(binding);
+  binding.run();
+  const event = isCheckbox || isRadio || tag === "select" ? "change" : "input";
+  el.addEventListener(event, function() {
+    if (isCheckbox) {
+      state.value = input.checked;
+    } else if (isRadio) {
+      if (input.checked) {
+        state.value = input.value;
+      }
+    } else {
+      state.value = input.value;
+    }
+  });
+};
+var BINDABLE_TAGS = /* @__PURE__ */ new Set(["input", "textarea", "select"]);
 var applyProp = function(el, prop, ctx, svg) {
   const name = prop.name;
   const parts = prop.parts;
   const whole = parts.length === 1 && typeof parts[0] === "object" ? parts[0].slot : -1;
   if (!parts.length) {
     applyAttr(el, name, name, svg);
+    return;
+  }
+  if (name === "bind") {
+    const raw = whole >= 0 ? ctx.holder.values[whole] : parts.join("");
+    if (isState(raw)) {
+      if (!BINDABLE_TAGS.has(el.tagName.toLowerCase())) {
+        fail("LJS-303", "<" + el.tagName.toLowerCase() + ">");
+      }
+      bindForm(el, raw, ctx);
+    } else {
+      fail("LJS-302", "got " + typeof raw + " in <" + el.tagName.toLowerCase() + ">");
+    }
     return;
   }
   if (name.length > 2 && name.startsWith("on")) {
@@ -764,8 +837,10 @@ var buildElement = function(vnode, ctx, svg) {
   const tag = vnode.type;
   const isSvg = svg || SVG_TAGS.has(tag);
   const el = isSvg ? document.createElementNS(SVG_NS, tag) : document.createElement(tag);
-  for (const prop of vnode.props || []) {
-    applyProp(el, prop, ctx, isSvg);
+  if (env.dev && vnode.props && vnode.props.some((p) => p.name === "bind")) {
+    if (vnode.props.some((p) => p.name === "value" || p.name === "checked")) {
+      warn("LJS-304", "<" + tag + ">");
+    }
   }
   if (vnode.children) {
     for (const child of vnode.children) {
@@ -773,6 +848,9 @@ var buildElement = function(vnode, ctx, svg) {
         el.appendChild(node);
       }
     }
+  }
+  for (const prop of vnode.props || []) {
+    applyProp(el, prop, ctx, isSvg);
   }
   return [el];
 };
@@ -818,6 +896,13 @@ var mountComponent = function(component, props, parent) {
       const s = new StateImpl(initial, onchange);
       inst.states.push(s);
       return s;
+    },
+    bind: function(p, fallback) {
+      const raw = p ? p.bind : void 0;
+      const target = isState(raw) ? raw : new StateImpl(raw !== void 0 ? raw : fallback);
+      const bound = new BoundState(target, p ? p.onchange : void 0);
+      inst.states.push(bound);
+      return bound;
     },
     onMount: function(cb) {
       inst.mountCbs.push(cb);

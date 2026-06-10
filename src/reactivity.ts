@@ -114,6 +114,43 @@ export class StateImpl<T> {
     }
 }
 
+/**
+ * The state returned by the bind() tool. Delegates to a target state (the
+ * external bound state, or a local one), and adds set(): a component-
+ * initiated write that also notifies the owner's onchange callback —
+ * while plain .value writes (e.g. by the parent) stay silent.
+ */
+export class BoundState<T> extends StateImpl<T> {
+    private target: StateImpl<T>;
+    private notify?: (value: T, oldValue: T) => void;
+
+    constructor(target: StateImpl<T>, notify?: (value: T, oldValue: T) => void) {
+        super(undefined as T);
+        this.target = target;
+        this.notify = notify;
+    }
+
+    override get value(): T {
+        return this.target.value;
+    }
+
+    override set value(next: T) {
+        this.target.value = next;
+    }
+
+    override peek(): T {
+        return this.target.peek();
+    }
+
+    set(next: T): void {
+        const old = this.target.peek();
+        this.target.value = next;
+        if (!Object.is(next, old) && typeof this.notify === 'function') {
+            this.notify(next, old);
+        }
+    }
+}
+
 export const isState = function (v: unknown): v is StateImpl<unknown> {
     return v instanceof StateImpl;
 };

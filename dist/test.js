@@ -46,7 +46,10 @@ var MESSAGES = {
   "LJS-201": "State contents are frozen in dev mode \u2014 assign a new value instead of mutating",
   "LJS-202": "Slot holds a snapshot \u2014 wrap dynamic expressions: ${() => ...}",
   "LJS-203": "Update loop detected \u2014 a state change keeps triggering itself",
-  "LJS-301": 'Event attributes require a function: onclick="${() => ...}"'
+  "LJS-301": 'Event attributes require a function: onclick="${() => ...}"',
+  "LJS-302": 'bind requires a state: bind="${state}"',
+  "LJS-303": "bind works on <input>, <textarea> and <select> \u2014 on components it is a prop",
+  "LJS-304": "bind owns the element value \u2014 remove the explicit value/checked attribute"
 };
 var format = function(code, detail) {
   const message = MESSAGES[code] || "Unknown error";
@@ -140,6 +143,29 @@ var StateImpl = class {
   /** Read without subscribing (used by inspect/tooling) */
   peek() {
     return this.v;
+  }
+};
+var BoundState = class extends StateImpl {
+  constructor(target, notify) {
+    super(void 0);
+    this.target = target;
+    this.notify = notify;
+  }
+  get value() {
+    return this.target.value;
+  }
+  set value(next) {
+    this.target.value = next;
+  }
+  peek() {
+    return this.target.peek();
+  }
+  set(next) {
+    const old = this.target.peek();
+    this.target.value = next;
+    if (!Object.is(next, old) && typeof this.notify === "function") {
+      this.notify(next, old);
+    }
   }
 };
 var isState = function(v) {
@@ -375,12 +401,56 @@ var resolveProp = function(parts, holder) {
   }
   return out;
 };
+var bindForm = function(el, state, ctx) {
+  const input = el;
+  const tag = el.tagName.toLowerCase();
+  const isCheckbox = tag === "input" && input.type === "checkbox";
+  const isRadio = tag === "input" && input.type === "radio";
+  const write = function() {
+    const v = state.value;
+    if (isCheckbox) {
+      input.checked = !!v;
+    } else if (isRadio) {
+      input.checked = toText(v) === input.value;
+    } else if (input.value !== toText(v)) {
+      input.value = toText(v);
+    }
+  };
+  const binding = new Binding(write);
+  ctx.bindings.push(binding);
+  binding.run();
+  const event = isCheckbox || isRadio || tag === "select" ? "change" : "input";
+  el.addEventListener(event, function() {
+    if (isCheckbox) {
+      state.value = input.checked;
+    } else if (isRadio) {
+      if (input.checked) {
+        state.value = input.value;
+      }
+    } else {
+      state.value = input.value;
+    }
+  });
+};
+var BINDABLE_TAGS = /* @__PURE__ */ new Set(["input", "textarea", "select"]);
 var applyProp = function(el, prop, ctx, svg) {
   const name = prop.name;
   const parts = prop.parts;
   const whole = parts.length === 1 && typeof parts[0] === "object" ? parts[0].slot : -1;
   if (!parts.length) {
     applyAttr(el, name, name, svg);
+    return;
+  }
+  if (name === "bind") {
+    const raw = whole >= 0 ? ctx.holder.values[whole] : parts.join("");
+    if (isState(raw)) {
+      if (!BINDABLE_TAGS.has(el.tagName.toLowerCase())) {
+        fail("LJS-303", "<" + el.tagName.toLowerCase() + ">");
+      }
+      bindForm(el, raw, ctx);
+    } else {
+      fail("LJS-302", "got " + typeof raw + " in <" + el.tagName.toLowerCase() + ">");
+    }
     return;
   }
   if (name.length > 2 && name.startsWith("on")) {
@@ -485,8 +555,10 @@ var buildElement = function(vnode, ctx, svg) {
   const tag = vnode.type;
   const isSvg = svg || SVG_TAGS.has(tag);
   const el = isSvg ? document.createElementNS(SVG_NS, tag) : document.createElement(tag);
-  for (const prop of vnode.props || []) {
-    applyProp(el, prop, ctx, isSvg);
+  if (env.dev && vnode.props && vnode.props.some((p) => p.name === "bind")) {
+    if (vnode.props.some((p) => p.name === "value" || p.name === "checked")) {
+      warn("LJS-304", "<" + tag + ">");
+    }
   }
   if (vnode.children) {
     for (const child of vnode.children) {
@@ -494,6 +566,9 @@ var buildElement = function(vnode, ctx, svg) {
         el.appendChild(node);
       }
     }
+  }
+  for (const prop of vnode.props || []) {
+    applyProp(el, prop, ctx, isSvg);
   }
   return [el];
 };
@@ -539,6 +614,13 @@ var mountComponent = function(component, props, parent) {
       const s = new StateImpl(initial, onchange);
       inst.states.push(s);
       return s;
+    },
+    bind: function(p, fallback) {
+      const raw = p ? p.bind : void 0;
+      const target = isState(raw) ? raw : new StateImpl(raw !== void 0 ? raw : fallback);
+      const bound = new BoundState(target, p ? p.onchange : void 0);
+      inst.states.push(bound);
+      return bound;
     },
     onMount: function(cb) {
       inst.mountCbs.push(cb);

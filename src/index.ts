@@ -19,7 +19,7 @@ import { parse } from './parser';
 import { env, explain } from './errors';
 import { inspect, mount } from './runtime';
 
-export type { Component, Handle, Props, SlotValue, State, Template, Tools, View } from './types';
+export type { Bindable, Bound, Component, Handle, Props, SlotValue, State, Template, Tools, View } from './types';
 export { mount, inspect } from './runtime';
 export { explain, env } from './errors';
 

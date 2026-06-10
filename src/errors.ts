@@ -23,6 +23,9 @@ const MESSAGES: Record<string, string> = {
     'LJS-202': 'Slot holds a snapshot — wrap dynamic expressions: ${() => ...}',
     'LJS-203': 'Update loop detected — a state change keeps triggering itself',
     'LJS-301': 'Event attributes require a function: onclick="${() => ...}"',
+    'LJS-302': 'bind requires a state: bind="${state}"',
+    'LJS-303': 'bind works on <input>, <textarea> and <select> — on components it is a prop',
+    'LJS-304': 'bind owns the element value — remove the explicit value/checked attribute',
 };
 
 const EXPLAIN: Record<string, string> = {
@@ -62,6 +65,16 @@ const EXPLAIN: Record<string, string> = {
     'LJS-301':
         'Attributes starting with "on" are events and must receive a function: onclick="${() => count.value++}". ' +
         'String handlers are not supported (CSP-safe by design).',
+    'LJS-302':
+        'The bind directive needs the state object itself: bind="${name}" (not bind="name", which is a string, ' +
+        'and not bind="${name.value}", which is a one-time snapshot). Create it with const name = state("").',
+    'LJS-303':
+        'On native elements, bind is engine sugar and only <input>, <textarea> and <select> have a defined wiring. ' +
+        'On components, bind is a plain prop: implement it with the bind() tool — ' +
+        'const value = bind(props, fallback) — and pass <${Comp} bind="${state}" />.',
+    'LJS-304':
+        'An element has both bind and an explicit value/checked attribute. bind drives that property in both ' +
+        'directions, so the explicit attribute fights it. Remove value/checked and set the state instead.',
 };
 
 const format = function (code: string, detail?: string): string {

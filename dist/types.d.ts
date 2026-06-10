@@ -37,12 +37,35 @@ export interface View {
 export interface State<T> {
     value: T;
 }
+/**
+ * A bindable state returned by the bind() tool. set() commits a
+ * component-initiated change: it writes the value AND fires the owner's
+ * onchange callback. Direct .value writes stay silent (no onchange).
+ */
+export interface Bound<T> extends State<T> {
+    set(value: T): void;
+}
+/**
+ * The two-way binding protocol for components:
+ *   <${Switch} bind="${state}" onchange="${(v) => ...}" />
+ * bind accepts a State (two-way) or a plain value (initial only).
+ */
+export interface Bindable<T> {
+    bind?: State<T> | T;
+    onchange?: (value: T, oldValue: T) => void;
+}
 /** Values accepted by ${...} slots */
 export type SlotValue = string | number | boolean | null | undefined | State<unknown> | View | Node | ((...args: never[]) => unknown) | readonly SlotValue[];
 /** Tools injected into every component */
 export interface Tools {
     /** Create a reactive state. Assignment to .value triggers updates. */
     state<T>(initial: T, onchange?: (value: T, oldValue: T) => void): State<T>;
+    /**
+     * Implement the two-way binding protocol: returns the external state
+     * when props.bind is a State, otherwise a local state (initialized from
+     * a plain props.bind or the fallback). set() also fires props.onchange.
+     */
+    bind<T>(props: Bindable<T>, fallback: T): Bound<T>;
     /** Called after the component DOM is attached. Return a cleanup function if needed. */
     onMount(callback: (el: Node) => void | (() => void)): void;
     /** Called when the component is unmounted. */
