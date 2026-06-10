@@ -62,6 +62,9 @@ A component worth building once is worth never building again.
   `components/<name>/` holding source, contract.json, verify report, snippet.
   A single generated `registry.json` (all contracts, one file) is the search
   index an agent can read in one request.
+  *Seeded in this repository:* `components/` with `<Switch />` as the first
+  block, `npm run registry` as the generator and gate, `npm run dev` as the
+  local playground (auto-discovers `components/*/demo.html`).
 - **Phase 2 — MCP server.** The registry as tools: `search(intent)`,
   `get_contract(name)`, `get_source(name)`, `verify(name)` — discovery and
   trust inside the agent's own toolchain, no browsing.

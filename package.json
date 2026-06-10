@@ -26,6 +26,8 @@
     "scripts": {
         "test": "vitest run",
         "test:watch": "vitest",
+        "dev": "node scripts/dev.js",
+        "registry": "node scripts/registry.js",
         "build": "node build.js",
         "typecheck": "tsc --noEmit"
     },

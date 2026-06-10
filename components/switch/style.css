@@ -1,0 +1,48 @@
+/* <Switch /> — default styling */
+.lm-switch {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    user-select: none;
+    outline-offset: 2px;
+}
+
+.lm-switch .lm-track {
+    display: inline-block;
+    width: 40px;
+    height: 22px;
+    border-radius: 11px;
+    background: #cbd5e1;
+    position: relative;
+    transition: background 0.15s ease;
+}
+
+.lm-switch .lm-thumb {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+    transition: left 0.15s ease;
+}
+
+.lm-switch.lm-on .lm-track {
+    background: #16a34a;
+}
+
+.lm-switch.lm-on .lm-thumb {
+    left: 20px;
+}
+
+.lm-switch.lm-disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.lm-switch .lm-label {
+    font: 14px/1.4 system-ui, sans-serif;
+}

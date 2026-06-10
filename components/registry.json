@@ -1,0 +1,31 @@
+[
+    {
+        "name": "switch",
+        "path": "components/switch",
+        "verified": true,
+        "checks": 8,
+        "contract": {
+            "name": "switch",
+            "props": {
+                "label": {
+                    "type": "string",
+                    "default": ""
+                },
+                "disabled": {
+                    "type": "boolean",
+                    "default": false
+                }
+            },
+            "bind": {
+                "type": "boolean",
+                "default": false
+            },
+            "events": [
+                "onchange"
+            ],
+            "api": [
+                "toggle"
+            ]
+        }
+    }
+]

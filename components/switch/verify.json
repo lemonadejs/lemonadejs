@@ -1,0 +1,38 @@
+{
+    "component": "switch",
+    "pass": true,
+    "checks": [
+        {
+            "name": "mounts with defaults",
+            "pass": true
+        },
+        {
+            "name": "prop label",
+            "pass": true
+        },
+        {
+            "name": "prop label (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop disabled",
+            "pass": true
+        },
+        {
+            "name": "prop disabled (live state)",
+            "pass": true
+        },
+        {
+            "name": "event onchange",
+            "pass": true
+        },
+        {
+            "name": "bind",
+            "pass": true
+        },
+        {
+            "name": "api via ref",
+            "pass": true
+        }
+    ]
+}
