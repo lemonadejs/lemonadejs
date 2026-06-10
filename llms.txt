@@ -196,6 +196,23 @@ Props are read-only (frozen in dev). Data flows up via callback props.
     LJS-301 events need functions, not strings   LJS-302 bind needs a state: bind="${state}"
     LJS-303 bind: input/textarea/select only     LJS-304 bind owns value — drop the value attribute
 
+## Migrating from v5
+
+    v5                                   v6
+    return render => render`...`         return render`...` (no wrapper)
+    this.prop / {{self.prop}}            const prop = state(...) + ${prop}
+    onload(fn) / :ready                  onMount(fn) (return a cleanup fn) / ref="${fn}"
+    self.onchange(prop, o, n)            state(v, (val, old) => ...) per state
+    :loop="self.rows"                    ${() => rows.value.map(r => render`...`)}
+    :render="${cond}"                    ${() => cond.value && render`...`}
+    :bind="self.name"                    bind="${name}" (elements) / bind() tool (components)
+    lemonade.set/get/dispatch (Sugar)    store() + exported action functions in a module
+    lemonade.set(k, fn, true) persist    store(initial, 'storage-key')
+    setComponents({ Card }) + <Card/>    same — or embed by value: <${Card} />
+    lm-path / setPath forms              form() from lemonadejs/forms ($get/$set)
+    HTML strings in slots                escaped by default; unsafe(html) for trusted markup
+    el.refresh() / refresh(true)         not needed — assignment updates surgically
+
 ## Common mistakes
 
 WRONG  ${valid.value && render`...`}            evaluates once — frozen (LJS-202 warns)
