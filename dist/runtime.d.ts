@@ -35,6 +35,8 @@ export interface Instance {
     mountCbs: ((el: Node) => void | (() => void))[];
     unmountCbs: (() => void)[];
     mounted: boolean;
+    /** Set by unmountInstance — dead instances are never reused or resurrected */
+    dead: boolean;
 }
 /** One unit of content produced by a slot */
 interface ViewEntry {

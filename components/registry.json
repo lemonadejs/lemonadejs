@@ -1,5 +1,136 @@
 [
     {
+        "name": "contextmenu",
+        "path": "components/contextmenu",
+        "verified": true,
+        "checks": 6,
+        "contract": {
+            "name": "contextmenu",
+            "props": {
+                "options": {
+                    "type": "array"
+                }
+            },
+            "bind": null,
+            "events": [
+                "onopen",
+                "onclose"
+            ],
+            "api": [
+                "open",
+                "openAt",
+                "close"
+            ]
+        }
+    },
+    {
+        "name": "modal",
+        "path": "components/modal",
+        "verified": true,
+        "checks": 47,
+        "contract": {
+            "name": "modal",
+            "props": {
+                "title": {
+                    "type": "string",
+                    "default": ""
+                },
+                "width": {
+                    "type": "number",
+                    "default": 0
+                },
+                "height": {
+                    "type": "number",
+                    "default": 0
+                },
+                "top": {
+                    "type": "number",
+                    "default": 0
+                },
+                "left": {
+                    "type": "number",
+                    "default": 0
+                },
+                "position": {
+                    "type": "string",
+                    "default": ""
+                },
+                "backdrop": {
+                    "type": "boolean",
+                    "default": false
+                },
+                "closable": {
+                    "type": "boolean",
+                    "default": false
+                },
+                "draggable": {
+                    "type": "boolean",
+                    "default": false
+                },
+                "resizable": {
+                    "type": "boolean",
+                    "default": false
+                },
+                "minimizable": {
+                    "type": "boolean",
+                    "default": false
+                },
+                "minimized": {
+                    "type": "boolean",
+                    "default": false
+                },
+                "fullscreen": {
+                    "type": "boolean",
+                    "default": false
+                },
+                "autoclose": {
+                    "type": "boolean",
+                    "default": false
+                },
+                "autoadjust": {
+                    "type": "boolean",
+                    "default": false
+                },
+                "focus": {
+                    "type": "boolean",
+                    "default": true
+                },
+                "overflow": {
+                    "type": "boolean",
+                    "default": false
+                },
+                "responsive": {
+                    "type": "boolean",
+                    "default": true
+                },
+                "layers": {
+                    "type": "boolean",
+                    "default": false
+                },
+                "url": {
+                    "type": "string",
+                    "default": ""
+                }
+            },
+            "bind": {
+                "type": "boolean"
+            },
+            "events": [
+                "onopen",
+                "onclose",
+                "onmove",
+                "onresize"
+            ],
+            "api": [
+                "open",
+                "close",
+                "toggle",
+                "front",
+                "back"
+            ]
+        }
+    },
+    {
         "name": "switch",
         "path": "components/switch",
         "verified": true,

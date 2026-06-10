@@ -1,0 +1,30 @@
+{
+    "component": "contextmenu",
+    "pass": true,
+    "checks": [
+        {
+            "name": "mounts with defaults",
+            "pass": true
+        },
+        {
+            "name": "prop options",
+            "pass": true
+        },
+        {
+            "name": "prop options (live state)",
+            "pass": true
+        },
+        {
+            "name": "event onopen",
+            "pass": true
+        },
+        {
+            "name": "event onclose",
+            "pass": true
+        },
+        {
+            "name": "api via ref",
+            "pass": true
+        }
+    ]
+}

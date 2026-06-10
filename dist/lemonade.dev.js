@@ -838,12 +838,15 @@ var lemonade = (() => {
       } else {
         const view = item.view;
         if (o && o.kind === "view" && o.template === view.template) {
+          const hasDead = o.instances.some(function(i2) {
+            return i2.dead;
+          });
           const equal = valuesEqual(o.holder.values, view.values);
-          if (equal && !isForcing()) {
+          if (equal && !isForcing() && !hasDead) {
             next.push(o);
             continue;
           }
-          if (!o.instances.length || equal) {
+          if (!hasDead && (!o.instances.length || equal)) {
             o.holder.values = view.values;
             for (const binding of o.bindings) {
               binding.run();
@@ -1141,7 +1144,8 @@ var lemonade = (() => {
       pending: [],
       mountCbs: [],
       unmountCbs: [],
-      mounted: false
+      mounted: false,
+      dead: false
     };
     const tools = {
       state: function(initial, onchange) {
@@ -1161,6 +1165,9 @@ var lemonade = (() => {
       },
       onUnmount: function(cb) {
         inst.unmountCbs.push(cb);
+      },
+      unmount: function() {
+        unmountInstance(inst);
       }
     };
     const finalProps = DEV ? Object.freeze({ ...props }) : props;
@@ -1212,6 +1219,10 @@ var lemonade = (() => {
     }
   };
   var unmountInstance = function(inst) {
+    if (inst.dead) {
+      return;
+    }
+    inst.dead = true;
     for (const child of [...inst.children]) {
       unmountInstance(child);
     }
@@ -1228,6 +1239,15 @@ var lemonade = (() => {
       cb();
     }
     inst.unmountCbs = [];
+    if (typeof document !== "undefined" && document.activeElement) {
+      const active = document.activeElement;
+      for (const node of inst.elements) {
+        if (node === active || node.contains(active)) {
+          active.blur?.();
+          break;
+        }
+      }
+    }
     for (const node of inst.elements) {
       remove(node);
     }

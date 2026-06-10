@@ -211,7 +211,7 @@ Interop with other reactive worlds (React, Svelte, Rx) — subscribe + peek:
 
 ## Lifecycle
 
-    const C: Component = (props, { state, onMount, onUnmount }) => {
+    const C: Component = (props, { state, onMount, onUnmount, unmount }) => {
         onMount((el) => {
             const id = setInterval(tick, 1000);
             return () => clearInterval(id);     // cleanup, runs on unmount

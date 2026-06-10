@@ -172,10 +172,16 @@ describe('Destroy under mass creation (the v5 wound, gated)', () => {
             return; // requires --expose-gc (enabled in vitest config)
         }
         const shared = store('alive');
-        // No local binding for the api: a same-frame variable can keep the
-        // object reachable in V8 regardless of block scope
+        // Methodology, established forensically (scripts/hunt-retainer.mjs):
+        // 1. no local binding for the target and NO deref between gc passes —
+        //    V8 conservative stack scanning pins anything touching the stack;
+        // 2. jsdom memoizes querySelector results PER SELECTOR
+        //    (DocumentImpl._nwsapi.selectResolvers) — re-running the same
+        //    selectors after unmount releases the cached elements. This is
+        //    jsdom-only; browsers do not memo querySelector.
         const weak = new WeakRef(modalCycle(shared) as object);
-        for (let i = 0; i < 10 && weak.deref(); i++) {
+        document.querySelector('.lm-modal-header');
+        for (let i = 0; i < 10; i++) {
             gc();
             await new Promise((r) => setTimeout(r, 0));
         }

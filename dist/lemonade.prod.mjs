@@ -800,12 +800,15 @@ var applySlot = function(s, value, inst) {
     } else {
       const view = item.view;
       if (o && o.kind === "view" && o.template === view.template) {
+        const hasDead = o.instances.some(function(i2) {
+          return i2.dead;
+        });
         const equal = valuesEqual(o.holder.values, view.values);
-        if (equal && !isForcing()) {
+        if (equal && !isForcing() && !hasDead) {
           next.push(o);
           continue;
         }
-        if (!o.instances.length || equal) {
+        if (!hasDead && (!o.instances.length || equal)) {
           o.holder.values = view.values;
           for (const binding of o.bindings) {
             binding.run();
@@ -1103,7 +1106,8 @@ var mountComponent = function(component2, props, parent) {
     pending: [],
     mountCbs: [],
     unmountCbs: [],
-    mounted: false
+    mounted: false,
+    dead: false
   };
   const tools = {
     state: function(initial, onchange) {
@@ -1123,6 +1127,9 @@ var mountComponent = function(component2, props, parent) {
     },
     onUnmount: function(cb) {
       inst.unmountCbs.push(cb);
+    },
+    unmount: function() {
+      unmountInstance(inst);
     }
   };
   const finalProps = DEV ? Object.freeze({ ...props }) : props;
@@ -1174,6 +1181,10 @@ var runMount = function(inst) {
   }
 };
 var unmountInstance = function(inst) {
+  if (inst.dead) {
+    return;
+  }
+  inst.dead = true;
   for (const child of [...inst.children]) {
     unmountInstance(child);
   }
@@ -1190,6 +1201,15 @@ var unmountInstance = function(inst) {
     cb();
   }
   inst.unmountCbs = [];
+  if (typeof document !== "undefined" && document.activeElement) {
+    const active = document.activeElement;
+    for (const node of inst.elements) {
+      if (node === active || node.contains(active)) {
+        active.blur?.();
+        break;
+      }
+    }
+  }
   for (const node of inst.elements) {
     remove(node);
   }

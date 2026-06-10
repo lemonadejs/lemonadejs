@@ -1,0 +1,194 @@
+{
+    "component": "modal",
+    "pass": true,
+    "checks": [
+        {
+            "name": "mounts with defaults",
+            "pass": true
+        },
+        {
+            "name": "prop title",
+            "pass": true
+        },
+        {
+            "name": "prop title (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop width",
+            "pass": true
+        },
+        {
+            "name": "prop width (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop height",
+            "pass": true
+        },
+        {
+            "name": "prop height (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop top",
+            "pass": true
+        },
+        {
+            "name": "prop top (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop left",
+            "pass": true
+        },
+        {
+            "name": "prop left (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop position",
+            "pass": true
+        },
+        {
+            "name": "prop position (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop backdrop",
+            "pass": true
+        },
+        {
+            "name": "prop backdrop (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop closable",
+            "pass": true
+        },
+        {
+            "name": "prop closable (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop draggable",
+            "pass": true
+        },
+        {
+            "name": "prop draggable (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop resizable",
+            "pass": true
+        },
+        {
+            "name": "prop resizable (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop minimizable",
+            "pass": true
+        },
+        {
+            "name": "prop minimizable (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop minimized",
+            "pass": true
+        },
+        {
+            "name": "prop minimized (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop fullscreen",
+            "pass": true
+        },
+        {
+            "name": "prop fullscreen (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop autoclose",
+            "pass": true
+        },
+        {
+            "name": "prop autoclose (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop autoadjust",
+            "pass": true
+        },
+        {
+            "name": "prop autoadjust (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop focus",
+            "pass": true
+        },
+        {
+            "name": "prop focus (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop overflow",
+            "pass": true
+        },
+        {
+            "name": "prop overflow (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop responsive",
+            "pass": true
+        },
+        {
+            "name": "prop responsive (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop layers",
+            "pass": true
+        },
+        {
+            "name": "prop layers (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop url",
+            "pass": true
+        },
+        {
+            "name": "prop url (live state)",
+            "pass": true
+        },
+        {
+            "name": "event onopen",
+            "pass": true
+        },
+        {
+            "name": "event onclose",
+            "pass": true
+        },
+        {
+            "name": "event onmove",
+            "pass": true
+        },
+        {
+            "name": "event onresize",
+            "pass": true
+        },
+        {
+            "name": "bind",
+            "pass": true
+        },
+        {
+            "name": "api via ref",
+            "pass": true
+        }
+    ]
+}
