@@ -272,6 +272,21 @@ describe('components/modal — behaviors', () => {
         expect(handle!.query('.lm-modal-content')).not.toBeNull();
     });
 
+    it('position is REACTIVE while open (v5 reactive-properties example)', async () => {
+        const position = store('');
+        const { el } = await openModal({ position, width: 300, height: 200 });
+        expect(el.style.position).toBe('fixed'); // centered: explicit coords
+
+        position.value = 'right';
+        await flush();
+        expect(handle!.query('.lm-modal-root')!.getAttribute('data-position')).toBe('right');
+        expect(el.style.top).toBe(''); // flex-aligned now, no fixed coords
+
+        position.value = ''; // back to default: centered coordinates return
+        await flush();
+        expect(el.style.top).toBe(Math.max(0, (window.innerHeight - 200) / 2) + 'px');
+    });
+
     it('bind stays the controlled open state', () => {
         const visible = store(false);
         handle = t(Modal as never, { bind: visible, focus: false } as never);

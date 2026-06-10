@@ -3,7 +3,7 @@
  * --dump-dom, writes PASS/FAIL lines into a <pre>. jsdom cannot do
  * layout; this is the truth loop for autoadjust/centering/minimize.
  */
-import { html, mount, type Component } from '../src/index';
+import { html, mount, store, type Component } from '../src/index';
 import Modal from '../components/modal/modal';
 
 type Api = { open(): void; close(): void; toggle(): void };
@@ -31,6 +31,8 @@ let plain!: Api;
 let fancy!: Api;
 let chat2!: Api;
 let chat3!: Api;
+let posApi!: Api;
+const posState = store('');
 
 const App: Component = () => html`<div>
     <${Modal} ref="${(a: Api) => (edge = a)}" title="Edge" position="absolute"
@@ -46,6 +48,8 @@ const App: Component = () => html`<div>
         top="180" left="220" width="300" height="200" draggable minimizable closable layers></${Modal}>
     <${Modal} ref="${(a: Api) => (chat3 = a)}" title="Chat 3" position="absolute"
         top="240" left="320" width="300" height="200" draggable minimizable closable layers></${Modal}>
+    <${Modal} ref="${(a: Api) => (posApi = a)}" title="Positioned" position="${posState}"
+        width="300" height="160" focus="${false}"></${Modal}>
 </div>`;
 
 const run = async () => {
@@ -192,6 +196,36 @@ const run = async () => {
         'dock-reflows-on-restore',
         bars[0].style.left === '10px' && bars[2].style.left === '215px' && !bars[1].className.includes('lm-modal-minimized'),
         { first: bars[0].style.left, third: bars[2].style.left }
+    );
+    fancy.close();
+    chat2.close();
+    chat3.close();
+    await frame();
+
+    // ---- 9. position is REACTIVE while open: center → right → bottom
+    posApi.open();
+    await frame();
+    const pm = () => document.querySelector('.lm-modal')!.getBoundingClientRect();
+    const middle = pm();
+    posState.value = 'right';
+    await frame();
+    const right = pm();
+    posState.value = 'bottom';
+    await frame();
+    const bottom = pm();
+    posApi.close();
+    log(
+        'position-reactive-while-open',
+        Math.abs(middle.left - (window.innerWidth - middle.width) / 2) <= 1 &&
+            Math.abs(right.right - window.innerWidth) <= 1 &&
+            Math.abs(bottom.bottom - window.innerHeight) <= 1,
+        {
+            centeredLeft: Math.round(middle.left),
+            rightEdge: Math.round(right.right),
+            bottomEdge: Math.round(bottom.bottom),
+            vw: window.innerWidth,
+            vh: window.innerHeight,
+        }
     );
 
     const pre = document.createElement('pre');

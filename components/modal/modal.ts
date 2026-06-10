@@ -283,6 +283,17 @@ export const Modal = component('modal', {
     // re-armed by watching the open state itself (api, bind or backdrop)
     onMount(() => open.subscribe((v) => v && scheduleSetup()));
 
+    // position is live while open (v5 reactive properties): drop the
+    // explicit coordinates and re-place under the new positioning model
+    onMount(() =>
+        props.position!.subscribe(() => {
+            if (open.value && root) {
+                pos.value = { top: props.top!.value as number, left: props.left!.value as number, fixed: false };
+                scheduleSetup();
+            }
+        })
+    );
+
     const setup = () => {
         const el = root!;
         const p = props.position!.value as string;

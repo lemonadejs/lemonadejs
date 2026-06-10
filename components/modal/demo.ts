@@ -3,6 +3,7 @@
  */
 import { html, mount, type Component } from '../../src/index';
 import Modal from './modal';
+import Switch from '../switch/switch';
 
 type Api = { open(): void; close(): void; toggle(): void };
 
@@ -64,7 +65,17 @@ const App: Component = (props, { state }) => {
     let full!: Api;
     let edge!: Api;
     let panel!: Api;
+    let live!: Api;
     const chats: Api[] = [];
+
+    // Reactive-properties panel: one state per prop, bound to the form
+    // controls AND to the modal — both stay in sync while it is open
+    const title = state('My window modal');
+    const position = state('');
+    const draggable = state(true);
+    const resizable = state(true);
+    const closable = state(true);
+    const minimizable = state(true);
 
     return html`<div>
         <h1>&lt;Modal /&gt;</h1>
@@ -87,6 +98,33 @@ const App: Component = (props, { state }) => {
                 <p>Chat window ${n} — minimize me to the dock.</p>
             </${Modal}>`
         )}
+
+        <h3>Reactive properties (the v5 docs advanced example)</h3>
+        <p>Every prop below is a live state bound to BOTH the form control and the open modal.</p>
+        <div style="display:grid;grid-template-columns:max-content 220px;gap:10px;align-items:center;max-width:420px">
+            <label>Title</label><input type="text" bind="${title}" />
+            <label>Position</label>
+            <select bind="${position}">
+                <option value="">Default (center)</option>
+                <option value="left">Left</option>
+                <option value="right">Right</option>
+                <option value="bottom">Bottom</option>
+            </select>
+            <span></span><${Switch} label="Draggable" bind="${draggable}" />
+            <span></span><${Switch} label="Resizable" bind="${resizable}" />
+            <span></span><${Switch} label="Closable" bind="${closable}" />
+            <span></span><${Switch} label="Minimizable" bind="${minimizable}" />
+            <span></span><button onclick="${() => live.toggle()}">Toggle Modal</button>
+        </div>
+
+        <${Modal} ref="${(a: Api) => (live = a)}" title="${title}" position="${position}"
+            draggable="${draggable}" resizable="${resizable}"
+            closable="${closable}" minimizable="${minimizable}"
+            width="380" height="220"
+            onclose="${(origin: string) => note('reactive modal closed via ' + origin)}">
+            <p>Quick example! Change anything on the panel — title, position and
+            behaviors update while I am open.</p>
+        </${Modal}>
 
         <${Modal} ref="${(a: Api) => (edge = a)}" title="Auto-adjusted" position="absolute"
             top="${window.innerHeight - 60}" left="${window.innerWidth - 80}"
