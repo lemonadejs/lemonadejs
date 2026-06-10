@@ -109,6 +109,15 @@
 .lm-modal-minimized .lm-modal-header {
     border-bottom: 0;
     cursor: pointer;
+    box-sizing: border-box;
+    height: 40px;
+    padding: 0 6px 0 14px;
+}
+
+.lm-modal-minimized .lm-modal-title {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .lm-modal-minimized:hover {

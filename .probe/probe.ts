@@ -152,6 +152,24 @@ const run = async () => {
         slot,
         after: { top: bar.style.top, left: bar.style.left },
     });
+    // Title and buttons must sit on the vertical CENTER of the 40px bar
+    await new Promise((res) => setTimeout(res, 350)); // let the dock transition finish
+    const barR = bar.getBoundingClientRect();
+    const titleR = (bar.querySelector('.lm-modal-title') as HTMLElement).getBoundingClientRect();
+    const btnR = (bar.querySelector('.lm-modal-minimize') as HTMLElement).getBoundingClientRect();
+    const mid = barR.top + barR.height / 2;
+    log(
+        'minimized-bar-content-centered',
+        Math.round(barR.height) === 40 &&
+            Math.abs(titleR.top + titleR.height / 2 - mid) <= 1.5 &&
+            Math.abs(btnR.top + btnR.height / 2 - mid) <= 1.5,
+        {
+            barH: Math.round(barR.height),
+            titleOff: Math.round(titleR.top + titleR.height / 2 - mid),
+            btnOff: Math.round(btnR.top + btnR.height / 2 - mid),
+        }
+    );
+
     (bar.querySelector('.lm-modal-header') as HTMLElement).click();
     await frame();
     log('bar-click-restores-fully', !bar.className.includes('lm-modal-minimized'), { cls: bar.className });
