@@ -12,13 +12,17 @@
  *   f.$set({ name: 'Ana' });        // partial updates, nested supported
  */
 import type { State } from './types';
+/** Partial at EVERY level — $set('{ address: { city } }') is legal */
+export type DeepPartial<T> = {
+    [K in keyof T]?: T[K] extends readonly unknown[] ? T[K] : T[K] extends object ? DeepPartial<T[K]> : T[K];
+};
 export type Form<T> = {
     [K in keyof T]: T[K] extends Record<string, unknown> ? Form<T[K]> : State<T[K]>;
 } & {
     /** Snapshot of the whole form as plain data */
     $get(): T;
     /** Apply a (partial, possibly nested) data object to the form states */
-    $set(values: Partial<T>): void;
+    $set(values: DeepPartial<T>): void;
 };
 export declare const form: <T extends Record<string, unknown>>(initial: T) => Form<T>;
 export default form;

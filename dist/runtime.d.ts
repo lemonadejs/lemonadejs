@@ -32,7 +32,7 @@ export interface Instance {
     slots: SlotState[];
     elements: Node[];
     pending: Instance[];
-    mountCbs: ((el: Node) => void | (() => void))[];
+    mountCbs: ((el: Node) => unknown)[];
     unmountCbs: (() => void)[];
     mounted: boolean;
     /** Set by unmountInstance — dead instances are never reused or resurrected */

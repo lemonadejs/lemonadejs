@@ -39,7 +39,7 @@ export type ContractInput<C> = {
     api: infer A;
 } ? {
     ref?: (api: {
-        [K in keyof A]: (...args: never[]) => unknown;
+        [K in keyof A]: (...args: any[]) => any;
     }) => void;
 } : object) & {
     expose?: boolean;
@@ -60,7 +60,7 @@ export type ContractProps<C> = {
     api: infer A;
 } ? {
     ref?: (api: {
-        [K in keyof A]: (...args: never[]) => unknown;
+        [K in keyof A]: (...args: any[]) => any;
     }) => void;
 } : object) & {
     expose?: boolean;

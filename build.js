@@ -63,8 +63,9 @@ const run = async function () {
         });
     }
 
-    // Type declarations
-    execSync('npx tsc -p tsconfig.json', { cwd: __dirname, stdio: 'inherit' });
+    // Type declarations — build scope is the ENGINE only (the root
+    // tsconfig typechecks the whole monorepo incl. components/tests)
+    execSync('npx tsc -p tsconfig.build.json', { cwd: __dirname, stdio: 'inherit' });
 
     // Size budget report — footprint is a feature
     const min = fs.readFileSync(path.join(out, 'lemonade.min.js'));
