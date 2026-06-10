@@ -189,6 +189,27 @@ describe('components/router — behaviors', () => {
         expect(visible()).toHaveLength(1); // only home shown
     });
 
+    it('animation: both pages stay visible until the slide ends, then the old one hides', () => {
+        vi.useFakeTimers();
+        const api = open({ animation: true });
+        api.setPath('/about');
+
+        const router = handle!.query('.lm-router')!;
+        expect(router.className).toContain('lm-router-slide-out'); // forward
+        expect(visible()).toHaveLength(2); // old NOT hidden mid-slide
+
+        vi.advanceTimersByTime(450);
+        expect(router.className).not.toContain('lm-router-slide-out');
+        expect(visible()).toHaveLength(1);
+        expect(visible()[0].querySelector('h1')!.textContent).toBe('About');
+
+        api.setPath('/'); // backward: opposite direction class
+        expect(router.className).toContain('lm-router-slide-in');
+        vi.advanceTimersByTime(450);
+        expect(visible()[0].querySelector('h1')!.textContent).toBe('Home');
+        vi.useRealTimers();
+    });
+
     it('unmount removes the global listeners and destroys page components', () => {
         const lifecycle: string[] = [];
         const Tracked: Component = (p, { onUnmount }) => {

@@ -7,12 +7,17 @@
     height: 100%;
 }
 
+/* Every page owns the FULL container width: during a slide the two
+   visible pages sit side by side at 100% each, and the container moves
+   one full width — the new page pushes the old one entirely out of the
+   viewport before it is hidden */
 .lm-router-page {
     height: 100%;
     box-sizing: border-box;
     padding: 0 20px;
-    max-width: 100vw;
-    flex: 1;
+    flex: 0 0 100%;
+    min-width: 100%;
+    max-width: 100%;
 }
 
 @media (max-width: 800px) {
@@ -36,13 +41,20 @@
     }
 }
 
-/* Slide between sibling pages, direction by route order (v5) */
+/* Slide between sibling pages, direction by route order (v5).
+   transform, not left: % is the container's own width, and no
+   position requirement. Overflow only clips DURING the slide. */
+.lm-router-slide-in,
+.lm-router-slide-out {
+    overflow: hidden;
+}
+
 .lm-router-slide-in {
-    animation: lm-router-slide-in 0.4s forwards;
+    animation: lm-router-slide-in 0.4s ease forwards;
 }
 
 .lm-router-slide-out {
-    animation: lm-router-slide-out 0.4s forwards;
+    animation: lm-router-slide-out 0.4s ease forwards;
 }
 
 .lm-router-slide-in::-webkit-scrollbar,
@@ -50,21 +62,14 @@
     display: none;
 }
 
-@media (min-width: 800px) {
-    .lm-router-slide-in,
-    .lm-router-slide-out {
-        position: relative;
-    }
-}
-
 @keyframes lm-router-slide-in {
-    0% { left: -100%; }
-    100% { left: 0; }
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(0); }
 }
 
 @keyframes lm-router-slide-out {
-    0% { left: 0; }
-    100% { left: -100%; }
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-100%); }
 }
 
 /* Top progress bar while a remote view is fetching (v5) */
