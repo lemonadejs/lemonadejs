@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach } from 'vitest';
-import { render, type Component, type State } from '../src/index';
+import { html, type Component, type State } from '../src/index';
 import { test as t } from '../src/test';
 
 let handle: ReturnType<typeof t> | null = null;
@@ -13,11 +13,11 @@ describe('Components and props', () => {
         let received: unknown;
         const Card: Component<{ title?: string; data?: number[] }> = (props) => {
             received = props.data;
-            return render`<div class="card"><h3>${props.title}</h3></div>`;
+            return html`<div class="card"><h3>${props.title}</h3></div>`;
         };
 
         const data = [1, 2, 3];
-        const App: Component = () => render`<main><${Card} title="Hello" data="${data}" /></main>`;
+        const App: Component = () => html`<main><${Card} title="Hello" data="${data}" /></main>`;
 
         handle = t(App);
         expect(handle.query('h3')!.textContent).toBe('Hello');
@@ -27,12 +27,12 @@ describe('Components and props', () => {
     it('keeps a state prop live across the component boundary', () => {
         let countRef!: State<number>;
         const Display: Component<{ total?: State<number> }> = (props) =>
-            render`<b>${props.total}</b>`;
+            html`<b>${props.total}</b>`;
 
         const App: Component = (props, { state }) => {
             const count = state(1);
             countRef = count;
-            return render`<div><${Display} total="${count}" /></div>`;
+            return html`<div><${Display} total="${count}" /></div>`;
         };
 
         handle = t(App);
@@ -44,9 +44,9 @@ describe('Components and props', () => {
     it('supports callback props (data flows up through functions)', () => {
         let saved = '';
         const Editor: Component<{ onsave?: (v: string) => void }> = (props) =>
-            render`<button onclick="${() => props.onsave && props.onsave('done')}">save</button>`;
+            html`<button onclick="${() => props.onsave && props.onsave('done')}">save</button>`;
 
-        const App: Component = () => render`<div><${Editor} onsave="${(v: string) => (saved = v)}" /></div>`;
+        const App: Component = () => html`<div><${Editor} onsave="${(v: string) => (saved = v)}" /></div>`;
 
         handle = t(App);
         handle.query('button')!.click();
@@ -54,8 +54,8 @@ describe('Components and props', () => {
     });
 
     it('renders children passed between component tags', () => {
-        const Card: Component = (props) => render`<div class="card">${props.children}</div>`;
-        const App: Component = () => render`<main><${Card}><p>inside</p><span>more</span></${Card}></main>`;
+        const Card: Component = (props) => html`<div class="card">${props.children}</div>`;
+        const App: Component = () => html`<main><${Card}><p>inside</p><span>more</span></${Card}></main>`;
 
         handle = t(App);
         expect(handle.query('.card p')!.textContent).toBe('inside');
@@ -64,11 +64,11 @@ describe('Components and props', () => {
 
     it('children carry the parent scope (slots bind to parent states)', () => {
         let countRef!: State<number>;
-        const Card: Component = (props) => render`<div class="card">${props.children}</div>`;
+        const Card: Component = (props) => html`<div class="card">${props.children}</div>`;
         const App: Component = (props, { state }) => {
             const count = state(7);
             countRef = count;
-            return render`<main><${Card}><p>${count}</p></${Card}></main>`;
+            return html`<main><${Card}><p>${count}</p></${Card}></main>`;
         };
 
         handle = t(App);
@@ -81,9 +81,9 @@ describe('Components and props', () => {
         let received: unknown;
         const Box: Component<{ wide?: boolean }> = (props) => {
             received = props.wide;
-            return render`<div></div>`;
+            return html`<div></div>`;
         };
-        const App: Component = () => render`<main><${Box} wide /></main>`;
+        const App: Component = () => html`<main><${Box} wide /></main>`;
         handle = t(App);
         expect(received).toBe(true);
     });
@@ -95,13 +95,13 @@ describe('Components and props', () => {
         const Item: Component<{ label?: string }> = (props, { onMount, onUnmount }) => {
             onMount(() => log.push('mount:' + props.label));
             onUnmount(() => log.push('unmount:' + props.label));
-            return render`<li>${props.label}</li>`;
+            return html`<li>${props.label}</li>`;
         };
 
         const App: Component = (props, { state }) => {
             const items = state(['a', 'b']);
             itemsRef = items;
-            return render`<ul>${() => items.value.map((x) => render`<${Item} label="${x}" />`)}</ul>`;
+            return html`<ul>${() => items.value.map((x) => html`<${Item} label="${x}" />`)}</ul>`;
         };
 
         handle = t(App);
@@ -119,9 +119,9 @@ describe('Components and props', () => {
         let captured: Record<string, unknown> | null = null;
         const Box: Component<{ a?: string }> = (props) => {
             captured = props as Record<string, unknown>;
-            return render`<div></div>`;
+            return html`<div></div>`;
         };
-        const App: Component = () => render`<main><${Box} a="1" /></main>`;
+        const App: Component = () => html`<main><${Box} a="1" /></main>`;
         handle = t(App);
         expect(() => {
             (captured as Record<string, unknown>).a = 'changed';

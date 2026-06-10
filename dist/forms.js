@@ -28,7 +28,7 @@ module.exports = __toCommonJS(forms_exports);
 // src/errors.ts
 var MESSAGES = {
   "LJS-001": "Component is not a function",
-  "LJS-002": "Component must return a template created with render`...`",
+  "LJS-002": "Component must return a template created with html`...`",
   "LJS-003": "mount() requires a DOM element as root",
   "LJS-101": "Unexpected closing tag \u2014 check tag nesting",
   "LJS-102": "Unclosed tag at the end of the template",

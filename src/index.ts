@@ -1,11 +1,11 @@
 /**
  * LemonadeJS v6 — public API
  *
- * import { render, mount, type Component } from 'lemonadejs';
+ * import { html, mount, type Component } from 'lemonadejs';
  *
  * const Counter: Component = (props, { state }) => {
  *     const count = state(0);
- *     return render`<div>
+ *     return html`<div>
  *         <p>${count}</p>
  *         <button onclick="${() => count.value++}">+1</button>
  *     </div>`;
@@ -33,10 +33,13 @@ export { explain, env } from './errors';
 const templates = new WeakMap<TemplateStringsArray, Template>();
 
 /**
- * The template tag. Static parts are parsed on first use and cached forever;
- * each call only carries this render's values.
+ * The template tag — html`...` describes what it returns: a parsed HTML
+ * template plus this call's values. It renders nothing; mount() renders.
+ * Static parts are parsed on first use and cached forever (the
+ * TemplateStringsArray identity is the key). The name also unlocks
+ * lit-style editor tooling (highlighting, completion) for free.
  */
-export const render = function (strings: TemplateStringsArray, ...values: SlotValue[]): View {
+export const html = function (strings: TemplateStringsArray, ...values: SlotValue[]): View {
     let template = templates.get(strings);
     if (!template) {
         template = parse(strings);
@@ -45,11 +48,7 @@ export const render = function (strings: TemplateStringsArray, ...values: SlotVa
     return { template, values };
 };
 
-/** Alias for editor tooling that recognizes html`...` (lit-style plugins) */
-export const html = render;
-
 const lemonade = {
-    render,
     html,
     mount,
     inspect,

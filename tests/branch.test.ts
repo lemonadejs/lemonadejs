@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach } from 'vitest';
-import { render, type Component, type State } from '../src/index';
+import { html, type Component, type State } from '../src/index';
 import { test as t } from '../src/test';
 
 let handle: ReturnType<typeof t> | null = null;
@@ -14,7 +14,7 @@ describe('Dynamic branches (the ${...} contract)', () => {
         const C: Component = (props, { state }) => {
             const valid = state(true);
             validRef = valid;
-            return render`<div>${() => valid.value && render`<span class="x">123</span>`}</div>`;
+            return html`<div>${() => valid.value && html`<span class="x">123</span>`}</div>`;
         };
 
         handle = t(C);
@@ -34,7 +34,7 @@ describe('Dynamic branches (the ${...} contract)', () => {
         const C: Component = (props, { state }) => {
             const items = state(['a', 'b']);
             itemsRef = items;
-            return render`<ul>${() => items.value.map((x) => render`<li>${x}</li>`)}</ul>`;
+            return html`<ul>${() => items.value.map((x) => html`<li>${x}</li>`)}</ul>`;
         };
 
         handle = t(C);
@@ -56,7 +56,7 @@ describe('Dynamic branches (the ${...} contract)', () => {
         const C: Component = (props, { state }) => {
             const items = state(['a', 'b', 'c']);
             itemsRef = items;
-            return render`<ul>${() => items.value.map((x) => render`<li>${x}</li>`)}</ul>`;
+            return html`<ul>${() => items.value.map((x) => html`<li>${x}</li>`)}</ul>`;
         };
 
         handle = t(C);
@@ -76,7 +76,7 @@ describe('Dynamic branches (the ${...} contract)', () => {
         const C: Component = (props, { state }) => {
             const items = state(['a', 'b', 'c']);
             itemsRef = items;
-            return render`<ul>${() => items.value.map((x) => render`<li>${x}</li>`)}</ul>`;
+            return html`<ul>${() => items.value.map((x) => html`<li>${x}</li>`)}</ul>`;
         };
 
         handle = t(C);
@@ -90,8 +90,8 @@ describe('Dynamic branches (the ${...} contract)', () => {
         const C: Component = (props, { state }) => {
             const items = state(['a', 'b']);
             itemsRef = items;
-            return render`<div>${() =>
-                items.value.map((x) => render`<button onclick="${() => (clicked = x)}">${x}</button>`)}</div>`;
+            return html`<div>${() =>
+                items.value.map((x) => html`<button onclick="${() => (clicked = x)}">${x}</button>`)}</div>`;
         };
 
         handle = t(C);
@@ -109,7 +109,7 @@ describe('Dynamic branches (the ${...} contract)', () => {
             const items = state(['x', 'y']);
             validRef = valid;
             itemsRef = items;
-            return render`<ul>${() => valid.value && items.value.map((x) => render`<li>${x}</li>`)}</ul>`;
+            return html`<ul>${() => valid.value && items.value.map((x) => html`<li>${x}</li>`)}</ul>`;
         };
 
         handle = t(C);
@@ -130,7 +130,7 @@ describe('Dynamic branches (the ${...} contract)', () => {
         const C: Component = (props, { state }) => {
             const mode = state(false);
             modeRef = mode;
-            return render`<div>${() => (mode.value ? render`<b>bold</b>` : 'plain')}</div>`;
+            return html`<div>${() => (mode.value ? html`<b>bold</b>` : 'plain')}</div>`;
         };
 
         handle = t(C);
@@ -150,9 +150,9 @@ describe('Dynamic branches (the ${...} contract)', () => {
         const C: Component = (props, { state }) => {
             const items = state(['a']);
             itemsRef = items;
-            return render`<div>
+            return html`<div>
                 <h1>static</h1>
-                ${() => items.value.map((x) => render`<p>${x}</p>`)}
+                ${() => items.value.map((x) => html`<p>${x}</p>`)}
                 <footer>also static</footer>
             </div>`;
         };
@@ -172,13 +172,13 @@ describe('Dynamic branches (the ${...} contract)', () => {
     it('accepts DOM nodes as slot values', () => {
         const external = document.createElement('em');
         external.textContent = 'node';
-        const C: Component = () => render`<div>${external}</div>`;
+        const C: Component = () => html`<div>${external}</div>`;
         handle = t(C);
         expect(handle.query('em')).toBe(external);
     });
 
     it('renders a static nested view once', () => {
-        const C: Component = () => render`<div>${render`<i>static</i>`}</div>`;
+        const C: Component = () => html`<div>${html`<i>static</i>`}</div>`;
         handle = t(C);
         expect(handle.query('i')!.textContent).toBe('static');
     });

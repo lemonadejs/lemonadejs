@@ -7,7 +7,7 @@
  *   import { form } from 'lemonadejs/forms';
  *
  *   const f = form({ name: '', address: { city: '' }, age: 0 });
- *   render`<input bind="${f.name}" /><input bind="${f.address.city}" />`;
+ *   html`<input bind="${f.name}" /><input bind="${f.address.city}" />`;
  *   f.$get();                       // { name: '...', address: { city: '...' }, age: 0 }
  *   f.$set({ name: 'Ana' });        // partial updates, nested supported
  */

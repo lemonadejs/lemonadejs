@@ -3,7 +3,7 @@
  *
  * Parses the static strings of a tagged template into a JSON tree (Template).
  * Runs ONCE per call site: the TemplateStringsArray identity is the cache key
- * (see render in index.ts). Slots are recorded by position; values are never
+ * (see html in index.ts). Slots are recorded by position; values are never
  * seen here.
  *
  * Slot positions supported:

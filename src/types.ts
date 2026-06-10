@@ -30,7 +30,7 @@ export interface Template {
     nodes: VNode[];
 }
 
-/** The result of render`...` — a parsed template plus this call's values */
+/** The result of html`...` — a parsed template plus this call's values */
 export interface View {
     template: Template;
     values: unknown[];
@@ -109,7 +109,7 @@ export interface Handle {
     unmount(): void;
 }
 
-/** Check that a value is a View produced by render`...` */
+/** Check that a value is a View produced by html`...` */
 export function isView(v: unknown): v is View {
     return (
         typeof v === 'object' &&

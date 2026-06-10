@@ -3,7 +3,7 @@
  * bind() tool implementing the component protocol (Bindable<T>).
  */
 import { describe, it, expect, afterEach, vi } from 'vitest';
-import { render, type Bindable, type Component, type State } from '../src/index';
+import { html, type Bindable, type Component, type State } from '../src/index';
 import { test as t } from '../src/test';
 
 let handle: ReturnType<typeof t> | null = null;
@@ -15,7 +15,7 @@ afterEach(() => {
 /** The canonical protocol component, built with the bind() tool */
 const Switch: Component<Bindable<boolean>> = (props, { bind }) => {
     const value = bind(props, false);
-    return render`<div class="switch ${() => (value.value ? 'on' : 'off')}"
+    return html`<div class="switch ${() => (value.value ? 'on' : 'off')}"
         onclick="${() => value.set(!value.value)}"></div>`;
 };
 
@@ -25,7 +25,7 @@ describe('Native bind directive', () => {
         const C: Component = (p, { state }) => {
             const name = state('lemon');
             ref = name;
-            return render`<div><input bind="${name}" /><p>${name}</p></div>`;
+            return html`<div><input bind="${name}" /><p>${name}</p></div>`;
         };
         handle = t(C);
         const input = handle.query('input') as HTMLInputElement;
@@ -47,7 +47,7 @@ describe('Native bind directive', () => {
         const C: Component = (p, { state }) => {
             const on = state(false);
             ref = on;
-            return render`<div><input type="checkbox" bind="${on}" /></div>`;
+            return html`<div><input type="checkbox" bind="${on}" /></div>`;
         };
         handle = t(C);
         const box = handle.query('input') as HTMLInputElement;
@@ -66,7 +66,7 @@ describe('Native bind directive', () => {
         const C: Component = (p, { state }) => {
             const pick = state('b');
             ref = pick;
-            return render`<div>
+            return html`<div>
                 <input type="radio" name="g" value="a" bind="${pick}" />
                 <input type="radio" name="g" value="b" bind="${pick}" />
             </div>`;
@@ -87,7 +87,7 @@ describe('Native bind directive', () => {
         const C: Component = (p, { state }) => {
             const pick = state('two');
             ref = pick;
-            return render`<div><select bind="${pick}">
+            return html`<div><select bind="${pick}">
                 <option value="one">1</option>
                 <option value="two">2</option>
             </select></div>`;
@@ -106,7 +106,7 @@ describe('Native bind directive', () => {
         const C: Component = (p, { state }) => {
             const text = state('start');
             ref = text;
-            return render`<div><textarea bind="${text}"></textarea></div>`;
+            return html`<div><textarea bind="${text}"></textarea></div>`;
         };
         handle = t(C);
         const area = handle.query('textarea') as HTMLTextAreaElement;
@@ -120,7 +120,7 @@ describe('Native bind directive', () => {
         const C: Component = (p, { state }) => {
             const age = state<number | null>(30);
             ref = age;
-            return render`<div><input type="number" bind="${age}" /></div>`;
+            return html`<div><input type="number" bind="${age}" /></div>`;
         };
         handle = t(C);
         const input = handle.query('input') as HTMLInputElement;
@@ -138,7 +138,7 @@ describe('Native bind directive', () => {
     it('never renders bind as a DOM attribute', () => {
         const C: Component = (p, { state }) => {
             const v = state('x');
-            return render`<div><input bind="${v}" /></div>`;
+            return html`<div><input bind="${v}" /></div>`;
         };
         handle = t(C);
         expect(handle.query('input')!.hasAttribute('bind')).toBe(false);
@@ -146,14 +146,14 @@ describe('Native bind directive', () => {
     });
 
     it('throws LJS-302 for a plain string (forgot the expression)', () => {
-        const C: Component = () => render`<div><input bind="name" /></div>`;
+        const C: Component = () => html`<div><input bind="name" /></div>`;
         expect(() => t(C)).toThrow(/LJS-302/);
     });
 
     it('throws LJS-302 for an unwrapped snapshot (state.value)', () => {
         const C: Component = (p, { state }) => {
             const name = state('x');
-            return render`<div><input bind="${name.value}" /></div>`;
+            return html`<div><input bind="${name.value}" /></div>`;
         };
         expect(() => t(C)).toThrow(/LJS-302/);
     });
@@ -161,7 +161,7 @@ describe('Native bind directive', () => {
     it('throws LJS-303 on a non-form element', () => {
         const C: Component = (p, { state }) => {
             const v = state('x');
-            return render`<div bind="${v}">x</div>`;
+            return html`<div bind="${v}">x</div>`;
         };
         expect(() => t(C)).toThrow(/LJS-303/);
     });
@@ -170,7 +170,7 @@ describe('Native bind directive', () => {
         const spy = vi.spyOn(console, 'warn').mockImplementation(() => {});
         const C: Component = (p, { state }) => {
             const v = state('x');
-            return render`<div><input bind="${v}" value="conflict" /></div>`;
+            return html`<div><input bind="${v}" value="conflict" /></div>`;
         };
         handle = t(C);
         expect(spy.mock.calls.some((args) => String(args[0]).includes('LJS-304'))).toBe(true);
@@ -183,7 +183,7 @@ describe('Native bind directive', () => {
         const C: Component = (p, { state }) => {
             const v = state('a');
             ref = v;
-            return render`<div><input bind="${v}" /><p>${() => (runs++, v.value)}</p></div>`;
+            return html`<div><input bind="${v}" /><p>${() => (runs++, v.value)}</p></div>`;
         };
         handle = t(C);
         const input = handle.query('input') as HTMLInputElement;
@@ -200,7 +200,7 @@ describe('Component bind protocol (the bind() tool)', () => {
         const App: Component = (p, { state }) => {
             const on = state(false);
             ref = on;
-            return render`<main><${Switch} bind="${on}" /><p>${() => (on.value ? 'yes' : 'no')}</p></main>`;
+            return html`<main><${Switch} bind="${on}" /><p>${() => (on.value ? 'yes' : 'no')}</p></main>`;
         };
         handle = t(App);
         expect(handle.query('.switch')!.className).toBe('switch off');
@@ -221,7 +221,7 @@ describe('Component bind protocol (the bind() tool)', () => {
         const App: Component = (p, { state }) => {
             const on = state(false);
             ref = on;
-            return render`<main><${Switch} bind="${on}" onchange="${(v: boolean) => changes.push(v)}" /></main>`;
+            return html`<main><${Switch} bind="${on}" onchange="${(v: boolean) => changes.push(v)}" /></main>`;
         };
         handle = t(App);
 
@@ -234,7 +234,7 @@ describe('Component bind protocol (the bind() tool)', () => {
     });
 
     it('works standalone with a local state and the fallback', () => {
-        const App: Component = () => render`<main><${Switch} /></main>`;
+        const App: Component = () => html`<main><${Switch} /></main>`;
         handle = t(App);
         expect(handle.query('.switch')!.className).toBe('switch off');
         handle.query('.switch')!.click();
@@ -242,7 +242,7 @@ describe('Component bind protocol (the bind() tool)', () => {
     });
 
     it('accepts a plain value as the initial state (one-way snapshot)', () => {
-        const App: Component = () => render`<main><${Switch} bind="${true}" /></main>`;
+        const App: Component = () => html`<main><${Switch} bind="${true}" /></main>`;
         handle = t(App);
         expect(handle.query('.switch')!.className).toBe('switch on');
         handle.query('.switch')!.click();
@@ -252,7 +252,7 @@ describe('Component bind protocol (the bind() tool)', () => {
     it('onchange fires standalone too, with new and old values', () => {
         const calls: [boolean, boolean][] = [];
         const App: Component = () =>
-            render`<main><${Switch} onchange="${(v: boolean, o: boolean) => calls.push([v, o])}" /></main>`;
+            html`<main><${Switch} onchange="${(v: boolean, o: boolean) => calls.push([v, o])}" /></main>`;
         handle = t(App);
         handle.query('.switch')!.click();
         handle.query('.switch')!.click();
@@ -265,7 +265,7 @@ describe('Component bind protocol (the bind() tool)', () => {
     it('keeps two components bound to the same state in sync', () => {
         const App: Component = (p, { state }) => {
             const on = state(false);
-            return render`<main><${Switch} bind="${on}" /><${Switch} bind="${on}" /></main>`;
+            return html`<main><${Switch} bind="${on}" /><${Switch} bind="${on}" /></main>`;
         };
         handle = t(App);
         const [a, b] = handle.queryAll('.switch');
@@ -280,7 +280,7 @@ describe('Component bind protocol (the bind() tool)', () => {
     it('non-lowercase event names still attach on elements, but warn LJS-305', () => {
         const spy = vi.spyOn(console, 'warn').mockImplementation(() => {});
         let clicks = 0;
-        const C: Component = () => render`<div><button onClick="${() => clicks++}">x</button></div>`;
+        const C: Component = () => html`<div><button onClick="${() => clicks++}">x</button></div>`;
         handle = t(C);
         handle.query('button')!.click();
         expect(clicks).toBe(1); // normalized: still works
@@ -292,7 +292,7 @@ describe('Component bind protocol (the bind() tool)', () => {
         const spy = vi.spyOn(console, 'warn').mockImplementation(() => {});
         const App: Component = (p, { state }) => {
             const on = state(false);
-            return render`<main><${Switch} bind="${on}" onChange="${() => {}}" /></main>`;
+            return html`<main><${Switch} bind="${on}" onChange="${() => {}}" /></main>`;
         };
         handle = t(App);
         expect(spy.mock.calls.some((args) => String(args[0]).includes('LJS-305'))).toBe(true);
@@ -303,7 +303,7 @@ describe('Component bind protocol (the bind() tool)', () => {
         const spy = vi.spyOn(console, 'warn').mockImplementation(() => {});
         const App: Component = (p, { state }) => {
             const on = state(false);
-            return render`<main><${Switch} bind="${on}" onchange="${() => {}}" /></main>`;
+            return html`<main><${Switch} bind="${on}" onchange="${() => {}}" /></main>`;
         };
         handle = t(App);
         expect(spy.mock.calls.some((args) => String(args[0]).includes('LJS-305'))).toBe(false);
@@ -314,13 +314,13 @@ describe('Component bind protocol (the bind() tool)', () => {
         // A custom input that decorates a native one — bind flows through
         const Field: Component<Bindable<string>> = (props, { bind }) => {
             const value = bind(props, '');
-            return render`<label class="field"><input bind="${value}" /></label>`;
+            return html`<label class="field"><input bind="${value}" /></label>`;
         };
         let ref!: State<string>;
         const App: Component = (p, { state }) => {
             const name = state('init');
             ref = name;
-            return render`<main><${Field} bind="${name}" /></main>`;
+            return html`<main><${Field} bind="${name}" /></main>`;
         };
         handle = t(App);
         const input = handle.query('input') as HTMLInputElement;

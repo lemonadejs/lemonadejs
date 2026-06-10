@@ -5,11 +5,11 @@ framework agents can hold entirely in context. The complete API reference lives 
 [llms.txt](llms.txt) (~2k tokens, made to be pasted into a prompt).
 
 ```ts
-import { render, mount, type Component } from 'lemonadejs';
+import { html, mount, type Component } from 'lemonadejs';
 
 const Counter: Component<{ start?: number }> = (props, { state }) => {
     const count = state(props.start ?? 0);
-    return render`<div>
+    return html`<div>
         <p>${count}</p>
         <button onclick="${() => count.value++}">+1</button>
     </div>`;
@@ -30,7 +30,7 @@ One module per concern — each independently unit-testable:
 | `src/errors.ts` | Stable error codes (LJS-xxx) with one-line cause + fix; `explain(code)` returns long-form docs offline. Dev mode (`env.dev`) freezes state contents and warns about snapshot mistakes. |
 | `src/test.ts` | The `lemonadejs/test` harness: render, query, snapshot, inspect, unmount — agents verify their own output headlessly. |
 | `src/types.ts` | Public types: `Component<Props>`, `State<T>`, `Tools`, `View`. |
-| `src/index.ts` | Public API: `render` tag (+ `html` alias), `mount`, `inspect`, `explain`, `env`. |
+| `src/index.ts` | Public API: `html` tag (+ `html` alias), `mount`, `inspect`, `explain`, `env`. |
 
 ## Development
 

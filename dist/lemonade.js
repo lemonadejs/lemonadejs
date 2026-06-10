@@ -28,7 +28,6 @@ __export(index_exports, {
   html: () => html,
   inspect: () => inspect,
   mount: () => mount,
-  render: () => render,
   setComponents: () => setComponents,
   store: () => store,
   unsafe: () => unsafe
@@ -42,7 +41,7 @@ var env = {
 };
 var MESSAGES = {
   "LJS-001": "Component is not a function",
-  "LJS-002": "Component must return a template created with render`...`",
+  "LJS-002": "Component must return a template created with html`...`",
   "LJS-003": "mount() requires a DOM element as root",
   "LJS-101": "Unexpected closing tag \u2014 check tag nesting",
   "LJS-102": "Unclosed tag at the end of the template",
@@ -58,15 +57,15 @@ var MESSAGES = {
   "LJS-305": "Event and callback names are lowercase: onclick, onchange, onsave"
 };
 var EXPLAIN = {
-  "LJS-001": 'The value used as a component is not a function. Components are plain functions: const Card: Component = (props, { state }) => render`<div>...</div>`. When embedding, pass the function itself: <${Card} title="x" />.',
-  "LJS-002": "A component must return the result of the render tag. Correct: return render`<div>${count}</div>`. Returning strings, DOM nodes or nothing is not supported.",
+  "LJS-001": 'The value used as a component is not a function. Components are plain functions: const Card: Component = (props, { state }) => html`<div>...</div>`. When embedding, pass the function itself: <${Card} title="x" />.',
+  "LJS-002": "A component must return the result of the html tag. Correct: return html`<div>${count}</div>`. Returning strings, DOM nodes or nothing is not supported.",
   "LJS-003": 'mount(Component, root) expects root to be an existing DOM element, e.g. document.getElementById("app").',
   "LJS-101": "A closing tag was found that does not match the currently open tag. Check the nesting of your template. Void elements (br, img, input...) must not be closed.",
   "LJS-102": "The template ended while a tag was still open. Every opened tag must be closed: <div>...</div>, or self-closed: <Component />.",
   "LJS-104": "Tags starting with an uppercase letter are components. Either register the function once \u2014 setComponents({ Card }) \u2014 and use <Card /> anywhere (names are case-sensitive and must match exactly), or embed it by value with no registration: <${Card} />. A typo in a registered name raises this error at mount time.",
   "LJS-105": "Expressions can appear as text content, as a full attribute value, inside a quoted attribute value, or as a component tag: <${Card}>. They cannot be used as attribute names or partial tag names.",
   "LJS-201": "State contents are NOT immutable (this is not React): mutating in place is allowed and free \u2014 rows.value[i].total = 9 \u2014 but it does not notify by itself. Call rows.touch() after mutating to run updates: no copies, no proxies, DOM writes are delta-only. For bulk operations wrap the work in batch(() => {...}) so thousands of changes notify once. For small data, assignment also works: state.value = [...state.value, x]. The footgun: mutate without touch() and nothing updates.",
-  "LJS-202": "A template slot received a plain value (string/number/boolean) while states were being read. Plain values are one-time snapshots. If the slot should update when states change, wrap it: ${() => valid.value && render`...`}. If the snapshot is intentional, ignore this warning.",
+  "LJS-202": "A template slot received a plain value (string/number/boolean) while states were being read. Plain values are one-time snapshots. If the slot should update when states change, wrap it: ${() => valid.value && html`...`}. If the snapshot is intentional, ignore this warning.",
   "LJS-203": "A state assignment inside a reactive expression triggered itself recursively more than 100 times. Do not assign to states inside template expressions; assign from event handlers or callbacks.",
   "LJS-301": 'Attributes starting with "on" are events and must receive a function: onclick="${() => count.value++}". String handlers are not supported (CSP-safe by design).',
   "LJS-302": 'The bind directive needs the state object itself: bind="${name}" (not bind="name", which is a string, and not bind="${name.value}", which is a one-time snapshot). Create it with const name = state("").',
@@ -1189,7 +1188,7 @@ var createWebComponent = function(name, component, options) {
 
 // src/index.ts
 var templates = /* @__PURE__ */ new WeakMap();
-var render = function(strings, ...values) {
+var html = function(strings, ...values) {
   let template = templates.get(strings);
   if (!template) {
     template = parse(strings);
@@ -1197,9 +1196,7 @@ var render = function(strings, ...values) {
   }
   return { template, values };
 };
-var html = render;
 var lemonade = {
-  render,
   html,
   mount,
   inspect,

@@ -7,20 +7,20 @@ This file is the complete API. If something is not here, it does not exist.
 
 Zero-build (one file, one tag):
     <script src="https://cdn.jsdelivr.net/npm/lemonadejs@6/dist/lemonade.min.js"></script>
-    <!-- global: lemonade.render, lemonade.mount, ... -->
+    <!-- global: lemonade.html, lemonade.mount, ... -->
 
 Module:
-    import { render, mount, type Component, type State } from 'lemonadejs';
+    import { html, mount, type Component, type State } from 'lemonadejs';
 
 ## Components
 
-A component is a plain function: (props, tools) => render`...`. No classes, no this, no hooks rules.
+A component is a plain function: (props, tools) => html`...`. No classes, no this, no hooks rules.
 
-    import { render, mount, type Component } from 'lemonadejs';
+    import { html, mount, type Component } from 'lemonadejs';
 
     const Counter: Component<{ start?: number }> = (props, { state }) => {
         const count = state(props.start ?? 0);
-        return render`<div>
+        return html`<div>
             <p>${count}</p>
             <button onclick="${() => count.value++}">+1</button>
         </div>`;
@@ -33,17 +33,17 @@ A component is a plain function: (props, tools) => render`...`. No classes, no t
 1. ${state}            → live value; updates when the state changes
 2. ${() => expr}       → live expression; re-runs when any state it READS changes
 3. ${plainValue}       → one-time snapshot; plain strings are TEXT, never HTML (XSS-safe)
-4. Loops/conditionals are just expressions returning render`...` views or arrays of them:
-       ${() => items.value.map(x => render`<li>${x}</li>`)}
-       ${() => valid.value && render`<div>shown when valid</div>`}
+4. Loops/conditionals are just expressions returning html`...` views or arrays of them:
+       ${() => items.value.map(x => html`<li>${x}</li>`)}
+       ${() => valid.value && html`<div>shown when valid</div>`}
    Inside the inner template, plain snapshots (${x}) are correct: the outer arrow re-runs.
 
-Slot values: string|number (text), false/true/null/undefined (nothing), render`` view, Node, array of these.
+Slot values: string|number (text), false/true/null/undefined (nothing), html`` view, Node, array of these.
 
 Trusted HTML (plain strings are ALWAYS escaped; this is the explicit opt-out):
 
     import { unsafe } from 'lemonadejs';
-    render`<article>${unsafe(trustedHtmlFromCms)}</article>`   // never on user input
+    html`<article>${unsafe(trustedHtmlFromCms)}</article>`   // never on user input
 
 ## State
 
@@ -107,11 +107,11 @@ Only input/textarea/select. Do not combine bind with value/checked (LJS-304).
 
 Components — bind is a plain prop, implemented with the bind() tool:
 
-    import { render, type Component, type Bindable } from 'lemonadejs';
+    import { html, type Component, type Bindable } from 'lemonadejs';
 
     const Switch: Component<Bindable<boolean>> = (props, { bind }) => {
         const value = bind(props, false);   // external state if bound, local otherwise
-        return render`<div class="${() => (value.value ? 'on' : 'off')}"
+        return html`<div class="${() => (value.value ? 'on' : 'off')}"
             onclick="${() => value.set(!value.value)}"></div>`;
     };
 
@@ -128,15 +128,15 @@ Two equivalent ways to use a component:
 
     import { setComponents } from 'lemonadejs';
     setComponents({ Card, Modal });        // register once (typed, by value)...
-    render`<Card title="x">...</Card>`     // ...then use by name anywhere (case-sensitive)
+    html`<Card title="x">...</Card>`     // ...then use by name anywhere (case-sensitive)
 
-    render`<${Card} title="x" /></...>`    // or embed by value, no registration needed
+    html`<${Card} title="x" /></...>`    // or embed by value, no registration needed
 
 Unknown/misspelled names raise LJS-104 at mount. Both forms take identical props.
 Embedded by value:
 
     const Card: Component<{ title?: string; total?: State<number>; onsave?: (v: string) => void }> =
-        (props) => render`<div class="card">
+        (props) => html`<div class="card">
             <h3>${props.title}</h3>      <!-- literal attr → string snapshot -->
             <b>${props.total}</b>        <!-- state passed by reference → live -->
             ${props.children}            <!-- content between the tags -->
@@ -144,7 +144,7 @@ Embedded by value:
 
     const App: Component = (props, { state }) => {
         const count = state(0);
-        return render`<main>
+        return html`<main>
             <${Card} title="Hello" total="${count}" onsave="${(v) => console.log(v)}">
                 <p>children, bound to the PARENT scope: ${count}</p>
             </${Card}>
@@ -163,7 +163,7 @@ Props are read-only (frozen in dev). Data flows up via callback props.
             return () => clearInterval(id);     // cleanup, runs on unmount
         });
         onUnmount(() => {...});
-        return render`<div></div>`;
+        return html`<div></div>`;
     };
 
     const handle = mount(C, root);  // { el, unmount() }
@@ -181,7 +181,7 @@ Props are read-only (frozen in dev). Data flows up via callback props.
 
     import { form } from 'lemonadejs/forms';
     const f = form({ name: '', address: { city: '' } });   // states mirroring the shape
-    render`<input bind="${f.name}" /><input bind="${f.address.city}" />`
+    html`<input bind="${f.name}" /><input bind="${f.address.city}" />`
     f.$get()                        // plain data object, nested
     f.$set({ name: 'Ana' })         // partial updates, nested supported
 
@@ -208,7 +208,7 @@ Props are read-only (frozen in dev). Data flows up via callback props.
 ## Error codes (stable, pattern-matchable)
 
     LJS-001 component is not a function          LJS-201 mutation is silent — touch() or assign
-    LJS-002 must return render`...`              LJS-202 slot is a snapshot — wrap: ${() => ...}
+    LJS-002 must return html`...`              LJS-202 slot is a snapshot — wrap: ${() => ...}
     LJS-003 mount root must be an element        LJS-203 update loop — don't assign states in expressions
     LJS-101 mismatched closing tag               LJS-301 events need functions, not strings
     LJS-102 unclosed tag                         LJS-302 bind needs a state: bind="${state}"
@@ -219,12 +219,13 @@ Props are read-only (frozen in dev). Data flows up via callback props.
 ## Migrating from v5
 
     v5                                   v6
-    return render => render`...`         return render`...` (no wrapper)
+    return render => render`...`         return html`...` (tag renamed, no wrapper)
+    lemonade.render(Comp, root)          mount(Comp, root)
     this.prop / {{self.prop}}            const prop = state(...) + ${prop}
     onload(fn) / :ready                  onMount(fn) (return a cleanup fn) / ref="${fn}"
     self.onchange(prop, o, n)            state(v, (val, old) => ...) per state
-    :loop="self.rows"                    ${() => rows.value.map(r => render`...`)}
-    :render="${cond}"                    ${() => cond.value && render`...`}
+    :loop="self.rows"                    ${() => rows.value.map(r => html`...`)}
+    :render="${cond}"                    ${() => cond.value && html`...`}
     :bind="self.name"                    bind="${name}" (elements) / bind() tool (components)
     lemonade.set/get/dispatch (Sugar)    store() + exported action functions in a module
     lemonade.set(k, fn, true) persist    store(initial, 'storage-key')
@@ -235,8 +236,8 @@ Props are read-only (frozen in dev). Data flows up via callback props.
 
 ## Common mistakes
 
-WRONG  ${valid.value && render`...`}            evaluates once — frozen (LJS-202 warns)
-RIGHT  ${() => valid.value && render`...`}
+WRONG  ${valid.value && html`...`}            evaluates once — frozen (LJS-202 warns)
+RIGHT  ${() => valid.value && html`...`}
 
 WRONG  items.value.push(x)  alone               silent (LJS-201) — nothing updates
 RIGHT  items.value.push(x); items.touch()       — or items.value = [...items.value, x]

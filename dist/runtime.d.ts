@@ -11,7 +11,7 @@
  * Branch rules (the contract):
  *   falsy/true            → nothing (previous content detaches, kept for reuse)
  *   string/number         → escaped text (never parsed as HTML)
- *   render`...` View      → live DOM branch
+ *   html`...` View      → live DOM branch
  *   Node                  → inserted as-is
  *   array                 → flattened, each item by the same rules
  */
@@ -85,7 +85,7 @@ export interface InspectReport {
 /**
  * The explicit escape hatch for TRUSTED markup. Plain strings in slots are
  * always escaped; unsafe() parses a trusted HTML string into nodes:
- *   render`<div>${unsafe(articleHtml)}</div>`
+ *   html`<div>${unsafe(articleHtml)}</div>`
  * Never call it on user input — the name is the warning.
  */
 export declare const unsafe: (html: string) => Node[];

@@ -4,7 +4,7 @@
  * lemonadejs/forms companion.
  */
 import { describe, it, expect, afterEach } from 'vitest';
-import { render, store, unsafe, createWebComponent, type Component, type State } from '../src/index';
+import { html, store, unsafe, createWebComponent, type Component, type State } from '../src/index';
 import { form } from '../src/forms';
 import { test as t } from '../src/test';
 
@@ -17,10 +17,10 @@ afterEach(() => {
 describe('store() — shared state outside components', () => {
     it('shares one store across two independently mounted components', () => {
         const counter = store(0);
-        const Display: Component = () => render`<p class="d">${counter}</p>`;
+        const Display: Component = () => html`<p class="d">${counter}</p>`;
         const Controls: Component = () =>
-            render`<button onclick="${() => counter.value++}">+</button>`;
-        const App: Component = () => render`<main><${Display} /><${Controls} /></main>`;
+            html`<button onclick="${() => counter.value++}">+</button>`;
+        const App: Component = () => html`<main><${Display} /><${Controls} /></main>`;
 
         handle = t(App);
         handle.query('button')!.click();
@@ -31,7 +31,7 @@ describe('store() — shared state outside components', () => {
 
     it('works in expressions and stays live after unmount/remount', () => {
         const theme = store('light');
-        const C: Component = () => render`<div class="${() => 'app ' + theme.value}"></div>`;
+        const C: Component = () => html`<div class="${() => 'app ' + theme.value}"></div>`;
 
         const first = t(C);
         theme.value = 'dark';
@@ -58,15 +58,15 @@ describe('store() — shared state outside components', () => {
 
 describe('unsafe() — explicit trusted HTML', () => {
     it('renders trusted markup as real elements', () => {
-        const C: Component = () => render`<div>${unsafe('<b>bold</b> and <i>italic</i>')}</div>`;
+        const C: Component = () => html`<div>${unsafe('<b>bold</b> and <i>italic</i>')}</div>`;
         handle = t(C);
         expect(handle.query('b')!.textContent).toBe('bold');
         expect(handle.query('i')!.textContent).toBe('italic');
     });
 
     it('contrasts with default escaping in the same template', () => {
-        const html = '<u>markup</u>';
-        const C: Component = () => render`<div><p class="esc">${html}</p><p class="raw">${unsafe(html)}</p></div>`;
+        const markup = '<u>markup</u>';
+        const C: Component = () => html`<div><p class="esc">${markup}</p><p class="raw">${unsafe(markup)}</p></div>`;
         handle = t(C);
         expect(handle.query('.esc u')).toBeNull();
         expect(handle.query('.esc')!.textContent).toBe('<u>markup</u>');
@@ -79,7 +79,7 @@ describe('unsafe() — explicit trusted HTML', () => {
         const C: Component = (p, { state }) => {
             const on = state(true);
             show = on;
-            return render`<div>${() => on.value && content}</div>`;
+            return html`<div>${() => on.value && content}</div>`;
         };
         handle = t(C);
         expect(handle.query('em')).not.toBeNull();
@@ -93,7 +93,7 @@ describe('unsafe() — explicit trusted HTML', () => {
 describe('createWebComponent() — interop boundary', () => {
     it('defines a custom element that mounts the component on connect', () => {
         const Hello: Component<{ name?: string }> = (props) =>
-            render`<p class="hello">Hello ${props.name}</p>`;
+            html`<p class="hello">Hello ${props.name}</p>`;
         const tag = createWebComponent('hello', Hello as Component<Record<string, unknown>>);
         expect(tag).toBe('lm-hello');
 
@@ -109,7 +109,7 @@ describe('createWebComponent() — interop boundary', () => {
 
     it('supports a custom prefix and rich props via the props property', () => {
         const List: Component<{ items?: string[] }> = (props) =>
-            render`<ul>${(props.items || []).map((x) => render`<li>${x}</li>`)}</ul>`;
+            html`<ul>${(props.items || []).map((x) => html`<li>${x}</li>`)}</ul>`;
         const tag = createWebComponent('list', List as Component<Record<string, unknown>>, { prefix: 'app' });
         expect(tag).toBe('app-list');
 
@@ -123,7 +123,7 @@ describe('createWebComponent() — interop boundary', () => {
     it('keeps internal reactivity working inside the custom element', () => {
         const Counter: Component = (p, { state }) => {
             const n = state(0);
-            return render`<div><span>${n}</span><button onclick="${() => n.value++}">+</button></div>`;
+            return html`<div><span>${n}</span><button onclick="${() => n.value++}">+</button></div>`;
         };
         createWebComponent('counter', Counter as Component<Record<string, unknown>>);
         const el = document.createElement('lm-counter');
@@ -152,7 +152,7 @@ describe('lemonadejs/forms — form() companion', () => {
 
     it('binds form fields to inputs end to end', () => {
         const f = form({ user: { email: 'a@b.c' } });
-        const C: Component = () => render`<div><input bind="${f.user.email}" /></div>`;
+        const C: Component = () => html`<div><input bind="${f.user.email}" /></div>`;
         handle = t(C);
         const input = handle.query('input') as HTMLInputElement;
         expect(input.value).toBe('a@b.c');
@@ -173,7 +173,7 @@ describe('lemonadejs/forms — form() companion', () => {
 
     it('fields are live in templates like any state', () => {
         const f = form({ title: 'first' });
-        const C: Component = () => render`<h1>${f.title}</h1>`;
+        const C: Component = () => html`<h1>${f.title}</h1>`;
         handle = t(C);
         expect(handle.query('h1')!.textContent).toBe('first');
         f.title.value = 'second';

@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach, vi } from 'vitest';
-import lemonade, { render, mount, batch, explain, type Component, type State } from '../src/index';
+import lemonade, { html, mount, batch, explain, type Component, type State } from '../src/index';
 import { test as t } from '../src/test';
 
 let handle: ReturnType<typeof t> | null = null;
@@ -17,7 +17,7 @@ describe('Lifecycle, dev mode and errors', () => {
                 return () => log.push('cleanup');
             });
             onUnmount(() => log.push('unmounted'));
-            return render`<section>x</section>`;
+            return html`<section>x</section>`;
         };
 
         handle = t(C);
@@ -37,7 +37,7 @@ describe('Lifecycle, dev mode and errors', () => {
                 { id: 3, title: 'c' },
             ]);
             rows = data;
-            return render`<ul>${() => data.value.map((r) => render`<li>${r.title}</li>`)}</ul>`;
+            return html`<ul>${() => data.value.map((r) => html`<li>${r.title}</li>`)}</ul>`;
         };
         handle = t(C);
         const before = handle.queryAll('li');
@@ -62,7 +62,7 @@ describe('Lifecycle, dev mode and errors', () => {
         const C: Component = (props, { state }) => {
             const data = state([1], () => calls.push(1));
             ref = data;
-            return render`<div>${() => data.value.join(',')}</div>`;
+            return html`<div>${() => data.value.join(',')}</div>`;
         };
         handle = t(C);
         ref.value.push(2);
@@ -79,7 +79,7 @@ describe('Lifecycle, dev mode and errors', () => {
             const list = state([0]);
             a = x;
             b = list;
-            return render`<div>${() => (runs++, x.value + ':' + b.value.join(','))}</div>`;
+            return html`<div>${() => (runs++, x.value + ':' + b.value.join(','))}</div>`;
         };
         handle = t(C);
         const before = runs;
@@ -102,7 +102,7 @@ describe('Lifecycle, dev mode and errors', () => {
         const C: Component = (props, { state }) => {
             const count = state(0, (v, old) => calls.push([v, old]));
             ref = count;
-            return render`<div>${count}</div>`;
+            return html`<div>${count}</div>`;
         };
         handle = t(C);
         ref.value = 1;
@@ -117,7 +117,7 @@ describe('Lifecycle, dev mode and errors', () => {
         const spy = vi.spyOn(console, 'warn').mockImplementation(() => {});
         const C: Component = (props, { state }) => {
             const count = state(1);
-            return render`<div>${count.value}</div>`; // read during setup → snapshot
+            return html`<div>${count.value}</div>`; // read during setup → snapshot
         };
         handle = t(C);
         expect(spy.mock.calls.some((args) => String(args[0]).includes('LJS-202'))).toBe(true);
@@ -125,22 +125,22 @@ describe('Lifecycle, dev mode and errors', () => {
     });
 
     it('throws LJS-104 for capitalized string tags', () => {
-        const C: Component = () => render`<div><Card /></div>`;
+        const C: Component = () => html`<div><Card /></div>`;
         expect(() => t(C)).toThrow(/LJS-104/);
     });
 
     it('throws LJS-102 for unclosed tags', () => {
-        const C: Component = () => render`<div><p>`;
+        const C: Component = () => html`<div><p>`;
         expect(() => t(C)).toThrow(/LJS-102/);
     });
 
     it('throws LJS-101 for mismatched closing tags', () => {
-        const C: Component = () => render`<div><p>x</div>`;
+        const C: Component = () => html`<div><p>x</div>`;
         expect(() => t(C)).toThrow(/LJS-101/);
     });
 
     it('throws LJS-301 for string event handlers (CSP-safe by design)', () => {
-        const C: Component = () => render`<div><button onclick="alert(1)">x</button></div>`;
+        const C: Component = () => html`<div><button onclick="alert(1)">x</button></div>`;
         expect(() => t(C)).toThrow(/LJS-301/);
     });
 
@@ -150,7 +150,7 @@ describe('Lifecycle, dev mode and errors', () => {
     });
 
     it('throws LJS-003 for an invalid mount root', () => {
-        const C: Component = () => render`<div></div>`;
+        const C: Component = () => html`<div></div>`;
         expect(() => mount(C, null as unknown as Element)).toThrow(/LJS-003/);
     });
 
@@ -163,12 +163,12 @@ describe('Lifecycle, dev mode and errors', () => {
     it('inspect() reports the live component tree as plain JSON', () => {
         const Child: Component = (props, { state }) => {
             state('child-state');
-            return render`<span>c</span>`;
+            return html`<span>c</span>`;
         };
         const C: Component = (props, { state }) => {
             const count = state(11);
             void count;
-            return render`<div><${Child} /></div>`;
+            return html`<div><${Child} /></div>`;
         };
 
         handle = t(C);
@@ -178,13 +178,13 @@ describe('Lifecycle, dev mode and errors', () => {
     });
 
     it('produces a deterministic snapshot', () => {
-        const C: Component = () => render`<div class="a"><p>hi</p></div>`;
+        const C: Component = () => html`<div class="a"><p>hi</p></div>`;
         handle = t(C);
         expect(handle.snapshot()).toBe('<div class="a">\n  <p>\n    "hi"');
     });
 
     it('default export exposes the full API', () => {
-        expect(typeof lemonade.render).toBe('function');
+        expect(typeof lemonade.html).toBe('function');
         expect(typeof lemonade.mount).toBe('function');
         expect(typeof lemonade.inspect).toBe('function');
         expect(typeof lemonade.explain).toBe('function');
