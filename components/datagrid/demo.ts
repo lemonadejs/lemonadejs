@@ -3,9 +3,14 @@
  * The headline: 100,000 rows, mutable in place (touch()), a window of
  * DOM. This is the block the v6 state model was designed for.
  */
-import { html, mount, store, type Component } from 'lemonadejs';
+import { html, mount, store, setComponents, createWebComponent, type Component } from 'lemonadejs';
 import Datagrid, { type Column } from '@lemonadejs/datagrid';
 import Switch from '@lemonadejs/switch';
+
+// One block, three deployments: by value <${Datagrid}>, by name
+// <Datagrid /> (registered once), and <lm-datagrid> (custom element)
+setComponents({ Datagrid: Datagrid as never });
+createWebComponent(Datagrid as never);
 
 type Row = Record<string, unknown>;
 type Api = { getSelected(): Row[]; setSearch(q: string): void; sort(n: string): void; refresh(): void };
@@ -82,13 +87,19 @@ const App: Component = (props, { state }) => {
             onsort="${(name: string, dir: number | null) => note('sort ' + name + ' ' + (dir || 'off'))}">
         </${Datagrid}>
 
-        <h3>Paginated flavor (no virtualization)</h3>
-        <${Datagrid} data="${makeRows(45)}" columns="${[
+        <h3>Paginated flavor — deployed BY NAME: &lt;Datagrid /&gt;</h3>
+        <Datagrid data="${makeRows(45)}" columns="${[
             { name: 'id', title: 'ID', type: 'number', width: '80px' },
             { name: 'name', title: 'Name', width: '2fr', editable: true },
             { name: 'country', title: 'Country', width: '90px', align: 'center' },
             { name: 'active', title: 'Active', type: 'checkbox', width: '80px', editable: true },
-        ] as Column[]}" pagination="10" selectable="single"></${Datagrid}>
+        ] as Column[]}" pagination="10" selectable="single"></Datagrid>
+
+        <h3>Custom element — &lt;lm-datagrid&gt; (works in plain HTML or any framework)</h3>
+        <lm-datagrid data="${makeRows(8)}" columns="${[
+            { name: 'id', title: 'ID', type: 'number', width: '80px' },
+            { name: 'name', title: 'Name' },
+        ] as Column[]}" pagination="4"></lm-datagrid>
 
         <h3>Event log</h3>
         <pre style="font-size:12px">${() => log.value.join('\n')}</pre>
