@@ -79,6 +79,20 @@ const run = async () => {
         cx,
         cy,
     });
+
+    // Opening a submenu must NOT move the cursor-anchored parent
+    const anchored = r;
+    const exp = [...m[0].querySelectorAll('[data-item]')].find((x) => x.textContent!.includes('Export'))!;
+    exp.dispatchEvent(new MouseEvent('mouseenter', { bubbles: true }));
+    await new Promise((res) => setTimeout(res, 300));
+    await frame();
+    m = menus();
+    r = rectOf(m[0]);
+    log(
+        'parent-stays-anchored-when-submenu-opens',
+        m.length === 2 && r.top === anchored.top && r.left === anchored.left,
+        { before: anchored, after: r, levels: m.length }
+    );
     api.close();
     await frame();
 

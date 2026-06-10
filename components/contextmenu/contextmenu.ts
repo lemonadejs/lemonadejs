@@ -309,6 +309,25 @@ export const Contextmenu = component('contextmenu', {
                   ${item.submenu ? html`<span class="lm-contextmenu-arrow">›</span>` : ''}
               </li>`;
 
+    // ONE view per Level: pushing/popping levels must never rebuild the
+    // surviving menus — a rebuilt Modal re-runs auto-adjust and loses the
+    // cursor anchor, visibly moving the parent when a submenu opens
+    const levelViews = new WeakMap<Level, unknown>();
+    const levelView = (lvl: Level, li: number) => {
+        let view = levelViews.get(lvl);
+        if (!view) {
+            view = html`<${Modal} header="${false}" position="absolute" bind="${true}"
+                top="${lvl.top}" left="${lvl.left}"
+                focus="${false}" responsive="${false}" autoadjust overflow>
+                <ul class="lm-contextmenu-list" role="menu" aria-orientation="vertical">${lvl.options.map(
+                    (item, ii) => itemView(li, ii, item)
+                )}</ul>
+            </${Modal}>`;
+            levelViews.set(lvl, view);
+        }
+        return view;
+    };
+
     return html`<div class="lm-contextmenu" tabindex="-1" role="menu"
         ref="${(el: Element) => (wrapper = el as HTMLElement)}"
         onkeydown="${onKey}"
@@ -316,17 +335,7 @@ export const Contextmenu = component('contextmenu', {
             if (!wrapper?.contains(e.relatedTarget as Node)) {
                 closeFrom(0);
             }
-        }}">${() =>
-        levels.value.map(
-            (lvl, li) =>
-                html`<${Modal} header="${false}" position="absolute" bind="${true}"
-                    top="${lvl.top}" left="${lvl.left}"
-                    focus="${false}" responsive="${false}" autoadjust overflow>
-                    <ul class="lm-contextmenu-list" role="menu" aria-orientation="vertical">${lvl.options.map(
-                        (item, ii) => itemView(li, ii, item)
-                    )}</ul>
-                </${Modal}>`
-        )}</div>`;
+        }}">${() => levels.value.map((lvl, li) => levelView(lvl, li))}</div>`;
 });
 
 export default Contextmenu;

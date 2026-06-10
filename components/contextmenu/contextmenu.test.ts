@@ -160,6 +160,25 @@ describe('components/contextmenu — on the Modal primitive', () => {
         expect(menus()).toHaveLength(1);
     });
 
+    it('opening/closing a submenu never rebuilds or moves the parent level', async () => {
+        await open();
+        const parent = menus()[0] as HTMLElement;
+        const top = parent.style.top;
+        const left = parent.style.left;
+
+        key('ArrowDown');
+        key('ArrowDown'); // Export
+        key('ArrowRight');
+        await flush();
+        expect(menus()).toHaveLength(2);
+        expect(menus()[0]).toBe(parent); // same DOM node — not rebuilt
+        expect(parent.style.top).toBe(top);
+        expect(parent.style.left).toBe(left);
+
+        key('ArrowLeft'); // pop the submenu
+        expect(menus()[0]).toBe(parent); // still the same node
+    });
+
     it('outside mousedown closes everything', async () => {
         await open();
         document.body.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
