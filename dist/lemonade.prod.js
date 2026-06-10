@@ -371,6 +371,15 @@ var forcing = false;
 var isForcing = function() {
   return forcing;
 };
+var untracked = function(fn) {
+  const previous = current;
+  current = null;
+  try {
+    return fn();
+  } finally {
+    current = previous;
+  }
+};
 var batching = null;
 var batchForcing = false;
 var batch = function(fn) {
@@ -997,7 +1006,9 @@ var applyProp = function(el, prop, ctx, svg) {
   if (name === "ref" && whole >= 0) {
     const fn = ctx.holder.values[whole];
     if (typeof fn === "function") {
-      fn(el);
+      untracked(function() {
+        fn(el);
+      });
     }
     return;
   }
@@ -1172,7 +1183,9 @@ var mountComponent = function(component2, props, parent) {
   };
   const finalProps = DEV ? Object.freeze({ ...props }) : props;
   const before = readCount();
-  const view = component2(finalProps, tools);
+  const view = untracked(function() {
+    return component2(finalProps, tools);
+  });
   if (!isView(view)) {
     fail("LJS-002", inst.name);
   }

@@ -82,13 +82,31 @@
     overflow: auto;
 }
 
+/* Minimized: docked to the bottom taskbar row (positions set by the dock) */
 .lm-modal-minimized {
-    height: auto !important;
+    width: 195px !important;
+    height: 40px !important;
+    min-width: 0;
+    transition: top 0.3s ease, left 0.3s ease;
+    overflow: hidden;
 }
 
-.lm-modal-minimized .lm-modal-content,
-.lm-modal-minimized .lm-modal-resizer {
+.lm-modal-minimized .lm-modal-content {
     display: none;
+}
+
+.lm-modal-minimized .lm-modal-header {
+    border-bottom: 0;
+}
+
+/* During drag/resize: no transitions, no accidental selection */
+.lm-modal-action {
+    transition: none !important;
+    user-select: none;
+}
+
+.lm-modal-focus {
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25), 0 0 0 2px rgba(37, 99, 235, 0.35);
 }
 
 .lm-modal-fullscreen {
@@ -102,20 +120,4 @@
     margin: 0;
 }
 
-.lm-modal-resizer {
-    position: absolute;
-    right: 2px;
-    bottom: 2px;
-    width: 14px;
-    height: 14px;
-    cursor: nwse-resize;
-    border-right: 2px solid #a1a1aa;
-    border-bottom: 2px solid #a1a1aa;
-    border-radius: 0 0 4px 0;
-}
-
-@media (max-width: 800px) {
-    .lm-modal-responsive:not(.lm-modal-minimized) {
-        width: calc(100vw - 16px) !important;
-    }
-}
+/* Resize is edge-based (8 directions, 10px zones) — no handle element */

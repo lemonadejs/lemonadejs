@@ -1,93 +1,159 @@
 /**
- * <Modal /> — full v5 property parity on the v6 contract model, plus
- * MUI Dialog's fullscreen.
+ * <Modal /> — the platform primitive. Floating panels, dropdown lists,
+ * autocomplete, corner chats and the context menu are all built on these
+ * behaviors, ported faithfully from v5:
  *
- * v5 → v6 mapping: closed → bind (inverted: bind is the OPEN state, the
- * controlled prop); auto-close → autoclose; auto-adjust → autoadjust;
- * content: HTMLElement → children.
+ *   - resize from all 8 edges/corners (10px hit zone) with live cursor
+ *     feedback; Shift preserves the aspect ratio
+ *   - drag by the top 40px zone with a move cursor — improved over v5:
+ *     the grab zone is CLAMPED to the viewport, a modal can never be
+ *     dragged irrecoverably off-screen
+ *   - minimize DOCKS to a taskbar row at the bottom of the screen
+ *     (205px slots, wrapping), restore returns to the remembered spot
+ *   - explicit coordinates on open (centered unless positioned), margin
+ *     based auto-adjust, responsive fullscreen on small screens
+ *   - Escape/focus handling scoped to the ELEMENT (multiple modals never
+ *     fight over a document listener), v5 close origins preserved
  *
- * onclose receives the origin: 'button' | 'backdrop' | 'escape' |
- * 'focusout' | 'api' — exactly the v5 reasons.
+ * v5 → v6 mapping: closed → bind (inverted: bind is the OPEN state);
+ * auto-close → autoclose; auto-adjust → autoadjust; content → children.
+ * onclose(origin): 'button' | 'backdrop' | 'escape' | 'focusout' | 'api'.
+ * onmove(top, left) and onresize(width, height) fire on release.
  */
 
 import { component, html, unsafe } from '../../src/index';
 
-/** Shared z-index counter for layers mode */
-let layerIndex = 100;
+const EDGE = 10; // resize hit zone
+const BAR = 40; // drag zone height
+const MIN_W = 140;
+const MIN_H = 80;
+
+/** Shared z-index across all modals (layers mode) */
+let layerIndex = 20;
+
+/** The minimize dock: a module-level taskbar shared by all modals */
+const dock: HTMLElement[] = [];
+
+const refreshDock = () => {
+    let left = 10;
+    let bottom = 55;
+    for (const el of dock) {
+        el.style.top = window.innerHeight - bottom + 'px';
+        el.style.left = left + 'px';
+        left += 205;
+        if (window.innerWidth - left < 205) {
+            left = 10;
+            bottom += 50;
+        }
+    }
+};
+
+type ResizeDir = 'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw' | '';
+
+/** v5 hit-test: which resize direction does this point touch? */
+const hitResize = (rect: DOMRect, x: number, y: number): ResizeDir => {
+    const top = y - rect.top < EDGE;
+    const bottom = rect.height - (y - rect.top) < EDGE;
+    const right = rect.width - (x - rect.left) < EDGE;
+    const left = x - rect.left < EDGE;
+    if (top) return right ? 'ne' : left ? 'nw' : 'n';
+    if (bottom) return right ? 'se' : left ? 'sw' : 's';
+    if (right) return 'e';
+    if (left) return 'w';
+    return '';
+};
 
 export const Modal = component('modal', {
     bind: Boolean,                // open state (v5: closed, inverted)
-    title: '',                    // header title
-    width: 0,                     // px; 0 = auto
-    height: 0,                    // px; 0 = auto
-    top: 0,                       // px, for position=absolute
-    left: 0,                      // px, for position=absolute
+    title: '',
+    width: 0,
+    height: 0,
+    top: 0,
+    left: 0,
     position: '',                 // center | left | right | bottom | absolute
-    backdrop: false,              // dim the page behind
-    closable: false,              // × button + Escape
-    draggable: false,             // move by the header
-    resizable: false,             // resize by the corner handle
-    minimizable: false,           // – button collapses to the header
-    minimized: false,             // initial minimized state
-    fullscreen: false,            // MUI: cover the viewport
-    autoclose: false,             // close when focus leaves (v5: auto-close)
-    autoadjust: false,            // clamp into the viewport on open (v5: auto-adjust)
-    focus: true,                  // focus the modal when opened
-    overflow: false,              // scroll content larger than the modal
-    responsive: true,             // small screens: full width (CSS)
-    layers: false,                // bring to front on mousedown
-    url: '',                      // load remote content on first open
+    backdrop: false,
+    closable: false,
+    draggable: false,
+    resizable: false,
+    minimizable: false,
+    minimized: false,
+    fullscreen: false,            // MUI
+    autoclose: false,             // v5: auto-close
+    autoadjust: false,            // v5: auto-adjust
+    focus: true,
+    overflow: false,
+    responsive: true,
+    layers: false,
+    url: '',
     onopen: Function,
-    onclose: Function,            // (origin) => void
-    onmove: Function,             // (x, y) => void
-    onresize: Function,           // (w, h) => void
+    onclose: Function,
+    onmove: Function,
+    onresize: Function,
     api: { open: Function, close: Function, toggle: Function, front: Function, back: Function },
 }, (props, { bind, state, onMount, onUnmount }) => {
     const open = bind(props, false);
-    const minimized = state(props.minimized!.value as boolean);
-    const moved = state({ top: props.top!.value as number, left: props.left!.value as number, dragged: false });
-    const sized = state({ w: props.width!.value as number, h: props.height!.value as number });
+    const minimized = state(false);
+    const pos = state({ top: props.top!.value as number, left: props.left!.value as number, fixed: false });
+    const size = state({ w: props.width!.value as number, h: props.height!.value as number });
     const layer = state(0);
     const remote = state<Node[] | null>(null);
 
     let root: HTMLElement | null = null;
+    let restoreTo = { top: 0, left: 0 };
 
-    // One in-flight interaction at a time; ONE cleanup registered at setup
-    // (never per-drag — that would accumulate closures on every interaction)
+    // ---- interactions: one in flight, ONE cleanup registered at setup
     let releaseInteraction: (() => void) | null = null;
+    onUnmount(() => {
+        releaseInteraction?.();
+        if (root) {
+            const i = dock.indexOf(root);
+            if (i >= 0) {
+                dock.splice(i, 1);
+                refreshDock();
+            }
+        }
+    });
 
-    onUnmount(() => releaseInteraction?.());
-
-    const track = (move: (e: MouseEvent) => void) => {
+    const track = (move: (e: MouseEvent) => void, done?: () => void) => {
         releaseInteraction?.();
         const up = () => {
             document.removeEventListener('mousemove', move);
             document.removeEventListener('mouseup', up);
             releaseInteraction = null;
+            root?.classList.remove('lm-modal-action');
+            done?.();
         };
         releaseInteraction = up;
+        root?.classList.add('lm-modal-action');
         document.addEventListener('mousemove', move);
         document.addEventListener('mouseup', up);
     };
 
+    const onResizeWindow = () => refreshDock();
+    onMount(() => {
+        window.addEventListener('resize', onResizeWindow);
+        return () => window.removeEventListener('resize', onResizeWindow);
+    });
+
+    // ---- open/close
     const doOpen = () => {
         if (!open.value) {
             open.set(true);
             (props.onopen as (() => void) | undefined)?.();
         }
     };
-
     const doClose = (origin: string) => {
         if (open.value) {
+            if (minimized.value) {
+                restore();
+            }
             open.set(false);
             (props.onclose as ((origin: string) => void) | undefined)?.(origin);
         }
     };
-
     const front = () => {
         layer.value = ++layerIndex;
     };
-
     const back = () => {
         layer.value = 0;
     };
@@ -100,35 +166,99 @@ export const Modal = component('modal', {
         back,
     });
 
-    // Escape closes when closable
-    const onkey = (e: KeyboardEvent) => {
-        if (e.key === 'Escape' && open.value && props.closable!.value) {
-            doClose('escape');
+    // ---- minimize docking (v5 taskbar behavior)
+    const minimize = () => {
+        if (!root || minimized.value) {
+            return;
+        }
+        restoreTo = { top: pos.value.top, left: pos.value.left };
+        minimized.value = true;
+        dock.push(root);
+        refreshDock();
+    };
+    const restore = () => {
+        if (!root || !minimized.value) {
+            return;
+        }
+        const i = dock.indexOf(root);
+        if (i >= 0) {
+            dock.splice(i, 1);
+        }
+        minimized.value = false;
+        pos.value = { top: restoreTo.top, left: restoreTo.left, fixed: true };
+        root.style.top = restoreTo.top + 'px';
+        root.style.left = restoreTo.left + 'px';
+        refreshDock();
+    };
+
+    // ---- v5 margin-based auto-adjust
+    const autoAdjust = (el: HTMLElement) => {
+        if (!props.autoadjust!.value) {
+            return;
+        }
+        el.style.marginLeft = '';
+        el.style.marginTop = '';
+        const margin = 10;
+        const r = el.getBoundingClientRect();
+        let dx = 0;
+        let dy = 0;
+        const overRight = window.innerWidth - (r.left + r.width);
+        if (overRight < 0) {
+            dx = overRight - margin;
+        }
+        if (r.left < 0) {
+            dx = margin - r.left;
+        }
+        const overBottom = window.innerHeight - (r.top + r.height);
+        if (overBottom < 0) {
+            dy = overBottom - margin;
+        }
+        if (r.top < 0) {
+            dy = margin - r.top;
+        }
+        if (dx) {
+            el.style.marginLeft = dx + 'px';
+        }
+        if (dy) {
+            el.style.marginTop = dy + 'px';
         }
     };
 
-    onMount(() => {
-        document.addEventListener('keydown', onkey);
-        return () => document.removeEventListener('keydown', onkey);
-    });
-
-    // Per-open behaviors: focus, autoadjust, remote content
+    // ---- per-open setup (v5 onload behavior)
     const onOpened = (el: Element) => {
         root = el as HTMLElement;
+        const p = props.position!.value as string;
         if (props.layers!.value) {
             front();
         }
-        if (props.autoadjust!.value && moved.value.dragged === false && props.position!.value === 'absolute') {
-            const w = (sized.value.w as number) || el.clientWidth;
-            const h = (sized.value.h as number) || el.clientHeight;
-            moved.value = {
-                top: Math.max(0, Math.min(moved.value.top, window.innerHeight - h)),
-                left: Math.max(0, Math.min(moved.value.left, window.innerWidth - w)),
-                dragged: moved.value.dragged,
-            };
+        if (!props.fullscreen!.value && p !== 'left' && p !== 'right' && p !== 'bottom') {
+            // Explicit coordinates: measure, then center unless given (v5)
+            let w = (size.value.w as number) || root.offsetWidth;
+            let h = (size.value.h as number) || root.offsetHeight;
+            if (w && !size.value.w) {
+                size.value = { w, h: size.value.h };
+            }
+            if (h && !size.value.h) {
+                size.value = { w: size.value.w, h };
+            }
+            if (p === 'absolute') {
+                pos.value = { ...pos.value, fixed: true };
+            } else {
+                const top = props.top!.value || Math.max(0, (window.innerHeight - h) / 2);
+                const left = props.left!.value || Math.max(0, (window.innerWidth - w) / 2);
+                pos.value = { top, left, fixed: true };
+            }
+            // v5 responsive: small screens promote tall modals to fullscreen
+            if (props.responsive!.value && document.documentElement.clientWidth < 800 && h > 300) {
+                root.classList.add('lm-modal-fullscreen');
+            }
+        }
+        autoAdjust(root);
+        if (props.minimized!.value && !minimized.value) {
+            minimize();
         }
         if (props.focus!.value) {
-            (el as HTMLElement).focus();
+            root.focus();
         }
         if (props.url!.value && remote.value === null && typeof fetch === 'function') {
             fetch(props.url!.value as string)
@@ -137,38 +267,128 @@ export const Modal = component('modal', {
         }
     };
 
-    // Drag by the header
-    const dragStart = (e: MouseEvent) => {
-        if (!props.draggable!.value || props.fullscreen!.value || !root) {
-            return;
+    // ---- pointer interactions: v5 hit-testing on the modal itself
+    const cursorFor = (e: MouseEvent): string => {
+        if (!root || minimized.value || props.fullscreen!.value) {
+            return '';
         }
-        e.preventDefault();
         const rect = root.getBoundingClientRect();
-        const offsetX = e.clientX - rect.left;
-        const offsetY = e.clientY - rect.top;
-        track((ev: MouseEvent) => {
-            moved.value = { top: ev.clientY - offsetY, left: ev.clientX - offsetX, dragged: true };
-            (props.onmove as ((x: number, y: number) => void) | undefined)?.(moved.value.left, moved.value.top);
-        });
+        if (props.resizable!.value) {
+            const dir = hitResize(rect, e.clientX, e.clientY);
+            if (dir) {
+                return dir + '-resize';
+            }
+        }
+        if (props.draggable!.value && e.clientY - rect.top < BAR) {
+            return 'move';
+        }
+        return '';
     };
 
-    // Resize by the corner handle
-    const resizeStart = (e: MouseEvent) => {
-        if (!props.resizable!.value || !root) {
+    const onHover = (e: MouseEvent) => {
+        if (root && !releaseInteraction) {
+            root.style.cursor = cursorFor(e);
+        }
+    };
+
+    const startDrag = (e: MouseEvent, rect: DOMRect) => {
+        const offsetX = e.clientX - rect.left;
+        const offsetY = e.clientY - rect.top;
+        track(
+            (ev: MouseEvent) => {
+                // Improved over v5: the grab bar can never leave the screen
+                const top = Math.min(Math.max(0, ev.clientY - offsetY), Math.max(0, window.innerHeight - BAR));
+                const left = Math.min(
+                    Math.max(-(rect.width - 80), ev.clientX - offsetX),
+                    Math.max(0, window.innerWidth - 80)
+                );
+                if (root) {
+                    root.style.marginLeft = '';
+                    root.style.marginTop = '';
+                }
+                pos.value = { top, left, fixed: true };
+            },
+            () => {
+                (props.onmove as ((top: number, left: number) => void) | undefined)?.(
+                    pos.value.top,
+                    pos.value.left
+                );
+            }
+        );
+    };
+
+    const startResize = (e: MouseEvent, rect: DOMRect, dir: ResizeDir) => {
+        const sx = e.clientX;
+        const sy = e.clientY;
+        const start = { w: rect.width, h: rect.height, t: rect.top, l: rect.left };
+        const ratio = start.h / (start.w || 1);
+        track(
+            (ev: MouseEvent) => {
+                const dx = ev.clientX - sx;
+                const dy = ev.clientY - sy;
+                let { w, h, t, l } = start;
+                if (dir.includes('e')) {
+                    w = start.w + dx;
+                    if (ev.shiftKey) {
+                        h = start.h + dx * ratio;
+                    }
+                } else if (dir.includes('w')) {
+                    l = Math.min(start.l + dx, start.l + start.w - MIN_W);
+                    w = start.l + start.w - l;
+                    if (ev.shiftKey) {
+                        h = start.h - dx * ratio;
+                    }
+                }
+                if (dir.includes('s') && !ev.shiftKey) {
+                    h = start.h + dy;
+                } else if (dir.includes('n')) {
+                    t = Math.min(start.t + dy, start.t + start.h - MIN_H);
+                    h = start.t + start.h - t;
+                }
+                w = Math.max(MIN_W, w);
+                h = Math.max(MIN_H, h);
+                size.value = { w, h };
+                if (dir.includes('w') || dir.includes('n')) {
+                    pos.value = { top: t, left: l, fixed: true };
+                }
+            },
+            () => {
+                (props.onresize as ((w: number, h: number) => void) | undefined)?.(
+                    size.value.w as number,
+                    size.value.h as number
+                );
+            }
+        );
+    };
+
+    const onPress = (e: MouseEvent) => {
+        if (props.layers!.value) {
+            front();
+        }
+        if (!root || minimized.value || props.fullscreen!.value) {
             return;
         }
-        e.preventDefault();
-        e.stopPropagation();
         const rect = root.getBoundingClientRect();
-        const startX = e.clientX;
-        const startY = e.clientY;
-        track((ev: MouseEvent) => {
-            sized.value = {
-                w: Math.max(120, rect.width + (ev.clientX - startX)),
-                h: Math.max(80, rect.height + (ev.clientY - startY)),
-            };
-            (props.onresize as ((w: number, h: number) => void) | undefined)?.(sized.value.w, sized.value.h);
-        });
+        if (props.resizable!.value) {
+            const dir = hitResize(rect, e.clientX, e.clientY);
+            if (dir) {
+                e.preventDefault();
+                startResize(e, rect, dir);
+                return;
+            }
+        }
+        if (props.draggable!.value && e.clientY - rect.top < BAR && !(e.target as Element).closest('button')) {
+            e.preventDefault();
+            startDrag(e, rect);
+        }
+    };
+
+    const onKey = (e: KeyboardEvent) => {
+        if (e.key === 'Escape' && props.closable!.value && open.value) {
+            doClose('escape');
+            e.preventDefault();
+            e.stopImmediatePropagation();
+        }
     };
 
     const styles = () => {
@@ -176,12 +396,15 @@ export const Modal = component('modal', {
         if (props.fullscreen!.value) {
             return '';
         }
-        const m = moved.value;
-        const s = sized.value;
-        if (m.dragged || props.position!.value === 'absolute') {
-            parts.push('position:fixed', 'top:' + m.top + 'px', 'left:' + m.left + 'px', 'margin:0');
+        const p = pos.value;
+        const s = size.value;
+        if (minimized.value) {
+            // The dock owns top/left while minimized (set imperatively)
+            parts.push('position:fixed');
+        } else if (p.fixed) {
+            parts.push('position:fixed', 'top:' + p.top + 'px', 'left:' + p.left + 'px', 'margin:0');
         }
-        if (s.w) {
+        if (s.w && !minimized.value) {
             parts.push('width:' + s.w + 'px');
         }
         if (s.h && !minimized.value) {
@@ -197,35 +420,39 @@ export const Modal = component('modal', {
         open.value &&
         html`<div class="lm-modal-root" data-position="${() => props.position!.value || false}">
             ${() =>
-                props.backdrop!.value &&
+                props.backdrop!.value && !minimized.value &&
                 html`<div class="lm-modal-backdrop" onclick="${() => props.closable!.value && doClose('backdrop')}"></div>`}
             <div class="lm-modal ${() => (minimized.value ? 'lm-modal-minimized' : '')} ${() =>
                 props.fullscreen!.value ? 'lm-modal-fullscreen' : ''} ${() =>
-                props.responsive!.value ? 'lm-modal-responsive' : ''} ${() =>
                 props.overflow!.value ? 'lm-modal-overflow' : ''}"
                 style="${styles}"
                 tabindex="-1"
                 ref="${(el: Element) => onOpened(el)}"
-                onmousedown="${() => props.layers!.value && front()}"
+                onmousemove="${onHover}"
+                onmousedown="${onPress}"
+                onkeydown="${onKey}"
+                onfocusin="${() => root?.classList.add('lm-modal-focus')}"
                 onfocusout="${(e: FocusEvent) => {
-                    if (props.autoclose!.value && root && !root.contains(e.relatedTarget as Node)) {
-                        doClose('focusout');
+                    if (root && !root.contains(e.relatedTarget as Node)) {
+                        root.classList.remove('lm-modal-focus');
+                        if (props.autoclose!.value) {
+                            doClose('focusout');
+                        }
                     }
                 }}">
-                <header class="lm-modal-header" onmousedown="${dragStart}">
+                <header class="lm-modal-header">
                     <span class="lm-modal-title">${props.title}</span>
                     <span class="lm-modal-controls">
                         ${() =>
                             props.minimizable!.value &&
                             html`<button class="lm-modal-minimize"
-                                onclick="${() => (minimized.value = !minimized.value)}">–</button>`}
+                                onclick="${() => (minimized.value ? restore() : minimize())}">–</button>`}
                         ${() =>
                             props.closable!.value &&
                             html`<button class="lm-modal-close" onclick="${() => doClose('button')}">×</button>`}
                     </span>
                 </header>
                 <div class="lm-modal-content">${props.children}${() => remote.value}</div>
-                ${() => props.resizable!.value && html`<span class="lm-modal-resizer" onmousedown="${resizeStart}"></span>`}
             </div>
         </div>`}`;
 });

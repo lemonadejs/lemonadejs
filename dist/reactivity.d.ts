@@ -7,6 +7,12 @@
  */
 export declare const isForcing: () => boolean;
 /**
+ * Run fn with dependency tracking suspended. Imperative escape hatches
+ * (ref callbacks, component setup bodies) must never subscribe the
+ * enclosing binding to the states they happen to read.
+ */
+export declare const untracked: <R>(fn: () => R) => R;
+/**
  * Coalesce many updates into one notification pass. Designed for bulk
  * operations on big data (paste, sort, bulk delete): every state change
  * inside the callback queues its bindings — deduped — and they run once

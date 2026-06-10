@@ -20,7 +20,7 @@ import type { Bindable, Component, Handle, State, Template, Tools, View, VNode, 
 import { isView } from './types';
 import { fail, warn } from './errors';
 import { DEV } from './env';
-import { Binding, BoundState, isDynamic, isForcing, isState, readCount, resolve, StateImpl } from './reactivity';
+import { Binding, BoundState, isDynamic, isForcing, isState, readCount, resolve, StateImpl, untracked } from './reactivity';
 import { contract as contractOf } from './contract';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -448,7 +448,11 @@ const applyProp = function (el: Element, prop: VProp, ctx: BuildCtx, svg: boolea
     if (name === 'ref' && whole >= 0) {
         const fn = ctx.holder.values[whole];
         if (typeof fn === 'function') {
-            (fn as (el: Element) => void)(el);
+            // Imperative escape hatch: reads inside the ref must not
+            // subscribe the enclosing branch binding
+            untracked(function () {
+                (fn as (el: Element) => void)(el);
+            });
         }
         return;
     }
@@ -666,7 +670,11 @@ export const mountComponent = function (
 
     const finalProps = DEV ? Object.freeze({ ...props }) : props;
     const before = readCount();
-    const view = component(finalProps as never, tools);
+    // Setup bodies are imperative: their reads must not subscribe whatever
+    // branch binding happens to be materializing this component
+    const view = untracked(function () {
+        return component(finalProps as never, tools);
+    });
     if (!isView(view)) {
         fail('LJS-002', inst.name);
     }

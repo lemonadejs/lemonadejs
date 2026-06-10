@@ -30,9 +30,9 @@ mount(() => html`<main>
 | `position` | string | `''` | `center` \| `left` \| `right` \| `bottom` \| `absolute` |
 | `backdrop` | boolean | `false` | dim the page (click closes when closable) |
 | `closable` | boolean | `false` | × button + Escape + backdrop click |
-| `draggable` | boolean | `false` | move by the header |
-| `resizable` | boolean | `false` | corner handle |
-| `minimizable` / `minimized` | boolean | `false` | – button / initial state |
+| `draggable` | boolean | `false` | top 40px zone; CLAMPED — can never leave the screen |
+| `resizable` | boolean | `false` | ALL 8 edges/corners (10px zones), live cursors, Shift = aspect ratio |
+| `minimizable` / `minimized` | boolean | `false` | docks to a bottom taskbar row (205px slots, wrapping); restore remembers position |
 | `fullscreen` | boolean | `false` | MUI: cover the viewport |
 | `autoclose` | boolean | `false` | close on focusout (v5: `auto-close`) |
 | `autoadjust` | boolean | `false` | clamp into viewport on open (v5: `auto-adjust`) |
@@ -41,7 +41,7 @@ mount(() => html`<main>
 | `responsive` | boolean | `true` | small screens: full width |
 | `layers` | boolean | `false` | bring to front on mousedown |
 | `url` | string | `''` | load remote content on first open |
-| `onopen` / `onclose(origin)` / `onmove(x,y)` / `onresize(w,h)` | events | — | |
+| `onopen` / `onclose(origin)` / `onmove(top,left)` / `onresize(width,height)` — move/resize fire on release | events | — | |
 | `api` | — | — | `open()`, `close()`, `toggle()`, `front()`, `back()` via `ref` |
 
 Origins reported by `onclose`: `button`, `backdrop`, `escape`, `focusout`, `api`.

@@ -21,6 +21,21 @@ export const isForcing = function (): boolean {
     return forcing;
 };
 
+/**
+ * Run fn with dependency tracking suspended. Imperative escape hatches
+ * (ref callbacks, component setup bodies) must never subscribe the
+ * enclosing binding to the states they happen to read.
+ */
+export const untracked = function <R>(fn: () => R): R {
+    const previous = current;
+    current = null;
+    try {
+        return fn();
+    } finally {
+        current = previous;
+    }
+};
+
 /** Pending bindings while a batch() is open (deduped across states) */
 let batching: Set<Binding> | null = null;
 let batchForcing = false;
