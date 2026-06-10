@@ -49,3 +49,4 @@ export declare const component: <P>(name: string, contract: Record<string, unkno
  * bind, events, api. Returns null for unpublished components.
  */
 export declare const describe: (c: Function) => Schema | null;
+export declare const use: <T = Record<string, unknown>>(c: Function) => T | null;

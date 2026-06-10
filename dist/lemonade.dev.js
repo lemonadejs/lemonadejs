@@ -32,7 +32,8 @@ var lemonade = (() => {
     mount: () => mount,
     setComponents: () => setComponents,
     store: () => store,
-    unsafe: () => unsafe
+    unsafe: () => unsafe,
+    use: () => use
   });
 
   // src/env.ts
@@ -55,7 +56,8 @@ var lemonade = (() => {
     "LJS-303": "bind works on <input>, <textarea> and <select> \u2014 on components it is a prop",
     "LJS-304": "bind owns the element value \u2014 remove the explicit value/checked attribute",
     "LJS-305": "Event and callback names are lowercase: onclick, onchange, onsave",
-    "LJS-401": "Prop does not match its contract"
+    "LJS-401": "Prop does not match its contract",
+    "LJS-501": "Sugar singletons: expose once, never touch \u2014 check the api in the contract"
   };
   var EXPLAIN = !DEV ? {} : {
     "LJS-001": 'The value used as a component is not a function. Components are plain functions: const Card: Component = (props, { state }) => html`<div>...</div>`. When embedding, pass the function itself: <${Card} title="x" />.',
@@ -73,7 +75,8 @@ var lemonade = (() => {
     "LJS-303": 'On native elements, bind is engine sugar and only <input>, <textarea> and <select> have a defined wiring. On components, bind is a plain prop: implement it with the bind() tool \u2014 const value = bind(props, fallback) \u2014 and pass <${Comp} bind="${state}" />.',
     "LJS-304": "An element has both bind and an explicit value/checked attribute. bind drives that property in both directions, so the explicit attribute fights it. Remove value/checked and set the state instead.",
     "LJS-305": "One rule, no exceptions: every event and callback name is lowercase, HTML-style \u2014 onclick, oninput, onchange, onsave, onitemclick \u2014 exactly like the platform names onmousedown or onbeforeunload. On native elements other casings still attach (the event name is normalized) but warn; on components, props are case-sensitive JavaScript keys, so onChange would be silently ignored by a component reading onchange. Declare and pass component callbacks in lowercase.",
-    "LJS-401": 'A published component received a prop that violates its contract: wrong type, a non-function for a declared event, or a contract key that cannot work (prop names must be lowercase because they become HTML attributes). Check describe(Component) for the expected interface. Attribute strings are coerced to the declared type automatically ("5" \u2192 5 for numbers, presence semantics for booleans).'
+    "LJS-401": 'A published component received a prop that violates its contract: wrong type, a non-function for a declared event, or a contract key that cannot work (prop names must be lowercase because they become HTML attributes). Check describe(Component) for the expected interface. Attribute strings are coerced to the declared type automatically ("5" \u2192 5 for numbers, presence semantics for booleans).',
+    "LJS-501": "Sugar services are singletons by definition: one <${C} expose /> per component, registered once and never touched. This warning fires when a second instance exposes the same component (last one wins \u2014 almost always a bug) or when expose is used without api: { ... } declared in the contract. Consume with use(Component), which returns null until the instance is mounted."
   };
   var format = function(code, detail) {
     const message = MESSAGES[code] || "Unknown error";
@@ -1262,6 +1265,31 @@ var lemonade = (() => {
       if (schema.bind && incoming.bind === void 0 && schema.bind.default !== void 0) {
         final.bind = schema.bind.default;
       }
+      if (incoming.expose) {
+        const previousRef = incoming.ref;
+        final.ref = function(api) {
+          if (schema.api.length) {
+            const published = {};
+            for (const method of schema.api) {
+              published[method] = api[method];
+            }
+            if (DEV && exposed.has(wrapped)) {
+              warn("LJS-501", "<" + name + "> was already exposed \u2014 singleton overwritten");
+            }
+            exposed.set(wrapped, published);
+            tools.onUnmount(function() {
+              if (exposed.get(wrapped) === published) {
+                exposed.delete(wrapped);
+              }
+            });
+          } else if (DEV) {
+            warn("LJS-501", "<" + name + "> has no api in its contract \u2014 nothing to expose");
+          }
+          if (previousRef) {
+            previousRef(api);
+          }
+        };
+      }
       if (DEV) {
         for (const e of schema.events) {
           if (incoming[e] !== void 0 && typeof incoming[e] !== "function") {
@@ -1277,6 +1305,10 @@ var lemonade = (() => {
   };
   var describe = function(c) {
     return schemas.get(c) || null;
+  };
+  var exposed = /* @__PURE__ */ new Map();
+  var use = function(c) {
+    return exposed.get(c) || null;
   };
 
   // src/webcomponents.ts
@@ -1444,6 +1476,7 @@ var lemonade = (() => {
     unsafe,
     component,
     describe,
+    use,
     createWebComponent,
     explain,
     version: 6

@@ -19,7 +19,7 @@ export type { Bindable, Bound, Component, Handle, Props, SlotValue, State, Templ
 export { mount, inspect, setComponents, unsafe } from './runtime';
 export { store } from './store';
 export { batch } from './reactivity';
-export { component, describe } from './contract';
+export { component, describe, use } from './contract';
 export type { Schema, PropSchema, ContractType } from './contract';
 export { createWebComponent } from './webcomponents';
 export { explain } from './errors';
@@ -41,6 +41,7 @@ declare const lemonade: {
     unsafe: (html: string) => Node[];
     component: <P>(name: string, contract: Record<string, unknown>, fn: import("./types").Component<P>) => import("./types").Component<P>;
     describe: (c: Function) => import("./contract").Schema | null;
+    use: <T = Record<string, unknown>>(c: Function) => T | null;
     createWebComponent: typeof createWebComponent;
     explain: (code: string) => string;
     version: number;

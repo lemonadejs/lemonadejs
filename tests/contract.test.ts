@@ -7,6 +7,7 @@ import {
     html,
     component,
     describe,
+    use,
     createWebComponent,
     store,
     type Bindable,
@@ -198,6 +199,90 @@ suite('subscribe() — the universal adapter', () => {
         expect(renders).toBe(1);
         expect(count.peek()).toBe(6);
         off();
+    });
+});
+
+suite('Sugar: expose/use singleton services', () => {
+    /** A service component: private internals, declared api */
+    const makeNotifications = () =>
+        component('notifications', {
+            api: { notify: Function, count: Function },
+        }, (props: { ref?: (api: object) => void }, { state }) => {
+            const queue = state<string[]>([]); // private — closed over
+            props.ref?.({
+                notify: (msg: string) => (queue.value = [...queue.value, msg]),
+                count: () => queue.value.length,
+                secret: () => 'should never cross the boundary',
+            });
+            return html`<ul>${() => queue.value.map((m) => html`<li>${m}</li>`)}</ul>`;
+        });
+
+    it('exposes only the declared api and keeps internals unreachable', () => {
+        const Notifications = makeNotifications();
+        const App: Component = () => html`<main><${Notifications} expose /></main>`;
+        handle = t(App);
+
+        const api = use<{ notify: (m: string) => void; count: () => number }>(Notifications)!;
+        expect(typeof api.notify).toBe('function');
+        expect(typeof api.count).toBe('function');
+        expect((api as Record<string, unknown>).secret).toBeUndefined(); // contract is the boundary
+    });
+
+    it('calling the api drives the exposing instance reactively from anywhere', () => {
+        const Notifications = makeNotifications();
+        const App: Component = () => html`<main><${Notifications} expose /></main>`;
+        handle = t(App);
+
+        const api = use<{ notify: (m: string) => void; count: () => number }>(Notifications)!;
+        api.notify('saved!');
+        api.notify('again');
+        expect(handle.queryAll('li').map((li) => li.textContent)).toEqual(['saved!', 'again']);
+        expect(api.count()).toBe(2);
+    });
+
+    it('unmount withdraws the singleton', () => {
+        const Notifications = makeNotifications();
+        const App: Component = () => html`<main><${Notifications} expose /></main>`;
+        const local = t(App);
+        expect(use(Notifications)).not.toBeNull();
+        local.unmount();
+        expect(use(Notifications)).toBeNull();
+    });
+
+    it('use() returns null for never-exposed components', () => {
+        const Lonely = component('lonely', { api: { x: Function } }, () => html`<i></i>`);
+        expect(use(Lonely)).toBeNull();
+    });
+
+    it('warns LJS-501 when a second instance overwrites the singleton (last wins)', () => {
+        const spy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+        const Notifications = makeNotifications();
+        const App: Component = () => html`<main><${Notifications} expose /><${Notifications} expose /></main>`;
+        handle = t(App);
+        expect(spy.mock.calls.some((args) => String(args[0]).includes('LJS-501'))).toBe(true);
+        expect(use(Notifications)).not.toBeNull();
+        spy.mockRestore();
+    });
+
+    it('warns LJS-501 when expose is used without a declared api', () => {
+        const spy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+        const NoApi = component('noapi', { label: '' }, (props: { ref?: (a: object) => void }) => {
+            props.ref?.({ anything: 1 });
+            return html`<i></i>`;
+        });
+        const App: Component = () => html`<main><${NoApi} expose /></main>`;
+        handle = t(App);
+        expect(spy.mock.calls.some((args) => String(args[0]).includes('LJS-501'))).toBe(true);
+        spy.mockRestore();
+    });
+
+    it("the caller's own ref still runs alongside expose", () => {
+        const Notifications = makeNotifications();
+        let captured: object | null = null;
+        const App: Component = () =>
+            html`<main><${Notifications} expose ref="${(api: object) => (captured = api)}" /></main>`;
+        handle = t(App);
+        expect(captured).not.toBeNull();
     });
 });
 

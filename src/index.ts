@@ -20,14 +20,14 @@ import { explain } from './errors';
 import { inspect, mount, setComponents, unsafe } from './runtime';
 import { store } from './store';
 import { batch } from './reactivity';
-import { component, describe } from './contract';
+import { component, describe, use } from './contract';
 import { createWebComponent } from './webcomponents';
 
 export type { Bindable, Bound, Component, Handle, Props, SlotValue, State, Template, Tools, View } from './types';
 export { mount, inspect, setComponents, unsafe } from './runtime';
 export { store } from './store';
 export { batch } from './reactivity';
-export { component, describe } from './contract';
+export { component, describe, use } from './contract';
 export type { Schema, PropSchema, ContractType } from './contract';
 export { createWebComponent } from './webcomponents';
 export { explain } from './errors';
@@ -61,6 +61,7 @@ const lemonade = {
     unsafe,
     component,
     describe,
+    use,
     createWebComponent,
     explain,
     version: 6,

@@ -51,7 +51,8 @@ var MESSAGES = {
   "LJS-303": "bind works on <input>, <textarea> and <select> \u2014 on components it is a prop",
   "LJS-304": "bind owns the element value \u2014 remove the explicit value/checked attribute",
   "LJS-305": "Event and callback names are lowercase: onclick, onchange, onsave",
-  "LJS-401": "Prop does not match its contract"
+  "LJS-401": "Prop does not match its contract",
+  "LJS-501": "Sugar singletons: expose once, never touch \u2014 check the api in the contract"
 };
 var format = function(code, detail) {
   const message = MESSAGES[code] || "Unknown error";

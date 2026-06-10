@@ -153,6 +153,34 @@ export const component = function <P>(
             final.bind = schema.bind.default;
         }
 
+        // Sugar: <${C} expose /> publishes the declared api as a singleton
+        if (incoming.expose) {
+            const previousRef = incoming.ref as ((api: Record<string, unknown>) => void) | undefined;
+            final.ref = function (api: Record<string, unknown>) {
+                if (schema.api.length) {
+                    // Only the declared surface crosses the boundary
+                    const published: Record<string, unknown> = {};
+                    for (const method of schema.api) {
+                        published[method] = api[method];
+                    }
+                    if (DEV && exposed.has(wrapped)) {
+                        warn('LJS-501', '<' + name + '> was already exposed — singleton overwritten');
+                    }
+                    exposed.set(wrapped, published);
+                    tools.onUnmount(function () {
+                        if (exposed.get(wrapped) === published) {
+                            exposed.delete(wrapped);
+                        }
+                    });
+                } else if (DEV) {
+                    warn('LJS-501', '<' + name + '> has no api in its contract — nothing to expose');
+                }
+                if (previousRef) {
+                    previousRef(api);
+                }
+            };
+        }
+
         if (DEV) {
             for (const e of schema.events) {
                 if (incoming[e] !== undefined && typeof incoming[e] !== 'function') {
@@ -176,4 +204,23 @@ export const component = function <P>(
  */
 export const describe = function (c: Function): Schema | null {
     return schemas.get(c) || null;
+};
+
+/**
+ * Sugar: singleton component services. An instance mounted with `expose`
+ * publishes its DECLARED api (and nothing else — internals stay closed
+ * over, unreachable) for the whole application:
+ *
+ *   <${Notifications} expose />
+ *   use(Notifications)?.notify('saved');   // typed by the import itself
+ *
+ * Singletons by definition: re-exposing warns LJS-501 (last wins);
+ * unmounting withdraws the api. This is the pattern that replaces
+ * external state tools — store() for shared data, expose/use for
+ * component-owned services.
+ */
+const exposed = new Map<Function, Record<string, unknown>>();
+
+export const use = function <T = Record<string, unknown>>(c: Function): T | null {
+    return (exposed.get(c) as T) || null;
 };

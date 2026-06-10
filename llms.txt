@@ -196,6 +196,14 @@ LJS-401 in dev; contract prop names must be lowercase (they become HTML attribut
                         // api actually exposed. Generate a component and its
                         // proof in one breath.
 
+Sugar — singleton component services (replaces external state tools like Redux):
+
+    <${Notifications} expose />              // instance publishes its DECLARED api on mount
+    use(Notifications)?.notify('saved')      // anywhere; typed by the import; null until mounted
+    // only api: {...} crosses the boundary — internals stay closed over, unreachable
+    // singletons: register once, never touch; re-exposing warns LJS-501 (last wins);
+    // unmount withdraws. For app-owned logic prefer store() + exported actions.
+
 Interop with other reactive worlds (React, Svelte, Rx) — subscribe + peek:
 
     const value = useSyncExternalStore(rows.subscribe, rows.peek);   // React reads
