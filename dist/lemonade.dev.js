@@ -32,7 +32,6 @@ var lemonade = (() => {
     inspect: () => inspect,
     isDisposing: () => isDisposing,
     mount: () => mount,
-    owns: () => owns,
     ref: () => ref,
     setComponents: () => setComponents,
     store: () => store,
@@ -933,31 +932,6 @@ var lemonade = (() => {
       }
     }
   };
-  var portalAnchors = /* @__PURE__ */ new WeakMap();
-  var owns = function(container, target) {
-    let n = target;
-    while (n) {
-      if (n === container) {
-        return true;
-      }
-      const anchor = portalAnchors.get(n);
-      n = anchor || n.parentNode;
-    }
-    return false;
-  };
-  var attachPortals = function(portals) {
-    for (const p of portals) {
-      if (!p.el.isConnected && p.anchor.isConnected) {
-        document.body.appendChild(p.el);
-      }
-    }
-  };
-  var removePortals = function(portals) {
-    for (const p of portals) {
-      blurWithin([p.el]);
-      remove(p.el);
-    }
-  };
   var disposeEntry = function(entry) {
     withDisposal(function() {
       if (entry.kind === "view") {
@@ -970,7 +944,6 @@ var lemonade = (() => {
         for (const cleanup of entry.cleanups) {
           cleanup();
         }
-        removePortals(entry.portals);
       }
       blurWithin(entry.nodes);
       for (const node of entry.nodes) {
@@ -1104,16 +1077,7 @@ var lemonade = (() => {
   var buildViewEntry = function(view, inst) {
     injectStyles(view.template);
     const holder = { values: view.values };
-    const ctx = {
-      inst,
-      holder,
-      live: true,
-      bindings: [],
-      instances: [],
-      cleanups: [],
-      refs: [],
-      portals: []
-    };
+    const ctx = { inst, holder, live: true, bindings: [], instances: [], cleanups: [], refs: [] };
     const nodes = buildNodes(view.template.nodes, ctx, false);
     return {
       kind: "view",
@@ -1123,8 +1087,7 @@ var lemonade = (() => {
       instances: ctx.instances,
       nodes,
       cleanups: ctx.cleanups,
-      refs: ctx.refs,
-      portals: ctx.portals
+      refs: ctx.refs
     };
   };
   var applySlot = function(s, value, inst) {
@@ -1134,9 +1097,6 @@ var lemonade = (() => {
       if (s.entries.length && !s.detached) {
         withDisposal(function() {
           for (const entry of s.entries) {
-            if (entry.kind === "view") {
-              removePortals(entry.portals);
-            }
             for (const node of entry.nodes) {
               remove(node);
             }
@@ -1307,13 +1267,8 @@ var lemonade = (() => {
         }
       }
       for (const entry of next) {
-        if (entry.kind === "view") {
-          if (entry.portals.length) {
-            attachPortals(entry.portals);
-          }
-          if (entry.refs.length) {
-            fireRefs(entry.refs, entry.cleanups);
-          }
+        if (entry.kind === "view" && entry.refs.length) {
+          fireRefs(entry.refs, entry.cleanups);
         }
       }
       for (const instance of fresh) {
@@ -1405,11 +1360,11 @@ var lemonade = (() => {
     const name = prop.name;
     const parts = prop.parts;
     const whole = parts.length === 1 && typeof parts[0] === "object" ? parts[0].slot : -1;
-    if (name === "key" || name === "portal") {
-      return;
-    }
     if (!parts.length) {
       applyAttr(el, name, name, svg);
+      return;
+    }
+    if (name === "key") {
       return;
     }
     if (name === "bind") {
@@ -1565,12 +1520,6 @@ var lemonade = (() => {
     for (const prop of vnode.props || []) {
       applyProp(el, prop, ctx, isSvg);
     }
-    if (vnode.props && vnode.props.some((p) => p.name === "portal")) {
-      const anchor = document.createTextNode("");
-      portalAnchors.set(el, anchor);
-      ctx.portals.push({ el, anchor });
-      return [anchor];
-    }
     return [el];
   };
   var buildNode = function(vnode, ctx, svg) {
@@ -1609,7 +1558,6 @@ var lemonade = (() => {
       mountCbs: [],
       unmountCbs: [],
       refs: [],
-      portals: [],
       mounted: false,
       dead: false
     };
@@ -1705,8 +1653,7 @@ var lemonade = (() => {
       // Root-level object refs are nulled when the component unmounts
       cleanups: inst.unmountCbs,
       // Root-level refs fire in runMount — after the host attached them
-      refs: inst.refs,
-      portals: inst.portals
+      refs: inst.refs
     };
     injectStyles(view.template);
     inst.elements = buildNodes(view.template.nodes, ctx, false);
@@ -1720,22 +1667,14 @@ var lemonade = (() => {
       return;
     }
     inst.mounted = true;
-    if (inst.portals.length) {
-      attachPortals(inst.portals);
-    }
     if (inst.refs.length) {
       fireRefs(inst.refs, inst.unmountCbs);
     }
     for (const s of inst.slots) {
       if (!s.detached) {
         for (const entry of s.entries) {
-          if (entry.kind === "view") {
-            if (entry.portals.length) {
-              attachPortals(entry.portals);
-            }
-            if (entry.refs.length) {
-              fireRefs(entry.refs, entry.cleanups);
-            }
+          if (entry.kind === "view" && entry.refs.length) {
+            fireRefs(entry.refs, entry.cleanups);
           }
         }
       }
@@ -1778,7 +1717,6 @@ var lemonade = (() => {
       cb();
     }
     withDisposal(function() {
-      removePortals(inst.portals);
       blurWithin(inst.elements);
       for (const node of inst.elements) {
         remove(node);

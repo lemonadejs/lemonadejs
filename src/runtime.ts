@@ -49,8 +49,6 @@ export interface Instance {
     unmountCbs: (() => void)[];
     /** Refs queued during the root build, fired by runMount */
     refs: RefEntry[];
-    /** Root-level portaled elements, attached by runMount */
-    portals: PortalEntry[];
     mounted: boolean;
     /** Set by unmountInstance — dead instances are never reused or resurrected */
     dead: boolean;
@@ -67,13 +65,6 @@ interface RefEntry {
     el: Element;
 }
 
-/** A portaled element: lives in document.body, holds its place in the
- *  flow through an invisible anchor text node */
-interface PortalEntry {
-    el: Element;
-    anchor: Text;
-}
-
 /** Build context: who owns the bindings/instances created while building */
 interface BuildCtx {
     inst: Instance;
@@ -86,8 +77,6 @@ interface BuildCtx {
     cleanups: (() => void)[];
     /** Refs queued during the build, fired on insertion */
     refs: RefEntry[];
-    /** Elements rendered into document.body, anchored in the flow */
-    portals: PortalEntry[];
 }
 
 /** One unit of content produced by a slot */
@@ -101,8 +90,6 @@ interface ViewEntry {
     cleanups: (() => void)[];
     /** Pending refs — fired (once) when the entry first attaches */
     refs: RefEntry[];
-    /** Elements rendered into document.body, anchored in the flow */
-    portals: PortalEntry[];
     /** List identity from key="${...}" — matching is by key, not position */
     key?: unknown;
 }
@@ -299,49 +286,6 @@ const blurWithin = function (nodes: Node[]): void {
     }
 };
 
-/** Portaled element → its anchor in the flow, for owns() teleporting */
-const portalAnchors = new WeakMap<Node, Text>();
-
-/**
- * Ownership-aware containment: like container.contains(target), but at a
- * portal boundary the walk TELEPORTS to the portal's anchor and continues
- * up the logical tree. The check for dismiss-on-focusout/click-outside
- * when part of a component (a panel, a popper) renders in document.body:
- *
- *   onfocusout="${(e) => { if (!owns(root, e.relatedTarget)) close(); }}"
- */
-export const owns = function (container: Node, target: Node | null): boolean {
-    let n: Node | null = target;
-    while (n) {
-        if (n === container) {
-            return true;
-        }
-        const anchor = portalAnchors.get(n);
-        n = anchor || n.parentNode;
-    }
-    return false;
-};
-
-/** Append pending portal elements to document.body — called at the same
- *  points refs fire (the anchor is attached, the portal follows). Cached
- *  entries re-attach here after a detach. Order of arrival = stacking. */
-const attachPortals = function (portals: PortalEntry[]): void {
-    for (const p of portals) {
-        if (!p.el.isConnected && p.anchor.isConnected) {
-            document.body.appendChild(p.el);
-        }
-    }
-};
-
-/** Remove an entry's portal elements (detach or disposal) — callers wrap
- *  in withDisposal; blur is handled here since portals are off-flow */
-const removePortals = function (portals: PortalEntry[]): void {
-    for (const p of portals) {
-        blurWithin([p.el]);
-        remove(p.el);
-    }
-};
-
 const disposeEntry = function (entry: Entry): void {
     withDisposal(function () {
         if (entry.kind === 'view') {
@@ -354,7 +298,6 @@ const disposeEntry = function (entry: Entry): void {
             for (const cleanup of entry.cleanups) {
                 cleanup();
             }
-            removePortals(entry.portals);
         }
         blurWithin(entry.nodes);
         for (const node of entry.nodes) {
@@ -529,16 +472,7 @@ const patchPlan = function (ci: Instance, holder: Holder): (() => void)[] | null
 const buildViewEntry = function (view: View, inst: Instance): ViewEntry {
     injectStyles(view.template);
     const holder: Holder = { values: view.values };
-    const ctx: BuildCtx = {
-        inst,
-        holder,
-        live: true,
-        bindings: [],
-        instances: [],
-        cleanups: [],
-        refs: [],
-        portals: [],
-    };
+    const ctx: BuildCtx = { inst, holder, live: true, bindings: [], instances: [], cleanups: [], refs: [] };
     const nodes = buildNodes(view.template.nodes, ctx, false);
     return {
         kind: 'view',
@@ -549,7 +483,6 @@ const buildViewEntry = function (view: View, inst: Instance): ViewEntry {
         nodes,
         cleanups: ctx.cleanups,
         refs: ctx.refs,
-        portals: ctx.portals,
     };
 };
 
@@ -566,9 +499,6 @@ const applySlot = function (s: SlotState, value: unknown, inst: Instance): void 
         if (s.entries.length && !s.detached) {
             withDisposal(function () {
                 for (const entry of s.entries) {
-                    if (entry.kind === 'view') {
-                        removePortals(entry.portals); // off-flow, leave with the entry
-                    }
                     for (const node of entry.nodes) {
                         remove(node);
                     }
@@ -768,18 +698,11 @@ const applySlot = function (s: SlotState, value: unknown, inst: Instance): void 
                 ref = node;
             }
         }
-        // The nodes are attached NOW: portals follow their anchors into the
-        // document, THEN pending refs fire (fresh entries, plus cached
-        // entries that were built or re-attached while detached) — a ref
-        // inside a portal must see its element connected
+        // The nodes are attached NOW: fire pending refs (fresh entries,
+        // plus cached entries that were built while detached)
         for (const entry of next) {
-            if (entry.kind === 'view') {
-                if (entry.portals.length) {
-                    attachPortals(entry.portals);
-                }
-                if (entry.refs.length) {
-                    fireRefs(entry.refs, entry.cleanups);
-                }
+            if (entry.kind === 'view' && entry.refs.length) {
+                fireRefs(entry.refs, entry.cleanups);
             }
         }
         for (const instance of fresh) {
@@ -894,15 +817,14 @@ const applyProp = function (el: Element, prop: VProp, ctx: BuildCtx, svg: boolea
     const parts = prop.parts;
     const whole = parts.length === 1 && typeof parts[0] === 'object' ? parts[0].slot : -1;
 
-    // Directives (consumed by the engine, never rendered): key is list
-    // identity for applySlot, portal is handled by buildElement
-    if (name === 'key' || name === 'portal') {
-        return;
-    }
-
     // Boolean attribute: <input disabled />
     if (!parts.length) {
         applyAttr(el, name, name, svg);
+        return;
+    }
+
+    // List identity directive (consumed by applySlot, never rendered)
+    if (name === 'key') {
         return;
     }
 
@@ -1096,18 +1018,6 @@ const buildElement = function (vnode: VNode, ctx: BuildCtx, svg: boolean): Node[
         applyProp(el, prop, ctx, isSvg);
     }
 
-    // portal directive: the element renders in document.body — out of any
-    // transformed/clipping/stacking ancestor — while an invisible anchor
-    // holds its place in the flow (identity, ordering, detach/reattach).
-    // Ownership is unchanged: disposal, refs, isDisposing all still apply;
-    // dismiss checks use owns(container, target) instead of contains().
-    if (vnode.props && vnode.props.some((p) => p.name === 'portal')) {
-        const anchor = document.createTextNode('');
-        portalAnchors.set(el, anchor);
-        ctx.portals.push({ el, anchor });
-        return [anchor];
-    }
-
     return [el];
 };
 
@@ -1158,7 +1068,6 @@ export const mountComponent = function (
         mountCbs: [],
         unmountCbs: [],
         refs: [],
-        portals: [],
         mounted: false,
         dead: false,
     };
@@ -1280,7 +1189,6 @@ export const mountComponent = function (
         cleanups: inst.unmountCbs,
         // Root-level refs fire in runMount — after the host attached them
         refs: inst.refs,
-        portals: inst.portals,
     };
     injectStyles(view.template);
     inst.elements = buildNodes(view.template.nodes, ctx, false);
@@ -1298,26 +1206,18 @@ export const runMount = function (inst: Instance): void {
         return;
     }
     inst.mounted = true;
-    // Portals follow their (now attached) anchors into the document, then
-    // refs fire (the host attached the elements before calling runMount),
-    // so onMount callbacks can rely on ref-captured values: root-level
-    // first, then branch entries built during the detached construction
-    if (inst.portals.length) {
-        attachPortals(inst.portals);
-    }
+    // Refs fire FIRST (the host attached the elements before calling
+    // runMount), so onMount callbacks can rely on ref-captured values:
+    // root-level refs, then pending refs of branch entries built during
+    // the initial (detached) construction
     if (inst.refs.length) {
         fireRefs(inst.refs, inst.unmountCbs);
     }
     for (const s of inst.slots) {
         if (!s.detached) {
             for (const entry of s.entries) {
-                if (entry.kind === 'view') {
-                    if (entry.portals.length) {
-                        attachPortals(entry.portals);
-                    }
-                    if (entry.refs.length) {
-                        fireRefs(entry.refs, entry.cleanups);
-                    }
+                if (entry.kind === 'view' && entry.refs.length) {
+                    fireRefs(entry.refs, entry.cleanups);
                 }
             }
         }
@@ -1366,7 +1266,6 @@ export const unmountInstance = function (inst: Instance): void {
     // Never leave focus on a node being removed: correct UX, and the
     // document's last-focused reference would otherwise retain the subtree
     withDisposal(function () {
-        removePortals(inst.portals);
         blurWithin(inst.elements);
         for (const node of inst.elements) {
             remove(node);

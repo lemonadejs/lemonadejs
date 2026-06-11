@@ -191,33 +191,6 @@ Lifecycle: the injected tag carries a data-lemonade attribute, dedupes per
 template (call-site identity), and persists for the document lifetime —
 unmounting instances never removes it, remounting never duplicates it.
 
-## Portal (floating UI)
-
-An element with the `portal` directive renders in document.body — escaping
-transformed, clipping (overflow:hidden) and stacking-context ancestors that
-break position:fixed — while an invisible anchor holds its place in the
-flow. Everything else is unchanged: bindings stay live, events attach to
-the element, refs fire attached, the portal leaves on branch close and
-unmount, returns on reopen, and travels with its keyed list item.
-
-    <div class="lm-dropdown">
-        <input onfocus="${open}" />
-        ${() => isOpen.value && html`<div class="lm-panel" portal>...</div>`}
-    </div>
-
-One rule changes: the portaled DOM is no longer a DOM DESCENDANT of your
-root, so dismiss checks must use owns() instead of contains():
-
-    import { owns } from 'lemonadejs';
-    onfocusout="${(e) => {
-        if (isDisposing()) return;
-        if (!owns(root, e.relatedTarget as Node)) close();   // sees through portals
-    }}"
-
-owns(container, target) is containment that teleports across portal
-boundaries back to the anchor — use it for ALL focusout/click-outside
-checks; it behaves exactly like contains() for in-flow content.
-
 ## Two-way binding
 
 Native form elements — engine directive (consumed, never a DOM attribute):
