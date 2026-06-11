@@ -34,7 +34,7 @@ const flush = () => new Promise((r) => setTimeout(r, 0));
 
 const make = (props: Record<string, unknown> = {}) => {
     let api: Api | null = null;
-    handle = t(Calendar as never, { ...props, ref: (a: Api) => (api = a) } as never);
+    handle = t(Calendar, { ...props, ref: (a: Api) => (api = a) });
     return api!;
 };
 
@@ -55,7 +55,7 @@ const type = (text: string) => {
 
 describe('components/calendar — the date picker on the Modal primitive', () => {
     it('passes verify() — the registry gate', () => {
-        expect(verify(Calendar as never).pass).toBe(true);
+        expect(verify(Calendar).pass).toBe(true);
     });
 
     it('inline: renders the 42-cell day grid with out-of-month days greyed', () => {

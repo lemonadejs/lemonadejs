@@ -61,7 +61,7 @@ export const Toolbar = component('toolbar', {
     let root: HTMLElement | null = null;
     let menu: MenuApi | null = null;
 
-    const items = (): ToolbarItem[] => (props.options!.value as ToolbarItem[]) || [];
+    const items = (): ToolbarItem[] => (props.options.value as ToolbarItem[]) || [];
 
     /** The Nth picker header in DOM order belongs to the Nth select item */
     const headerEl = (index: number): HTMLElement | null => {
@@ -176,8 +176,8 @@ export const Toolbar = component('toolbar', {
 
     return html`<div class="lm-toolbar" role="toolbar"
         ref="${(el: Element) => (root = el as HTMLElement)}"
-        data-position="${() => (props.position!.value as string) || false}"
-        data-visible="${() => ((props.visible!.value as boolean) === false ? 'false' : 'true')}">
+        data-position="${() => (props.position.value as string) || false}"
+        data-visible="${() => ((props.visible.value as boolean) === false ? 'false' : 'true')}">
         ${() => items().map((item, i) => itemView(item, i))}
         <${Contextmenu} ref="${(a: MenuApi) => (menu = a)}"
             onclose="${() => (expanded.value = null)}" />

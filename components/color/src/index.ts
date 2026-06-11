@@ -72,10 +72,10 @@ export const Color = component('color', {
     let context: CanvasRenderingContext2D | null = null;
     let point: HTMLElement | null = null;
 
-    const inline = () => props.type!.value === 'inline';
+    const inline = () => props.type.value === 'inline';
 
     const palette = (): string[][] => {
-        const p = props.palette!.value as (string | string[])[] | undefined;
+        const p = props.palette.value as (string | string[])[] | undefined;
         if (p && p.length) {
             return (Array.isArray(p[0]) ? p : [p]) as string[][];
         }
@@ -95,13 +95,13 @@ export const Color = component('color', {
             anchorLeft.value = rect.left;
         }
         opened.value = true;
-        (props.onopen as (() => void) | undefined)?.();
+        props.onopen?.();
     };
 
     const doClose = (origin: string) => {
         if (opened.value) {
             opened.value = false;
-            (props.onclose as ((origin: string) => void) | undefined)?.(origin);
+            props.onclose?.(origin);
         }
     };
 
@@ -121,7 +121,7 @@ export const Color = component('color', {
             if (picked.value !== color) {
                 picked.set(color);
             }
-        } else if (props.closeonchange!.value) {
+        } else if (props.closeonchange.value) {
             commit(color, 'select');
         }
     };
@@ -286,13 +286,13 @@ export const Color = component('color', {
         </div>`;
 
     return html`<div class="lm-color"
-        data-type="${() => props.type!.value || false}"
+        data-type="${() => props.type.value || false}"
         ref="${(el: Element) => (wrapper = el as HTMLElement)}"
         onfocusout="${onFocusOut}">
         ${() =>
-            props.type!.value === 'input' &&
+            props.type.value === 'input' &&
             html`<input type="text" class="lm-color-input"
-                placeholder="${() => props.placeholder!.value || false}"
+                placeholder="${() => props.placeholder.value || false}"
                 value="${() => (picked.value as string) || ''}"
                 style="${() => (picked.value ? 'color:' + picked.value : '')}"
                 ref="${(el: Element) => (input = el as HTMLInputElement)}"

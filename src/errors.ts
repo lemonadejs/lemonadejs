@@ -25,6 +25,7 @@ const MESSAGES: Record<string, string> = {
     'LJS-304': 'bind owns the element value — remove the explicit value/checked attribute',
     'LJS-305': 'Event and callback names are lowercase: onclick, onchange, onsave',
     'LJS-401': 'Prop does not match its contract',
+    'LJS-402': 'Unknown prop — not declared in the contract',
     'LJS-501': 'Sugar singletons: expose once, never touch — check the api in the contract',
 };
 
@@ -91,6 +92,11 @@ const EXPLAIN: Record<string, string> = !DEV ? {} : {
         'declared event, or a contract key that cannot work (prop names must be lowercase because they become ' +
         'HTML attributes). Check describe(Component) for the expected interface. Attribute strings are coerced ' +
         'to the declared type automatically ("5" → 5 for numbers, presence semantics for booleans).',
+    'LJS-402':
+        'A prop was passed to a published component that its contract does not declare. The component never ' +
+        'reads it, so it does nothing — usually a typo (the warning suggests the closest declared name) or a ' +
+        'prop that belongs to a different component. Check describe(Component) for the declared interface. ' +
+        'ref, children, expose and declared on* events are always accepted and never warn.',
     'LJS-501':
         'Sugar services are singletons by definition: one <${C} expose /> per component, registered once and ' +
         'never touched. This warning fires when a second instance exposes the same component (last one wins — ' +

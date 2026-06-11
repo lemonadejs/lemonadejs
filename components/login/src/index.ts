@@ -121,7 +121,7 @@ export const Login = component('login', {
     const companyName = state('');
     const phoneNumber = state('');
     const user = state('');             // v5: username (the login alias, not the email)
-    const rememberMe = state(!!props.remember!.value);
+    const rememberMe = state(!!props.remember.value);
     const accepted = state(false);      // terms checkbox (v5: self.terms)
     const captcha = state('');
     const captchaImage = state('');     // base64 png from the server
@@ -154,8 +154,8 @@ export const Login = component('login', {
 
     /** v5 getUrl: url || pathname, device token as ?token= */
     const endpoint = () =>
-        (props.url!.value || window.location.pathname) +
-        (props.device!.value ? '?token=' + props.device!.value : '');
+        (props.url.value || window.location.pathname) +
+        (props.device.value ? '?token=' + props.device.value : '');
 
     /** v5 default success behavior: redirect (3s grace when there is a message) */
     const redirect = (result: LoginResult) => {
@@ -334,12 +334,12 @@ export const Login = component('login', {
         if (!google) {
             return fail('Google API not found');
         }
-        if (!props.google!.value) {
+        if (!props.google.value) {
             return fail('Google Client ID not defined');
         }
         try {
             google.accounts.id.initialize({
-                client_id: props.google!.value,
+                client_id: props.google.value,
                 auto_select: true,
                 callback: (response: { credential: string }) =>
                     socialRequest({ social: 'google', token: response.credential, terms: accepted.value }),
@@ -389,13 +389,13 @@ export const Login = component('login', {
         if (!msal) {
             return fail('Microsoft API not found');
         }
-        if (!props.microsoft!.value) {
+        if (!props.microsoft.value) {
             return fail('Microsoft Client ID not defined');
         }
         try {
             const instance = new msal.PublicClientApplication({
                 auth: {
-                    clientId: props.microsoft!.value,
+                    clientId: props.microsoft.value,
                     authority: 'https://login.microsoftonline.com/common',
                     redirectUri: window.location.href.split('?')[0],
                 },
@@ -457,20 +457,20 @@ export const Login = component('login', {
         }
     });
 
-    const anySocial = () => !!(props.google!.value || props.facebook!.value || props.microsoft!.value);
+    const anySocial = () => !!(props.google.value || props.facebook.value || props.microsoft.value);
 
     return html`<div
-        class="lm-login ${() => (props.fullscreen!.value ? 'lm-login-fullscreen' : '')} ${() =>
+        class="lm-login ${() => (props.fullscreen.value ? 'lm-login-fullscreen' : '')} ${() =>
             loading.value ? 'lm-login-loading' : ''}"
         data-screen="${screen}">
         <div class="lm-login-alert">${alertText}</div>
         <div class="lm-login-message">${notice}</div>
         <form class="lm-login-form" onsubmit="${(e: Event) => e.preventDefault()}">
-            ${() => props.logo!.value && html`<div class="lm-login-logo"><img src="${props.logo}" alt="" /></div>`}
+            ${() => props.logo.value && html`<div class="lm-login-logo"><img src="${props.logo}" alt="" /></div>`}
             ${() => instructions.value && html`<div class="lm-login-instructions">${instructions}</div>`}
             ${() =>
                 on('login', 'register') &&
-                props.google!.value &&
+                props.google.value &&
                 html`<div class="lm-login-row" ref="${(el: Element) => (googleEl = el as HTMLElement)}">
                     <button type="button" class="lm-login-social lm-login-google" onclick="${loginWithGoogle}">
                         Login with Google
@@ -478,7 +478,7 @@ export const Login = component('login', {
                 </div>`}
             ${() =>
                 on('login', 'register') &&
-                props.facebook!.value &&
+                props.facebook.value &&
                 html`<div class="lm-login-row">
                     <button type="button" class="lm-login-social lm-login-facebook" onclick="${loginWithFacebook}">
                         ${() => (screen.value === 'register' ? 'Sign up' : 'Login with Facebook')}
@@ -486,7 +486,7 @@ export const Login = component('login', {
                 </div>`}
             ${() =>
                 on('login', 'register') &&
-                props.microsoft!.value &&
+                props.microsoft.value &&
                 html`<div class="lm-login-row">
                     <button type="button" class="lm-login-social lm-login-microsoft" onclick="${loginWithMicrosoft}">
                         ${() => (screen.value === 'register' ? 'Sign up' : 'Login with Microsoft')}
@@ -512,21 +512,21 @@ export const Login = component('login', {
                 </div>`}
             ${() =>
                 on('register') &&
-                props.phone!.value &&
+                props.phone.value &&
                 html`<div class="lm-login-row">
                     <label for="lm-login-phone">Phone</label>
                     <input type="text" id="lm-login-phone" name="phone" bind="${phoneNumber}" onkeydown="${enter}" />
                 </div>`}
             ${() =>
                 on('register') &&
-                props.company!.value &&
+                props.company.value &&
                 html`<div class="lm-login-row">
                     <label for="lm-login-company">Company</label>
                     <input type="text" id="lm-login-company" name="company" bind="${companyName}" onkeydown="${enter}" />
                 </div>`}
             ${() =>
                 on('register') &&
-                props.username!.value &&
+                props.username.value &&
                 html`<div class="lm-login-row">
                     <label for="lm-login-username">Username</label>
                     <input type="text" id="lm-login-username" name="username" autocomplete="off"
@@ -555,7 +555,7 @@ export const Login = component('login', {
                 </div>`}
             ${() =>
                 on('login') &&
-                props.remember!.value &&
+                props.remember.value &&
                 html`<div class="lm-login-row lm-login-remember">
                     <label><input type="checkbox" bind="${rememberMe}" />
                         <span>Remember me on this device</span></label>
@@ -566,12 +566,12 @@ export const Login = component('login', {
                     <a class="lm-login-link" onclick="${() => show('forgot')}">Forgot Password?</a>
                 </div>`}
             ${() =>
-                ((on('register') && props.terms!.value) || on('terms')) &&
+                ((on('register') && props.terms.value) || on('terms')) &&
                 html`<div class="lm-login-row lm-login-terms">
                     <label><input type="checkbox" bind="${accepted}" />
                         <span>${() =>
                             unsafe(
-                                props.termstext!.value ||
+                                props.termstext.value ||
                                     'Please accept our Terms and Conditions to continue'
                             )}</span></label>
                 </div>`}
@@ -594,7 +594,7 @@ export const Login = component('login', {
                 </div>`}
             ${() =>
                 on('login') &&
-                props.profile!.value &&
+                props.profile.value &&
                 html`<div class="lm-login-row lm-login-profile">
                     Do not have an account?
                     <a class="lm-login-link" onclick="${() => show('register')}">Create a new profile</a>

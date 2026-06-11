@@ -96,6 +96,40 @@ export const render = function <P>(component: Component<P>, props?: P): TestHand
     };
 };
 
+/**
+ * Drain pending microtasks AND zero-delay timers — the two queues
+ * components defer into (Modal's per-open setup, debounced handlers).
+ * await flush() between an action and its assertion.
+ */
+export const flush = function (): Promise<void> {
+    return new Promise(function (resolve) {
+        setTimeout(resolve, 0);
+    });
+};
+
+/**
+ * Give an element a fixed geometry in DOM-only environments (jsdom has
+ * no layout — every rect is 0). Components that measure (modal
+ * autoadjust, tooltip flip, gantt drag) become testable headlessly:
+ *
+ *   setRect(t.query('.lm-bar')!, { left: 100, top: 0, width: 200, height: 24 });
+ */
+export const setRect = function (el: Element, rect: Partial<DOMRect>): void {
+    const r = {
+        x: rect.left ?? 0,
+        y: rect.top ?? 0,
+        top: rect.top ?? 0,
+        left: rect.left ?? 0,
+        width: rect.width ?? 0,
+        height: rect.height ?? 0,
+        right: rect.right ?? (rect.left ?? 0) + (rect.width ?? 0),
+        bottom: rect.bottom ?? (rect.top ?? 0) + (rect.height ?? 0),
+    };
+    el.getBoundingClientRect = function () {
+        return { ...r, toJSON: () => r } as DOMRect;
+    };
+};
+
 export interface VerifyCheck {
     name: string;
     pass: boolean;

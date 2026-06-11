@@ -46,11 +46,12 @@ let handle: ReturnType<typeof t> | null = null;
 
 beforeEach(() => {
     ctxs = [];
-    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation(() => {
+    // jsdom has no canvas — the mock context stands in for CanvasRenderingContext2D
+    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation((() => {
         const c = makeCtx();
         ctxs.push(c);
-        return c as never;
-    });
+        return c;
+    }) as unknown as HTMLCanvasElement['getContext']);
     vi.spyOn(HTMLCanvasElement.prototype, 'toDataURL').mockReturnValue('data:image/png;base64,TEST');
 });
 
@@ -90,7 +91,7 @@ const mount = (props: Record<string, unknown> = {}) => {
 
 describe('components/cropper', () => {
     it('passes verify() — the registry gate', () => {
-        const report = verify(Cropper as never);
+        const report = verify(Cropper);
         expect(report.pass).toBe(true);
     });
 
@@ -470,7 +471,7 @@ describe('components/cropper', () => {
     });
 
     it('degrades to a no-op without a 2d context (jsdom reality)', () => {
-        vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null as never);
+        vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null);
         const api = mount({ src: 'data:image/png;base64,AAA' });
 
         loadImage(api, 1600, 1440); // must not throw

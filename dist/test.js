@@ -21,7 +21,9 @@ var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: tru
 var test_exports = {};
 __export(test_exports, {
   default: () => test_default,
+  flush: () => flush,
   render: () => render,
+  setRect: () => setRect,
   verify: () => verify
 });
 module.exports = __toCommonJS(test_exports);
@@ -75,6 +77,26 @@ var render = function(component, props) {
       handle.unmount();
       root.remove();
     }
+  };
+};
+var flush = function() {
+  return new Promise(function(resolve) {
+    setTimeout(resolve, 0);
+  });
+};
+var setRect = function(el, rect) {
+  const r = {
+    x: rect.left ?? 0,
+    y: rect.top ?? 0,
+    top: rect.top ?? 0,
+    left: rect.left ?? 0,
+    width: rect.width ?? 0,
+    height: rect.height ?? 0,
+    right: rect.right ?? (rect.left ?? 0) + (rect.width ?? 0),
+    bottom: rect.bottom ?? (rect.top ?? 0) + (rect.height ?? 0)
+  };
+  el.getBoundingClientRect = function() {
+    return { ...r, toJSON: () => r };
   };
 };
 var SAMPLES = {

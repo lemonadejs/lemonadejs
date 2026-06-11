@@ -465,29 +465,29 @@ export const Calendar = component('calendar', {
     let gridEl: HTMLElement | null = null;
     let modalApi: { open(): void; close(): void } | null = null;
 
-    const kind = () => resolvedType.value || (props.type!.value as string) || 'default';
+    const kind = () => resolvedType.value || (props.type.value as string) || 'default';
     const inline = () => kind() === 'inline';
-    const fmt = () => (props.format!.peek() as string) || 'YYYY-MM-DD';
+    const fmt = () => (props.format.peek() as string) || 'YYYY-MM-DD';
 
     // ---- view building (v5 Views): one cell list per view
     const buildDays = (): CalendarCell[] => {
         const pg = page.peek();
         const cur = cursor.peek();
-        const start = Number(props.startingday!.peek()) || 0;
+        const start = Number(props.startingday.peek()) || 0;
         const offset = (dayOfWeek(pg.y, pg.m, 1) - start + 7) % 7;
         const base = toSerial(pg.y, pg.m, 1) - offset;
         const today = new Date();
-        const min = String((props.min!.peek() as string) || '').substring(0, 10);
-        const max = String((props.max!.peek() as string) || '').substring(0, 10);
-        const validate = props.validate!.peek() as
+        const min = String((props.min.peek() as string) || '').substring(0, 10);
+        const max = String((props.max.peek() as string) || '').substring(0, 10);
+        const validate = props.validate.peek() as
             | ((day: number, month: number, year: number, cell: CalendarCell) => unknown)
             | undefined;
         const events = new Set(
-            ((props.data!.peek() as CalendarEvent[]) || [])
+            ((props.data.peek() as CalendarEvent[]) || [])
                 .filter((entry) => entry && typeof entry === 'object' && typeof entry.date === 'string')
                 .map((entry) => entry.date.substring(0, 10))
         );
-        const rangeOn = !!props.range!.peek();
+        const rangeOn = !!props.range.peek();
         const previewEnd =
             rangeEnd !== null
                 ? rangeEnd
@@ -603,13 +603,13 @@ export const Calendar = component('calendar', {
         if (!entries.length) {
             return '';
         }
-        const withTime = !!props.time!.peek();
+        const withTime = !!props.time.peek();
         const mapped = entries.map((entry) => {
             const p = parseEntry(entry, fmt());
             if (!p) {
                 return '';
             }
-            return props.numeric!.peek() ? serialOf(p, withTime) : isoOf(p, withTime);
+            return props.numeric.peek() ? serialOf(p, withTime) : isoOf(p, withTime);
         });
         if (Array.isArray(v)) {
             return mapped;
@@ -650,7 +650,7 @@ export const Calendar = component('calendar', {
         rangeStart = null;
         rangeEnd = null;
         hovered = null;
-        if (props.range!.peek() && first) {
+        if (props.range.peek() && first) {
             rangeStart = toSerial(p.y, p.m, p.d);
             const second = entries.length > 1 ? parseEntry(entries[1], fmt()) : null;
             rangeEnd = second ? toSerial(second.y, second.m, second.d) : null;
@@ -668,9 +668,9 @@ export const Calendar = component('calendar', {
 
     const commitSingle = () => {
         const c = cursor.peek();
-        const withTime = !!props.time!.peek();
+        const withTime = !!props.time.peek();
         const p: Parts = { y: c.y, m: c.m, d: c.d, h: Number(hour.peek()) || 0, i: Number(minute.peek()) || 0, s: 0 };
-        commitValue(props.numeric!.peek() ? serialOf(p, withTime) : isoOf(p, withTime));
+        commitValue(props.numeric.peek() ? serialOf(p, withTime) : isoOf(p, withTime));
     };
 
     const commitRange = () => {
@@ -679,16 +679,16 @@ export const Calendar = component('calendar', {
             return;
         }
         const entry = (serial: number): unknown =>
-            props.numeric!.peek() ? serial : isoOf(fromSerial(serial), false);
+            props.numeric.peek() ? serial : isoOf(fromSerial(serial), false);
         commitValue([entry(rangeStart), rangeEnd !== null ? entry(rangeEnd) : '']);
     };
 
-    const commit = () => (props.range!.peek() ? commitRange() : commitSingle());
+    const commit = () => (props.range.peek() ? commitRange() : commitSingle());
 
     // ---- cursor and navigation
     const fireUpdate = () => {
         const c = cursor.peek();
-        (props.onupdate as ((v: string) => void) | undefined)?.(isoOf({ ...c, h: 0, i: 0, s: 0 }, false));
+        props.onupdate?.(isoOf({ ...c, h: 0, i: 0, s: 0 }, false));
     };
 
     const setCursorTo = (cell: CalendarCell) => {
@@ -740,7 +740,7 @@ export const Calendar = component('calendar', {
 
     // ---- selection (v5 select)
     const select = (cell: CalendarCell) => {
-        if (props.disabled!.peek() || cell.disabled) {
+        if (props.disabled.peek() || cell.disabled) {
             return;
         }
         const vw = view.peek();
@@ -756,7 +756,7 @@ export const Calendar = component('calendar', {
             return;
         }
         setCursorTo(cell);
-        if (props.range!.peek()) {
+        if (props.range.peek()) {
             // Clicking at/before the start (or with a finished range) restarts (v5)
             if (rangeStart !== null && (rangeStart >= cell.serial || rangeEnd !== null)) {
                 rangeStart = null;
@@ -771,7 +771,7 @@ export const Calendar = component('calendar', {
             refresh();
         } else {
             commitSingle();
-            if (!props.time!.peek()) {
+            if (!props.time.peek()) {
                 // time mode: the panel stays open for the time picker (v5)
                 closePanel('button');
             }
@@ -779,7 +779,7 @@ export const Calendar = component('calendar', {
     };
 
     const hover = (cell: CalendarCell) => {
-        if (props.range!.peek() && view.peek() === 'days' && rangeStart !== null && rangeEnd === null) {
+        if (props.range.peek() && view.peek() === 'days' && rangeStart !== null && rangeEnd === null) {
             if (hovered !== cell.serial) {
                 hovered = cell.serial;
                 refresh();
@@ -792,14 +792,14 @@ export const Calendar = component('calendar', {
         if (inline() || opened.peek()) {
             return;
         }
-        if ((props.type!.peek() as string) === 'auto') {
+        if ((props.type.peek() as string) === 'auto') {
             resolvedType.value = window.innerWidth > 640 ? 'default' : 'picker';
         }
         panelPosition.value = kind() === 'picker' ? 'bottom' : 'absolute';
         if (kind() === 'picker') {
             panelWidth.value = 0; // CSS pins the sheet to 100%
         } else {
-            panelWidth.value = (props.width!.peek() as number) || 300;
+            panelWidth.value = (props.width.peek() as number) || 300;
             const input = root?.querySelector('.lm-calendar-input');
             if (input) {
                 const rect = input.getBoundingClientRect();
@@ -813,7 +813,7 @@ export const Calendar = component('calendar', {
         syncFromValue(typed && !SERIAL.test(text.trim()) ? text : picked.peek());
         opened.value = true;
         modalApi?.open();
-        (props.onopen as (() => void) | undefined)?.();
+        props.onopen?.();
     };
 
     const closePanel = (origin: string) => {
@@ -824,7 +824,7 @@ export const Calendar = component('calendar', {
         modalApi?.close();
         // Anything uncommitted reverts: cursor, range preview, typed text
         syncFromValue(picked.peek());
-        (props.onclose as ((origin: string) => void) | undefined)?.(origin);
+        props.onclose?.(origin);
     };
 
     /** Done/Update/Enter: commit the current cursor (or range) and close */
@@ -844,8 +844,8 @@ export const Calendar = component('calendar', {
     // ---- input typing: mask + live view steering, commit on Enter only
     const onType = (e: Event) => {
         const el = e.target as HTMLInputElement;
-        if (props.format!.peek()) {
-            const pattern = maskPattern(props.format!.peek() as string);
+        if (props.format.peek()) {
+            const pattern = maskPattern(props.format.peek() as string);
             if (pattern && !((e as InputEvent).inputType || '').includes('delete')) {
                 const masked = applyMask(el.value, pattern);
                 if (masked !== el.value) {
@@ -854,7 +854,7 @@ export const Calendar = component('calendar', {
             }
         }
         display.value = el.value;
-        if (!props.range!.peek() && !SERIAL.test(el.value.trim())) {
+        if (!props.range.peek() && !SERIAL.test(el.value.trim())) {
             const p = parseEntry(el.value, fmt());
             if (p) {
                 cursor.value = { y: p.y, m: p.m, d: p.d };
@@ -920,7 +920,7 @@ export const Calendar = component('calendar', {
     };
 
     const onWheel = (e: WheelEvent) => {
-        if (props.wheel!.peek() === false) {
+        if (props.wheel.peek() === false) {
             return;
         }
         e.preventDefault();
@@ -957,13 +957,13 @@ export const Calendar = component('calendar', {
 
     // ---- lifecycle: external writes are silent; live props re-render
     onMount(() => picked.subscribe(() => syncFromValue(picked.peek())));
-    onMount(() => props.data!.subscribe(refresh));
-    onMount(() => props.min!.subscribe(refresh));
-    onMount(() => props.max!.subscribe(refresh));
-    onMount(() => props.range!.subscribe(refresh));
-    onMount(() => props.startingday!.subscribe(refresh));
+    onMount(() => props.data.subscribe(refresh));
+    onMount(() => props.min.subscribe(refresh));
+    onMount(() => props.max.subscribe(refresh));
+    onMount(() => props.range.subscribe(refresh));
+    onMount(() => props.startingday.subscribe(refresh));
     onMount(() =>
-        props.format!.subscribe(() => {
+        props.format.subscribe(() => {
             display.value = renderDisplay(picked.peek());
         })
     );
@@ -1009,7 +1009,7 @@ export const Calendar = component('calendar', {
                 </div>
             </div>
             <div class="lm-calendar-weekdays">${() => {
-                const start = Number(props.startingday!.value) || 0;
+                const start = Number(props.startingday.value) || 0;
                 return Array.from({ length: 7 }, (_, at) =>
                     html`<div>${translate(WEEKDAYS[(start + at) % 7]).substring(0, 1)}</div>`
                 );
@@ -1020,8 +1020,8 @@ export const Calendar = component('calendar', {
             onwheel="${onWheel}">
             ${() => cells.value.map(cellView)}
         </div>
-        <div class="lm-calendar-footer" data-visible="${() => (props.footer!.value === false ? 'false' : 'true')}">
-            <div class="lm-calendar-time" data-visible="${() => (props.time!.value ? 'true' : 'false')}">
+        <div class="lm-calendar-footer" data-visible="${() => (props.footer.value === false ? 'false' : 'true')}">
+            <div class="lm-calendar-time" data-visible="${() => (props.time.value ? 'true' : 'false')}">
                 <select class="lm-calendar-control" bind="${hour}">${HOURS.map(
                     (h) => html`<option value="${h}">${two(h)}</option>`
                 )}</select>
@@ -1039,8 +1039,8 @@ export const Calendar = component('calendar', {
 
     return html`<div class="lm-calendar"
         data-type="${() => kind()}"
-        data-grid="${() => (props.grid!.value ? 'true' : false)}"
-        data-disabled="${() => (props.disabled!.value ? 'true' : false)}"
+        data-grid="${() => (props.grid.value ? 'true' : false)}"
+        data-disabled="${() => (props.disabled.value ? 'true' : false)}"
         ref="${(el: Element) => (root = el as HTMLElement)}"
         onkeydown="${onKey}"
         onfocusout="${onFocusOut}">
@@ -1048,7 +1048,7 @@ export const Calendar = component('calendar', {
             inline()
                 ? ''
                 : html`<input type="text" class="lm-calendar-input" bind="${display}"
-                      placeholder="${() => (props.placeholder!.value as string) || false}"
+                      placeholder="${() => (props.placeholder.value as string) || false}"
                       onclick="${open}"
                       onfocusin="${open}"
                       oninput="${onType}" />`}

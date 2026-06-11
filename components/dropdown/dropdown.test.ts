@@ -44,11 +44,11 @@ const fruits = () => [
 
 const open = async (props: Record<string, unknown> = {}) => {
     let api: Api | null = null;
-    handle = t(Dropdown as never, {
+    handle = t(Dropdown, {
         data: fruits(),
         ...props,
         ref: (a: Api) => (api = a),
-    } as never);
+    });
     return api!;
 };
 
@@ -60,7 +60,7 @@ const key = (k: string) => rootEl().dispatchEvent(new KeyboardEvent('keydown', {
 
 describe('components/dropdown — the select on the Modal primitive', () => {
     it('passes verify() — the registry gate', () => {
-        expect(verify(Dropdown as never).pass).toBe(true);
+        expect(verify(Dropdown).pass).toBe(true);
     });
 
     it('normalizes strings, numbers and {id,name} into items', async () => {

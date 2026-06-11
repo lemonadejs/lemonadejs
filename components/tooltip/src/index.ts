@@ -57,7 +57,7 @@ export const Tooltip = component('tooltip', {
         const r = wrapper.getBoundingClientRect();
         const w = popper.offsetWidth;
         const h = popper.offsetHeight;
-        let s = props.position!.value as string;
+        let s = props.position.value as string;
         if (SIDES.indexOf(s) < 0) {
             s = 'top';
         }
@@ -92,25 +92,25 @@ export const Tooltip = component('tooltip', {
     // state is the re-arm signal for both paths.
     onMount(() => open.subscribe((v) => v && place()));
     // position is live while open
-    onMount(() => props.position!.subscribe(() => open.value && place()));
+    onMount(() => props.position.subscribe(() => open.value && place()));
 
     // ---- show/hide
     const show = () => {
-        if (props.disabled!.value || open.value || timer !== null) {
+        if (props.disabled.value || open.value || timer !== null) {
             return;
         }
         timer = setTimeout(() => {
             timer = null;
             open.value = true;
-            (props.onopen as (() => void) | undefined)?.();
-        }, props.delay!.value as number);
+            props.onopen?.();
+        }, props.delay.value as number);
     };
 
     const hide = () => {
         clearPending(); // leaving mid-delay cancels the pending show
         if (open.value) {
             open.value = false;
-            (props.onclose as (() => void) | undefined)?.();
+            props.onclose?.();
         }
     };
 
@@ -130,7 +130,7 @@ export const Tooltip = component('tooltip', {
         }}"
         onkeydown="${(e: KeyboardEvent) => e.key === 'Escape' && hide()}">${props.children}${() =>
         open.value &&
-        html`<span class="lm-tooltip-popper ${() => (props.arrow!.value ? 'lm-tooltip-arrow' : '')}"
+        html`<span class="lm-tooltip-popper ${() => (props.arrow.value ? 'lm-tooltip-arrow' : '')}"
             role="tooltip"
             data-position="${() => side.value}"
             style="${() => 'position:fixed;top:' + pos.value.top + 'px;left:' + pos.value.left + 'px'}"

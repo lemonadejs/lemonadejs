@@ -87,7 +87,7 @@ export const List = component('list', {
     // peek, not value: render bindings must NOT track data directly —
     // every data change (assignment or touch) flows through the refresh
     // subscription into `view`, so the list re-renders exactly once
-    const items = () => (props.data!.peek() as unknown[]) || [];
+    const items = () => (props.data.peek() as unknown[]) || [];
 
     // ---- the view pipeline: data -> filter(query) -> indices
     const view = state<number[]>([]);
@@ -98,13 +98,13 @@ export const List = component('list', {
     let scroller: HTMLElement | null = null;
 
     /** v5: total set externally = the caller owns filtering and slicing */
-    const isRemote = () => (props.total!.value as number) > 0;
-    const virtual = () => !props.pagination!.value && (props.height!.value as number) > 0;
-    const rowHeight = () => (props.rowheight!.value as number) || 40;
+    const isRemote = () => (props.total.value as number) > 0;
+    const virtual = () => !props.pagination.value && (props.height.value as number) > 0;
+    const rowHeight = () => (props.rowheight.value as number) || 40;
 
     const pageCount = () => {
-        const size = (props.pagination!.value as number) || 1;
-        const total = isRemote() ? (props.total!.value as number) : view.value.length;
+        const size = (props.pagination.value as number) || 1;
+        const total = isRemote() ? (props.total.value as number) : view.value.length;
         return Math.max(1, Math.ceil(total / size));
     };
 
@@ -123,7 +123,7 @@ export const List = component('list', {
             indices = Array.from({ length: data.length }, (_, i) => i);
         }
         view.value = indices;
-        if (props.pagination!.value) {
+        if (props.pagination.value) {
             page.value = Math.min(page.value, Math.max(0, pageCount() - 1));
         } else if (scroller) {
             onScroll();
@@ -133,20 +133,20 @@ export const List = component('list', {
     // External data changes: assignment AND touch() re-enter the pipeline.
     // v5: a local-mode data assignment goes back to page zero (silently);
     // in remote mode the new data IS the requested page — keep it.
-    onMount(() => props.data!.subscribe(() => {
+    onMount(() => props.data.subscribe(() => {
         if (!isRemote()) {
             page.value = 0;
         }
         refresh();
     }));
-    onMount(() => props.total!.subscribe(refresh)); // v5: total change recomputes the pager
+    onMount(() => props.total.subscribe(refresh)); // v5: total change recomputes the pager
 
     // ---- virtual window (the datagrid pattern: view + first + translateY)
     const visibleCount = () =>
-        props.pagination!.value
-            ? (props.pagination!.value as number)
+        props.pagination.value
+            ? (props.pagination.value as number)
             : virtual()
-              ? Math.ceil((props.height!.value as number) / rowHeight()) + OVERSCAN * 2
+              ? Math.ceil((props.height.value as number) / rowHeight()) + OVERSCAN * 2
               : view.value.length;
 
     const onScroll = () => {
@@ -160,10 +160,10 @@ export const List = component('list', {
 
     const windowIndices = () => {
         // Remote: data is already the current page — show all of it
-        const start = props.pagination!.value
+        const start = props.pagination.value
             ? isRemote()
                 ? 0
-                : page.value * (props.pagination!.value as number)
+                : page.value * (props.pagination.value as number)
             : first.value;
         return view.value.slice(start, start + visibleCount());
     };
@@ -171,11 +171,11 @@ export const List = component('list', {
     // ---- search (v5: onbeforesearch → filter (local only) → onsearch)
     const setSearch = (q: string) => {
         const next = String(q ?? '');
-        (props.onbeforesearch as ((q: string) => void) | undefined)?.(next);
+        props.onbeforesearch?.(next);
         query.value = next;
         page.value = 0;
         refresh();
-        (props.onsearch as ((q: string) => void) | undefined)?.(next);
+        props.onsearch?.(next);
     };
 
     // ---- paging (v5 setPage; clamped; silent when nothing changes)
@@ -183,14 +183,14 @@ export const List = component('list', {
         const next = Math.min(Math.max(0, Math.floor(p)), pageCount() - 1);
         if (next !== page.value) {
             page.value = next;
-            (props.onchangepage as ((p: number) => void) | undefined)?.(next);
+            props.onchangepage?.(next);
         }
     };
 
     /** "21–40 of 87 items" */
     const pageInfo = () => {
-        const size = props.pagination!.value as number;
-        const total = isRemote() ? (props.total!.value as number) : view.value.length;
+        const size = props.pagination.value as number;
+        const total = isRemote() ? (props.total.value as number) : view.value.length;
         if (!total) {
             return '0 items';
         }
@@ -251,7 +251,7 @@ export const List = component('list', {
     const itemView = (dataIndex: number) => {
         const item = items()[dataIndex];
         // render is a declared (non-event) prop, so it arrives as a live state
-        const custom = props.render!.value as ((item: unknown, index: number) => string | View) | undefined;
+        const custom = props.render.value as ((item: unknown, index: number) => string | View) | undefined;
         const onitemclick = props.onitemclick as
             | ((item: unknown, index: number, e: MouseEvent) => void)
             | undefined;
@@ -262,16 +262,16 @@ export const List = component('list', {
             custom ? custom(item, dataIndex) : defaultItem(item)}</div>`;
     };
 
-    return html`<div class="lm-list ${() => (props.dense!.value ? 'lm-list-dense' : '')} ${() =>
-        props.divider!.value ? 'lm-list-divider' : ''}">
+    return html`<div class="lm-list ${() => (props.dense.value ? 'lm-list-dense' : '')} ${() =>
+        props.divider.value ? 'lm-list-divider' : ''}">
         ${() =>
-            props.search!.value &&
+            props.search.value &&
             html`<div class="lm-list-toolbar">
                 <input class="lm-list-search" type="search" placeholder="Search..."
                     oninput="${(e: Event) => setSearch((e.target as HTMLInputElement).value)}" />
             </div>`}
         <div class="lm-list-content" role="list"
-            style="${() => (virtual() ? 'height:' + props.height!.value + 'px;overflow-y:auto' : '')}"
+            style="${() => (virtual() ? 'height:' + props.height.value + 'px;overflow-y:auto' : '')}"
             ref="${(el: Element) => (scroller = el as HTMLElement)}"
             onscroll="${onScroll}">
             <div class="lm-list-canvas"
@@ -283,11 +283,11 @@ export const List = component('list', {
             </div>
             ${() =>
                 view.value.length === 0
-                    ? html`<div class="lm-list-message">${() => props.message!.value}</div>`
+                    ? html`<div class="lm-list-message">${() => props.message.value}</div>`
                     : ''}
         </div>
         ${() =>
-            props.pagination!.value
+            props.pagination.value
                 ? html`<div class="lm-list-footer">
                       <span class="lm-list-pageinfo">${() => pageInfo()}</span>
                       <nav class="lm-list-pages" aria-label="Pagination">

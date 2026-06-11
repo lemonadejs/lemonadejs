@@ -26,7 +26,7 @@ const leave = (el: HTMLElement) => el.dispatchEvent(new MouseEvent('mouseleave')
 
 describe('components/rating', () => {
     it('passes verify() — the registry gate', () => {
-        const report = verify(Rating as never);
+        const report = verify(Rating);
         expect(report.pass).toBe(true);
     });
 

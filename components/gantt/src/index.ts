@@ -75,7 +75,7 @@ export const Gantt = component('gantt', {
     onclick: Function,            // (task, event)
     api: { getRange: Function, setRange: Function },
 }, (props, { state, onMount, onUnmount }) => {
-    const tasks = () => (props.data!.peek() as GanttTask[]) || [];
+    const tasks = () => (props.data.peek() as GanttTask[]) || [];
 
     // ---- the range: explicit props win; otherwise fit the data
     const range = state<{ from: number; to: number }>({ from: 0, to: 1 });
@@ -85,8 +85,8 @@ export const Gantt = component('gantt', {
 
     const computeRange = () => {
         const list = tasks();
-        let from = props.start!.peek() ? toMs(props.start!.peek() as string) : NaN;
-        let to = props.end!.peek() ? toMs(props.end!.peek() as string) : NaN;
+        let from = props.start.peek() ? toMs(props.start.peek() as string) : NaN;
+        let to = props.end.peek() ? toMs(props.end.peek() as string) : NaN;
         if (Number.isNaN(from) || Number.isNaN(to)) {
             let lo = Infinity;
             let hi = -Infinity;
@@ -115,9 +115,9 @@ export const Gantt = component('gantt', {
         version.value++;
     };
 
-    onMount(() => props.data!.subscribe(refresh));
-    onMount(() => props.start!.subscribe(refresh));
-    onMount(() => props.end!.subscribe(refresh));
+    onMount(() => props.data.subscribe(refresh));
+    onMount(() => props.start.subscribe(refresh));
+    onMount(() => props.end.subscribe(refresh));
     computeRange();
 
     const totalDays = () => Math.round((range.value.to - range.value.from) / DAY) + 1;
@@ -164,14 +164,14 @@ export const Gantt = component('gantt', {
     };
 
     const startDrag = (e: MouseEvent, index: number, task: GanttTask, el: HTMLElement) => {
-        if (!props.editable!.value || task.readonly) {
+        if (!props.editable.value || task.readonly) {
             return;
         }
         e.preventDefault();
         const area = el.closest('.lm-gantt-rows') as HTMLElement;
         const areaRect = area.getBoundingClientRect();
         const barRect = el.getBoundingClientRect();
-        const snapMs = Math.max(1, (props.snap!.value as number) || 1) * DAY;
+        const snapMs = Math.max(1, (props.snap.value as number) || 1) * DAY;
         const msPerPx = (range.value.to - range.value.from + DAY) / (areaRect.width || 1);
 
         const mode: 'move' | 'left' | 'right' =
@@ -210,8 +210,8 @@ export const Gantt = component('gantt', {
                 }
                 task.start = toIso(p.from);
                 task.end = toIso(p.to);
-                props.data!.touch();
-                (props.onchange as ((t: GanttTask, s: string, e: string) => void) | undefined)?.(
+                props.data.touch();
+                props.onchange?.(
                     task,
                     task.start,
                     task.end
@@ -235,7 +235,7 @@ export const Gantt = component('gantt', {
     const injectedCells: HTMLTableCellElement[] = [];
 
     const renderLanes = () => {
-        const selector = props.table!.peek() as string;
+        const selector = props.table.peek() as string;
         if (!selector) {
             return;
         }
@@ -282,7 +282,7 @@ export const Gantt = component('gantt', {
         } else {
             el.className =
                 'lm-gantt-bar' +
-                (props.editable!.peek() && !task.readonly ? ' lm-gantt-editable' : '') +
+                (props.editable.peek() && !task.readonly ? ' lm-gantt-editable' : '') +
                 (dragging ? ' lm-gantt-dragging' : '');
             el.style.left = round2(pct(from)) + '%';
             el.style.width = round2(widthPct(from, to)) + '%';
@@ -303,13 +303,13 @@ export const Gantt = component('gantt', {
         el.title = (task.label || '') + ' · ' + toIso(from) + (milestone ? '' : ' → ' + toIso(to));
         el.addEventListener('mousedown', (e) => startDrag(e, index, task, el));
         el.addEventListener('click', (e) =>
-            (props.onclick as ((t: GanttTask, ev: MouseEvent) => void) | undefined)?.(task, e)
+            props.onclick?.(task, e)
         );
         return el;
     };
 
     onMount(() => {
-        if (props.table!.peek()) {
+        if (props.table.peek()) {
             renderLanes();
             // Lanes follow the same pipeline: data/range changes AND drag
             // previews re-render the affected lanes
@@ -383,11 +383,11 @@ export const Gantt = component('gantt', {
                 title="${(task.label || '') + ' · ' + toIso(from)}"
                 onmousedown="${(e: MouseEvent) => startDrag(e, index, task, (e.currentTarget || e.target) as HTMLElement)}"
                 onclick="${(e: MouseEvent) =>
-                    (props.onclick as ((t: GanttTask, ev: MouseEvent) => void) | undefined)?.(task, e)}"></div>`;
+                    props.onclick?.(task, e)}"></div>`;
         }
 
         return html`<div class="lm-gantt-bar ${dragging ? 'lm-gantt-dragging' : ''} ${
-            props.editable!.value && !task.readonly ? 'lm-gantt-editable' : ''
+            props.editable.value && !task.readonly ? 'lm-gantt-editable' : ''
         }"
             style="left:${round2(pct(from))}%;width:${round2(widthPct(from, to))}%;${
                 task.color ? 'background:' + task.color : ''
@@ -395,7 +395,7 @@ export const Gantt = component('gantt', {
             title="${(task.label || '') + ' · ' + toIso(from) + ' → ' + toIso(to)}"
             onmousedown="${(e: MouseEvent) => startDrag(e, index, task, (e.currentTarget || e.target) as HTMLElement)}"
             onclick="${(e: MouseEvent) =>
-                (props.onclick as ((t: GanttTask, ev: MouseEvent) => void) | undefined)?.(task, e)}">
+                props.onclick?.(task, e)}">
             ${() =>
                 typeof task.progress === 'number'
                     ? html`<div class="lm-gantt-progress" style="width:${Math.min(100, Math.max(0, task.progress))}%"></div>`
@@ -404,9 +404,9 @@ export const Gantt = component('gantt', {
         </div>`;
     };
 
-    return html`<div class="lm-gantt" data-editable="${() => (props.editable!.value ? 'true' : false)}">
+    return html`<div class="lm-gantt" data-editable="${() => (props.editable.value ? 'true' : false)}">
         ${() =>
-            props.header!.value &&
+            props.header.value &&
             html`<div class="lm-gantt-header">
                 <div class="lm-gantt-months">${() =>
                     monthSegments().map(
@@ -419,11 +419,11 @@ export const Gantt = component('gantt', {
                     )}</div>
             </div>`}
         ${() =>
-            props.table!.value
+            props.table.value
                 ? '' // table mode: the rows live as lanes inside YOUR table
                 : html`<div class="lm-gantt-rows">
                       ${() =>
-                          props.grid!.value &&
+                          props.grid.value &&
                           html`<div class="lm-gantt-grid">${() =>
                               dayTicks()
                                   .filter((t) => t.weekend)
@@ -432,13 +432,13 @@ export const Gantt = component('gantt', {
                                           html`<div class="lm-gantt-weekend" style="left:${t.left}%;width:${t.width}%"></div>`
                                   )}</div>`}
                       ${() =>
-                          props.today!.value && todayLeft() !== null
+                          props.today.value && todayLeft() !== null
                               ? html`<div class="lm-gantt-today" style="left:${todayLeft()}%"></div>`
                               : ''}
                       ${() => {
                           void version.value; // rows flow through refresh
                           return tasks().map(
-                              (task, index) => html`<div class="lm-gantt-row" style="height:${props.rowheight!.value}px">
+                              (task, index) => html`<div class="lm-gantt-row" style="height:${props.rowheight.value}px">
                                   ${() => barView(task, index)}
                               </div>`
                           );

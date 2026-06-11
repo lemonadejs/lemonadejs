@@ -206,11 +206,11 @@ export const Schedule = component('schedule', {
 }, (props, { state, onMount, onUnmount }) => {
     // ---- data access: peek, never track — every change (assignment or
     // touch) flows through ONE subscription into the tick the body reads
-    const rows = (): ScheduleEvent[] => (props.data!.peek() as ScheduleEvent[]) || [];
-    const weekly = (): boolean => !!props.weekly!.value;
+    const rows = (): ScheduleEvent[] => (props.data.peek() as ScheduleEvent[]) || [];
+    const weekly = (): boolean => !!props.weekly.value;
 
-    if (!Array.isArray(props.data!.peek())) {
-        props.data!.value = [];
+    if (!Array.isArray(props.data.peek())) {
+        props.data.value = [];
     }
 
     const tick = state(0);
@@ -220,17 +220,17 @@ export const Schedule = component('schedule', {
         normalize(rows()); // external assignments may carry raw events
         tick.value = tick.peek() + 1;
     };
-    onMount(() => props.data!.subscribe(refresh));
+    onMount(() => props.data.subscribe(refresh));
 
     // ---- grid math (live: grid/snap may change after mount, v5 track())
     const gridMin = (): number => {
-        const g = Number(props.grid!.value);
+        const g = Number(props.grid.value);
         return g > 0 ? g : 15;
     };
     const perHour = (): number => Math.max(1, Math.round(60 / gridMin()));
     const totalRows = (): number => perHour() * 24;
     const snapDiv = (): number => {
-        const s = Number(props.snap!.value) || 0;
+        const s = Number(props.snap.value) || 0;
         if (s <= gridMin()) {
             return 1;
         }
@@ -254,19 +254,19 @@ export const Schedule = component('schedule', {
     // ---- anchor date + range mirrors (props live; setRange/setReadOnly write)
     // peek during setup: tracked reads in the setup body trip the LJS-202
     // snapshot heuristic (the template legitimately carries primitive slots)
-    const anchor = state((props.value!.peek() as string) || todayISO());
+    const anchor = state((props.value.peek() as string) || todayISO());
     onMount(() =>
-        props.value!.subscribe((v) => {
+        props.value.subscribe((v) => {
             if (v) {
                 anchor.value = v as string;
             }
         })
     );
 
-    const validRange = state<string[]>((props.validrange!.peek() as string[]) || []);
-    const readonlyRange = state<unknown[]>((props.readonlyrange!.peek() as unknown[]) || []);
-    onMount(() => props.validrange!.subscribe((v) => (validRange.value = (v as string[]) || [])));
-    onMount(() => props.readonlyrange!.subscribe((v) => (readonlyRange.value = (v as unknown[]) || [])));
+    const validRange = state<string[]>((props.validrange.peek() as string[]) || []);
+    const readonlyRange = state<unknown[]>((props.readonlyrange.peek() as unknown[]) || []);
+    onMount(() => props.validrange.subscribe((v) => (validRange.value = (v as string[]) || [])));
+    onMount(() => props.readonlyrange.subscribe((v) => (readonlyRange.value = (v as unknown[]) || [])));
 
     const selection = state<string[]>([]);
     const drag = state<Drag | null>(null);
@@ -286,7 +286,7 @@ export const Schedule = component('schedule', {
     // ---- columns: 7 slots, null = hidden (v5 getColumns, local time only)
     const columns = (): (Column | null)[] => {
         const out: (Column | null)[] = [null, null, null, null, null, null, null];
-        const kind = (props.type!.value as string) || 'week';
+        const kind = (props.type.value as string) || 'week';
         const base = parseDate(anchor.value) || new Date();
         if (weekly()) {
             if (kind === 'week') {
@@ -478,7 +478,7 @@ export const Schedule = component('schedule', {
         rows().push(...events);
         sortData();
         remember({ action: 'add', records: events });
-        props.data!.touch();
+        props.data.touch();
         call('oncreate', events);
         if (user) {
             if (edit) {
@@ -510,7 +510,7 @@ export const Schedule = component('schedule', {
             newValue.end !== undefined ||
             newValue.date !== undefined ||
             newValue.weekday !== undefined;
-        if (!props.overlap!.value && placeChanged) {
+        if (!props.overlap.value && placeChanged) {
             const place: Place = weekly()
                 ? (newValue.weekday !== undefined ? newValue.weekday : record.weekday)!
                 : String(newValue.date !== undefined ? newValue.date : record.date).substring(0, 10);
@@ -538,7 +538,7 @@ export const Schedule = component('schedule', {
         }
         sortData();
         remember({ action: 'update', guid: record.guid!, newValue: applied, oldValue });
-        props.data!.touch();
+        props.data.touch();
         call('onupdate', record, oldValue, newValue);
         notifyChange();
         return true;
@@ -568,7 +568,7 @@ export const Schedule = component('schedule', {
         if (removed.length) {
             remember({ action: 'delete', records: removed });
         }
-        props.data!.touch();
+        props.data.touch();
         notifyChange();
         return true;
     };
@@ -587,7 +587,7 @@ export const Schedule = component('schedule', {
         }
         normalize(next);
         selection.value = [];
-        props.data!.value = next; // assignment notifies the data subscription
+        props.data.value = next; // assignment notifies the data subscription
         notifyChange();
         return true;
     };
@@ -626,7 +626,7 @@ export const Schedule = component('schedule', {
         anchor.value = fmtDate(d);
     };
     const step = (): number => {
-        const kind = (props.type!.value as string) || 'week';
+        const kind = (props.type.value as string) || 'week';
         return kind === 'week' || kind === 'weekdays' ? 7 : 1;
     };
 
@@ -684,7 +684,7 @@ export const Schedule = component('schedule', {
     // ---- editor (v5 dist/event.js, composed on Modal)
     const edition = (record: ScheduleEvent): void => {
         call('onedition', record);
-        if (props.editor!.value) {
+        if (props.editor.value) {
             openEditor(record);
         }
     };
@@ -809,7 +809,7 @@ export const Schedule = component('schedule', {
             if (y2 >= totalRows() || inDisabledRange(y, y2 + 1)) {
                 return;
             }
-            if (!props.overlap!.value && conflicts(place, y, y2 + 1, d.guid ?? undefined)) {
+            if (!props.overlap.value && conflicts(place, y, y2 + 1, d.guid ?? undefined)) {
                 return;
             }
             drag.value = { ...d, y1: y, y2, column: x, place };
@@ -820,7 +820,7 @@ export const Schedule = component('schedule', {
             if (inDisabledRange(lo, hi + 1)) {
                 return;
             }
-            if (!props.overlap!.value && conflicts(d.place, lo, hi + 1, d.guid ?? undefined)) {
+            if (!props.overlap.value && conflicts(d.place, lo, hi + 1, d.guid ?? undefined)) {
                 return;
             }
             drag.value = { ...d, y2: snapped };
@@ -1056,7 +1056,7 @@ export const Schedule = component('schedule', {
     // ---- rendering
     const headerView = (): View[] => {
         const cols = columns();
-        const dict = props.weekdays!.value as string[] | undefined;
+        const dict = props.weekdays.value as string[] | undefined;
         const names = Array.isArray(dict) && dict.length === 7 ? dict : DEFAULT_WEEKDAYS;
         const now = new Date();
         const today = fmtDate(now);
@@ -1143,7 +1143,7 @@ export const Schedule = component('schedule', {
             const place = placeOf(c);
             const list = eventsAt(place);
             byPlace.set(place, list);
-            if (props.overlap!.value) {
+            if (props.overlap.value) {
                 const active: ScheduleEvent[] = [];
                 for (const ev of list) {
                     const s = hourToInt(ev.start);
@@ -1203,7 +1203,7 @@ export const Schedule = component('schedule', {
         if (!d) {
             return '';
         }
-        const dict = props.weekdays!.value as string[] | undefined;
+        const dict = props.weekdays.value as string[] | undefined;
         const names = Array.isArray(dict) && dict.length === 7 ? dict : DEFAULT_WEEKDAYS;
         const times = timeOptions();
         const timeSelect = (cls: string, current: string | undefined, set: (v: string) => void) =>
@@ -1246,7 +1246,7 @@ export const Schedule = component('schedule', {
 
     return html`<div class="lm-schedule ${() => (gridMin() > 9 ? 'lm-schedule-large' : '')}"
         tabindex="0"
-        data-type="${() => (props.type!.value as string) || 'week'}"
+        data-type="${() => (props.type.value as string) || 'week'}"
         data-weekly="${() => (weekly() ? 'true' : false)}"
         ref="${(el: Element) => (rootEl = el as HTMLElement)}"
         onmousedown="${onPress}"

@@ -10,11 +10,12 @@ import {
     use,
     createWebComponent,
     store,
+    type ApiOf,
     type Bindable,
     type Component,
     type State,
 } from '../src/index';
-import { render as t, verify } from '../src/test';
+import { render as t, verify, flush, setRect } from '../src/test';
 
 let handle: ReturnType<typeof t> | null = null;
 afterEach(() => {
@@ -90,8 +91,8 @@ suite('Contracts: component() and describe()', () => {
     });
 
     it('coerces attribute strings to declared types', () => {
-        const Doubler = component('doubler', { count: 0 }, (props: { count?: State<number> }) =>
-            html`<i>${() => (props.count!.value as number) * 2}</i>`);
+        const Doubler = component('doubler', { count: 0 }, (props) =>
+            html`<i>${() => props.count.value * 2}</i>`);
         const App: Component = () => html`<main><${Doubler} count="21" /></main>`;
         handle = t(App);
         expect(handle.query('i')!.textContent).toBe('42'); // number math, not "2121"
@@ -122,10 +123,8 @@ suite('Contract-driven web components', () => {
     });
 
     it('attributes are LIVE after mount and coerced (core of HTML)', () => {
-        const Label = component('liveattr', { label: 'x', count: 0 }, (props: {
-            label?: State<string>;
-            count?: State<number>;
-        }) => html`<p>${props.label}:${() => (props.count!.value as number) + 1}</p>`);
+        const Label = component('liveattr', { label: 'x', count: 0 }, (props) =>
+            html`<p>${props.label}:${() => props.count.value + 1}</p>`);
         createWebComponent(Label as Component<Record<string, unknown>>);
 
         const el = document.createElement('lm-liveattr');
@@ -312,5 +311,95 @@ suite('verify() — conformance against the contract', () => {
         const apiCheck = report.checks.find((c) => c.name === 'api via ref')!;
         expect(apiCheck.pass).toBe(false);
         expect(apiCheck.detail).toContain('api.open');
+    });
+});
+
+suite('LJS-402: unknown props warn with a suggestion', () => {
+    const warned = (fn: () => void): string[] => {
+        const spy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+        try {
+            fn();
+            return spy.mock.calls.map((c) => String(c[0])).filter((m) => m.indexOf('LJS-402') >= 0);
+        } finally {
+            spy.mockRestore();
+        }
+    };
+
+    it('a typo in a prop name warns and suggests the declared name', () => {
+        const messages = warned(() => {
+            handle = t(Switch as Component<unknown>, { lable: 'oops' });
+        });
+        expect(messages.length).toBe(1);
+        expect(messages[0]).toContain('lable in <switch>');
+        expect(messages[0]).toContain("did you mean 'label'?");
+    });
+
+    it('declared props, events, ref, children and expose never warn', () => {
+        const messages = warned(() => {
+            handle = t(Switch as Component<unknown>, {
+                label: 'fine',
+                onchange: () => {},
+                ref: () => {},
+            });
+        });
+        expect(messages).toEqual([]);
+    });
+
+    it('bind on a contract WITHOUT bind warns', () => {
+        const NoBind = component('nobind402', { label: '' }, (props) => html`<i>${props.label}</i>`);
+        const messages = warned(() => {
+            handle = t(NoBind as Component<unknown>, { bind: store('x') });
+        });
+        expect(messages.length).toBe(1);
+        expect(messages[0]).toContain('bind in <nobind402>');
+    });
+
+    it('a prop far from every declared name warns without a suggestion', () => {
+        const messages = warned(() => {
+            handle = t(Switch as Component<unknown>, { totallydifferent: 1 });
+        });
+        expect(messages.length).toBe(1);
+        expect(messages[0]).not.toContain('did you mean');
+    });
+});
+
+suite('Type flow: contract knowledge reaches the editor', () => {
+    it('declared props are non-optional states — no ! needed', () => {
+        // The body below compiles WITHOUT non-null assertions: that is the test
+        const Meter = component('meter402', { min: 0, max: 100, onlevel: Function }, (props) => {
+            const span = props.max.value - props.min.value; // number, no casts
+            props.onlevel?.(span); // events invocable as-is
+            return html`<i>${span}</i>`;
+        });
+        handle = t(Meter as Component<unknown>, { min: 10, max: 30 });
+        expect(handle.text()).toBe('20');
+    });
+});
+
+suite('Test helpers: flush() and setRect()', () => {
+    it('flush() drains zero-delay timers', async () => {
+        let done = false;
+        setTimeout(() => (done = true), 0);
+        expect(done).toBe(false);
+        await flush();
+        expect(done).toBe(true);
+    });
+
+    it('setRect() gives jsdom elements real geometry', () => {
+        const Probe: Component = () => html`<div class="box"></div>`;
+        handle = t(Probe);
+        const box = handle.query('.box')!;
+        setRect(box, { left: 10, top: 20, width: 100, height: 50 });
+        const r = box.getBoundingClientRect();
+        expect(r.right).toBe(110);
+        expect(r.bottom).toBe(70);
+        expect(r.width).toBe(100);
+    });
+
+    it('ApiOf<typeof C> names the api a ref receives — no hand-rolled shapes', () => {
+        let api: ApiOf<typeof Switch> | null = null;
+        handle = t(Switch, { ref: (a) => (api = a) });
+        api!.toggle(); // typed straight from the contract
+        expect(handle.query('.switch')!.className).toContain('on');
     });
 });

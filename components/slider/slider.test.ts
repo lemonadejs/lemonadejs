@@ -35,13 +35,13 @@ const key = (k: string) => new KeyboardEvent('keydown', { key: k, bubbles: true,
 
 /** Mount and stub the track rect: 200px wide at x=0 → clientX/2 = percent */
 const mount = (props: Record<string, unknown> = {}) => {
-    handle = t(Slider as never, props as never);
+    handle = t(Slider, props);
     setRect(track(), { top: 0, left: 0, width: 200, height: 24 });
 };
 
 describe('components/slider', () => {
     it('passes verify() — the registry gate', () => {
-        expect(verify(Slider as never).pass).toBe(true);
+        expect(verify(Slider).pass).toBe(true);
     });
 
     it('positions fill and thumb deterministically from the bound value', () => {

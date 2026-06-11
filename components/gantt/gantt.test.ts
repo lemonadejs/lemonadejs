@@ -27,13 +27,13 @@ const tasks = (): GanttTask[] => [
 
 const open = (props: Record<string, unknown> = {}) => {
     let api: Api | null = null;
-    handle = t(Gantt as never, {
+    handle = t(Gantt, {
         data: tasks(),
         start: '2026-06-01',
         end: '2026-06-20',
         ...props,
         ref: (a: Api) => (api = a),
-    } as never);
+    });
     return api!;
 };
 
@@ -43,7 +43,7 @@ const styleOf = (el: Element) => el.getAttribute('style') || '';
 // 2026-06-01..20 = 20 days inclusive → each day = 5% of the range
 describe('components/gantt — %-positioned, table-embeddable', () => {
     it('passes verify() — the registry gate', () => {
-        expect(verify(Gantt as never).pass).toBe(true);
+        expect(verify(Gantt).pass).toBe(true);
     });
 
     it('bars are positioned in % of the range (the alignment contract)', () => {
@@ -59,12 +59,12 @@ describe('components/gantt — %-positioned, table-embeddable', () => {
     it('two instances sharing a range align exactly (the embedding story)', () => {
         open();
         const firstStyles = bars().map(styleOf);
-        const second = t(Gantt as never, {
+        const second = t(Gantt, {
             data: tasks(),
             start: '2026-06-01',
             end: '2026-06-20',
             header: false,
-        } as never);
+        });
         const secondStyles = [...second.root.querySelectorAll('.lm-gantt-bar')].map((el) => el.getAttribute('style'));
         expect(secondStyles[0]).toContain('left:0%');
         expect(firstStyles[0]!.includes('left:0%')).toBe(true);

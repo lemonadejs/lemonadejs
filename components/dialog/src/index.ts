@@ -58,17 +58,17 @@ export const Dialog = component('dialog', {
 
     // Effective values: the last open(options) wins over props (v5
     // setProperties merged options straight into self)
-    const title = () => overrides.value.title ?? (props.title!.value as string);
-    const message = () => overrides.value.message ?? (props.message!.value as string);
-    const kind = () => overrides.value.type ?? (props.type!.value as string);
-    const confirmLabel = () => overrides.value.confirmlabel ?? (props.confirmlabel!.value as string);
-    const cancelLabel = () => overrides.value.cancellabel ?? (props.cancellabel!.value as string);
-    const placeholder = () => overrides.value.placeholder ?? (props.placeholder!.value as string);
+    const title = () => overrides.value.title ?? (props.title.value as string);
+    const message = () => overrides.value.message ?? (props.message.value as string);
+    const kind = () => overrides.value.type ?? (props.type.value as string);
+    const confirmLabel = () => overrides.value.confirmlabel ?? (props.confirmlabel.value as string);
+    const cancelLabel = () => overrides.value.cancellabel ?? (props.cancellabel.value as string);
+    const placeholder = () => overrides.value.placeholder ?? (props.placeholder.value as string);
 
     // v5: `cancel || !(type == 'alert' || type == 'input')` — Cancel always
     // shows on the default type; cancel=false hides it on alert/input
     const cancelVisible = () => {
-        const wanted = overrides.value.cancel ?? (props.cancel!.value as boolean);
+        const wanted = overrides.value.cancel ?? (props.cancel.value as boolean);
         const t = kind();
         return wanted || !(t === 'alert' || t === 'input');
     };

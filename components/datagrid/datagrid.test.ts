@@ -41,14 +41,14 @@ const columns: Column[] = [
 
 const open = (props: Record<string, unknown> = {}) => {
     let api: Api | null = null;
-    handle = t(Datagrid as never, {
+    handle = t(Datagrid, {
         data: makeRows(1000),
         columns,
         height: 360,
         rowheight: 36,
         ...props,
         ref: (a: Api) => (api = a),
-    } as never);
+    });
     return api!;
 };
 
@@ -63,7 +63,7 @@ const scrollTo = (top: number) => {
 
 describe('components/datagrid — the virtualized grid', () => {
     it('passes verify() — the registry gate', () => {
-        expect(verify(Datagrid as never).pass).toBe(true);
+        expect(verify(Datagrid).pass).toBe(true);
     });
 
     it('VIRTUALIZES: 1000 rows produce only a window of DOM', () => {

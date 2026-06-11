@@ -57,7 +57,7 @@ export const Transferlist = component('transferlist', {
     const queryRight = state('');
 
     // ---- derived views (tracked: re-run when data/chosen/checks change)
-    const items = () => normalize((props.data!.value as unknown[]) || []);
+    const items = () => normalize((props.data.value as unknown[]) || []);
     const chosenValues = () => asArray(chosen.value);
 
     const leftItems = () => {
@@ -73,7 +73,7 @@ export const Transferlist = component('transferlist', {
     };
 
     // ---- untracked reads for handlers and subscriptions
-    const peekItems = () => normalize((props.data!.peek() as unknown[]) || []);
+    const peekItems = () => normalize((props.data.peek() as unknown[]) || []);
     const peekChosen = () => asArray(chosen.peek());
 
     /** Drop checked values that no longer belong to their side */
@@ -163,7 +163,7 @@ export const Transferlist = component('transferlist', {
 
     // Live data changes keep the chosen values that still exist (silent)
     onMount(() =>
-        props.data!.subscribe(() => {
+        props.data.subscribe(() => {
             const values = new Set(peekItems().map((item) => item.value));
             const current = peekChosen();
             const kept = current.filter((v) => values.has(v));
@@ -191,7 +191,7 @@ export const Transferlist = component('transferlist', {
 
     // ---- rendering
     const titleOf = (side: 'left' | 'right') => {
-        const titles = (props.titles!.value as string[]) || [];
+        const titles = (props.titles.value as string[]) || [];
         return side === 'left' ? titles[0] ?? 'Available' : titles[1] ?? 'Chosen';
     };
 
@@ -220,19 +220,19 @@ export const Transferlist = component('transferlist', {
                     '/' + all().length + ' selected'}</div>
             </div>
             ${() =>
-                props.search!.value
+                props.search.value
                     ? html`<input type="search" class="lm-transferlist-search" placeholder="Search"
                           value="${() => query.value}"
                           oninput="${(e: Event) => (query.value = (e.target as HTMLInputElement).value)}" />`
                     : ''}
-            <div class="lm-transferlist-items" role="list" style="height:${() => props.height!.value}px">
+            <div class="lm-transferlist-items" role="list" style="height:${() => props.height.value}px">
                 ${() => visible().map((item) => rowView(item, checked))}
                 ${() => (visible().length === 0 ? html`<div class="lm-transferlist-empty">No items</div>` : '')}
             </div>
         </div>`;
     };
 
-    return html`<div class="lm-transferlist" data-search="${() => (props.search!.value ? 'true' : false)}">
+    return html`<div class="lm-transferlist" data-search="${() => (props.search.value ? 'true' : false)}">
         ${listView('left')}
         <div class="lm-transferlist-controls">
             <button type="button" class="lm-transferlist-button" data-action="all-right" aria-label="Move all right"

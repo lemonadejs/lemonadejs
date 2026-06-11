@@ -45,18 +45,18 @@ export const ImageList = component('imagelist', {
     bar: false,                   // overlay title bar on each image
     onitemclick: Function,        // (item, index, event)
 }, (props) => {
-    const items = () => (props.data!.value as ImageListItem[]) || [];
+    const items = () => (props.data.value as ImageListItem[]) || [];
 
-    const columns = () => Math.max(1, parseInt(String(props.columns!.value), 10) || 0);
-    const gap = () => Math.max(0, parseInt(String(props.gap!.value), 10) || 0);
+    const columns = () => Math.max(1, parseInt(String(props.columns.value), 10) || 0);
+    const gap = () => Math.max(0, parseInt(String(props.gap.value), 10) || 0);
 
     const rootStyle = () => {
-        if (props.variant!.value === 'masonry') {
+        if (props.variant.value === 'masonry') {
             // Multi-column flow: top-to-bottom fill, ragged bottom edge
             return 'columns:' + columns() + ';column-gap:' + gap() + 'px;';
         }
         let css = 'display:grid;grid-template-columns:repeat(' + columns() + ', 1fr);gap:' + gap() + 'px;';
-        const rh = parseInt(String(props.rowheight!.value), 10);
+        const rh = parseInt(String(props.rowheight.value), 10);
         if (rh > 0) {
             css += 'grid-auto-rows:' + rh + 'px;';
         }
@@ -64,11 +64,11 @@ export const ImageList = component('imagelist', {
     };
 
     const itemStyle = (item: ImageListItem): string | false => {
-        if (props.variant!.value === 'masonry') {
+        if (props.variant.value === 'masonry') {
             // Column boxes have no row gap of their own — the item carries it
             return 'break-inside:avoid;margin-bottom:' + gap() + 'px;';
         }
-        if (props.variant!.value === 'quilted') {
+        if (props.variant.value === 'quilted') {
             let css = '';
             const cols = parseInt(String(item.cols), 10);
             const rows = parseInt(String(item.rows), 10);
@@ -89,7 +89,7 @@ export const ImageList = component('imagelist', {
         | undefined;
 
     return html`<div class="lm-imagelist"
-        data-variant="${() => props.variant!.value || false}"
+        data-variant="${() => props.variant.value || false}"
         style="${() => rootStyle()}">${() =>
         items().map((item, index) => html`<div class="lm-imagelist-item"
             data-clickable="${onitemclick ? 'true' : false}"
@@ -98,7 +98,7 @@ export const ImageList = component('imagelist', {
             <img class="lm-imagelist-img" loading="lazy"
                 src="${item.src || ''}" alt="${item.title || ''}" />
             ${() =>
-                props.bar!.value
+                props.bar.value
                     ? html`<div class="lm-imagelist-bar">
                           <div class="lm-imagelist-title">${item.title || ''}</div>
                           ${item.subtitle

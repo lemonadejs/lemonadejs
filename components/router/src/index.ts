@@ -70,7 +70,7 @@ export const Router = component('router', {
     onbeforecreatepage: Function, // (route, html) -> false cancels
     api: { setPath: Function, current: Function },
 }, (props, { onMount, onUnmount }) => {
-    const pages: Page[] = ((props.routes!.value as Route[]) || []).map((route) => ({
+    const pages: Page[] = ((props.routes.value as Route[]) || []).map((route) => ({
         route,
         el: null,
         handle: null,
@@ -107,7 +107,7 @@ export const Router = component('router', {
     /** Keep .lm-router-page order matching route order (v5: direction) */
     const reorder = () => {
         for (const page of pages) {
-            if (page.el && !props.single!.value) {
+            if (page.el && !props.single.value) {
                 root!.appendChild(page.el);
             }
         }
@@ -161,7 +161,7 @@ export const Router = component('router', {
 
     const show = (page: Page, isNew: boolean) => {
         const old = current;
-        if (props.single!.value) {
+        if (props.single.value) {
             old?.el?.remove();
             root!.appendChild(page.el!);
         } else if (old?.el) {
@@ -176,7 +176,7 @@ export const Router = component('router', {
             document.title = title;
         }
         loading(false);
-        (props.onchangepage as ((r: Route, o: Route | null, n: boolean) => void) | undefined)?.(
+        props.onchangepage?.(
             page.route,
             old ? old.route : null,
             isNew
@@ -185,7 +185,7 @@ export const Router = component('router', {
 
     /** v5 slide: direction by route order; interrupted animations flush */
     const swap = (page: Page, isNew: boolean) => {
-        if (props.animation!.value && current && current !== page && !props.single!.value) {
+        if (props.animation.value && current && current !== page && !props.single.value) {
             const dir = 'lm-router-slide-' + (pages.indexOf(page) < pages.indexOf(current) ? 'in' : 'out');
             page.el!.style.display = '';
             root!.classList.add(dir);

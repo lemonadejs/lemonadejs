@@ -35,7 +35,7 @@ const root = () => handle!.query('.lm-dialog')!;
 
 const open = async (props: Record<string, unknown> = {}, options?: DialogOptions) => {
     let api: Api | null = null;
-    handle = t(Dialog as never, { ...props, ref: (a: Api) => (api = a) } as never);
+    handle = t(Dialog, { ...props, ref: (a: Api) => (api = a) });
     const result = api!.open(options);
     await flush();
     return { api: api!, result };
@@ -48,16 +48,16 @@ const type = (text: string) => {
 
 describe('components/dialog — on the Modal primitive', () => {
     it('passes verify() — the registry gate', () => {
-        expect(verify(Dialog as never).pass).toBe(true);
+        expect(verify(Dialog).pass).toBe(true);
     });
 
     it('starts closed; api.open() shows a centered backdrop box with title and message', async () => {
         let api: Api | null = null;
-        handle = t(Dialog as never, {
+        handle = t(Dialog, {
             title: 'Are you sure?',
             message: 'This cannot be undone.',
             ref: (a: Api) => (api = a),
-        } as never);
+        });
         expect(modal()).toBeNull();
 
         api!.open();

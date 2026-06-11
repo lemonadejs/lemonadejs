@@ -27,7 +27,7 @@ const User: Component<{ id?: string }> = (props) => html`<div><h1>User</h1><span
 const open = (extra: Partial<Record<string, unknown>> = {}, routes?: Route[]) => {
     let api: Api | null = null;
     history.replaceState({}, '', '/');
-    handle = t(Router as never, {
+    handle = t(Router, {
         routes: routes || [
             { path: '/', component: Home },
             { path: '/about', component: About, title: 'About us' },
@@ -35,7 +35,7 @@ const open = (extra: Partial<Record<string, unknown>> = {}, routes?: Route[]) =>
         ],
         ...extra,
         ref: (a: Api) => (api = a),
-    } as never);
+    });
     return api!;
 };
 
@@ -44,7 +44,7 @@ const visible = () =>
 
 describe('components/router — behaviors', () => {
     it('passes verify() — the registry gate', () => {
-        expect(verify(Router as never).pass).toBe(true);
+        expect(verify(Router).pass).toBe(true);
     });
 
     it('shows the route matching the current location at mount', () => {

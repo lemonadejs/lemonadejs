@@ -54,9 +54,9 @@ export const Speeddial = component('speeddial', {
 
     const doOpen = () => {
         clearGrace();
-        if (!props.disabled!.value && !fanned.value) {
+        if (!props.disabled.value && !fanned.value) {
             fanned.set(true);
-            (props.onopen as (() => void) | undefined)?.();
+            props.onopen?.();
         }
     };
 
@@ -64,7 +64,7 @@ export const Speeddial = component('speeddial', {
         clearGrace();
         if (fanned.value) {
             fanned.set(false);
-            (props.onclose as (() => void) | undefined)?.();
+            props.onclose?.();
         }
     };
 
@@ -84,31 +84,31 @@ export const Speeddial = component('speeddial', {
     };
 
     const actions = (): SpeeddialAction[] => {
-        const a = props.options!.value as SpeeddialAction[] | undefined;
+        const a = props.options.value as SpeeddialAction[] | undefined;
         return Array.isArray(a) ? a : [];
     };
 
     const pick = (action: SpeeddialAction, e: Event) => {
         action.onclick?.(e);
-        (props.onaction as ((name: string, e: Event) => void) | undefined)?.(action.name, e);
+        props.onaction?.(action.name, e);
         doClose();
     };
 
     return html`<div
         class="lm-speeddial ${() => (fanned.value ? 'lm-speeddial-open' : '')} ${() =>
-            props.disabled!.value ? 'lm-speeddial-disabled' : ''} ${() =>
-            props.position!.value === 'fixed' ? 'lm-speeddial-fixed' : ''}"
-        data-direction="${() => props.direction!.value || false}"
+            props.disabled.value ? 'lm-speeddial-disabled' : ''} ${() =>
+            props.position.value === 'fixed' ? 'lm-speeddial-fixed' : ''}"
+        data-direction="${() => props.direction.value || false}"
         onmouseenter="${doOpen}"
         onmouseleave="${onLeave}"
         onkeydown="${(e: KeyboardEvent) => e.key === 'Escape' && doClose()}">
         <button type="button" class="lm-speeddial-fab"
-            aria-label="${() => props.label!.value || false}"
+            aria-label="${() => props.label.value || false}"
             aria-haspopup="true"
             aria-expanded="${() => (fanned.value ? 'true' : 'false')}"
             disabled="${props.disabled}"
             onclick="${toggle}">
-            <span class="lm-speeddial-icon material-icons">${() => props.icon!.value || '+'}</span>
+            <span class="lm-speeddial-icon material-icons">${() => props.icon.value || '+'}</span>
         </button>
         <div class="lm-speeddial-actions" role="menu" aria-hidden="${() => (fanned.value ? 'false' : 'true')}">
             ${() =>

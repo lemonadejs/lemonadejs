@@ -51,6 +51,26 @@ var render = function(component, props) {
     }
   };
 };
+var flush = function() {
+  return new Promise(function(resolve) {
+    setTimeout(resolve, 0);
+  });
+};
+var setRect = function(el, rect) {
+  const r = {
+    x: rect.left ?? 0,
+    y: rect.top ?? 0,
+    top: rect.top ?? 0,
+    left: rect.left ?? 0,
+    width: rect.width ?? 0,
+    height: rect.height ?? 0,
+    right: rect.right ?? (rect.left ?? 0) + (rect.width ?? 0),
+    bottom: rect.bottom ?? (rect.top ?? 0) + (rect.height ?? 0)
+  };
+  el.getBoundingClientRect = function() {
+    return { ...r, toJSON: () => r };
+  };
+};
 var SAMPLES = {
   string: "sample",
   number: 1,
@@ -159,6 +179,8 @@ var verify = function(component) {
 var test_default = render;
 export {
   test_default as default,
+  flush,
   render,
+  setRect,
   verify
 };

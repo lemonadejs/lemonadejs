@@ -28,7 +28,9 @@ import { DEV } from './env';
 import { warn } from './errors';
 
 /** Widen literal defaults and map constructors to value types */
-type Widen<E> = E extends string
+type Widen<E> = E extends null | undefined // contract 'any'
+    ? unknown
+    : E extends string
     ? string
     : E extends number
       ? number
@@ -79,13 +81,19 @@ export type ContractInput<C> = {
  * The props a published component RECEIVES, derived from its contract:
  * declared props arrive as live states, on* keys are callbacks,
  * bind/onchange follow Bindable, api flows through ref.
+ *
+ * Declared props are NON-OPTIONAL: the engine constructs a state for
+ * every contract entry, so `props.height.value` is a `number` — no `!`
+ * and no `as` casts needed inside the component.
  */
 export type ContractProps<C> = {
-    [K in keyof C as K extends 'bind' | 'api' ? never : K extends `on${string}` ? never : K & string]?: State<
+    [K in keyof C as K extends 'bind' | 'api' ? never : K extends `on${string}` ? never : K & string]: State<
         Widen<C[K]>
     >;
 } & {
-    [K in keyof C as K extends `on${string}` ? K & string : never]?: (...args: never[]) => unknown;
+    // Events are directly invocable: props.onchange?.(value)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    [K in keyof C as K extends `on${string}` ? K & string : never]?: (...args: any[]) => unknown;
 } & (C extends { bind: infer B } ? Bindable<Widen<B>> : object) &
     (C extends { api: infer A }
         ? // INSIDE the component props.ref is always CALLABLE — the
@@ -96,6 +104,17 @@ export type ContractProps<C> = {
         expose?: boolean;
         children?: readonly Node[];
     };
+
+/** The api object a contract component publishes, as the CALLER sees it */
+export type ApiOf<C> = C extends Component<infer P>
+    ? P extends { ref?: infer R }
+        ? R extends (api: infer A) => void
+            ? A
+            : R extends { current: infer A | null }
+              ? A
+              : never
+        : never
+    : never;
 
 export type ContractType = 'string' | 'number' | 'boolean' | 'array' | 'object' | 'function' | 'any';
 
@@ -184,6 +203,56 @@ const matches = function (v: unknown, type: ContractType): boolean {
     return typeof v === type;
 };
 
+// Dev-only LJS-402 check. The `!DEV ? null :` ternary and the `DEV &&`
+// call site are EXPRESSIONS on purpose: esbuild folds expression-level
+// literal conditions at print time (dropping the dead arm), while a
+// statement-level `if (false) {...}` survives the late cross-module
+// inlining of DEV and would ship dead bytes in the production build.
+const warnUnknownProps = !DEV ? null : function (incoming: Record<string, unknown>, schema: Schema): void {
+    const editDistance = function (a: string, b: string): number {
+        if (Math.abs(a.length - b.length) > 2) {
+            return 3; // beyond suggestion range, skip the table
+        }
+        let prev = Array.from({ length: b.length + 1 }, (_, i) => i);
+        for (let i = 1; i <= a.length; i++) {
+            const cur = [i];
+            for (let j = 1; j <= b.length; j++) {
+                cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+            }
+            prev = cur;
+        }
+        return prev[b.length];
+    };
+    const closest = function (key: string, names: string[]): string {
+        let best = '';
+        let bestDistance = 3; // suggest only within edit distance 2
+        const k = key.toLowerCase();
+        for (const name of names) {
+            const d = editDistance(k, name.toLowerCase());
+            if (d < bestDistance) {
+                bestDistance = d;
+                best = name;
+            }
+        }
+        return best;
+    };
+    // A prop the contract does not declare is never read (LJS-402)
+    for (const key of Object.keys(incoming)) {
+        if (
+            key in schema.props ||
+            schema.events.indexOf(key) >= 0 ||
+            key === 'ref' ||
+            key === 'children' ||
+            key === 'expose' ||
+            (key === 'bind' && schema.bind !== null)
+        ) {
+            continue;
+        }
+        const hint = closest(key, Object.keys(schema.props).concat(schema.events));
+        warn('LJS-402', key + ' in <' + schema.name + '>' + (hint ? " — did you mean '" + hint + "'?" : ''));
+    }
+};
+
 /**
  * Publish a component: wraps fn so declared props arrive as live states
  * (defaults applied, attribute strings coerced, types validated in dev)
@@ -217,6 +286,8 @@ export const component = function <C extends Record<string, unknown>, P = Contra
             // Published props are live by construction
             final[key] = new StateImpl(v);
         }
+
+        DEV && warnUnknownProps!(incoming, schema);
 
         if (schema.bind && incoming.bind === undefined && schema.bind.default !== undefined) {
             // The contract default feeds the bind() tool when unbound

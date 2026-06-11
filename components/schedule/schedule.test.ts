@@ -71,12 +71,12 @@ const stubRect = (el: Element, height: number) =>
 
 const mount = (props: Record<string, unknown> = {}) => {
     let api: Api | null = null;
-    handle = t(Schedule as never, {
+    handle = t(Schedule, {
         value: '2026-06-10',
         editor: false,
         ...props,
         ref: (a: Api) => (api = a),
-    } as never);
+    });
     return api!;
 };
 
@@ -91,7 +91,7 @@ const sample = (over: Partial<ScheduleEvent> = {}): ScheduleEvent => ({
 
 describe('components/schedule', () => {
     it('passes verify() — the registry gate', () => {
-        expect(verify(Schedule as never).pass).toBe(true);
+        expect(verify(Schedule).pass).toBe(true);
     });
 
     // ---- views -----------------------------------------------------------

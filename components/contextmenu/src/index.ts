@@ -88,7 +88,7 @@ export const Contextmenu = component('contextmenu', {
             cursors.value = next;
             if (level === 0) {
                 wrapper?.classList.remove('lm-menu-focus');
-                (props.onclose as (() => void) | undefined)?.();
+                props.onclose?.();
             }
         }
     };
@@ -96,7 +96,7 @@ export const Contextmenu = component('contextmenu', {
     const doOpen = (options: ContextItem[] | null, x: number, y: number, adjustToCursor = false) => {
         levels.value = [
             {
-                options: options || (props.options!.value as ContextItem[]) || [],
+                options: options || (props.options.value as ContextItem[]) || [],
                 top: y,
                 left: x,
                 openedLeft: false,
@@ -105,7 +105,7 @@ export const Contextmenu = component('contextmenu', {
         cursors.value = {};
         wrapper?.classList.add('lm-menu-focus');
         wrapper?.focus();
-        (props.onopen as (() => void) | undefined)?.();
+        props.onopen?.();
         if (adjustToCursor) {
             // v5: when Modal's auto-adjust flipped the menu, anchor the
             // right/bottom edge at the cursor instead (two microtasks:

@@ -49,7 +49,7 @@ export const Topmenu = component('topmenu', {
     let root: HTMLElement | null = null;
     let menu: MenuApi | null = null;
 
-    const items = (): TopmenuItem[] => (props.options!.value as TopmenuItem[]) || [];
+    const items = (): TopmenuItem[] => (props.options.value as TopmenuItem[]) || [];
 
     const itemEl = (index: number): HTMLElement | null =>
         (root?.querySelectorAll('.lm-topmenu-title')[index] as HTMLElement) || null;

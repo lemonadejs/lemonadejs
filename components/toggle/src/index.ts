@@ -23,10 +23,10 @@ export const Toggle = component('toggle', {
     onchange: Function,           // fires on user-initiated changes
     api: { toggle: Function },    // imperative surface via ref
 }, (props, { bind }) => {
-    const pressed = bind(props, props.checked!.value as boolean);
+    const pressed = bind(props, props.checked.value as boolean);
 
     const toggle = () => {
-        if (!props.disabled!.value) {
+        if (!props.disabled.value) {
             pressed.set(!pressed.value);
         }
     };
@@ -35,14 +35,14 @@ export const Toggle = component('toggle', {
 
     return html`<label
         class="lm-toggle ${() => (pressed.value ? 'lm-toggle-on' : 'lm-toggle-off')} ${() =>
-            props.disabled!.value ? 'lm-toggle-disabled' : ''}">
+            props.disabled.value ? 'lm-toggle-disabled' : ''}">
         <input type="checkbox" class="lm-toggle-input"
             name="${props.name}"
             checked="${pressed}"
             disabled="${props.disabled}"
             onchange="${(e: Event) => pressed.set((e.target as HTMLInputElement).checked)}" />
-        ${() => props.icon!.value && html`<i class="lm-toggle-icon material-icons">${props.icon}</i>`}
-        ${() => props.text!.value && html`<span class="lm-toggle-text">${props.text}</span>`}
+        ${() => props.icon.value && html`<i class="lm-toggle-icon material-icons">${props.icon}</i>`}
+        ${() => props.text.value && html`<span class="lm-toggle-text">${props.text}</span>`}
     </label>`;
 });
 

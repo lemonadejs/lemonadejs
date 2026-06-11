@@ -56,7 +56,7 @@ state for a two-way live wire. Attribute strings are coerced to the declared typ
 
 | Prop | Type | Default | Description |
 |---|---|---|---|
-| `bind` | string | — | Two-way bound value. `.set()` fires `onchange`; plain assignment is silent. selection: single value, array when multiple |
+| `bind` | any | — | Two-way bound value. `.set()` fires `onchange`; plain assignment is silent. selection: single value, array when multiple (any) |
 | `options` | array | — | { value, label, icon, disabled } or strings |
 | `selectable` | string | `''` | '' action buttons | single | multiple |
 | `variant` | string | `''` | '' contained | outlined | text |

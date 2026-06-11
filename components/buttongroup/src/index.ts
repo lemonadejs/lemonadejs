@@ -47,7 +47,7 @@ const asList = (v: unknown): unknown[] => {
 };
 
 export const ButtonGroup = component('buttongroup', {
-    bind: String,                 // selection: single value, array when multiple
+    bind: null,                   // selection: single value, array when multiple (any)
     options: Array,               // { value, label, icon, disabled } or strings
     selectable: '',               // '' action buttons | single | multiple
     variant: '',                  // '' contained | outlined | text
@@ -61,15 +61,15 @@ export const ButtonGroup = component('buttongroup', {
     const selected = bind(props, '');
 
     const isSelected = (value: unknown) =>
-        !!props.selectable!.value && asList(selected.value).some((w) => sameValue(w, value));
+        !!props.selectable.value && asList(selected.value).some((w) => sameValue(w, value));
 
     const press = (item: ButtonGroupOption, e: MouseEvent) => {
-        if (props.disabled!.value || item.disabled === true) {
+        if (props.disabled.value || item.disabled === true) {
             return;
         }
-        const mode = props.selectable!.value as string;
+        const mode = props.selectable.value as string;
         if (!mode) {
-            (props.onclick as ((value: unknown, e: MouseEvent) => void) | undefined)?.(item.value, e);
+            props.onclick?.(item.value, e);
         } else if (mode === 'multiple') {
             const current = asList(selected.peek());
             const next = current.some((w) => sameValue(w, item.value))
@@ -86,20 +86,20 @@ export const ButtonGroup = component('buttongroup', {
     const view = (item: ButtonGroupOption) => html`<button type="button"
         class="lm-buttongroup-button"
         data-selected="${() => (isSelected(item.value) ? 'true' : false)}"
-        disabled="${() => props.disabled!.value || item.disabled === true || false}"
+        disabled="${() => props.disabled.value || item.disabled === true || false}"
         onclick="${(e: MouseEvent) => press(item, e)}">
         ${item.icon ? html`<i class="lm-buttongroup-icon material-icons">${item.icon}</i>` : ''}
         ${item.label !== undefined && item.label !== '' ? html`<span class="lm-buttongroup-label">${item.label}</span>` : ''}
     </button>`;
 
     return html`<div class="lm-buttongroup" role="group"
-        data-selectable="${() => props.selectable!.value || false}"
-        data-variant="${() => props.variant!.value || false}"
-        data-color="${() => props.color!.value || false}"
-        data-size="${() => props.size!.value || false}"
-        data-orientation="${() => props.orientation!.value || false}"
-        data-disabled="${() => (props.disabled!.value ? 'true' : false)}">
-        ${() => normalize((props.options!.value as unknown[]) || []).map(view)}
+        data-selectable="${() => props.selectable.value || false}"
+        data-variant="${() => props.variant.value || false}"
+        data-color="${() => props.color.value || false}"
+        data-size="${() => props.size.value || false}"
+        data-orientation="${() => props.orientation.value || false}"
+        data-disabled="${() => (props.disabled.value ? 'true' : false)}">
+        ${() => normalize((props.options.value as unknown[]) || []).map(view)}
     </div>`;
 });
 

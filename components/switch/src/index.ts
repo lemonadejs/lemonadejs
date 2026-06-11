@@ -29,10 +29,10 @@ export const Switch = component('switch', {
     onchange: Function,           // fires on user-initiated changes
     api: { toggle: Function },    // imperative surface via ref
 }, (props, { bind }) => {
-    const current = bind(props, props.checked!.value as boolean);
+    const current = bind(props, props.checked.value as boolean);
 
     const toggle = () => {
-        if (!props.disabled!.value) {
+        if (!props.disabled.value) {
             current.set(!current.value);
         }
     };
@@ -41,19 +41,19 @@ export const Switch = component('switch', {
 
     return html`<label
         class="lm-switch ${() => (current.value ? 'lm-switch-on' : 'lm-switch-off')} ${() =>
-            props.disabled!.value ? 'lm-switch-disabled' : ''} ${() =>
-            props.size!.value ? 'lm-switch-' + props.size!.value : ''}"
-        data-position="${() => props.position!.value || false}"
-        data-color="${() => props.color!.value || false}">
+            props.disabled.value ? 'lm-switch-disabled' : ''} ${() =>
+            props.size.value ? 'lm-switch-' + props.size.value : ''}"
+        data-position="${() => props.position.value || false}"
+        data-color="${() => props.color.value || false}">
         <input type="checkbox" class="lm-switch-input"
             name="${props.name}"
-            value="${() => props.value!.value || false}"
+            value="${() => props.value.value || false}"
             required="${props.required}"
             checked="${current}"
             disabled="${props.disabled}"
             onchange="${(e: Event) => current.set((e.target as HTMLInputElement).checked)}" />
         <span class="lm-switch-track"><span class="lm-switch-thumb"></span></span>
-        ${() => props.label!.value && html`<span class="lm-switch-label">${props.label}</span>`}
+        ${() => props.label.value && html`<span class="lm-switch-label">${props.label}</span>`}
     </label>`;
 });
 

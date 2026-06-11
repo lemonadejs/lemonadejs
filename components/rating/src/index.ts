@@ -29,10 +29,10 @@ export const Rating = component('rating', {
     onchange: Function,            // fires on component-initiated changes
     api: { getValue: Function, setValue: Function }, // v5 instance methods
 }, (props, { state, bind, onUnmount }) => {
-    const rating = bind(props, props.value!.value as number);
+    const rating = bind(props, props.value.value as number);
     const hover = state(0); // 1-based index being previewed, 0 = none
 
-    const interactive = () => !props.disabled!.value && !props.readonly!.value;
+    const interactive = () => !props.disabled.value && !props.readonly.value;
 
     // v5: clicking the current value toggles back to 0
     const select = (index: number) => {
@@ -44,7 +44,7 @@ export const Rating = component('rating', {
     // v5 parity: shrinking the star count clamps the value (and, as in v5,
     // the clamp is a component-initiated change — onchange fires)
     onUnmount(
-        props.number!.subscribe((n) => {
+        props.number.subscribe((n) => {
             if (rating.value > n) {
                 rating.set(n);
             }
@@ -53,7 +53,7 @@ export const Rating = component('rating', {
 
     // v5 accepted a comma-separated string (or a ready array via state)
     const titleFor = (i: number): string | false => {
-        const t = props.tooltip!.value as unknown;
+        const t = props.tooltip.value as unknown;
         if (Array.isArray(t)) {
             return (t[i] as string) || false;
         }
@@ -69,14 +69,14 @@ export const Rating = component('rating', {
     });
 
     return html`<div class="lm-rating"
-        name="${() => props.name!.value || false}"
+        name="${() => props.name.value || false}"
         data-value="${() => rating.value}"
-        data-size="${() => props.size!.value || false}"
-        data-color="${() => props.color!.value || false}"
-        data-disabled="${() => props.disabled!.value || false}"
-        data-readonly="${() => props.readonly!.value || false}"
+        data-size="${() => props.size.value || false}"
+        data-color="${() => props.color.value || false}"
+        data-disabled="${() => props.disabled.value || false}"
+        data-readonly="${() => props.readonly.value || false}"
         onmouseleave="${() => (hover.value = 0)}">${() => {
-        const count = Math.max(0, Number(props.number!.value) || 0);
+        const count = Math.max(0, Number(props.number.value) || 0);
         return Array.from(
             { length: count },
             (_, i) => html`<i class="lm-rating-star"

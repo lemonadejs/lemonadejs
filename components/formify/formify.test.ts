@@ -68,7 +68,7 @@ const edit = (el: HTMLElement, value?: string) => {
 
 describe('components/formify', () => {
     it('passes verify() — the registry gate', () => {
-        expect(verify(Formify as never).pass).toBe(true);
+        expect(verify(Formify).pass).toBe(true);
     });
 
     it('renders a <form class="lm-formify"> wrapping the children (v5 model)', () => {

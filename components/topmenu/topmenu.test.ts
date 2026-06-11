@@ -42,10 +42,10 @@ const options = (clicked: string[] = []): TopmenuItem[] => [
 
 const mountBar = (clicked: string[] = []) => {
     let api: Api | null = null;
-    handle = t(Topmenu as never, {
+    handle = t(Topmenu, {
         options: options(clicked),
         ref: (a: Api) => (api = a),
-    } as never);
+    });
     return api!;
 };
 
@@ -60,7 +60,7 @@ const key = (el: HTMLElement, k: string) =>
 
 describe('components/topmenu — a menubar on the Contextmenu block', () => {
     it('passes verify() — the registry gate', () => {
-        expect(verify(Topmenu as never).pass).toBe(true);
+        expect(verify(Topmenu).pass).toBe(true);
     });
 
     it('renders the bar items with the v5 ARIA model', () => {
@@ -245,7 +245,7 @@ describe('components/topmenu — a menubar on the Contextmenu block', () => {
         handle!.unmount();
         const { store } = await import('lemonadejs');
         const opts = store<TopmenuItem[]>([{ title: 'One' }]);
-        handle = t(Topmenu as never, { options: opts } as never);
+        handle = t(Topmenu, { options: opts });
         expect(titles().map((el) => el.textContent)).toEqual(['One']);
         opts.value = [{ title: 'One' }, { title: 'Two' }];
         expect(titles().map((el) => el.textContent)).toEqual(['One', 'Two']);

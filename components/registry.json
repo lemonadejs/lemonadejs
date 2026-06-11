@@ -240,7 +240,7 @@
                 }
             },
             "bind": {
-                "type": "string"
+                "type": "any"
             },
             "events": [
                 "onchange",

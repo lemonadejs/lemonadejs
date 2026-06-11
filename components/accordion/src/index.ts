@@ -66,9 +66,9 @@ export type AccordionProps = Omit<ContractInput<typeof CONTRACT>, 'bind' | 'onch
 };
 
 export const Accordion = component('accordion', CONTRACT, (props, { bind }) => {
-    const expanded = bind(props as Bindable<Expanded>, props.multiple!.value ? [] : -1);
+    const expanded = bind(props as Bindable<Expanded>, props.multiple.value ? [] : -1);
 
-    const items = (): AccordionItem[] => (props.options!.value as AccordionItem[]) || [];
+    const items = (): AccordionItem[] => (props.options.value as AccordionItem[]) || [];
 
     const isOpen = (index: number): boolean => {
         const current = expanded.value;
@@ -80,7 +80,7 @@ export const Accordion = component('accordion', CONTRACT, (props, { bind }) => {
         if (!item || item.disabled) {
             return;
         }
-        if (props.multiple!.value) {
+        if (props.multiple.value) {
             const open = Array.isArray(expanded.value) ? (expanded.value as number[]) : [];
             expanded.set(
                 open.includes(index)
@@ -118,7 +118,7 @@ export const Accordion = component('accordion', CONTRACT, (props, { bind }) => {
 
     /** Body content: the render prop wins; content falls back as plain text */
     const body = (item: AccordionItem, index: number) => {
-        const view = props.render!.value as unknown as
+        const view = props.render.value as unknown as
             | ((item: AccordionItem, index: number) => View)
             | undefined;
         return view ? view(item, index) : item.content || '';

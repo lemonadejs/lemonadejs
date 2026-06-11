@@ -57,14 +57,14 @@ export const Actionsheet = component('actionsheet', {
     const doOpen = () => {
         if (!opened.value) {
             opened.set(true);
-            (props.onopen as (() => void) | undefined)?.();
+            props.onopen?.();
         }
     };
 
     const doClose = (origin: string) => {
         if (opened.value) {
             opened.set(false);
-            (props.onclose as ((origin: string) => void) | undefined)?.(origin);
+            props.onclose?.(origin);
         }
     };
 
@@ -77,7 +77,7 @@ export const Actionsheet = component('actionsheet', {
 
     // v5 Actiongroup normalized a missing options array to []
     const groups = (): ActionsheetGroup[] => {
-        const a = props.actions!.value as ActionsheetGroup[] | undefined;
+        const a = props.actions.value as ActionsheetGroup[] | undefined;
         return Array.isArray(a) ? a : [];
     };
 
@@ -88,12 +88,12 @@ export const Actionsheet = component('actionsheet', {
     return html`<div class="lm-actionsheet">
         <${Modal} bind="${opened}" header="${false}" position="bottom" backdrop
             closable="${props.closable}"
-            onclose="${(origin: string) => (props.onclose as ((o: string) => void) | undefined)?.(origin)}">
+            onclose="${(origin: string) => props.onclose?.(origin)}">
             ${() =>
-                Boolean(props.title!.value || props.message!.value) &&
+                Boolean(props.title.value || props.message.value) &&
                 html`<div class="lm-actionsheet-group lm-actionsheet-header">
-                    ${() => props.title!.value && html`<div class="lm-actionsheet-title">${props.title}</div>`}
-                    ${() => props.message!.value && html`<div class="lm-actionsheet-message">${props.message}</div>`}
+                    ${() => props.title.value && html`<div class="lm-actionsheet-title">${props.title}</div>`}
+                    ${() => props.message.value && html`<div class="lm-actionsheet-message">${props.message}</div>`}
                 </div>`}
             ${() =>
                 groups().map(

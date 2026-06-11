@@ -106,7 +106,7 @@ describe('components/buttongroup', () => {
         const picked = store<unknown>('b');
         handle = t(ButtonGroup, {
             selectable: 'single',
-            bind: picked as never,
+            bind: picked,
             options: [
                 { value: 'a', label: 'A' },
                 { value: 'b', label: 'B' },
@@ -126,7 +126,7 @@ describe('components/buttongroup', () => {
         const changes: unknown[] = [];
         handle = t(ButtonGroup, {
             selectable: 'multiple',
-            bind: picked as never,
+            bind: picked,
             options: [
                 { value: 'bold', label: 'Bold' },
                 { value: 'italic', label: 'Italic' },
@@ -212,7 +212,7 @@ describe('components/buttongroup', () => {
     it('options stay live: a state write re-renders, the selection survives by value', () => {
         const options = store<unknown[]>(['One', 'Two']);
         const picked = store<unknown>('Two');
-        handle = t(ButtonGroup, { selectable: 'single', bind: picked as never, options });
+        handle = t(ButtonGroup, { selectable: 'single', bind: picked, options });
         expect(buttons().length).toBe(2);
         expect(selectedLabels()).toEqual(['Two']);
 

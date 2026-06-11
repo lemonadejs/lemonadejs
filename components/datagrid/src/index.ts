@@ -74,15 +74,15 @@ export const Datagrid = component('datagrid', {
     // every data change (assignment or touch) flows through the refresh
     // subscription into `view`, so the window re-renders exactly once,
     // always with indices that match the current data
-    const rows = () => (props.data!.peek() as Row[]) || [];
+    const rows = () => (props.data.peek() as Row[]) || [];
     // Same peek discipline as data: imperative paths and row builds must
     // not track the columns prop — column changes flow through the
     // refresh subscription (rows) and the tracked header bindings below
-    const columns = () => (props.columns!.peek() as Column[]) || [];
+    const columns = () => (props.columns.peek() as Column[]) || [];
     const visibleColumns = () => columns().filter((c) => !c.hidden);
     // Tracked read ON PURPOSE: the header cells and every grid-template
     // binding re-run when the columns prop is assigned or touch()ed
-    const liveColumns = () => ((props.columns!.value as Column[]) || []).filter((c) => !c.hidden);
+    const liveColumns = () => ((props.columns.value as Column[]) || []).filter((c) => !c.hidden);
 
     // ---- the view pipeline: data -> filter(query) -> sort -> indices.
     // Recomputed ONCE per change (not per binding) into a state.
@@ -136,7 +136,7 @@ export const Datagrid = component('datagrid', {
         // disposal blur into an unintended commit
         editing.value = null;
         view.value = indices;
-        if (props.pagination!.value) {
+        if (props.pagination.value) {
             page.value = Math.min(page.value, Math.max(0, pageCount() - 1));
         } else if (scroller) {
             onScroll();
@@ -144,10 +144,10 @@ export const Datagrid = component('datagrid', {
     };
 
     // External data changes: assignment AND touch() re-enter the pipeline
-    onMount(() => props.data!.subscribe(refresh));
+    onMount(() => props.data.subscribe(refresh));
     // Column changes (setColumn api or an external touch) take the same
     // path: refresh rebuilds the window with the current column set
-    onMount(() => props.columns!.subscribe(refresh));
+    onMount(() => props.columns.subscribe(refresh));
 
     // ---- drag gesture: document listeners with ONE persistent cleanup.
     // An unmount mid-drag releases the in-flight gesture (modal pattern);
@@ -194,7 +194,7 @@ export const Datagrid = component('datagrid', {
                 widths.value = { ...widths.value, [col.name]: w };
             },
             () => {
-                (props.oncolumnresize as ((n: string, w: number) => void) | undefined)?.(
+                props.oncolumnresize?.(
                     col.name,
                     widths.value[col.name] || Math.round(startWidth)
                 );
@@ -203,14 +203,14 @@ export const Datagrid = component('datagrid', {
     };
 
     // ---- virtual window
-    const rowHeight = () => (props.rowheight!.value as number) || 36;
+    const rowHeight = () => (props.rowheight.value as number) || 36;
     const visibleCount = () =>
-        props.pagination!.value
-            ? (props.pagination!.value as number)
-            : Math.ceil((props.height!.value as number) / rowHeight()) + OVERSCAN * 2;
+        props.pagination.value
+            ? (props.pagination.value as number)
+            : Math.ceil((props.height.value as number) / rowHeight()) + OVERSCAN * 2;
 
     const onScroll = () => {
-        if (!scroller || props.pagination!.value) {
+        if (!scroller || props.pagination.value) {
             return;
         }
         const start = Math.floor(scroller.scrollTop / rowHeight()) - OVERSCAN;
@@ -218,11 +218,11 @@ export const Datagrid = component('datagrid', {
         first.value = Math.min(Math.max(0, start), max);
     };
 
-    const pageCount = () => Math.max(1, Math.ceil(view.value.length / ((props.pagination!.value as number) || 1)));
+    const pageCount = () => Math.max(1, Math.ceil(view.value.length / ((props.pagination.value as number) || 1)));
 
     /** "21–40 of 45 rows" */
     const pageInfo = () => {
-        const size = props.pagination!.value as number;
+        const size = props.pagination.value as number;
         const total = view.value.length;
         if (!total) {
             return '0 rows';
@@ -254,7 +254,7 @@ export const Datagrid = component('datagrid', {
     refresh();
 
     const windowIndices = () => {
-        const start = props.pagination!.value ? page.value * (props.pagination!.value as number) : first.value;
+        const start = props.pagination.value ? page.value * (props.pagination.value as number) : first.value;
         return view.value.slice(start, start + visibleCount()).map((dataIndex, i) => ({
             dataIndex,
             viewIndex: start + i,
@@ -278,12 +278,12 @@ export const Datagrid = component('datagrid', {
                     : null;
         sortBy.value = next || null;
         refresh();
-        (props.onsort as ((n: string, d: 1 | -1 | null) => void) | undefined)?.(name, next ? next.dir : null);
+        props.onsort?.(name, next ? next.dir : null);
     };
 
     // ---- selection
     const notifySelect = () =>
-        (props.onselect as ((rows: Row[]) => void) | undefined)?.([...selected.value]);
+        props.onselect?.([...selected.value]);
 
     const toggleRow = (row: Row, single: boolean) => {
         if (single) {
@@ -309,7 +309,7 @@ export const Datagrid = component('datagrid', {
     };
 
     // ---- editing
-    const editable = (col: Column) => (col.editable !== undefined ? col.editable : !!props.editable!.value);
+    const editable = (col: Column) => (col.editable !== undefined ? col.editable : !!props.editable.value);
 
     const startEdit = (dataIndex: number, col: Column) => {
         if (editable(col) && col.type !== 'checkbox') {
@@ -323,8 +323,8 @@ export const Datagrid = component('datagrid', {
         editing.value = null;
         if (!Object.is(next, oldValue)) {
             row[col.name] = next;
-            props.data!.touch();
-            (props.onchange as ((r: Row, n: string, v: unknown, o: unknown) => void) | undefined)?.(
+            props.data.touch();
+            props.onchange?.(
                 row,
                 col.name,
                 next,
@@ -336,8 +336,8 @@ export const Datagrid = component('datagrid', {
     const setChecked = (row: Row, col: Column, checked: boolean) => {
         const oldValue = row[col.name];
         row[col.name] = checked;
-        props.data!.touch();
-        (props.onchange as ((r: Row, n: string, v: unknown, o: unknown) => void) | undefined)?.(
+        props.data.touch();
+        props.onchange?.(
             row,
             col.name,
             checked,
@@ -367,20 +367,20 @@ export const Datagrid = component('datagrid', {
             if (col) {
                 startEdit(view.value[a.r], col);
             }
-        } else if (e.key === ' ' && active.value && props.selectable!.value) {
-            toggleRow(rows()[view.value[a.r]], props.selectable!.value === 'single');
+        } else if (e.key === ' ' && active.value && props.selectable.value) {
+            toggleRow(rows()[view.value[a.r]], props.selectable.value === 'single');
         } else {
             handled = false;
         }
         if (handled) {
             e.preventDefault();
             // Keep the active row inside the window
-            if (!props.pagination!.value && scroller && active.value) {
+            if (!props.pagination.value && scroller && active.value) {
                 const top = active.value.r * rowHeight();
                 if (top < scroller.scrollTop) {
                     scroller.scrollTop = top;
-                } else if (top + rowHeight() > scroller.scrollTop + (props.height!.value as number)) {
-                    scroller.scrollTop = top + rowHeight() - (props.height!.value as number);
+                } else if (top + rowHeight() > scroller.scrollTop + (props.height.value as number)) {
+                    scroller.scrollTop = top + rowHeight() - (props.height.value as number);
                 }
                 onScroll();
             }
@@ -422,7 +422,7 @@ export const Datagrid = component('datagrid', {
             // The columns prop is the source of truth: touch() re-renders
             // the header (tracked bindings) and re-enters the pipeline
             // through the columns subscription (window rows)
-            props.columns!.touch();
+            props.columns.touch();
         },
     });
 
@@ -433,7 +433,7 @@ export const Datagrid = component('datagrid', {
     const gridTemplate = () => {
         const w = widths.value;
         const tracks = liveColumns().map((c) => (w[c.name] ? w[c.name] + 'px' : c.width || '1fr'));
-        if (props.selectable!.value === 'multiple') {
+        if (props.selectable.value === 'multiple') {
             tracks.unshift('40px');
         }
         return tracks.join(' ');
@@ -506,13 +506,13 @@ export const Datagrid = component('datagrid', {
             role="row"
             style="${() => 'height:' + rowHeight() + 'px;grid-template-columns:' + gridTemplate()}"
             onclick="${(e: MouseEvent) => {
-                if (props.selectable!.value === 'single') {
+                if (props.selectable.value === 'single') {
                     toggleRow(row, true);
                 }
-                (props.onrowclick as ((r: Row, ev: MouseEvent) => void) | undefined)?.(row, e);
+                props.onrowclick?.(row, e);
             }}">
             ${() =>
-                props.selectable!.value === 'multiple'
+                props.selectable.value === 'multiple'
                     ? html`<div class="lm-datagrid-cell" data-align="center" role="gridcell">
                           <input type="checkbox" checked="${() => selected.value.has(row)}"
                               onclick="${(e: Event) => e.stopPropagation()}"
@@ -529,7 +529,7 @@ export const Datagrid = component('datagrid', {
     const headerView = () => html`<div class="lm-datagrid-header" role="row"
         style="grid-template-columns:${() => gridTemplate()}">
         ${() =>
-            props.selectable!.value === 'multiple'
+            props.selectable.value === 'multiple'
                 ? html`<div class="lm-datagrid-th" data-align="center">
                       <input type="checkbox" checked="${() => allVisibleSelected()}" onchange="${toggleAll}" />
                   </div>`
@@ -554,7 +554,7 @@ export const Datagrid = component('datagrid', {
         ref="${(el: Element) => (rootEl = el as HTMLElement)}"
         onkeydown="${onKey}">
         ${() =>
-            props.search!.value &&
+            props.search.value &&
             html`<div class="lm-datagrid-toolbar">
                 <input class="lm-datagrid-search" type="search" placeholder="Search..."
                     oninput="${(e: Event) => {
@@ -566,15 +566,15 @@ export const Datagrid = component('datagrid', {
             </div>`}
         ${headerView()}
         <div class="lm-datagrid-body"
-            style="${() => (props.pagination!.value ? '' : 'height:' + props.height!.value + 'px;overflow-y:auto')}"
+            style="${() => (props.pagination.value ? '' : 'height:' + props.height.value + 'px;overflow-y:auto')}"
             ref="${(el: Element) => (scroller = el as HTMLElement)}"
             onscroll="${onScroll}">
             <div class="lm-datagrid-canvas"
                 style="${() =>
-                    props.pagination!.value ? '' : 'height:' + view.value.length * rowHeight() + 'px'}">
+                    props.pagination.value ? '' : 'height:' + view.value.length * rowHeight() + 'px'}">
                 <div class="lm-datagrid-window"
                     style="${() =>
-                        props.pagination!.value ? '' : 'transform:translateY(' + first.value * rowHeight() + 'px)'}">
+                        props.pagination.value ? '' : 'transform:translateY(' + first.value * rowHeight() + 'px)'}">
                     ${() => windowIndices().map(rowView)}
                 </div>
             </div>
@@ -582,7 +582,7 @@ export const Datagrid = component('datagrid', {
                 view.value.length === 0 ? html`<div class="lm-datagrid-empty">No matching rows</div>` : ''}
         </div>
         ${() =>
-            props.pagination!.value
+            props.pagination.value
                 ? html`<div class="lm-datagrid-footer">
                       <span class="lm-datagrid-pageinfo">${() => pageInfo()}</span>
                       <nav class="lm-datagrid-pages" aria-label="Pagination">

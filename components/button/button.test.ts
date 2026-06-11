@@ -18,7 +18,7 @@ const root = () => handle!.query('.lm-button')!;
 
 describe('components/button', () => {
     it('passes verify() — the registry gate', () => {
-        const report = verify(Button as never);
+        const report = verify(Button);
         expect(report.pass).toBe(true);
     });
 
@@ -71,7 +71,7 @@ describe('components/button', () => {
     it('loading shows the spinner instead of the content and blocks clicks (live)', () => {
         const busy = store(false);
         let clicks = 0;
-        handle = t(Button as never, { label: 'Save', loading: busy, onclick: () => clicks++ } as never);
+        handle = t(Button, { label: 'Save', loading: busy, onclick: () => clicks++ });
 
         root().click();
         expect(clicks).toBe(1);
@@ -128,7 +128,7 @@ describe('components/button', () => {
 
     it('label is live: replacing the state re-renders the text', () => {
         const label = store('Save');
-        handle = t(Button as never, { label } as never);
+        handle = t(Button, { label });
         expect(handle.query('.lm-button-label')!.textContent).toBe('Save');
         label.value = 'Saving…';
         expect(handle.query('.lm-button-label')!.textContent).toBe('Saving…');

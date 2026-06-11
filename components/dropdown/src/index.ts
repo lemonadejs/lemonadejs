@@ -137,9 +137,9 @@ export const Dropdown = component('dropdown', {
     });
 
     // ---- effective flags (v5: insert/remote/searchbar force autocomplete)
-    const kind = () => resolvedType.value || (props.type!.value as string) || 'default';
+    const kind = () => resolvedType.value || (props.type.value as string) || 'default';
     const autocomplete = () =>
-        !!props.autocomplete!.value || !!props.insert!.value || !!props.remote!.value || kind() === 'searchbar';
+        !!props.autocomplete.value || !!props.insert.value || !!props.remote.value || kind() === 'searchbar';
     const inline = () => kind() === 'inline';
 
     // ---- data pipeline: normalize -> group-sort -> flatten with headers
@@ -157,7 +157,7 @@ export const Dropdown = component('dropdown', {
     };
 
     const process = () => {
-        items = normalize((props.data!.peek() as unknown[]) || []);
+        items = normalize((props.data.peek() as unknown[]) || []);
         items.sort((a, b) => (a.group && b.group ? a.group.localeCompare(b.group) : 0));
         rows.value = flatten(items);
     };
@@ -168,7 +168,7 @@ export const Dropdown = component('dropdown', {
             return v;
         }
         if (typeof v === 'string' && v !== '') {
-            return v.split((props.divisor!.value as string) || ';');
+            return v.split((props.divisor.value as string) || ';');
         }
         return isEmpty(v) ? [] : [v];
     };
@@ -179,14 +179,14 @@ export const Dropdown = component('dropdown', {
     };
 
     const currentValue = (): unknown => {
-        if (props.multiple!.value) {
+        if (props.multiple.value) {
             return chosen.length ? chosen.map((i) => i.value) : null;
         }
         return chosen.length ? chosen[0].value : null;
     };
 
     const currentText = (): unknown => {
-        if (props.multiple!.value) {
+        if (props.multiple.value) {
             return chosen.length ? chosen.map((i) => i.text) : null;
         }
         return chosen.length ? chosen[0].text : null;
@@ -209,7 +209,7 @@ export const Dropdown = component('dropdown', {
 
     // Data changes re-process and re-validate the value (v5 watcher)
     onMount(() =>
-        props.data!.subscribe(() => {
+        props.data.subscribe(() => {
             process();
             const wanted = parseValue(picked.peek());
             const valid = wanted.filter((w) => items.some((item) => sameValue(w, item.value)));
@@ -222,9 +222,9 @@ export const Dropdown = component('dropdown', {
     );
 
     // ---- virtualization (datagrid pattern, fixed rowheight)
-    const rowHeight = () => (props.rowheight!.value as number) || 28;
-    const viewportHeight = () => Math.min((props.height!.value as number) || 300, rows.value.length * rowHeight());
-    const visibleCount = () => Math.ceil(((props.height!.value as number) || 300) / rowHeight()) + OVERSCAN * 2;
+    const rowHeight = () => (props.rowheight.value as number) || 28;
+    const viewportHeight = () => Math.min((props.height.value as number) || 300, rows.value.length * rowHeight());
+    const visibleCount = () => Math.ceil(((props.height.value as number) || 300) / rowHeight()) + OVERSCAN * 2;
 
     const onScroll = () => {
         if (!scroller) {
@@ -279,7 +279,7 @@ export const Dropdown = component('dropdown', {
         }
         loading.value = true;
         searchTimer = setTimeout(() => {
-            const url = (props.url!.value as string) + ((props.url!.value as string).includes('?') ? '&' : '?') + 'q=' + encodeURIComponent(q);
+            const url = (props.url.value as string) + ((props.url.value as string).includes('?') ? '&' : '?') + 'q=' + encodeURIComponent(q);
             fetch(url, http)
                 .then((r) => r.json())
                 .then((result) => resetRows(normalize(result)))
@@ -293,7 +293,7 @@ export const Dropdown = component('dropdown', {
         cursor.value = null;
         rows.value = flatten([...chosen, ...result.filter((r) => !chosen.some((c) => sameValue(c.value, r.value)))]);
         first.value = 0;
-        (props.onsearch as ((r: DropdownItem[]) => void) | undefined)?.(result);
+        props.onsearch?.(result);
     };
 
     const search = (q: string) => {
@@ -301,7 +301,7 @@ export const Dropdown = component('dropdown', {
             return;
         }
         query.value = q; // raw text — addTyped inserts what the user typed
-        if (props.remote!.value && props.url!.value) {
+        if (props.remote.value && props.url.value) {
             remoteSearch(q.toLowerCase());
         } else {
             localSearch(q);
@@ -310,10 +310,10 @@ export const Dropdown = component('dropdown', {
 
     // ---- selection (v5 selectItem/select)
     const selectItem = (item: DropdownItem) => {
-        if (props.remote!.value && items.indexOf(item) < 0) {
+        if (props.remote.value && items.indexOf(item) < 0) {
             items.push(item);
         }
-        if (props.multiple!.value) {
+        if (props.multiple.value) {
             const at = chosen.indexOf(item);
             if (at >= 0) {
                 chosen.splice(at, 1);
@@ -321,7 +321,7 @@ export const Dropdown = component('dropdown', {
                 chosen.push(item);
             }
         } else if (chosen[0] === item) {
-            if (props.allowempty!.value !== false) {
+            if (props.allowempty.value !== false) {
                 chosen = [];
             }
         } else {
@@ -340,7 +340,7 @@ export const Dropdown = component('dropdown', {
             commit('select');
             return;
         }
-        if (!props.multiple!.value) {
+        if (!props.multiple.value) {
             close('select');
         }
     };
@@ -350,10 +350,10 @@ export const Dropdown = component('dropdown', {
         rows.value.findIndex((entry) => entry.kind === 'item' && entry.item === item);
 
     const open = () => {
-        if (opened.value || props.disabled!.value || inline()) {
+        if (opened.value || props.disabled.value || inline()) {
             return;
         }
-        if ((props.type!.value as string) === 'auto') {
+        if ((props.type.value as string) === 'auto') {
             resolvedType.value = window.innerWidth > 640 ? 'default' : autocomplete() ? 'searchbar' : 'picker';
         }
         panelPosition.value = kind() === 'default' ? 'absolute' : 'bottom';
@@ -367,7 +367,7 @@ export const Dropdown = component('dropdown', {
             const rect = input.getBoundingClientRect();
             anchorTop.value = rect.bottom + 1;
             anchorLeft.value = rect.left;
-            let width = Math.max((props.width!.value as number) || 0, rect.width);
+            let width = Math.max((props.width.value as number) || 0, rect.width);
             for (const item of items) {
                 width = Math.max(width, (item.text || '').length * 7.5);
             }
@@ -385,7 +385,7 @@ export const Dropdown = component('dropdown', {
                 ensureVisible(at);
             }
         }
-        (props.onopen as (() => void) | undefined)?.();
+        props.onopen?.();
     };
 
     const commit = (origin: string) => {
@@ -396,7 +396,7 @@ export const Dropdown = component('dropdown', {
         }
         changed = false;
         updateLabel();
-        (props.onclose as ((o: string) => void) | undefined)?.(origin);
+        props.onclose?.(origin);
     };
 
     const sameList = (a: unknown, b: unknown): boolean => {
@@ -416,7 +416,7 @@ export const Dropdown = component('dropdown', {
             // Cancel: restore the committed value (v5)
             applyValue(picked.peek());
             updateLabel();
-            (props.onclose as ((o: string) => void) | undefined)?.(origin);
+            props.onclose?.(origin);
         } else {
             commit(origin);
         }
@@ -439,10 +439,10 @@ export const Dropdown = component('dropdown', {
             }
         }
         items.push(item);
-        (props.data!.peek() as DropdownItem[]).push(item);
+        (props.data.peek() as DropdownItem[]).push(item);
         rows.value = [{ kind: 'item', item }, ...rows.value];
         first.value = 0;
-        (props.oninsert as ((item: DropdownItem) => void) | undefined)?.(item);
+        props.oninsert?.(item);
     };
 
     const addTyped = () => {
@@ -490,7 +490,7 @@ export const Dropdown = component('dropdown', {
     };
 
     const onKey = (e: KeyboardEvent) => {
-        if (props.disabled!.value) {
+        if (props.disabled.value) {
             return;
         }
         if (!opened.value && !inline()) {
@@ -584,9 +584,9 @@ export const Dropdown = component('dropdown', {
             picked.set(v as never);
         },
         getText: () => currentText(),
-        getData: () => props.data!.peek(),
+        getData: () => props.data.peek(),
         setData: (d: unknown[]) => {
-            props.data!.value = d;
+            props.data.value = d;
         },
         add: (item: DropdownItem) => addItem(item),
         reset: () => {
@@ -607,16 +607,16 @@ export const Dropdown = component('dropdown', {
         process();
         applyValue(picked.peek());
         updateLabel();
-        (props.onload as (() => void) | undefined)?.();
+        props.onload?.();
     };
 
     onMount(() => {
-        if (props.url!.value && !props.remote!.value) {
+        if (props.url.value && !props.remote.value) {
             loading.value = true;
-            fetch(props.url!.value as string, { headers: { 'Content-Type': 'text/json' } })
+            fetch(props.url.value as string, { headers: { 'Content-Type': 'text/json' } })
                 .then((r) => r.json())
                 .then((result) => {
-                    (props.data!.peek() as unknown[]).push(...normalize(result as unknown[]));
+                    (props.data.peek() as unknown[]).push(...normalize(result as unknown[]));
                     loading.value = false;
                     ready();
                 })
@@ -660,19 +660,19 @@ export const Dropdown = component('dropdown', {
     </div>`;
 
     const searchField = () => html`<div class="lm-dropdown-input" contenteditable="true" tabindex="0"
-        placeholder="${() => props.placeholder!.value || false}"
+        placeholder="${() => props.placeholder.value || false}"
         ref="${(el: Element) => (el as HTMLElement).focus()}"
         oninput="${(e: Event) => search((e.target as HTMLElement).textContent || '')}"
         onpaste="${onPaste}"></div>`;
 
     const labelField = () => html`<div class="lm-dropdown-input" tabindex="0"
-        placeholder="${() => props.placeholder!.value || false}">${label}</div>`;
+        placeholder="${() => props.placeholder.value || false}">${label}</div>`;
 
     return html`<div class="lm-dropdown"
         data-state="${() => (opened.value ? 'true' : 'false')}"
         data-type="${() => kind()}"
-        data-insert="${() => (props.insert!.value ? 'true' : false)}"
-        data-disabled="${() => (props.disabled!.value ? 'true' : false)}"
+        data-insert="${() => (props.insert.value ? 'true' : false)}"
+        data-disabled="${() => (props.disabled.value ? 'true' : false)}"
         ref="${(el: Element) => (root = el as HTMLElement)}"
         onkeydown="${onKey}"
         onmousedown="${onPress}"
@@ -680,7 +680,7 @@ export const Dropdown = component('dropdown', {
         <div class="lm-dropdown-header ${() => (loading.value ? 'lm-dropdown-loading' : '')}">
             ${() => (opened.value && autocomplete() && !inline() ? searchField() : labelField())}
             ${() =>
-                props.insert!.value && opened.value
+                props.insert.value && opened.value
                     ? html`<button class="lm-dropdown-add" tabindex="0"
                           onclick="${(e: Event) => {
                               e.preventDefault();

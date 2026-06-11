@@ -29,7 +29,7 @@ const mouse = (type: string, x: number, y: number, extra: MouseEventInit = {}) =
 
 const openModal = async (props: Record<string, unknown>) => {
     let api: Api | null = null;
-    handle = t(Modal as never, { focus: false, ...props, ref: (a: Api) => (api = a) } as never);
+    handle = t(Modal, { focus: false, ...props, ref: (a: Api) => (api = a) });
     api!.open();
     await flush(); // per-open setup defers until the branch is attached
     const el = handle.query('.lm-modal') as HTMLElement;
@@ -39,7 +39,7 @@ const openModal = async (props: Record<string, unknown>) => {
 
 describe('components/modal — behaviors', () => {
     it('passes verify() — the registry gate', () => {
-        expect(verify(Modal as never).pass).toBe(true);
+        expect(verify(Modal).pass).toBe(true);
     });
 
     it('drags by the top bar and reports onmove(top, left) on release', async () => {
@@ -302,7 +302,7 @@ describe('components/modal — behaviors', () => {
 
     it('bind stays the controlled open state', () => {
         const visible = store(false);
-        handle = t(Modal as never, { bind: visible, focus: false } as never);
+        handle = t(Modal, { bind: visible, focus: false });
         expect(handle.query('.lm-modal')).toBeNull();
         visible.value = true;
         expect(handle.query('.lm-modal')).not.toBeNull();

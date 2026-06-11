@@ -42,26 +42,26 @@ export const Alert = component('alert', {
 
     const close = () => {
         visible.set(false);
-        (props.onclose as (() => void) | undefined)?.();
+        props.onclose?.();
     };
 
     return html`${() =>
         visible.value &&
         html`<div class="lm-alert" role="alert"
-            data-severity="${() => props.severity!.value || false}"
-            data-variant="${() => props.variant!.value || false}">
+            data-severity="${() => props.severity.value || false}"
+            data-variant="${() => props.variant.value || false}">
             ${() =>
-                props.icon!.value &&
+                props.icon.value &&
                 html`<span class="lm-alert-icon"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path
                     fill="currentColor"
-                    d="${() => PATHS[props.severity!.value as string] || PATHS.info}"></path></svg></span>`}
+                    d="${() => PATHS[props.severity.value as string] || PATHS.info}"></path></svg></span>`}
             <div class="lm-alert-body">
-                ${() => props.title!.value && html`<div class="lm-alert-title">${props.title}</div>`}
-                ${() => props.message!.value && html`<div class="lm-alert-message">${props.message}</div>`}
+                ${() => props.title.value && html`<div class="lm-alert-title">${props.title}</div>`}
+                ${() => props.message.value && html`<div class="lm-alert-message">${props.message}</div>`}
                 ${props.children}
             </div>
             ${() =>
-                props.closable!.value &&
+                props.closable.value &&
                 html`<button type="button" class="lm-alert-close" aria-label="Close"
                     onclick="${close}">×</button>`}
         </div>`}`;

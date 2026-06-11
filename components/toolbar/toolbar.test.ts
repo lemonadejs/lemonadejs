@@ -24,7 +24,7 @@ afterEach(() => {
 const flush = () => new Promise((r) => setTimeout(r, 0));
 
 const mountBar = (props: Record<string, unknown>) => {
-    handle = t(Toolbar as never, props as never);
+    handle = t(Toolbar, props);
 };
 
 const root = () => handle!.query('.lm-toolbar') as HTMLElement;
@@ -40,7 +40,7 @@ const pick = (i: number) => rows()[i].dispatchEvent(new MouseEvent('mouseup', { 
 
 describe('components/toolbar — an action bar with Contextmenu pickers', () => {
     it('passes verify() — the registry gate', () => {
-        expect(verify(Toolbar as never).pass).toBe(true);
+        expect(verify(Toolbar).pass).toBe(true);
     });
 
     it('renders the v5 item anatomy: anchor with icon, title, image — only the provided parts', () => {

@@ -31,7 +31,7 @@ const selectedIndexes = () => ({
 
 describe('components/tabs', () => {
     it('passes verify() — the registry gate', () => {
-        const report = verify(Tabs as never);
+        const report = verify(Tabs);
         expect(report.pass).toBe(true);
     });
 
@@ -185,7 +185,7 @@ describe('components/tabs', () => {
         expect(headers().length).toBe(3);
         expect(created).toEqual([]);
 
-        api!.create('nope' as never); // v5: console.error, no tab
+        api!.create('nope' as never); // deliberately invalid — v5: console.error, no tab
         expect(error).toHaveBeenCalledWith('Item must be an object');
         expect(headers().length).toBe(3);
     });

@@ -44,7 +44,7 @@ const key = (code: string) =>
 
 const open = async (props: Record<string, unknown> = {}) => {
     let api: Api | null = null;
-    handle = t(Color as never, { ...props, ref: (a: Api) => (api = a) } as never);
+    handle = t(Color, { ...props, ref: (a: Api) => (api = a) });
     api!.open();
     await flush();
     return api!;
@@ -52,13 +52,13 @@ const open = async (props: Record<string, unknown> = {}) => {
 
 describe('components/color — on the Modal primitive', () => {
     it('passes verify() — the registry gate', () => {
-        expect(verify(Color as never).pass).toBe(true);
+        expect(verify(Color).pass).toBe(true);
     });
 
     it('starts closed and opens a headerless Modal panel, firing onopen', async () => {
         const opens: number[] = [];
         let api: Api | null = null;
-        handle = t(Color as never, { onopen: () => opens.push(1), ref: (a: Api) => (api = a) } as never);
+        handle = t(Color, { onopen: () => opens.push(1), ref: (a: Api) => (api = a) });
         expect(modal()).toBeNull();
         expect(api!.isClosed()).toBe(true);
 
@@ -142,14 +142,14 @@ describe('components/color — on the Modal primitive', () => {
         expect(cell('#333333')).not.toBeNull();
         handle!.unmount();
 
-        handle = t(Color as never, { type: 'inline', palette: ['#aaaaaa', '#bbbbbb'] } as never);
+        handle = t(Color, { type: 'inline', palette: ['#aaaaaa', '#bbbbbb'] });
         expect(handle.queryAll('.lm-color-row')).toHaveLength(1);
         expect(cells()).toHaveLength(2);
     });
 
     it('the palette is live: a new matrix re-renders the grid (v5 constructRows)', () => {
         const palette = store([['#111111']]);
-        handle = t(Color as never, { type: 'inline', palette } as never);
+        handle = t(Color, { type: 'inline', palette });
         expect(cells()).toHaveLength(1);
 
         palette.value = [['#222222', '#333333'], ['#444444', '#555555']];
@@ -179,7 +179,7 @@ describe('components/color — on the Modal primitive', () => {
 
     it('type="input": renders the toggle input, click opens, the bound color paints it', async () => {
         const current = store('#e91e63');
-        handle = t(Color as never, { type: 'input', bind: current, placeholder: 'Pick' } as never);
+        handle = t(Color, { type: 'input', bind: current, placeholder: 'Pick' });
         expect(input()).not.toBeNull();
         expect(input().value).toBe('#e91e63');
         expect(input().getAttribute('placeholder')).toBe('Pick');
@@ -198,12 +198,12 @@ describe('components/color — on the Modal primitive', () => {
         const current = store('');
         const changes: string[] = [];
         const closes: string[] = [];
-        handle = t(Color as never, {
+        handle = t(Color, {
             type: 'input',
             bind: current,
             onchange: (v: string) => changes.push(v),
             onclose: (o: string) => closes.push(o),
-        } as never);
+        });
 
         key('ArrowDown');
         await flush();
@@ -242,7 +242,7 @@ describe('components/color — on the Modal primitive', () => {
     it('type="inline": the panel renders without a Modal and selections commit immediately', () => {
         const current = store('');
         const changes: string[] = [];
-        handle = t(Color as never, { type: 'inline', bind: current, onchange: (v: string) => changes.push(v) } as never);
+        handle = t(Color, { type: 'inline', bind: current, onchange: (v: string) => changes.push(v) });
         expect(modal()).toBeNull();
         expect(handle.query('.lm-color-panel')).not.toBeNull();
         expect(handle.query('.lm-color')!.getAttribute('data-type')).toBe('inline');

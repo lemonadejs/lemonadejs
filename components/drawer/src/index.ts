@@ -42,8 +42,8 @@ export const Drawer = component('drawer', {
     // live while open (Modal re-places under the new positioning model).
     // peek: setup-time reads must not subscribe (and must stay out of the
     // LJS-202 snapshot heuristic — header="${false}" is a primitive slot)
-    const position = state(toPosition(props.anchor!.peek()));
-    onMount(() => props.anchor!.subscribe(() => (position.value = toPosition(props.anchor!.value))));
+    const position = state(toPosition(props.anchor.peek()));
+    onMount(() => props.anchor.subscribe(() => (position.value = toPosition(props.anchor.value))));
 
     // Drawer-initiated transitions go through the bound chain (assignment
     // is silent to the Modal underneath) and fire the drawer's own events;
@@ -51,13 +51,13 @@ export const Drawer = component('drawer', {
     const doOpen = () => {
         if (!visible.value) {
             visible.value = true;
-            (props.onopen as (() => void) | undefined)?.();
+            props.onopen?.();
         }
     };
     const doClose = (origin: string) => {
         if (visible.value) {
             visible.value = false;
-            (props.onclose as ((origin: string) => void) | undefined)?.(origin);
+            props.onclose?.(origin);
         }
     };
 
@@ -73,9 +73,9 @@ export const Drawer = component('drawer', {
             width="${props.width}"
             backdrop="${props.backdrop}"
             closable="${props.closable}"
-            onclose="${(origin: string) => (props.onclose as ((origin: string) => void) | undefined)?.(origin)}">
+            onclose="${(origin: string) => props.onclose?.(origin)}">
             ${() =>
-                props.title!.value &&
+                props.title.value &&
                 html`<header class="lm-drawer-header">
                     <span class="lm-drawer-title">${props.title}</span>
                     <button class="lm-drawer-close" onclick="${() => doClose('button')}">×</button>

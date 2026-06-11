@@ -44,11 +44,11 @@ export const Progress = component('progress', {
         return Number.isFinite(n) ? Math.min(100, Math.max(0, n)) : 0;
     };
 
-    const indeterminate = () => !determinate || props.indeterminate!.value === true;
+    const indeterminate = () => !determinate || props.indeterminate.value === true;
 
     // Circular geometry: radius from size/thickness, arc length from percent
-    const diameter = () => Number(props.size!.value) || 40;
-    const stroke = () => Number(props.thickness!.value) || 3.6;
+    const diameter = () => Number(props.size.value) || 40;
+    const stroke = () => Number(props.thickness.value) || 3.6;
     const radius = () => Math.max(0, (diameter() - stroke()) / 2);
     const circumference = () => 2 * Math.PI * radius();
     // Indeterminate spins a fixed 25% arc; determinate draws the percent
@@ -56,20 +56,20 @@ export const Progress = component('progress', {
     const dashoffset = () => round(circumference() * (1 - arc() / 100));
 
     const label = () =>
-        props.label!.value === true &&
+        props.label.value === true &&
         !indeterminate() &&
         html`<span class="lm-progress-label">${() => Math.round(clamp(percent.value))}%</span>`;
 
     const linear = () => html`<span class="lm-progress-track"
         style="${() => {
-            const t = Number(props.thickness!.value);
+            const t = Number(props.thickness.value);
             return t > 0 ? 'height: ' + t + 'px' : false;
         }}"><span class="lm-progress-bar"
             style="${() => (indeterminate() ? false : 'width: ' + clamp(percent.value) + '%')}"></span></span>${label}`;
 
     const circular = () => html`<span class="lm-progress-circular"
         style="${() => {
-            const s = Number(props.size!.value);
+            const s = Number(props.size.value);
             return s > 0 ? 'width: ' + s + 'px; height: ' + s + 'px' : false;
         }}"><svg class="lm-progress-svg" viewBox="0 0 ${() => diameter()} ${() => diameter()}">
             <circle class="lm-progress-circle-track"
@@ -87,10 +87,10 @@ export const Progress = component('progress', {
         aria-valuemin="0"
         aria-valuemax="100"
         aria-valuenow="${() => (indeterminate() ? false : clamp(percent.value))}"
-        data-type="${() => props.type!.value || false}"
+        data-type="${() => props.type.value || false}"
         data-indeterminate="${() => (indeterminate() ? 'true' : false)}"
-        data-color="${() => props.color!.value || false}">${() =>
-        props.type!.value === 'circular' ? circular() : linear()}</div>`;
+        data-color="${() => props.color.value || false}">${() =>
+        props.type.value === 'circular' ? circular() : linear()}</div>`;
 });
 
 export default Progress;

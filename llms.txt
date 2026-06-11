@@ -185,8 +185,13 @@ The contract is the interface as a runtime artifact; everything derives from it.
     });
 
 RULE: declared props arrive as LIVE STATES — props.label is State<string> in every
-deployment. Templates: ${props.label}. Logic: props.label.value. Wrong types warn
-LJS-401 in dev; contract prop names must be lowercase (they become HTML attributes).
+deployment, NON-OPTIONAL (the engine constructs every declared prop, so no ! and no
+casts: props.max.value - props.min.value just typechecks). Declared on* events are
+invocable as-is: props.onchange?.(value). Templates: ${props.label}. Logic:
+props.label.value. Wrong types warn LJS-401 in dev; a prop the contract does NOT
+declare warns LJS-402 with a did-you-mean suggestion; contract prop names must be
+lowercase (they become HTML attributes). ApiOf<typeof Switch> names the api type a
+ref receives — never hand-roll api shapes.
 
     contract(Switch)    // → { name, props: {label: {type,default}}, bind, events, api }
                         // the schema an agent reads INSTEAD of the source
@@ -278,6 +283,11 @@ focusout must check:
     t.inspect();                                // { component, states: [...], children } JSON
     t.unmount();
 
+    import { flush, setRect } from 'lemonadejs/test';
+    await flush();                              // drain microtasks + zero-delay timers
+    setRect(el, { left: 10, width: 200, height: 24 });  // geometry in jsdom (no layout
+                                                // there) — modal/tooltip/drag become testable
+
 ## Debugging
 
     import { inspect, explain, setComponents } from 'lemonadejs';
@@ -298,7 +308,8 @@ code eliminated — production pays zero.
     LJS-102 unclosed tag                         LJS-302 bind needs a state: bind="${state}"
     LJS-104 unknown component — setComponents    LJS-303 bind: input/textarea/select only
     LJS-105 ${} not allowed in that position     LJS-304 bind owns value — drop the value attribute
-                                                 LJS-305 callbacks are lowercase: onclick, onsave
+    LJS-401 prop violates its contract           LJS-305 callbacks are lowercase: onclick, onsave
+    LJS-402 unknown prop (did-you-mean hint)     LJS-501 expose once — singletons, never touch
 
 ## Migrating from v5
 

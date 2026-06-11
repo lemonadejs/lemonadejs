@@ -38,13 +38,13 @@ export const Backdrop = component('backdrop', {
     const close = () => {
         if (visible.value) {
             visible.set(false);
-            (props.onclose as (() => void) | undefined)?.();
+            props.onclose?.();
         }
     };
 
     const click = (e: MouseEvent) => {
-        (props.onclick as ((e: MouseEvent) => void) | undefined)?.(e);
-        if (props.closable!.value) {
+        props.onclick?.(e);
+        if (props.closable.value) {
             close();
         }
     };
@@ -58,12 +58,12 @@ export const Backdrop = component('backdrop', {
     // 0 = stylesheet defaults; anything else becomes an inline override
     const style = () => {
         const parts: string[] = [];
-        const dim = Number(props.opacity!.value);
+        const dim = Number(props.opacity.value);
         if (dim) {
             const alpha = Math.min(100, Math.max(0, dim)) / 100;
             parts.push('background-color: rgba(0, 0, 0, ' + alpha + ')');
         }
-        const z = Number(props.zindex!.value);
+        const z = Number(props.zindex.value);
         if (z) {
             parts.push('z-index: ' + z);
         }
@@ -73,7 +73,7 @@ export const Backdrop = component('backdrop', {
     return html`${() =>
         visible.value &&
         html`<div class="lm-backdrop"
-            data-blur="${() => (props.blur!.value === true ? 'true' : false)}"
+            data-blur="${() => (props.blur.value === true ? 'true' : false)}"
             style="${style}"
             onclick="${click}">${props.children}</div>`}`;
 });

@@ -243,7 +243,7 @@ export const Formify = component('formify', {
                 .then((result) => result.json())
                 .then((data: FormifyData) => {
                     values.value = data; // silent (no onchange); the subscriber applies it
-                    (props.onload as ((data: FormifyData) => void) | undefined)?.(data);
+                    props.onload?.(data);
                     return data;
                 })
                 .catch(() => null);
@@ -294,8 +294,8 @@ export const Formify = component('formify', {
         if (initial && typeof initial === 'object' && Object.keys(initial).length) {
             writeDom(initial);
         }
-        if (props.url!.value) {
-            load(props.url!.value as string);
+        if (props.url.value) {
+            load(props.url.value as string);
         }
         // External writes (bound state or api.set) flow into the DOM
         return values.subscribe((v) => {

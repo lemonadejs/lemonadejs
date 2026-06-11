@@ -41,43 +41,43 @@ export const Card = component('card', {
     const hasChildren = !!(props.children && props.children.length);
 
     const press = (e: MouseEvent) => {
-        if (props.clickable!.value) {
-            (props.onclick as ((event: MouseEvent) => void) | undefined)?.(e);
+        if (props.clickable.value) {
+            props.onclick?.(e);
         }
     };
 
     const heightOf = () =>
-        'height:' + (parseInt(String(props.imageheight!.value), 10) || 180) + 'px';
+        'height:' + (parseInt(String(props.imageheight.value), 10) || 180) + 'px';
 
-    return html`<div class="lm-card ${() => (props.clickable!.value ? 'lm-card-clickable' : '')}"
-        data-variant="${() => props.variant!.value || false}"
-        role="${() => (props.clickable!.value ? 'button' : false)}"
-        tabindex="${() => (props.clickable!.value ? '0' : false)}"
+    return html`<div class="lm-card ${() => (props.clickable.value ? 'lm-card-clickable' : '')}"
+        data-variant="${() => props.variant.value || false}"
+        role="${() => (props.clickable.value ? 'button' : false)}"
+        tabindex="${() => (props.clickable.value ? '0' : false)}"
         onclick="${press}">
         ${() =>
-            props.image!.value &&
+            props.image.value &&
             html`<img class="lm-card-media" src="${props.image}" alt="" style="${heightOf}" />`}
         ${() =>
-            (props.avatar!.value || props.title!.value || props.subtitle!.value) &&
+            (props.avatar.value || props.title.value || props.subtitle.value) &&
             html`<div class="lm-card-header">
                 ${() =>
-                    props.avatar!.value &&
+                    props.avatar.value &&
                     html`<img class="lm-card-avatar" src="${props.avatar}" alt="" />`}
                 <div class="lm-card-headings">
-                    ${() => props.title!.value && html`<div class="lm-card-title">${props.title}</div>`}
+                    ${() => props.title.value && html`<div class="lm-card-title">${props.title}</div>`}
                     ${() =>
-                        props.subtitle!.value &&
+                        props.subtitle.value &&
                         html`<div class="lm-card-subtitle">${props.subtitle}</div>`}
                 </div>
             </div>`}
         ${() =>
-            (hasChildren || props.content!.value) &&
+            (hasChildren || props.content.value) &&
             html`<div class="lm-card-content">
-                ${() => props.content!.value && html`<p class="lm-card-text">${props.content}</p>`}
+                ${() => props.content.value && html`<p class="lm-card-text">${props.content}</p>`}
                 ${props.children}
             </div>`}
         ${() => {
-            const actions = (props.actions!.value as CardAction[]) || [];
+            const actions = (props.actions.value as CardAction[]) || [];
             return (
                 Array.isArray(actions) &&
                 actions.length > 0 &&

@@ -36,7 +36,8 @@ let handle: ReturnType<typeof t> | null = null;
 
 beforeEach(() => {
     ctx = makeCtx();
-    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(ctx as never);
+    // jsdom has no canvas — the mock context stands in for CanvasRenderingContext2D
+    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(ctx as unknown as CanvasRenderingContext2D);
     vi.spyOn(HTMLCanvasElement.prototype, 'toDataURL').mockReturnValue('data:image/png;base64,TEST');
 });
 
@@ -73,7 +74,7 @@ const drag = (...points: [number, number][]) => {
 
 describe('components/signature', () => {
     it('passes verify() — the registry gate', () => {
-        const report = verify(Signature as never);
+        const report = verify(Signature);
         expect(report.pass).toBe(true);
     });
 
@@ -256,7 +257,7 @@ describe('components/signature', () => {
     });
 
     it('degrades to a no-op without a 2d context (jsdom reality)', () => {
-        vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null as never);
+        vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null);
         const changes: unknown[] = [];
         let api: Api | null = null;
         handle = t(Signature, {

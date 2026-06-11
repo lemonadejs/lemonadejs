@@ -33,6 +33,20 @@ export interface TestHandle {
  * return query/snapshot helpers for assertions.
  */
 export declare const render: <P>(component: Component<P>, props?: P) => TestHandle;
+/**
+ * Drain pending microtasks AND zero-delay timers — the two queues
+ * components defer into (Modal's per-open setup, debounced handlers).
+ * await flush() between an action and its assertion.
+ */
+export declare const flush: () => Promise<void>;
+/**
+ * Give an element a fixed geometry in DOM-only environments (jsdom has
+ * no layout — every rect is 0). Components that measure (modal
+ * autoadjust, tooltip flip, gantt drag) become testable headlessly:
+ *
+ *   setRect(t.query('.lm-bar')!, { left: 100, top: 0, width: 200, height: 24 });
+ */
+export declare const setRect: (el: Element, rect: Partial<DOMRect>) => void;
 export interface VerifyCheck {
     name: string;
     pass: boolean;

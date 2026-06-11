@@ -42,12 +42,12 @@ export const Quickmenu = component('quickmenu', {
     /** v5 self.open(e): the menu 2px under the header (viewport coords —
      *  the convention the composed Contextmenu's Modals position by) */
     const open = (e?: Event) => {
-        if (props.disabled!.value) {
+        if (props.disabled.value) {
             return;
         }
         const rect = header?.getBoundingClientRect();
         menu?.open(
-            (props.options!.value as ContextItem[]) || [],
+            (props.options.value as ContextItem[]) || [],
             rect ? rect.left : 0,
             rect ? rect.bottom + 2 : 0
         );
@@ -63,7 +63,7 @@ export const Quickmenu = component('quickmenu', {
     // outside-mousedown closer from dismissing it mid-click (the v6 shape
     // of v5's stopImmediatePropagation cancel)
     const onMousedown = (e: MouseEvent) => {
-        if (!props.disabled!.value) {
+        if (!props.disabled.value) {
             e.preventDefault();
             e.stopImmediatePropagation();
         }
@@ -80,11 +80,11 @@ export const Quickmenu = component('quickmenu', {
         close: () => menu?.close(),
     });
 
-    return html`<div class="lm-quickmenu" data-disabled="${() => (props.disabled!.value ? 'true' : false)}">
+    return html`<div class="lm-quickmenu" data-disabled="${() => (props.disabled.value ? 'true' : false)}">
         <div class="lm-quickmenu-header" role="button"
             ref="${(el: Element) => (header = el as HTMLElement)}"
-            style="width: ${() => props.width!.value}px"
-            tabindex="${() => (props.disabled!.value ? false : '0')}"
+            style="width: ${() => props.width.value}px"
+            tabindex="${() => (props.disabled.value ? false : '0')}"
             aria-haspopup="true"
             aria-expanded="${() => (menuOpen.value ? 'true' : 'false')}"
             onmousedown="${onMousedown}"
@@ -95,11 +95,11 @@ export const Quickmenu = component('quickmenu', {
         <${Contextmenu} ref="${(a: MenuApi) => (menu = a)}"
             onopen="${() => {
                 menuOpen.value = true;
-                (props.onopen as (() => void) | undefined)?.();
+                props.onopen?.();
             }}"
             onclose="${() => {
                 menuOpen.value = false;
-                (props.onclose as (() => void) | undefined)?.();
+                props.onclose?.();
             }}" />
     </div>`;
 });

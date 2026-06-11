@@ -140,7 +140,7 @@ export const Timeline = component('timeline', {
     }
 
     // The viewed month: from the date prop, today otherwise (v5 value)
-    let anchor = props.date!.value ? toDate(props.date!.value) : new Date();
+    let anchor = props.date.value ? toDate(props.date.value) : new Date();
     if (isNaN(anchor.getTime())) {
         anchor = new Date();
     }
@@ -154,29 +154,29 @@ export const Timeline = component('timeline', {
         alive = false;
     });
 
-    const isRemote = () => !!(props.remote!.value && props.url!.value && props.type!.value === 'monthly');
+    const isRemote = () => !!(props.remote.value && props.url.value && props.type.value === 'monthly');
 
     const maskOf = () =>
-        (props.format!.value as string) || (props.type!.value === 'monthly' ? 'dd mmm yyyy' : 'dddd, dd');
+        (props.format.value as string) || (props.type.value === 'monthly' ? 'dd mmm yyyy' : 'dddd, dd');
 
     const publish = (list: TimelineRecord[]) => {
         if (alive) {
             records.value = list;
-            (props.onupdate as ((records: TimelineRecord[]) => void) | undefined)?.(list);
+            props.onupdate?.(list);
         }
     };
 
     /** v5 updateResult: month filter (monthly), date sort, day labels */
     const compute = () => {
-        let list = [...(fetched || (props.data!.value as TimelineItem[]) || []), ...extracted];
-        if (props.type!.value === 'monthly') {
+        let list = [...(fetched || (props.data.value as TimelineItem[]) || []), ...extracted];
+        if (props.type.value === 'monthly') {
             const { year, month } = period.value;
             list = list.filter((item) => {
                 const d = toDate(item.date);
                 return d.getMonth() + 1 === month && d.getFullYear() === year;
             });
         }
-        const dir = props.order!.value === 'desc' ? -1 : 1;
+        const dir = props.order.value === 'desc' ? -1 : 1;
         list.sort((a, b) => dir * (toDate(a.date).getTime() - toDate(b.date).getTime()));
         publish(list.map((item) => ({ ...item, day: formatDate(toDate(item.date), maskOf()) })));
     };
@@ -191,11 +191,11 @@ export const Timeline = component('timeline', {
         if (typeof fetch !== 'function') {
             return;
         }
-        let u = props.url!.value as string;
+        let u = props.url.value as string;
         const remote = isRemote();
         if (remote) {
             const { year, month } = period.value;
-            u += `?year=${year}&month=${month}&asc=${props.order!.value === 'asc'}`;
+            u += `?year=${year}&month=${month}&asc=${props.order.value === 'asc'}`;
         }
         fetch(u, { headers: { 'Content-Type': 'text/json' } })
             .then((res) => {
@@ -232,21 +232,21 @@ export const Timeline = component('timeline', {
 
     // v5 tracked data / order / month (value changes land as month changes);
     // one period state means a year rollover refetches once, not twice
-    onMount(() => props.data!.subscribe(() => {
+    onMount(() => props.data.subscribe(() => {
         fetched = null; // v5: assigning data replaces what url loaded
         refresh();
     }));
-    onMount(() => props.order!.subscribe(refresh));
+    onMount(() => props.order.subscribe(refresh));
     onMount(() => period.subscribe(refresh));
-    onMount(() => props.date!.subscribe(() => {
-        const d = toDate(props.date!.value);
+    onMount(() => props.date.subscribe(() => {
+        const d = toDate(props.date.value);
         if (!isNaN(d.getTime())) {
             period.value = { year: d.getFullYear(), month: 1 + d.getMonth() };
         }
     }));
 
     // v5 onload: remote when a url exists, local processing otherwise
-    if (props.url!.value) {
+    if (props.url.value) {
         fetchRemote();
     } else {
         compute();
@@ -265,14 +265,14 @@ export const Timeline = component('timeline', {
     props.ref?.({ next, prev });
 
     const alignOf = () => {
-        const align = props.align!.value as string;
+        const align = props.align.value as string;
         return ALIGNMENTS.includes(align) ? align : 'left'; // v5 normalized invalid values
     };
 
     const sizeOf = (): string | false => {
         let css = '';
-        const w = parseInt(String(props.width!.value), 10);
-        const h = parseInt(String(props.height!.value), 10);
+        const w = parseInt(String(props.width.value), 10);
+        const h = parseInt(String(props.height.value), 10);
         if (w) {
             css += 'width:' + w + 'px;';
         }
@@ -295,8 +295,8 @@ export const Timeline = component('timeline', {
 
     return html`<div class="lm-timeline" style="${() => sizeOf()}">
         <div class="lm-timeline-header"
-            data-visible="${() => (props.controls!.value ? 'true' : 'false')}"
-            data-type="${() => props.type!.value || false}">
+            data-visible="${() => (props.controls.value ? 'true' : 'false')}"
+            data-type="${() => props.type.value || false}">
             <div class="lm-timeline-label">
                 <div class="lm-timeline-year">${() => period.value.year}</div>
                 <div class="lm-timeline-month">${() => MONTHS[period.value.month - 1]}</div>
@@ -307,15 +307,15 @@ export const Timeline = component('timeline', {
             </div>
         </div>
         <div class="lm-timeline-data"
-            data-mode="${() => props.position!.value || false}"
+            data-mode="${() => props.position.value || false}"
             data-align="${() => alignOf()}">${() =>
             records.value.length
                 ? records.value.map((item) => html`<div class="lm-timeline-item"
                     data-bullet="${item.day}"
                     style="${bordersOf(item)}">
-                    ${() => props.editable!.value &&
+                    ${() => props.editable.value &&
                         html`<div class="lm-timeline-edit"><button type="button" class="lm-timeline-icon"
-                            onclick="${() => (props.onedition as ((record: TimelineRecord) => void) | undefined)?.(item)}"
+                            onclick="${() => props.onedition?.(item)}"
                             tabindex="0">edit</button></div>`}
                     <div class="lm-timeline-title">${item.title || ''}</div>
                     <div class="lm-timeline-subtitle">${item.subtitle || ''}</div>
@@ -328,7 +328,7 @@ export const Timeline = component('timeline', {
                                 onclick="${(e: Event) => tag.onclick?.(e, tag)}">${tag.title || ''}</span>`)}</div>`
                         : false}
                 </div>`)
-                : html`<div class="lm-timeline-message">${() => props.message!.value}</div>`
+                : html`<div class="lm-timeline-message">${() => props.message.value}</div>`
         }</div>
     </div>`;
 });

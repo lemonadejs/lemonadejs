@@ -31,12 +31,12 @@ const options = (clicked: string[] = []): QuickmenuItem[] => [
 
 const mountMenu = (props: Record<string, unknown> = {}) => {
     let api: Api | null = null;
-    handle = t(Quickmenu as never, {
+    handle = t(Quickmenu, {
         title: 'Actions',
         options: options(),
         ref: (a: Api) => (api = a),
         ...props,
-    } as never);
+    });
     return api!;
 };
 
@@ -51,7 +51,7 @@ const key = (k: string) =>
 
 describe('components/quickmenu — a dropdown button on the Contextmenu block', () => {
     it('passes verify() — the registry gate', () => {
-        expect(verify(Quickmenu as never).pass).toBe(true);
+        expect(verify(Quickmenu).pass).toBe(true);
     });
 
     it('renders the header with the title and the v6 button ARIA model', () => {
@@ -66,7 +66,7 @@ describe('components/quickmenu — a dropdown button on the Contextmenu block', 
 
     it('title is live: replacing the state re-renders the header', () => {
         const title = store('One');
-        handle = t(Quickmenu as never, { title } as never);
+        handle = t(Quickmenu, { title });
         expect(header().textContent).toBe('One');
         title.value = 'Two';
         expect(header().textContent).toBe('Two');
@@ -74,7 +74,7 @@ describe('components/quickmenu — a dropdown button on the Contextmenu block', 
 
     it('width sizes the header and stays live (v5 :width)', () => {
         const width = store(200);
-        handle = t(Quickmenu as never, { title: 'W', width } as never);
+        handle = t(Quickmenu, { title: 'W', width });
         expect(header().style.width).toBe('200px');
         width.value = 320;
         expect(header().style.width).toBe('320px');
@@ -118,11 +118,11 @@ describe('components/quickmenu — a dropdown button on the Contextmenu block', 
     it('clicking a menu item fires its onclick and closes everything', async () => {
         const clicked: string[] = [];
         let api: Api | null = null;
-        handle = t(Quickmenu as never, {
+        handle = t(Quickmenu, {
             title: 'Actions',
             options: options(clicked),
             ref: (a: Api) => (api = a),
-        } as never);
+        });
         api!.open();
         await flush();
         rows()[0].dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
@@ -210,11 +210,11 @@ describe('components/quickmenu — a dropdown button on the Contextmenu block', 
     it('options is live: the next open reads the replaced list', async () => {
         const opts = store<QuickmenuItem[]>([{ title: 'First' }]);
         let api: Api | null = null;
-        handle = t(Quickmenu as never, {
+        handle = t(Quickmenu, {
             title: 'Live',
             options: opts,
             ref: (a: Api) => (api = a),
-        } as never);
+        });
         api!.open();
         await flush();
         expect(menus()[0].textContent).toContain('First');

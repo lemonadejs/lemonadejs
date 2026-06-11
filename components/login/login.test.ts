@@ -37,7 +37,7 @@ afterEach(() => {
 
 // onsuccess by default: the v5 fallback is a real redirect — not for jsdom
 const open = (props: Record<string, unknown> = {}) => {
-    handle = t(Login as never, { onsuccess: () => {}, ...props } as never);
+    handle = t(Login, { onsuccess: () => {}, ...props });
 };
 
 const q = (selector: string) => handle!.query(selector) as HTMLInputElement;
@@ -61,7 +61,7 @@ const sent = (i = 0) => JSON.parse((fetchMock.mock.calls[i][1] as RequestInit).b
 
 describe('components/login', () => {
     it('passes verify() — the registry gate', () => {
-        expect(verify(Login as never).pass).toBe(true);
+        expect(verify(Login).pass).toBe(true);
     });
 
     it('login posts username + sha512(password) + remember with credentials', async () => {

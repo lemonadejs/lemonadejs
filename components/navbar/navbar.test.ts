@@ -19,7 +19,7 @@ const title = () => handle!.query('.lm-navbar-title')!;
 
 describe('components/navbar', () => {
     it('passes verify() — the registry gate', () => {
-        expect(verify(Navbar as never).pass).toBe(true);
+        expect(verify(Navbar).pass).toBe(true);
     });
 
     it('renders the three v5 cells: left link, title, right link', () => {

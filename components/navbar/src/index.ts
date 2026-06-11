@@ -30,14 +30,14 @@ export const Navbar = component('navbar', {
     return html`<nav class="lm-navbar">
         <div class="lm-navbar-container">
             <div class="lm-navbar-icon"><a
-                href="${() => props.prev!.value || false}"
+                href="${() => props.prev.value || false}"
                 onclick="${(e: MouseEvent) =>
-                    (props.onprev as ((event: MouseEvent) => void) | undefined)?.(e)}">${props.left}</a></div>
+                    props.onprev?.(e)}">${props.left}</a></div>
             <div class="lm-navbar-title">${props.title}</div>
             <div class="lm-navbar-icon"><a
-                href="${() => props.next!.value || false}"
+                href="${() => props.next.value || false}"
                 onclick="${(e: MouseEvent) =>
-                    (props.onnext as ((event: MouseEvent) => void) | undefined)?.(e)}">${props.right}</a></div>
+                    props.onnext?.(e)}">${props.right}</a></div>
         </div>
     </nav>`;
 });

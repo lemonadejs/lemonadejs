@@ -48,7 +48,7 @@ const sample = (): ActionsheetGroup[] => [
 
 const open = async (props: Record<string, unknown> = {}) => {
     let api: Api | null = null;
-    handle = t(Actionsheet as never, { actions: sample(), ...props, ref: (a: Api) => (api = a) } as never);
+    handle = t(Actionsheet, { actions: sample(), ...props, ref: (a: Api) => (api = a) });
     api!.open();
     await flush();
     return api!;
@@ -56,17 +56,17 @@ const open = async (props: Record<string, unknown> = {}) => {
 
 describe('components/actionsheet — on the Modal primitive', () => {
     it('passes verify() — the registry gate', () => {
-        expect(verify(Actionsheet as never).pass).toBe(true);
+        expect(verify(Actionsheet).pass).toBe(true);
     });
 
     it('starts closed and opens a headerless bottom-sheet Modal, firing onopen', async () => {
         const opens: number[] = [];
         let api: Api | null = null;
-        handle = t(Actionsheet as never, {
+        handle = t(Actionsheet, {
             actions: sample(),
             onopen: () => opens.push(1),
             ref: (a: Api) => (api = a),
-        } as never);
+        });
         expect(modal()).toBeNull();
         expect(api!.isOpened()).toBe(false);
 
@@ -143,11 +143,11 @@ describe('components/actionsheet — on the Modal primitive', () => {
     it('bind is the open state, two-way (v5: visible)', async () => {
         const openState = store(false);
         let api: Api | null = null;
-        handle = t(Actionsheet as never, {
+        handle = t(Actionsheet, {
             bind: openState,
             actions: sample(),
             ref: (a: Api) => (api = a),
-        } as never);
+        });
         expect(modal()).toBeNull();
 
         openState.value = true; // external write opens, silent

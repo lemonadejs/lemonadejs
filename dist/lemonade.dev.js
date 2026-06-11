@@ -59,6 +59,7 @@ var lemonade = (() => {
     "LJS-304": "bind owns the element value \u2014 remove the explicit value/checked attribute",
     "LJS-305": "Event and callback names are lowercase: onclick, onchange, onsave",
     "LJS-401": "Prop does not match its contract",
+    "LJS-402": "Unknown prop \u2014 not declared in the contract",
     "LJS-501": "Sugar singletons: expose once, never touch \u2014 check the api in the contract"
   };
   var EXPLAIN = !DEV ? {} : {
@@ -78,6 +79,7 @@ var lemonade = (() => {
     "LJS-304": "An element has both bind and an explicit value/checked attribute. bind drives that property in both directions, so the explicit attribute fights it. Remove value/checked and set the state instead.",
     "LJS-305": "One rule, no exceptions: every event and callback name is lowercase, HTML-style \u2014 onclick, oninput, onchange, onsave, onitemclick \u2014 exactly like the platform names onmousedown or onbeforeunload. On native elements other casings still attach (the event name is normalized) but warn; on components, props are case-sensitive JavaScript keys, so onChange would be silently ignored by a component reading onchange. Declare and pass component callbacks in lowercase.",
     "LJS-401": 'A published component received a prop that violates its contract: wrong type, a non-function for a declared event, or a contract key that cannot work (prop names must be lowercase because they become HTML attributes). Check describe(Component) for the expected interface. Attribute strings are coerced to the declared type automatically ("5" \u2192 5 for numbers, presence semantics for booleans).',
+    "LJS-402": "A prop was passed to a published component that its contract does not declare. The component never reads it, so it does nothing \u2014 usually a typo (the warning suggests the closest declared name) or a prop that belongs to a different component. Check describe(Component) for the declared interface. ref, children, expose and declared on* events are always accepted and never warn.",
     "LJS-501": "Sugar services are singletons by definition: one <${C} expose /> per component, registered once and never touched. This warning fires when a second instance exposes the same component (last one wins \u2014 almost always a bug) or when expose is used without api: { ... } declared in the contract. Consume with use(Component), which returns null until the instance is mounted."
   };
   var format = function(code, detail) {
@@ -633,6 +635,42 @@ var lemonade = (() => {
     }
     return typeof v === type;
   };
+  var warnUnknownProps = !DEV ? null : function(incoming, schema) {
+    const editDistance = function(a, b) {
+      if (Math.abs(a.length - b.length) > 2) {
+        return 3;
+      }
+      let prev = Array.from({ length: b.length + 1 }, (_, i) => i);
+      for (let i = 1; i <= a.length; i++) {
+        const cur = [i];
+        for (let j = 1; j <= b.length; j++) {
+          cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+        }
+        prev = cur;
+      }
+      return prev[b.length];
+    };
+    const closest = function(key, names) {
+      let best = "";
+      let bestDistance = 3;
+      const k = key.toLowerCase();
+      for (const name of names) {
+        const d = editDistance(k, name.toLowerCase());
+        if (d < bestDistance) {
+          bestDistance = d;
+          best = name;
+        }
+      }
+      return best;
+    };
+    for (const key of Object.keys(incoming)) {
+      if (key in schema.props || schema.events.indexOf(key) >= 0 || key === "ref" || key === "children" || key === "expose" || key === "bind" && schema.bind !== null) {
+        continue;
+      }
+      const hint = closest(key, Object.keys(schema.props).concat(schema.events));
+      warn("LJS-402", key + " in <" + schema.name + ">" + (hint ? " \u2014 did you mean '" + hint + "'?" : ""));
+    }
+  };
   var component = function(name, contractDef, fn) {
     const schema = buildSchema(name, contractDef);
     const wrapped = function(props, tools) {
@@ -651,6 +689,7 @@ var lemonade = (() => {
         }
         final[key] = new StateImpl(v);
       }
+      DEV && warnUnknownProps(incoming, schema);
       if (schema.bind && incoming.bind === void 0 && schema.bind.default !== void 0) {
         final.bind = schema.bind.default;
       }

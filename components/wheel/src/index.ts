@@ -36,11 +36,11 @@ export const Wheel = component('wheel', {
     onchange: Function,           // (index) on user/component-initiated changes
     api: { getIndex: Function, setIndex: Function, getValue: Function },
 }, (props, { bind, state, onMount, onUnmount }) => {
-    const index = bind(props, Number(props.selected!.value) || 0);
+    const index = bind(props, Number(props.selected.value) || 0);
 
-    const items = () => (props.options!.value as unknown[]) || [];
-    const rh = () => Number(props.rowheight!.value) || 40;
-    const visible = () => Math.max(1, Math.floor(Number(props.visible!.value)) || 5);
+    const items = () => (props.options.value as unknown[]) || [];
+    const rh = () => Number(props.rowheight.value) || 40;
+    const visible = () => Math.max(1, Math.floor(Number(props.visible.value)) || 5);
     /** The blank run above/below the column that centers a row (v5: 80px) */
     const pad = () => ((visible() - 1) / 2) * rh();
     const max = () => Math.max(0, items().length - 1);
@@ -87,11 +87,11 @@ export const Wheel = component('wheel', {
 
     // External writes re-place the wheel silently; geometry follows props
     onMount(() => index.subscribe(align));
-    onMount(() => props.rowheight!.subscribe(align));
+    onMount(() => props.rowheight.subscribe(align));
     // v5/rating behavior: shrinking the option list clamps the selection
     // (a component-initiated change — onchange fires)
     onMount(() =>
-        props.options!.subscribe(() => {
+        props.options.subscribe(() => {
             const i = clampIndex(Number(index.value) || 0);
             if (i !== Number(index.value)) {
                 index.set(i);
@@ -114,7 +114,7 @@ export const Wheel = component('wheel', {
 
     const onWheel = (e: WheelEvent) => {
         e.preventDefault(); // the wheel owns its scroll (v5 for notches; here always — no native scroller)
-        if (props.disabled!.value || !items().length) {
+        if (props.disabled.value || !items().length) {
             return;
         }
         if (discrete(e)) {
@@ -154,7 +154,7 @@ export const Wheel = component('wheel', {
     };
 
     const start = (e: MouseEvent | TouchEvent) => {
-        if (props.disabled!.value || !items().length) {
+        if (props.disabled.value || !items().length) {
             return;
         }
         if (settle) {
@@ -187,7 +187,7 @@ export const Wheel = component('wheel', {
     };
 
     const onKey = (e: KeyboardEvent) => {
-        if (props.disabled!.value || !items().length) {
+        if (props.disabled.value || !items().length) {
             return;
         }
         const step = e.key === 'ArrowDown' ? 1 : e.key === 'ArrowUp' ? -1 : 0;
@@ -211,8 +211,8 @@ export const Wheel = component('wheel', {
 
     return html`<div class="lm-wheel ${() => (dragging.value ? 'lm-wheel-dragging' : '')}"
         role="listbox"
-        tabindex="${() => (props.disabled!.value ? false : '0')}"
-        data-disabled="${() => (props.disabled!.value ? 'true' : false)}"
+        tabindex="${() => (props.disabled.value ? false : '0')}"
+        data-disabled="${() => (props.disabled.value ? 'true' : false)}"
         style="${() => 'height:' + visible() * rh() + 'px'}"
         onwheel="${onWheel}"
         onmousedown="${start}"

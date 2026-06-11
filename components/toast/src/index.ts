@@ -120,7 +120,7 @@ export const Toast = component('toast', {
 
     /** A slot opened up: promote waiting toasts (their clock starts NOW) */
     const promote = () => {
-        while (waiting.length && items.value.length < (props.max!.value as number)) {
+        while (waiting.length && items.value.length < (props.max.value as number)) {
             activate(waiting.shift()!);
         }
     };
@@ -131,7 +131,7 @@ export const Toast = component('toast', {
         const gone = items.value.find((t) => t.id === id);
         items.value = items.value.filter((t) => t.id !== id);
         if (gone) {
-            (props.onclose as ((message: string) => void) | undefined)?.(gone.message);
+            props.onclose?.(gone.message);
         }
         promote();
     };
@@ -153,10 +153,10 @@ export const Toast = component('toast', {
             message: String(message),
             severity: options.severity || '',
             action: options.action || null,
-            duration: options.duration !== undefined ? options.duration : (props.duration!.value as number),
+            duration: options.duration !== undefined ? options.duration : (props.duration.value as number),
             leaving: false,
         };
-        if (items.value.length < (props.max!.value as number)) {
+        if (items.value.length < (props.max.value as number)) {
             activate(toast);
         } else {
             waiting.push(toast);
@@ -190,7 +190,7 @@ export const Toast = component('toast', {
     });
 
     return html`<div class="lm-toast"
-        data-position="${() => props.position!.value || false}">${() =>
+        data-position="${() => props.position.value || false}">${() =>
         items.value.map(
             (t) => html`<div class="lm-toast-item" role="status"
                 data-severity="${() => t.severity || false}"
@@ -204,7 +204,7 @@ export const Toast = component('toast', {
                             dismiss(t.id);
                         }}">${t.action.label}</button>`}
                 ${() =>
-                    props.closable!.value &&
+                    props.closable.value &&
                     html`<button type="button" class="lm-toast-close" aria-label="Close"
                         onclick="${() => dismiss(t.id)}">×</button>`}
             </div>`

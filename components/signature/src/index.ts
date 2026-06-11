@@ -37,7 +37,7 @@ export const Signature = component('signature', {
     onload: Function,             // fires once the canvas is ready (v5)
     api: { getValue: Function, setValue: Function, getImage: Function, clear: Function },
 }, (props, { bind, onMount, onUnmount }) => {
-    const initial = props.value!.value;
+    const initial = props.value.value;
     const strokes = bind(props, (Array.isArray(initial) ? initial.slice() : []) as unknown[]);
 
     let canvas: HTMLCanvasElement | null = null;
@@ -50,9 +50,9 @@ export const Signature = component('signature', {
     /** v5 move(): start a path — thickness, round cap, color */
     const pen = (x: number, y: number) => {
         ctx!.beginPath();
-        ctx!.lineWidth = (props.line!.value as number) || 3;
+        ctx!.lineWidth = (props.line.value as number) || 3;
         ctx!.lineCap = 'round';
-        ctx!.strokeStyle = (props.color!.value as string) || '#000';
+        ctx!.strokeStyle = (props.color.value as string) || '#000';
         ctx!.moveTo(x, y);
     };
 
@@ -122,7 +122,7 @@ export const Signature = component('signature', {
     };
 
     const start = (e: MouseEvent | TouchEvent) => {
-        if (props.disabled!.value || !ctx) {
+        if (props.disabled.value || !ctx) {
             return;
         }
         pending = data().slice();
@@ -156,26 +156,26 @@ export const Signature = component('signature', {
         canvas = el as HTMLCanvasElement;
         ctx = canvas.getContext('2d');
         redraw();
-        (props.onload as ((api: object) => void) | undefined)?.(api);
+        props.onload?.(api);
     };
 
     // Any committed or external write (bound store, setValue) replays the pad
     onMount(() => strokes.subscribe(() => redraw()));
 
-    return html`<div class="lm-signature ${() => (props.disabled!.value ? 'lm-signature-disabled' : '')}">
+    return html`<div class="lm-signature ${() => (props.disabled.value ? 'lm-signature-disabled' : '')}">
         <canvas class="lm-signature-canvas"
-            width="${() => props.width!.value || false}"
-            height="${() => props.height!.value || false}"
+            width="${() => props.width.value || false}"
+            height="${() => props.height.value || false}"
             ref="${(el: Element) => init(el)}"
             onmousedown="${start}"
             ontouchstart="${start}"
             onmousemove="${draw}"
             ontouchmove="${draw}"></canvas>
         ${() =>
-            props.instructions!.value &&
+            props.instructions.value &&
             html`<div class="lm-signature-instructions">${props.instructions}</div>`}
         ${() =>
-            props.name!.value &&
+            props.name.value &&
             html`<input type="hidden" class="lm-signature-input" name="${props.name}"
                 value="${() => JSON.stringify(data())}" />`}
     </div>`;

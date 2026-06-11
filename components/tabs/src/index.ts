@@ -90,7 +90,7 @@ export const Tabs = component('tabs', {
 
     // v5: programmatic data first, then element children appended
     const initial: TabItem[] = [];
-    for (const raw of (props.data!.value as TabItem[]) || []) {
+    for (const raw of (props.data.value as TabItem[]) || []) {
         initial.push(prepare(raw));
     }
     for (const node of props.children || []) {
@@ -103,7 +103,7 @@ export const Tabs = component('tabs', {
 
     // Initial selection: the last item flagged selected wins (v5), else
     // the selected prop; bind (a live state) wins over everything
-    let start = (props.selected!.value as number) || 0;
+    let start = (props.selected.value as number) || 0;
     initial.forEach((item, i) => {
         if (item.selected) {
             start = i;
@@ -131,7 +131,7 @@ export const Tabs = component('tabs', {
         // reselect the current one
         if (index >= 0 && index < items.value.length && index !== selected.value) {
             // v5 order: open fires, then change
-            (props.onopen as ((index: number) => void) | undefined)?.(index);
+            props.onopen?.(index);
             selected.set(index); // fires onchange(index, oldIndex)
         }
     };
@@ -141,7 +141,7 @@ export const Tabs = component('tabs', {
             console.error('Item must be an object');
             return;
         }
-        const ret = (props.onbeforecreate as ((item: TabItem, position?: number | null) => unknown) | undefined)?.(
+        const ret = props.onbeforecreate?.(
             item,
             position
         );
@@ -159,7 +159,7 @@ export const Tabs = component('tabs', {
         if (select) {
             doSelect(list.indexOf(prepared));
         }
-        (props.oncreate as ((item: TabItem, position: number) => void) | undefined)?.(prepared, at);
+        props.oncreate?.(prepared, at);
     };
 
     props.ref?.({ open: doSelect, create });
@@ -231,7 +231,7 @@ export const Tabs = component('tabs', {
             items.value = list;
             // v5: the moved tab is selected at its new position
             doSelect(to);
-            (props.onchangeposition as ((from: number, to: number) => void) | undefined)?.(drag.from, to);
+            props.onchangeposition?.(drag.from, to);
         }
         drag.el.style.opacity = '';
         drag = null;
@@ -245,8 +245,8 @@ export const Tabs = component('tabs', {
     };
 
     return html`<div class="lm-tabs"
-        data-position="${() => props.position!.value || false}"
-        data-round="${() => (props.round!.value ? 'true' : false)}">
+        data-position="${() => props.position.value || false}"
+        data-round="${() => (props.round.value ? 'true' : false)}">
         <div class="lm-tabs-headers" role="tablist">
             <ul ref="${(el: Element) => (ul = el as HTMLElement)}"
                 onclick="${onOpenEvent}"
@@ -264,7 +264,7 @@ export const Tabs = component('tabs', {
                             data-icon="${item.icon || false}">${item.title || ''}</li>`
                 )}</ul>
             ${() =>
-                props.allowcreate!.value &&
+                props.allowcreate.value &&
                 html`<div class="lm-tabs-insert-button" role="insert-tab"
                     onclick="${() => create({ title: 'Untitled' }, null, true)}">add</div>`}
         </div>

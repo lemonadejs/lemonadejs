@@ -23,7 +23,7 @@
  */
 import type { Bindable, Component, State } from './types';
 /** Widen literal defaults and map constructors to value types */
-type Widen<E> = E extends string ? string : E extends number ? number : E extends boolean ? boolean : E extends StringConstructor ? string : E extends NumberConstructor ? number : E extends BooleanConstructor ? boolean : E extends ArrayConstructor ? unknown[] : E extends ObjectConstructor ? Record<string, unknown> : E extends FunctionConstructor ? (...args: never[]) => unknown : E;
+type Widen<E> = E extends null | undefined ? unknown : E extends string ? string : E extends number ? number : E extends boolean ? boolean : E extends StringConstructor ? string : E extends NumberConstructor ? number : E extends BooleanConstructor ? boolean : E extends ArrayConstructor ? unknown[] : E extends ObjectConstructor ? Record<string, unknown> : E extends FunctionConstructor ? (...args: never[]) => unknown : E;
 /**
  * The props a CALLER may pass to a published component: plain values,
  * live states, or attribute strings (coerced) — the contract layer
@@ -53,11 +53,15 @@ export type ContractInput<C> = {
  * The props a published component RECEIVES, derived from its contract:
  * declared props arrive as live states, on* keys are callbacks,
  * bind/onchange follow Bindable, api flows through ref.
+ *
+ * Declared props are NON-OPTIONAL: the engine constructs a state for
+ * every contract entry, so `props.height.value` is a `number` — no `!`
+ * and no `as` casts needed inside the component.
  */
 export type ContractProps<C> = {
-    [K in keyof C as K extends 'bind' | 'api' ? never : K extends `on${string}` ? never : K & string]?: State<Widen<C[K]>>;
+    [K in keyof C as K extends 'bind' | 'api' ? never : K extends `on${string}` ? never : K & string]: State<Widen<C[K]>>;
 } & {
-    [K in keyof C as K extends `on${string}` ? K & string : never]?: (...args: never[]) => unknown;
+    [K in keyof C as K extends `on${string}` ? K & string : never]?: (...args: any[]) => unknown;
 } & (C extends {
     bind: infer B;
 } ? Bindable<Widen<B>> : object) & (C extends {
@@ -70,6 +74,12 @@ export type ContractProps<C> = {
     expose?: boolean;
     children?: readonly Node[];
 };
+/** The api object a contract component publishes, as the CALLER sees it */
+export type ApiOf<C> = C extends Component<infer P> ? P extends {
+    ref?: infer R;
+} ? R extends (api: infer A) => void ? A : R extends {
+    current: infer A | null;
+} ? A : never : never : never;
 export type ContractType = 'string' | 'number' | 'boolean' | 'array' | 'object' | 'function' | 'any';
 export interface PropSchema {
     type: ContractType;

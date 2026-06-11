@@ -31,7 +31,7 @@ const setRect = (el: HTMLElement, r: { top: number; left: number; width: number;
 };
 
 const mountTip = (props: Record<string, unknown> = {}, rect = { top: 100, left: 100, width: 80, height: 30 }) => {
-    handle = t(Tooltip as never, { title: 'Tip', ...props } as never);
+    handle = t(Tooltip, { title: 'Tip', ...props });
     const el = wrapper();
     setRect(el, rect);
     return el;
@@ -47,7 +47,7 @@ const show = async (el: HTMLElement, ms = 100) => {
 
 describe('components/tooltip', () => {
     it('passes verify() — the registry gate', () => {
-        expect(verify(Tooltip as never).pass).toBe(true);
+        expect(verify(Tooltip).pass).toBe(true);
     });
 
     it('renders its children inside the wrapper, popper hidden until hover', () => {

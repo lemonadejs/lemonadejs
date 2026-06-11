@@ -39,11 +39,11 @@ const items = (clicked: string[]): ContextItem[] => [
 
 const open = async (clicked: string[] = [], events: Record<string, () => void> = {}) => {
     let api: Api | null = null;
-    handle = t(Contextmenu as never, {
+    handle = t(Contextmenu, {
         options: items(clicked),
         ...events,
         ref: (a: Api) => (api = a),
-    } as never);
+    });
     api!.openAt(60, 60);
     await flush();
     return api!;
@@ -58,7 +58,7 @@ const cursorTitle = (level = 0) =>
 
 describe('components/contextmenu — on the Modal primitive', () => {
     it('passes verify() — the registry gate', () => {
-        expect(verify(Contextmenu as never).pass).toBe(true);
+        expect(verify(Contextmenu).pass).toBe(true);
     });
 
     it('each open level IS a Modal', async () => {
@@ -196,10 +196,10 @@ describe('components/contextmenu — on the Modal primitive', () => {
 /** fake-timers variant: flush via timer advance instead of real timeout */
 const openWithFakeTimers = async () => {
     let api: Api | null = null;
-    handle = t(Contextmenu as never, {
+    handle = t(Contextmenu, {
         options: items([]),
         ref: (a: Api) => (api = a),
-    } as never);
+    });
     api!.openAt(60, 60);
     await vi.advanceTimersByTimeAsync(1);
     return api!;

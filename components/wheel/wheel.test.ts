@@ -58,7 +58,7 @@ const drag = (target: Element, from: number, ...points: number[]) => {
 
 describe('components/wheel — the iOS-style option wheel', () => {
     it('passes verify() — the registry gate', () => {
-        expect(verify(Wheel as never).pass).toBe(true);
+        expect(verify(Wheel).pass).toBe(true);
     });
 
     it('renders one row per option: strings and v5 { title } objects', () => {

@@ -40,7 +40,7 @@ type Api = { open(): void; close(): void; toggle(): void };
 
 describe('components/speeddial', () => {
     it('passes verify() — the registry gate', () => {
-        expect(verify(Speeddial as never).pass).toBe(true);
+        expect(verify(Speeddial).pass).toBe(true);
     });
 
     it('renders closed: FAB with the default + glyph, collapsed fan', () => {

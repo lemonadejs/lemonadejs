@@ -49,16 +49,16 @@ export const Slider = component('slider', {
     onchange: Function,           // fires on RELEASE with the final value (v5-style commit)
     oninput: Function,            // fires on every value change while interacting
 }, (props, { state, bind, onUnmount }) => {
-    const current = bind(props, props.min!.value as number);
+    const current = bind(props, props.min.value as number);
     const dragging = state(false);
     const focused = state(false);
 
     let trackEl: HTMLElement | null = null;
     let thumbEl: HTMLElement | null = null;
 
-    const minV = () => Number(props.min!.value);
-    const maxV = () => Number(props.max!.value);
-    const stepV = () => Number(props.step!.value) || 1;
+    const minV = () => Number(props.min.value);
+    const maxV = () => Number(props.max.value);
+    const stepV = () => Number(props.step.value) || 1;
 
     /** The bound value as a number — an unbound/undefined state reads as min */
     const val = () => {
@@ -113,7 +113,7 @@ export const Slider = component('slider', {
     const moveTo = (next: number) => {
         if (next !== val()) {
             current.value = next;
-            (props.oninput as ((value: number) => void) | undefined)?.(next);
+            props.oninput?.(next);
         }
     };
 
@@ -121,12 +121,12 @@ export const Slider = component('slider', {
     const commitFrom = (start: number) => {
         const v = val();
         if (v !== start) {
-            (props.onchange as ((value: number, oldValue: number) => void) | undefined)?.(v, start);
+            props.onchange?.(v, start);
         }
     };
 
     const onPress = (e: MouseEvent) => {
-        if (props.disabled!.value || !trackEl) {
+        if (props.disabled.value || !trackEl) {
             return;
         }
         e.preventDefault();
@@ -145,7 +145,7 @@ export const Slider = component('slider', {
     };
 
     const onKey = (e: KeyboardEvent) => {
-        if (props.disabled!.value) {
+        if (props.disabled.value) {
             return;
         }
         const v = val();
@@ -182,7 +182,7 @@ export const Slider = component('slider', {
 
     /** Boolean marks: a tick per step, only while feasible (≤ MAX_MARKS) */
     const markList = () => {
-        if (!props.marks!.value) {
+        if (!props.marks.value) {
             return null;
         }
         const lo = minV();
@@ -204,10 +204,10 @@ export const Slider = component('slider', {
     };
 
     return html`<div
-        class="lm-slider ${() => (props.disabled!.value ? 'lm-slider-disabled' : '')} ${() =>
+        class="lm-slider ${() => (props.disabled.value ? 'lm-slider-disabled' : '')} ${() =>
             dragging.value ? 'lm-slider-active' : ''}"
-        data-color="${() => props.color!.value || false}">
-        ${() => props.label!.value && html`<span class="lm-slider-label">${props.label}</span>`}
+        data-color="${() => props.color.value || false}">
+        ${() => props.label.value && html`<span class="lm-slider-label">${props.label}</span>`}
         <div class="lm-slider-track"
             ref="${(el: Element) => (trackEl = el as HTMLElement)}"
             onmousedown="${onPress}">
@@ -216,19 +216,19 @@ export const Slider = component('slider', {
             ${markList}
             <span class="lm-slider-thumb"
                 role="slider"
-                tabindex="${() => (props.disabled!.value ? '-1' : '0')}"
+                tabindex="${() => (props.disabled.value ? '-1' : '0')}"
                 style="${() => 'left:' + pct(val()) + '%'}"
                 aria-valuemin="${() => minV()}"
                 aria-valuemax="${() => maxV()}"
                 aria-valuenow="${() => val()}"
-                aria-label="${() => props.label!.value || false}"
-                aria-disabled="${() => (props.disabled!.value ? 'true' : false)}"
+                aria-label="${() => props.label.value || false}"
+                aria-disabled="${() => (props.disabled.value ? 'true' : false)}"
                 ref="${(el: Element) => (thumbEl = el as HTMLElement)}"
                 onkeydown="${onKey}"
                 onfocus="${() => (focused.value = true)}"
                 onblur="${() => (focused.value = false)}">
                 ${() =>
-                    props.showvalue!.value && (dragging.value || focused.value)
+                    props.showvalue.value && (dragging.value || focused.value)
                         ? html`<span class="lm-slider-bubble">${() => String(val())}</span>`
                         : null}
             </span>

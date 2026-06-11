@@ -29,7 +29,7 @@ const make = (n: number): ListItem[] =>
 
 const open = (props: Record<string, unknown> = {}) => {
     let api: Api | null = null;
-    handle = t(List as never, { ...props, ref: (a: Api) => (api = a) } as never);
+    handle = t(List, { ...props, ref: (a: Api) => (api = a) });
     return api!;
 };
 
@@ -44,7 +44,7 @@ const scrollTo = (top: number) => {
 
 describe('components/list — the v5 list as the MUI-style List', () => {
     it('passes verify() — the registry gate', () => {
-        expect(verify(List as never).pass).toBe(true);
+        expect(verify(List).pass).toBe(true);
     });
 
     it('default renderer: title + secondary text per record, list semantics', () => {

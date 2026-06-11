@@ -28,7 +28,7 @@ export { isDisposing, mount, inspect, ref, setComponents, unsafe } from './runti
 export { store } from './store';
 export { batch } from './reactivity';
 export { component, contract, use } from './contract';
-export type { ContractInput, ContractProps, Schema, PropSchema, ContractType } from './contract';
+export type { ContractInput, ContractProps, ApiOf, Schema, PropSchema, ContractType } from './contract';
 export { createWebComponent } from './webcomponents';
 export { explain } from './errors';
 

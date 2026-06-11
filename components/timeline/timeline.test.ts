@@ -36,7 +36,7 @@ const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
 
 describe('components/timeline', () => {
     it('passes verify() — the registry gate', () => {
-        const report = verify(Timeline as never);
+        const report = verify(Timeline);
         expect(report.pass).toBe(true);
     });
 

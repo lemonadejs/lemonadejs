@@ -32,7 +32,7 @@ const closeButton = () => handle!.query('.lm-drawer-close') as HTMLElement | nul
 
 const openDrawer = async (props: Record<string, unknown> = {}) => {
     let api: Api | null = null;
-    handle = t(Drawer as never, { ...props, ref: (a: Api) => (api = a) } as never);
+    handle = t(Drawer, { ...props, ref: (a: Api) => (api = a) });
     api!.open();
     await flush();
     return api!;
@@ -43,17 +43,17 @@ const escape = (el: HTMLElement) =>
 
 describe('components/drawer — on the Modal primitive', () => {
     it('passes verify() — the registry gate', () => {
-        expect(verify(Drawer as never).pass).toBe(true);
+        expect(verify(Drawer).pass).toBe(true);
     });
 
     it('starts closed; api open/close/toggle drive the panel with onopen/onclose', async () => {
         const events: string[] = [];
         let api: Api | null = null;
-        handle = t(Drawer as never, {
+        handle = t(Drawer, {
             onopen: () => events.push('open'),
             onclose: (origin: string) => events.push('close:' + origin),
             ref: (a: Api) => (api = a),
-        } as never);
+        });
         expect(modal()).toBeNull();
 
         api!.open();
@@ -78,11 +78,11 @@ describe('components/drawer — on the Modal primitive', () => {
     it('bind is two-way and external writes stay SILENT', async () => {
         const visible = store(false);
         const events: string[] = [];
-        handle = t(Drawer as never, {
+        handle = t(Drawer, {
             bind: visible,
             onopen: () => events.push('open'),
             onclose: (origin: string) => events.push('close:' + origin),
-        } as never);
+        });
         expect(modal()).toBeNull();
 
         visible.value = true; // external write opens, silently

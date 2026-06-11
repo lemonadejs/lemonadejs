@@ -19,7 +19,7 @@ const root = () => handle!.query('.lm-toggle')!;
 
 describe('components/toggle', () => {
     it('passes verify() — the registry gate', () => {
-        const report = verify(Toggle as never);
+        const report = verify(Toggle);
         expect(report.pass).toBe(true);
     });
 

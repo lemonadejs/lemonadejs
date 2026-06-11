@@ -252,7 +252,7 @@ export const Cropper = component('cropper', {
         resetBox();
         refreshFilters();
         redraw();
-        (props.onload as ((img: HTMLImageElement) => void) | undefined)?.(image);
+        props.onload?.(image);
     };
     image.addEventListener('load', onImageLoad);
 
@@ -285,7 +285,7 @@ export const Cropper = component('cropper', {
     }));
 
     // src is live: any write loads a new image (initial value in init)
-    onMount(() => props.src!.subscribe((v) => {
+    onMount(() => props.src.subscribe((v) => {
         if (v) {
             image.src = v as string;
         }
@@ -309,7 +309,7 @@ export const Cropper = component('cropper', {
 
     /** v5 5px hit zones on the crop box (resize only when resizable) */
     const hitBox = (e: MouseEvent): string => {
-        if (!props.resizable!.value) {
+        if (!props.resizable.value) {
             return 'move';
         }
         const r = editor ? editor.getBoundingClientRect() : ({ left: 0, top: 0 } as DOMRect);
@@ -591,7 +591,7 @@ export const Cropper = component('cropper', {
         }
         const content = croppedContent();
         const data: CropData = { file: content, content, extension: imageType() };
-        if (props.original!.value) {
+        if (props.original.value) {
             data.original = image.src;
         }
         photo.set(data); // commits + onchange (v5 Save Photo)
@@ -648,8 +648,8 @@ export const Cropper = component('cropper', {
         ctx = canvas.getContext('2d', { willReadFrequently: true });
         filterCanvas = document.createElement('canvas');
         filterCtx = filterCanvas.getContext('2d', { willReadFrequently: true });
-        if (props.src!.value) {
-            image.src = props.src!.value as string;
+        if (props.src.value) {
+            image.src = props.src.value as string;
         }
     };
 
@@ -661,7 +661,7 @@ export const Cropper = component('cropper', {
     return html`<div class="lm-cropper ${() => (hasImage.value ? 'lm-cropper-edition' : '')} ${() =>
         dragging.value ? 'lm-cropper-dragging' : ''}">
         <div class="lm-cropper-editor"
-            style="${() => 'width:' + props.width!.value + 'px;height:' + props.height!.value + 'px'}"
+            style="${() => 'width:' + props.width.value + 'px;height:' + props.height.value + 'px'}"
             ref="${(el: Element) => (editor = el as HTMLElement)}"
             onmousedown="${onPress}"
             onclick="${() => !hasImage.value && upload()}"
@@ -682,7 +682,7 @@ export const Cropper = component('cropper', {
             <div class="lm-cropper-box" style="${boxStyle}" onmousemove="${onHoverBox}"></div>
         </div>
         ${() =>
-            props.controls!.value &&
+            props.controls.value &&
             html`<div class="lm-cropper-controls">
                 <div class="lm-cropper-ranges">
                     <label class="lm-cropper-range">Zoom<input type="range"
