@@ -385,7 +385,7 @@ describe('components/datagrid — column resize + customization', () => {
             gripAt(2).dispatchEvent(mouse('mousedown', 100));
             expect(drag(adds)).toBe(4);
             expect(drag(removes)).toBe(2);
-            handle!.unmount(); // mid-drag: the ONE persistent cleanup releases it
+            handle!.unmount(); // mid-drag: listen() removes the armed pair automatically
             handle = null;
             expect(drag(removes)).toBe(4); // balanced — nothing leaked
         } finally {

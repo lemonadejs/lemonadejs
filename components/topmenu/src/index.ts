@@ -197,7 +197,7 @@ export const Topmenu = component('topmenu', {
             onmouseenter="${() => hoverMove(index)}">${item.title}</div>`;
 
     return html`<div class="lm-topmenu" role="menubar" aria-orientation="horizontal"
-        ref="${(el: Element) => (root = el as HTMLElement)}"
+        ref="${(el: HTMLElement) => (root = el)}"
         oncontextmenu="${cancel}"
         onfocusin="${onFocusIn}"
         onfocusout="${onFocusOut}"

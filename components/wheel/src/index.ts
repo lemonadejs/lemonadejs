@@ -35,7 +35,7 @@ export const Wheel = component('wheel', {
     disabled: false,              // blocks interaction (new)
     onchange: Function,           // (index) on user/component-initiated changes
     api: { getIndex: Function, setIndex: Function, getValue: Function },
-}, (props, { bind, state, onMount, onUnmount }) => {
+}, (props, { bind, state, listen, onMount, onUnmount }) => {
     const index = bind(props, Number(props.selected.value) || 0);
 
     const items = () => (props.options.value as unknown[]) || [];
@@ -58,7 +58,9 @@ export const Wheel = component('wheel', {
             ? String((opt as { title?: unknown }).title ?? '')
             : String(opt ?? '');
 
-    // ---- glide settle + document listeners: ONE persistent cleanup
+    // ---- glide settle + document listeners: armed per gesture on listen;
+    // the release also COMMITS the gesture (done), so a mid-drag unmount
+    // still settles — ONE setup-time cleanup releasing every off
     let settle: ReturnType<typeof setTimeout> | null = null;
     let release: (() => void) | null = null;
     onUnmount(() => {
@@ -138,19 +140,18 @@ export const Wheel = component('wheel', {
 
     const track = (move: (e: Event) => void, done: () => void) => {
         release?.();
-        const up = () => {
-            document.removeEventListener('mousemove', move);
-            document.removeEventListener('touchmove', move);
-            document.removeEventListener('mouseup', up);
-            document.removeEventListener('touchend', up);
+        const up = () => release?.();
+        const offs = [
+            listen(document, 'mousemove', move),
+            listen(document, 'touchmove', move, { passive: false }),
+            listen(document, 'mouseup', up),
+            listen(document, 'touchend', up),
+        ];
+        release = () => {
+            offs.forEach((off) => off());
             release = null;
             done();
         };
-        release = up;
-        document.addEventListener('mousemove', move);
-        document.addEventListener('touchmove', move, { passive: false });
-        document.addEventListener('mouseup', up);
-        document.addEventListener('touchend', up);
     };
 
     const start = (e: MouseEvent | TouchEvent) => {

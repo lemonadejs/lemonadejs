@@ -48,7 +48,7 @@ export const Slider = component('slider', {
     color: '',                    // green | orange | red | purple
     onchange: Function,           // fires on RELEASE with the final value (v5-style commit)
     oninput: Function,            // fires on every value change while interacting
-}, (props, { state, bind, onUnmount }) => {
+}, (props, { state, bind, listen, onUnmount }) => {
     const current = bind(props, props.min.value as number);
     const dragging = state(false);
     const focused = state(false);
@@ -91,22 +91,23 @@ export const Slider = component('slider', {
     const valueAt = (x: number, rect: DOMRect) =>
         snap(minV() + (rect.width ? (x - rect.left) / rect.width : 0) * (maxV() - minV()));
 
-    // ---- interactions: one in flight, ONE cleanup registered at setup
-    // (the modal pattern — never accumulate per-drag onUnmount registrations)
+    // ---- interactions: one in flight, armed on listen (the engine removes
+    // the listeners on unmount); release also COMMITS the gesture (done), so
+    // a mid-drag unmount still commits — hence the explicit onUnmount
     let releaseInteraction: (() => void) | null = null;
     onUnmount(() => releaseInteraction?.());
 
     const track = (move: (e: MouseEvent) => void, done?: () => void) => {
         releaseInteraction?.();
-        const up = () => {
-            document.removeEventListener('mousemove', move);
-            document.removeEventListener('mouseup', up);
+        const offs = [
+            listen<MouseEvent>(document, 'mousemove', move),
+            listen(document, 'mouseup', () => releaseInteraction?.()),
+        ];
+        releaseInteraction = () => {
+            offs.forEach((off) => off());
             releaseInteraction = null;
             done?.();
         };
-        releaseInteraction = up;
-        document.addEventListener('mousemove', move);
-        document.addEventListener('mouseup', up);
     };
 
     /** Silent write + oninput — only when the value actually changes */
@@ -209,7 +210,7 @@ export const Slider = component('slider', {
         data-color="${() => props.color.value || false}">
         ${() => props.label.value && html`<span class="lm-slider-label">${props.label}</span>`}
         <div class="lm-slider-track"
-            ref="${(el: Element) => (trackEl = el as HTMLElement)}"
+            ref="${(el: HTMLElement) => (trackEl = el)}"
             onmousedown="${onPress}">
             <span class="lm-slider-rail"></span>
             <span class="lm-slider-fill" style="${() => 'width:' + pct(val()) + '%'}"></span>
@@ -223,7 +224,7 @@ export const Slider = component('slider', {
                 aria-valuenow="${() => val()}"
                 aria-label="${() => props.label.value || false}"
                 aria-disabled="${() => (props.disabled.value ? 'true' : false)}"
-                ref="${(el: Element) => (thumbEl = el as HTMLElement)}"
+                ref="${(el: HTMLElement) => (thumbEl = el)}"
                 onkeydown="${onKey}"
                 onfocus="${() => (focused.value = true)}"
                 onblur="${() => (focused.value = false)}">

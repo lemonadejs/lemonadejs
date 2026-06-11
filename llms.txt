@@ -87,6 +87,23 @@ Refs fire AFTER the nodes attach (same synchronous update, no waiting): the
 element is connected, so focus() and getBoundingClientRect() work directly
 inside a ref — no queueMicrotask/isConnected deferral is ever needed.
 
+Annotate the ref parameter with the type you KNOW (you wrote the tag):
+ref="${(el: HTMLInputElement) => el.focus()}" — no `as` casts. The engine
+stays flexible (SVG and exotic elements accept any signature).
+
+DOM listeners outside the template (document, window, another element) go
+through the listen TOOL — never raw addEventListener in a component:
+
+    const C: Component = (p, { listen }) => { ... };
+    listen(document, 'mousemove', onMove);          // removed on unmount, automatically
+    const off = listen(window, 'resize', onResize); // off() removes earlier (idempotent)
+
+listen works anywhere — setup, onMount, or MID-GESTURE inside an event
+handler: arm document mousemove/mouseup on mousedown, call off() on mouseup,
+and a mid-drag unmount still cleans up. A forgotten removeEventListener is
+not writable. (Listeners on the component's OWN elements stay in the
+template: onclick="${...}".)
+
 ONE RULE, NO EXCEPTIONS: all event and callback names are lowercase, HTML-style —
 onclick, oninput, onchange, onsave, onitemclick (like the platform's onmousedown).
 Any other casing warns LJS-305 in dev. On components, props are case-sensitive keys,
@@ -98,6 +115,32 @@ so onChange would be a DIFFERENT prop than onchange and silently ignored.
     <input value="${name}" />                  form values set as properties (one-way)
     <input disabled />                         boolean attributes work
     checked="${boolState}"                     boolean property binding
+
+## Styling
+
+Dynamic styles — css() builds the style string from an object (typed keys,
+automatic px on numbers, false/null entries skipped so conditionals compose):
+
+    import { css } from 'lemonadejs';
+    <div style="${() => css({ top: y.value, left: x.value, opacity: 0.5,
+        background: active.value && 'red' })}">
+    // → "top:12px;left:40px;opacity:0.5" — unitless props (opacity, z-index,
+    // flex, line-height, order, font-weight, --custom) never get px
+
+Component-owned CSS — a <style> tag inside html`` never enters the DOM tree:
+its CSS is lifted at parse time and injected into document.head ONCE per
+template, however many instances mount. A component ships working styling in
+ONE file, in every deployment:
+
+    const Chip: Component = () => html`<span class="lm-chip">
+        <style>.lm-chip { padding: 2px 8px; border-radius: 12px; }</style>
+        ${props.label}
+    </span>`;
+
+Rules: the CSS must be static — ${...} inside <style> fails LJS-105 (styles
+are parsed once; use style="" or CSS custom properties for per-instance
+values). Styles are GLOBAL by design: prefix every selector with your
+component class (lm-chip), exactly like the lm-<name>-* convention.
 
 ## Two-way binding
 
@@ -242,11 +285,12 @@ focusout must check:
 
 ## Lifecycle
 
-    const C: Component = (props, { state, onMount, onUnmount, unmount }) => {
+    const C: Component = (props, { state, onMount, onUnmount, listen, unmount }) => {
         onMount((el) => {
             const id = setInterval(tick, 1000);
             return () => clearInterval(id);     // cleanup, runs on unmount
         });
+        listen(document, 'keydown', onKey);     // removed on unmount automatically
         onUnmount(() => {...});
         return html`<div></div>`;
     };

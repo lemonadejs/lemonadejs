@@ -33,7 +33,7 @@
  * jsdom has no canvas: a null 2d context downgrades drawing to a no-op.
  */
 
-import { component, html } from 'lemonadejs';
+import { component, css, html } from 'lemonadejs';
 
 export type CropData = {
     file: string;
@@ -61,7 +61,7 @@ export const Cropper = component('cropper', {
         zoom: Function, rotate: Function, brightness: Function, contrast: Function,
         save: Function, reset: Function, upload: Function,
     },
-}, (props, { bind, state, onMount, onUnmount }) => {
+}, (props, { bind, state, listen, onMount, onUnmount }) => {
     const photo = bind(props as unknown as { bind?: CropData | null }, null as CropData | null);
 
     const num = (key: 'width' | 'height' | 'cropwidth' | 'cropheight') =>
@@ -291,20 +291,22 @@ export const Cropper = component('cropper', {
         }
     }));
 
-    // ---- pointer interactions: one in flight, ONE persistent cleanup
+    // ---- pointer interactions: one in flight, armed per gesture on listen;
+    // ONE setup-time release covers a mid-drag unmount (a single cleanup
+    // releasing every off keeps the engine's unmount iteration intact)
     let release: (() => void) | null = null;
     onUnmount(() => release?.());
 
     const track = (move: (e: MouseEvent) => void) => {
         release?.();
-        const up = () => {
-            document.removeEventListener('mousemove', move);
-            document.removeEventListener('mouseup', up);
+        const offs = [
+            listen<MouseEvent>(document, 'mousemove', move),
+            listen(document, 'mouseup', () => release?.()),
+        ];
+        release = () => {
+            offs.forEach((off) => off());
             release = null;
         };
-        release = up;
-        document.addEventListener('mousemove', move);
-        document.addEventListener('mouseup', up);
     };
 
     /** v5 5px hit zones on the crop box (resize only when resizable) */
@@ -643,8 +645,8 @@ export const Cropper = component('cropper', {
         upload,
     });
 
-    const init = (el: Element) => {
-        canvas = el as HTMLCanvasElement;
+    const init = (el: HTMLCanvasElement) => {
+        canvas = el;
         ctx = canvas.getContext('2d', { willReadFrequently: true });
         filterCanvas = document.createElement('canvas');
         filterCtx = filterCanvas.getContext('2d', { willReadFrequently: true });
@@ -655,14 +657,14 @@ export const Cropper = component('cropper', {
 
     const boxStyle = () => {
         const b = box.value;
-        return 'left:' + b.left + 'px;top:' + b.top + 'px;width:' + b.w + 'px;height:' + b.h + 'px';
+        return css({ left: b.left, top: b.top, width: b.w, height: b.h });
     };
 
     return html`<div class="lm-cropper ${() => (hasImage.value ? 'lm-cropper-edition' : '')} ${() =>
         dragging.value ? 'lm-cropper-dragging' : ''}">
         <div class="lm-cropper-editor"
-            style="${() => 'width:' + props.width.value + 'px;height:' + props.height.value + 'px'}"
-            ref="${(el: Element) => (editor = el as HTMLElement)}"
+            style="${() => css({ width: num('width'), height: num('height') })}"
+            ref="${(el: HTMLElement) => (editor = el)}"
             onmousedown="${onPress}"
             onclick="${() => !hasImage.value && upload()}"
             ondblclick="${upload}"
@@ -711,7 +713,7 @@ export const Cropper = component('cropper', {
             </div>`}
         <input type="file" class="lm-cropper-file" accept="image/*"
             onchange="${onFile}"
-            ref="${(el: Element) => (fileInput = el as HTMLInputElement)}" />
+            ref="${(el: HTMLInputElement) => (fileInput = el)}" />
     </div>`;
 });
 

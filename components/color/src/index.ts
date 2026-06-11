@@ -202,8 +202,8 @@ export const Color = component('color', {
         context.fillRect(0, 0, canvas.width, canvas.height);
     };
 
-    const initCanvas = (el: Element) => {
-        canvas = el as HTMLCanvasElement;
+    const initCanvas = (el: HTMLCanvasElement) => {
+        canvas = el;
         try {
             context = canvas.getContext('2d', { willReadFrequently: true });
         } catch {
@@ -265,7 +265,7 @@ export const Color = component('color', {
                 onmousedown="${pick}"
                 onmousemove="${pick}"
                 ontouchmove="${pick}"></canvas>
-            <div class="lm-color-point" ref="${(el: Element) => (point = el as HTMLElement)}"></div>
+            <div class="lm-color-point" ref="${(el: HTMLElement) => (point = el)}"></div>
         </div>`;
 
     const panelView = () =>
@@ -287,7 +287,7 @@ export const Color = component('color', {
 
     return html`<div class="lm-color"
         data-type="${() => props.type.value || false}"
-        ref="${(el: Element) => (wrapper = el as HTMLElement)}"
+        ref="${(el: HTMLElement) => (wrapper = el)}"
         onfocusout="${onFocusOut}">
         ${() =>
             props.type.value === 'input' &&
@@ -295,7 +295,7 @@ export const Color = component('color', {
                 placeholder="${() => props.placeholder.value || false}"
                 value="${() => (picked.value as string) || ''}"
                 style="${() => (picked.value ? 'color:' + picked.value : '')}"
-                ref="${(el: Element) => (input = el as HTMLInputElement)}"
+                ref="${(el: HTMLInputElement) => (input = el)}"
                 onclick="${doOpen}"
                 onfocusin="${doOpen}"
                 onkeydown="${onKey}" />`}

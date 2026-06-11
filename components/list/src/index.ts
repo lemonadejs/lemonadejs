@@ -36,7 +36,7 @@
  *     DOM alive
  */
 
-import { component, html, type View } from 'lemonadejs';
+import { component, css, html, type View } from 'lemonadejs';
 
 /** What the DEFAULT item renderer reads — any extra fields are yours
  *  (and the built-in search matches against all of them) */
@@ -271,8 +271,12 @@ export const List = component('list', {
                     oninput="${(e: Event) => setSearch((e.target as HTMLInputElement).value)}" />
             </div>`}
         <div class="lm-list-content" role="list"
-            style="${() => (virtual() ? 'height:' + props.height.value + 'px;overflow-y:auto' : '')}"
-            ref="${(el: Element) => (scroller = el as HTMLElement)}"
+            style="${() =>
+                css({
+                    height: virtual() && (props.height.value as number),
+                    overflowY: virtual() && 'auto',
+                })}"
+            ref="${(el: HTMLElement) => (scroller = el)}"
             onscroll="${onScroll}">
             <div class="lm-list-canvas"
                 style="${() => (virtual() ? 'height:' + view.value.length * rowHeight() + 'px' : '')}">

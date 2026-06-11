@@ -27,14 +27,17 @@ const enum Mode {
     Value,
     Comment,
     Close,
+    Style, // raw CSS until </style> — lifted off the tree (Template.styles)
 }
 
 export const parse = function (strings: readonly string[]): Template {
     const root: VNode = { type: '#root', children: [] };
     const stack: VNode[] = [root];
+    const styles: string[] = [];
 
     let mode = Mode.Text;
     let text = '';
+    let rawCss = '';
     let tag: VNode | null = null;
     let tagName = '';
     let attrName = '';
@@ -96,6 +99,17 @@ export const parse = function (strings: readonly string[]): Template {
     const openTag = function (): void {
         commitAttr();
         const node = tag!;
+        // <style> never enters the tree: its raw CSS is lifted into
+        // Template.styles and injected once per template (attributes on
+        // the tag are discarded; a self-closed <style /> is a no-op)
+        if (node.type === 'style') {
+            tag = null;
+            tagName = '';
+            mode = selfClose ? Mode.Text : Mode.Style;
+            rawCss = '';
+            selfClose = false;
+            return;
+        }
         // Capitalized tags are registered components: resolved at build time
         if (typeof node.type === 'string' && /^[A-Z]/.test(node.type)) {
             node.type = { name: node.type };
@@ -130,7 +144,9 @@ export const parse = function (strings: readonly string[]): Template {
         const seg = strings[s];
         for (let i = 0; i < seg.length; i++) {
             const c = seg[i];
-            switch (mode) {
+            // (mode as Mode): openTag assigns Mode.Style inside a closure, which
+            // TypeScript's narrowing cannot see
+            switch (mode as Mode) {
                 case Mode.Text:
                     if (c === '<') {
                         if (seg.startsWith('!--', i + 1)) {
@@ -243,13 +259,27 @@ export const parse = function (strings: readonly string[]): Template {
                         closeTag(closeIsSlot ? null : closeName || null);
                     }
                     break;
+
+                case Mode.Style:
+                    rawCss += c;
+                    if (rawCss.length >= 8 && rawCss.slice(-8).toLowerCase() === '</style>') {
+                        const trimmed = rawCss.slice(0, -8).trim();
+                        if (trimmed) {
+                            styles.push(trimmed);
+                        }
+                        rawCss = '';
+                        mode = Mode.Text;
+                    }
+                    break;
             }
         }
 
         // Slot boundary between strings[s] and strings[s + 1]
         if (s < strings.length - 1) {
             const slot = s;
-            switch (mode) {
+            // (mode as Mode): openTag assigns Mode.Style inside a closure, which
+            // TypeScript's narrowing cannot see
+            switch (mode as Mode) {
                 case Mode.Text:
                     flushText();
                     children(parent()).push({ type: '#slot', slot });
@@ -287,6 +317,12 @@ export const parse = function (strings: readonly string[]): Template {
                 case Mode.Comment:
                     // Expressions inside comments are ignored
                     break;
+                case Mode.Style:
+                    // Styles are parsed once and injected once — they cannot
+                    // depend on per-instance values. Use inline style="" or
+                    // CSS custom properties for dynamic styling.
+                    fail('LJS-105', 'expression inside <style>');
+                    break;
                 default:
                     fail('LJS-105', 'expression in an attribute name');
             }
@@ -294,6 +330,9 @@ export const parse = function (strings: readonly string[]): Template {
     }
 
     flushText();
+    if ((mode as Mode) === Mode.Style) {
+        fail('LJS-102', '<style>');
+    }
     if (stack.length > 1) {
         const top = stack[stack.length - 1];
         const name =
@@ -301,5 +340,9 @@ export const parse = function (strings: readonly string[]): Template {
         fail('LJS-102', '<' + name + '>');
     }
 
-    return { nodes: root.children || [] };
+    const template: Template = { nodes: root.children || [] };
+    if (styles.length) {
+        template.styles = styles;
+    }
+    return template;
 };

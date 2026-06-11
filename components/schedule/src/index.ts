@@ -31,7 +31,7 @@
  * array (or a record) and touch() — the grid re-renders once.
  */
 
-import { component, html, type View } from 'lemonadejs';
+import { component, css, html, type View } from 'lemonadejs';
 import Modal from '@lemonadejs/modal';
 
 export interface ScheduleEvent {
@@ -203,7 +203,7 @@ export const Schedule = component('schedule', {
         next: Function, prev: Function, today: Function,
         openEditor: Function, refresh: Function,
     },
-}, (props, { state, onMount, onUnmount }) => {
+}, (props, { state, onMount, onUnmount, listen }) => {
     // ---- data access: peek, never track — every change (assignment or
     // touch) flows through ONE subscription into the tick the body reads
     const rows = (): ScheduleEvent[] => (props.data.peek() as ScheduleEvent[]) || [];
@@ -726,29 +726,29 @@ export const Schedule = component('schedule', {
         return ALL_TIMES;
     };
 
-    // ---- drag gestures: ONE persistent release, modal's track pattern
+    // ---- drag gestures: listeners armed per gesture via listen() (off()
+    // is idempotent and self-pruning). The unmount hook cancels a
+    // mid-drag gesture: clears the drag state and the document cursor
     let release: (() => void) | null = null;
     onUnmount(() => release?.());
 
     const begin = (): void => {
         release?.();
-        const move = (ev: MouseEvent) => onDragMove(ev);
-        const up = (ev: MouseEvent) => {
-            detach();
-            commitDrag(ev);
-        };
         const detach = () => {
-            document.removeEventListener('mousemove', move);
-            document.removeEventListener('mouseup', up);
+            offMove();
+            offUp();
             release = null;
         };
+        const offMove = listen<MouseEvent>(document, 'mousemove', onDragMove);
+        const offUp = listen<MouseEvent>(document, 'mouseup', (ev) => {
+            detach();
+            commitDrag(ev);
+        });
         release = () => {
             detach();
             drag.value = null;
             document.body.style.cursor = '';
         };
-        document.addEventListener('mousemove', move);
-        document.addEventListener('mouseup', up);
     };
 
     /** Snap a resize target row so the event size is a multiple of snap (v5) */
@@ -1080,16 +1080,7 @@ export const Schedule = component('schedule', {
         const startRow = hourToInt(ev.start);
         const endRow = hourToInt(ev.end);
         const heightRows = Math.max(1, endRow - startRow);
-        const parts: string[] = ['height:' + heightRows * g + 'px'];
         const color = ev.color || '';
-        if (color) {
-            parts.push('--lm-schedule-background:' + color);
-            parts.push('--lm-schedule-color:' + (isLight(color) ? 'black' : 'white'));
-        }
-        if (staggerIndex) {
-            parts.push('margin-left:' + staggerIndex * 10 + 'px');
-            parts.push('width:calc(100% - ' + staggerIndex * 10 + 'px)');
-        }
         return html`<div class="lm-schedule-item ${selected ? 'lm-schedule-selected' : ''}"
             data-guid="${ev.guid}"
             data-title="${ev.title || ''}"
@@ -1101,7 +1092,13 @@ export const Schedule = component('schedule', {
             data-visible="${ev.visible === false ? 'false' : false}"
             data-warning="${ev.warning ? 'true' : false}"
             data-height="${heightRows}"
-            style="${parts.join(';')}"></div>`;
+            style="${css({
+                height: heightRows * g,
+                '--lm-schedule-background': color,
+                '--lm-schedule-color': color && (isLight(color) ? 'black' : 'white'),
+                marginLeft: staggerIndex ? staggerIndex * 10 : false,
+                width: staggerIndex ? 'calc(100% - ' + staggerIndex * 10 + 'px)' : false,
+            })}"></div>`;
     };
 
     const ghostView = (d: Drag): View => {
@@ -1110,17 +1107,16 @@ export const Schedule = component('schedule', {
         const hi = Math.max(d.y1, d.y2);
         const heightRows = hi - lo + 1;
         const color = d.record.color || '#3f51b5';
-        const parts = [
-            'height:' + heightRows * g + 'px',
-            '--lm-schedule-background:' + color,
-            '--lm-schedule-color:' + (isLight(color) ? 'black' : 'white'),
-        ];
         return html`<div class="lm-schedule-item lm-schedule-selected lm-schedule-dragging"
             data-title="${d.record.title || 'No title'}"
             data-start="${intToHour(lo)}"
             data-end="${intToHour(hi + 1)}"
             data-height="${heightRows}"
-            style="${parts.join(';')}"></div>`;
+            style="${css({
+                height: heightRows * g,
+                '--lm-schedule-background': color,
+                '--lm-schedule-color': isLight(color) ? 'black' : 'white',
+            })}"></div>`;
     };
 
     const bodyView = (): View[] => {
@@ -1248,7 +1244,7 @@ export const Schedule = component('schedule', {
         tabindex="0"
         data-type="${() => (props.type.value as string) || 'week'}"
         data-weekly="${() => (weekly() ? 'true' : false)}"
-        ref="${(el: Element) => (rootEl = el as HTMLElement)}"
+        ref="${(el: HTMLElement) => (rootEl = el)}"
         onmousedown="${onPress}"
         ondblclick="${onDouble}"
         onmousemove="${onHover}"

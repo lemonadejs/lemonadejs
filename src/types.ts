@@ -28,6 +28,10 @@ export interface VNode {
 /** A parsed template (cached by TemplateStringsArray identity) */
 export interface Template {
     nodes: VNode[];
+    /** CSS lifted from <style> tags in the template — injected into
+     *  document.head ONCE per template (call-site identity), never per
+     *  instance. Lets a component carry its styling in its own source. */
+    styles?: string[];
 }
 
 /** The result of html`...` — a parsed template plus this call's values */
@@ -119,6 +123,20 @@ export interface Tools {
     onMount(callback: (el: Node) => unknown): void;
     /** Called when the component is unmounted. */
     onUnmount(callback: () => void): void;
+    /**
+     * addEventListener whose removal the COMPONENT owns: the listener is
+     * removed automatically on unmount, and the returned off() removes it
+     * earlier (idempotent). Safe to call anywhere — setup, onMount, or
+     * MID-GESTURE inside an event handler (document mousemove/mouseup
+     * pairs survive a mid-drag unmount with no release bookkeeping).
+     * A forgotten removeEventListener stops being writable.
+     */
+    listen<E extends Event = Event>(
+        target: EventTarget,
+        type: string,
+        callback: (event: E) => void,
+        options?: AddEventListenerOptions | boolean
+    ): () => void;
     /**
      * Unmount this component instance imperatively: full destroy —
      * children, bindings, cleanups, DOM. Call it from handlers or

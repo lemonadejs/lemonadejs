@@ -36,7 +36,7 @@ export const Signature = component('signature', {
     onchange: Function,           // fires on stroke end, setValue and clear
     onload: Function,             // fires once the canvas is ready (v5)
     api: { getValue: Function, setValue: Function, getImage: Function, clear: Function },
-}, (props, { bind, onMount, onUnmount }) => {
+}, (props, { bind, listen, onMount, onUnmount }) => {
     const initial = props.value.value;
     const strokes = bind(props, (Array.isArray(initial) ? initial.slice() : []) as unknown[]);
 
@@ -94,7 +94,9 @@ export const Signature = component('signature', {
         }
     };
 
-    // ---- document listeners: one stroke in flight, ONE persistent cleanup
+    // ---- document listeners: one stroke in flight, armed on listen; the
+    // release also COMMITS the stroke, so a mid-stroke unmount still commits
+    // (one cleanup releasing every off keeps the engine's unmount iteration intact)
     let release: (() => void) | null = null;
     onUnmount(() => release?.());
 
@@ -110,15 +112,16 @@ export const Signature = component('signature', {
 
     const arm = () => {
         release?.();
-        const up = () => {
-            document.removeEventListener('mouseup', up);
-            document.removeEventListener('touchend', up);
+        const up = () => release?.();
+        const offs = [
+            listen(document, 'mouseup', up),
+            listen(document, 'touchend', up),
+        ];
+        release = () => {
+            offs.forEach((off) => off());
             release = null;
             finish();
         };
-        release = up;
-        document.addEventListener('mouseup', up);
-        document.addEventListener('touchend', up);
     };
 
     const start = (e: MouseEvent | TouchEvent) => {
@@ -152,8 +155,8 @@ export const Signature = component('signature', {
     props.ref?.(api);
 
     /** v5 init(): grab the context, draw a preloaded value, announce ready */
-    const init = (el: Element) => {
-        canvas = el as HTMLCanvasElement;
+    const init = (el: HTMLCanvasElement) => {
+        canvas = el;
         ctx = canvas.getContext('2d');
         redraw();
         props.onload?.(api);
@@ -166,7 +169,7 @@ export const Signature = component('signature', {
         <canvas class="lm-signature-canvas"
             width="${() => props.width.value || false}"
             height="${() => props.height.value || false}"
-            ref="${(el: Element) => init(el)}"
+            ref="${init}"
             onmousedown="${start}"
             ontouchstart="${start}"
             onmousemove="${draw}"

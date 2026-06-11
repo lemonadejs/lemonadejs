@@ -125,7 +125,7 @@ export const Accordion = component('accordion', CONTRACT, (props, { bind }) => {
     };
 
     return html`<div class="lm-accordion"
-        ref="${(el: Element) => (root = el as HTMLElement)}"
+        ref="${(el: HTMLElement) => (root = el)}"
         onkeydown="${onKeydown}">${() =>
         items().map(
             (item, i) => html`<div class="lm-accordion-panel"

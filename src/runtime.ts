@@ -270,8 +270,30 @@ const fireRefs = function (refs: RefEntry[], cleanups: (() => void)[]): void {
     refs.length = 0;
 };
 
+/**
+ * Inject a template's lifted <style> CSS into document.head — ONCE per
+ * template (call-site identity is the dedup key, the same key that caches
+ * the parse). Styles are never removed: they are global by design (use
+ * component class prefixes), and instances come and go while the CSS
+ * stays warm. No-DOM environments skip silently.
+ */
+const styled = new WeakSet<Template>();
+const injectStyles = function (template: Template): void {
+    if (!template.styles || styled.has(template) || typeof document === 'undefined') {
+        return;
+    }
+    styled.add(template);
+    for (const cssText of template.styles) {
+        const el = document.createElement('style');
+        el.setAttribute('data-lemonade', '');
+        el.textContent = cssText;
+        document.head.appendChild(el);
+    }
+};
+
 /** Build the DOM for a View inside a branch entry (live mode) */
 const buildViewEntry = function (view: View, inst: Instance): ViewEntry {
+    injectStyles(view.template);
     const holder: Holder = { values: view.values };
     const ctx: BuildCtx = { inst, holder, live: true, bindings: [], instances: [], cleanups: [], refs: [] };
     const nodes = buildNodes(view.template.nodes, ctx, false);
@@ -799,6 +821,31 @@ export const mountComponent = function (
         onUnmount: function (cb) {
             inst.unmountCbs.push(cb);
         },
+        listen: function <E extends Event>(
+            target: EventTarget,
+            type: string,
+            cb: (event: E) => void,
+            options?: AddEventListenerOptions | boolean
+        ) {
+            target.addEventListener(type, cb as EventListener, options);
+            // off() fires ONCE (manual release and unmount may both reach it)
+            // and self-prunes so gestures armed/released many times over a
+            // component's life do not accumulate dead closures until unmount
+            let on = true;
+            const off = function () {
+                if (!on) {
+                    return;
+                }
+                on = false;
+                target.removeEventListener(type, cb as EventListener, options);
+                const at = inst.unmountCbs.indexOf(off);
+                if (at >= 0) {
+                    inst.unmountCbs.splice(at, 1);
+                }
+            };
+            inst.unmountCbs.push(off);
+            return off;
+        },
         unmount: function () {
             unmountInstance(inst);
         },
@@ -838,6 +885,7 @@ export const mountComponent = function (
         // Root-level refs fire in runMount — after the host attached them
         refs: inst.refs,
     };
+    injectStyles(view.template);
     inst.elements = buildNodes(view.template.nodes, ctx, false);
 
     if (inst.elements[0]) {
@@ -903,10 +951,13 @@ export const unmountInstance = function (inst: Instance): void {
     for (const binding of inst.bindings) {
         binding.dispose();
     }
-    for (const cb of inst.unmountCbs) {
+    // Detach the list BEFORE running: listen() offs self-prune via splice,
+    // which would skip the next callback if it hit the array mid-iteration
+    const unmountCbs = inst.unmountCbs;
+    inst.unmountCbs = [];
+    for (const cb of unmountCbs) {
         cb();
     }
-    inst.unmountCbs = [];
     // Never leave focus on a node being removed: correct UX, and the
     // document's last-focused reference would otherwise retain the subtree
     withDisposal(function () {

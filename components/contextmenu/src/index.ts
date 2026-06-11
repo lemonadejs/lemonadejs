@@ -62,7 +62,7 @@ export const Contextmenu = component('contextmenu', {
     onopen: Function,
     onclose: Function,
     api: { open: Function, openAt: Function, close: Function },
-}, (props, { state, onMount }) => {
+}, (props, { state, listen }) => {
     const levels = state<Level[]>([]);
     const cursors = state<Record<number, number>>({});
 
@@ -268,15 +268,11 @@ export const Contextmenu = component('contextmenu', {
     });
 
     // Outside interaction closes — document fallback for hosts where
-    // focus management is unreliable; both removed on unmount
-    const onDocDown = (e: MouseEvent) => {
+    // focus management is unreliable; the engine removes it on unmount
+    listen<MouseEvent>(document, 'mousedown', (e) => {
         if (levels.value.length && !wrapper?.contains(e.target as Node)) {
             closeFrom(0);
         }
-    };
-    onMount(() => {
-        document.addEventListener('mousedown', onDocDown);
-        return () => document.removeEventListener('mousedown', onDocDown);
     });
 
     const itemView = (level: number, index: number, item: ContextItem) =>
@@ -329,7 +325,7 @@ export const Contextmenu = component('contextmenu', {
     };
 
     return html`<div class="lm-contextmenu" tabindex="-1" role="menu"
-        ref="${(el: Element) => (wrapper = el as HTMLElement)}"
+        ref="${(el: HTMLElement) => (wrapper = el)}"
         onkeydown="${onKey}"
         onfocusout="${(e: FocusEvent) => {
             if (isDisposing()) {

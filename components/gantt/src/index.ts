@@ -74,7 +74,7 @@ export const Gantt = component('gantt', {
     onchange: Function,           // (task, start, end) on drag commit
     onclick: Function,            // (task, event)
     api: { getRange: Function, setRange: Function },
-}, (props, { state, onMount, onUnmount }) => {
+}, (props, { state, onMount, onUnmount, listen }) => {
     const tasks = () => (props.data.peek() as GanttTask[]) || [];
 
     // ---- the range: explicit props win; otherwise fit the data
@@ -132,35 +132,30 @@ export const Gantt = component('gantt', {
 
     const round2 = (n: number) => Math.round(n * 1000) / 1000;
 
-    // ---- drag: ONE in-flight gesture, ONE persistent cleanup
+    // ---- drag: ONE in-flight gesture, listeners armed per drag via
+    // listen() (off() is idempotent and self-pruning). The unmount hook
+    // cancels a mid-drag gesture so the live preview state resets
     let releaseGesture: (() => void) | null = null;
     onUnmount(() => releaseGesture?.());
 
     const track = (move: (e: MouseEvent) => void, done: (commit: boolean) => void) => {
         releaseGesture?.();
-        const up = () => {
-            cleanup();
-            done(true);
-        };
-        const key = (e: KeyboardEvent) => {
-            if (e.key === 'Escape') {
-                cleanup();
-                done(false);
-            }
-        };
-        const cleanup = () => {
-            document.removeEventListener('mousemove', move);
-            document.removeEventListener('mouseup', up);
-            document.removeEventListener('keydown', key);
+        const finish = (commit: boolean) => {
+            offMove();
+            offUp();
+            offKey();
             releaseGesture = null;
+            done(commit);
         };
-        releaseGesture = () => {
-            cleanup();
-            done(false);
-        };
-        document.addEventListener('mousemove', move);
-        document.addEventListener('mouseup', up);
-        document.addEventListener('keydown', key);
+        const offMove = listen<MouseEvent>(document, 'mousemove', move);
+        const offUp = listen(document, 'mouseup', () => finish(true));
+        // Escape cancels mid-drag: the keydown listener is part of the gesture
+        const offKey = listen<KeyboardEvent>(document, 'keydown', (e) => {
+            if (e.key === 'Escape') {
+                finish(false);
+            }
+        });
+        releaseGesture = () => finish(false);
     };
 
     const startDrag = (e: MouseEvent, index: number, task: GanttTask, el: HTMLElement) => {

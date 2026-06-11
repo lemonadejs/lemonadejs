@@ -69,7 +69,7 @@ export const Router = component('router', {
     onbeforechangepage: Function, // (path, route) -> false | path | Route
     onbeforecreatepage: Function, // (route, html) -> false cancels
     api: { setPath: Function, current: Function },
-}, (props, { onMount, onUnmount }) => {
+}, (props, { onMount, onUnmount, listen }) => {
     const pages: Page[] = ((props.routes.value as Route[]) || []).map((route) => ({
         route,
         el: null,
@@ -285,18 +285,14 @@ export const Router = component('router', {
     };
 
     onMount(() => {
-        document.body.addEventListener('click', onClick);
-        window.addEventListener('popstate', onPop);
+        listen<MouseEvent>(document.body, 'click', onClick);
+        listen(window, 'popstate', onPop);
         for (const page of pages) {
             if (page.route.preload) {
                 ensure(page, {}, '{}', () => {});
             }
         }
         setPath(window.location.pathname + window.location.search, true);
-        return () => {
-            document.body.removeEventListener('click', onClick);
-            window.removeEventListener('popstate', onPop);
-        };
     });
 
     onUnmount(() => {
@@ -309,7 +305,7 @@ export const Router = component('router', {
         }
     });
 
-    return html`<div class="lm-router" ref="${(el: Element) => (root = el as HTMLElement)}"></div>`;
+    return html`<div class="lm-router" ref="${(el: HTMLElement) => (root = el)}"></div>`;
 });
 
 export default Router;

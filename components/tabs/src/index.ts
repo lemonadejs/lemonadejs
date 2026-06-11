@@ -248,7 +248,7 @@ export const Tabs = component('tabs', {
         data-position="${() => props.position.value || false}"
         data-round="${() => (props.round.value ? 'true' : false)}">
         <div class="lm-tabs-headers" role="tablist">
-            <ul ref="${(el: Element) => (ul = el as HTMLElement)}"
+            <ul ref="${(el: HTMLElement) => (ul = el)}"
                 onclick="${onOpenEvent}"
                 onfocusin="${onOpenEvent}"
                 onkeydown="${onKeydown}"

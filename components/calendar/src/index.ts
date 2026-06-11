@@ -1016,7 +1016,7 @@ export const Calendar = component('calendar', {
             }}</div>
         </div>
         <div class="lm-calendar-content" tabindex="0"
-            ref="${(el: Element) => (gridEl = el as HTMLElement)}"
+            ref="${(el: HTMLElement) => (gridEl = el)}"
             onwheel="${onWheel}">
             ${() => cells.value.map(cellView)}
         </div>
@@ -1041,7 +1041,7 @@ export const Calendar = component('calendar', {
         data-type="${() => kind()}"
         data-grid="${() => (props.grid.value ? 'true' : false)}"
         data-disabled="${() => (props.disabled.value ? 'true' : false)}"
-        ref="${(el: Element) => (root = el as HTMLElement)}"
+        ref="${(el: HTMLElement) => (root = el)}"
         onkeydown="${onKey}"
         onfocusout="${onFocusOut}">
         ${() =>

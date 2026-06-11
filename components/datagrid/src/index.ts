@@ -22,7 +22,7 @@
  * Not a spreadsheet: no formulas, no merged cells — that is jspreadsheet.
  */
 
-import { component, html, type View } from 'lemonadejs';
+import { component, css, html, type View } from 'lemonadejs';
 
 export interface Column {
     /** Key into each row object */
@@ -69,7 +69,7 @@ export const Datagrid = component('datagrid', {
     onrowclick: Function,         // (row, event)
     oncolumnresize: Function,     // (columnName, widthPx) on handle release
     api: { getSelected: Function, setSearch: Function, sort: Function, page: Function, refresh: Function, setColumn: Function },
-}, (props, { state, onMount, onUnmount }) => {
+}, (props, { state, onMount, onUnmount, listen }) => {
     // peek, not value: render bindings must NOT track data directly —
     // every data change (assignment or touch) flows through the refresh
     // subscription into `view`, so the window re-renders exactly once,
@@ -149,25 +149,27 @@ export const Datagrid = component('datagrid', {
     // path: refresh rebuilds the window with the current column set
     onMount(() => props.columns.subscribe(refresh));
 
-    // ---- drag gesture: document listeners with ONE persistent cleanup.
-    // An unmount mid-drag releases the in-flight gesture (modal pattern);
-    // registering onUnmount per drag would accumulate dead callbacks
+    // ---- drag gesture: document listeners armed per drag via listen()
+    // (off() is idempotent and self-pruning, so arming per drag never
+    // accumulates). releaseGesture completes an in-flight gesture when a
+    // new one starts, and the unmount hook keeps the OLD contract for a
+    // mid-drag unmount: class reset + done callback
     let releaseGesture: (() => void) | null = null;
     onUnmount(() => releaseGesture?.());
 
     const track = (move: (e: MouseEvent) => void, done?: () => void) => {
         releaseGesture?.();
-        const up = () => {
-            document.removeEventListener('mousemove', move);
-            document.removeEventListener('mouseup', up);
+        const offMove = listen<MouseEvent>(document, 'mousemove', move);
+        const release = () => {
+            offMove();
+            offUp();
             releaseGesture = null;
             rootEl?.classList.remove('lm-datagrid-resizing');
             done?.();
         };
-        releaseGesture = up;
+        const offUp = listen(document, 'mouseup', release);
+        releaseGesture = release;
         rootEl?.classList.add('lm-datagrid-resizing');
-        document.addEventListener('mousemove', move);
-        document.addEventListener('mouseup', up);
     };
 
     // ---- column resize: 6px handle on the th right edge
@@ -466,16 +468,15 @@ export const Datagrid = component('datagrid', {
                 ? // Edit IN the cell: a contenteditable span keeps the cell's
                   // geometry and typography; focus + select-all on entry
                   html`<span class="lm-datagrid-editor" contenteditable="true"
-                      ref="${(el: Element) => {
+                      ref="${(el: HTMLElement) => {
                           // Refs fire on ATTACHED elements — focus works directly.
                           // preventScroll: the cell is already visible (it was
                           // just double-clicked); auto-scroll would re-render
                           // the window and kill the edit
-                          const span = el as HTMLElement;
-                          span.focus({ preventScroll: true });
+                          el.focus({ preventScroll: true });
                           try {
                               const range = document.createRange();
-                              range.selectNodeContents(span);
+                              range.selectNodeContents(el);
                               const selection = window.getSelection();
                               selection?.removeAllRanges();
                               selection?.addRange(range);
@@ -551,7 +552,7 @@ export const Datagrid = component('datagrid', {
 
     return html`<div class="lm-datagrid" tabindex="0" role="grid"
         aria-rowcount="${() => view.value.length}"
-        ref="${(el: Element) => (rootEl = el as HTMLElement)}"
+        ref="${(el: HTMLElement) => (rootEl = el)}"
         onkeydown="${onKey}">
         ${() =>
             props.search.value &&
@@ -566,8 +567,12 @@ export const Datagrid = component('datagrid', {
             </div>`}
         ${headerView()}
         <div class="lm-datagrid-body"
-            style="${() => (props.pagination.value ? '' : 'height:' + props.height.value + 'px;overflow-y:auto')}"
-            ref="${(el: Element) => (scroller = el as HTMLElement)}"
+            style="${() =>
+                css({
+                    height: !props.pagination.value && (props.height.value as number),
+                    overflowY: !props.pagination.value && 'auto',
+                })}"
+            ref="${(el: HTMLElement) => (scroller = el)}"
             onscroll="${onScroll}">
             <div class="lm-datagrid-canvas"
                 style="${() =>

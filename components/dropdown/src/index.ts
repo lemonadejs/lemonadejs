@@ -648,7 +648,7 @@ export const Dropdown = component('dropdown', {
 
     const listView = () => html`<div class="lm-dropdown-lazy"
         style="${() => 'height:' + viewportHeight() + 'px'}"
-        ref="${(el: Element) => (scroller = el as HTMLElement)}"
+        ref="${(el: HTMLElement) => (scroller = el)}"
         onscroll="${onScroll}">
         <div class="lm-dropdown-canvas" style="${() => 'height:' + rows.value.length * rowHeight() + 'px'}">
             <div class="lm-dropdown-window"
@@ -661,7 +661,7 @@ export const Dropdown = component('dropdown', {
 
     const searchField = () => html`<div class="lm-dropdown-input" contenteditable="true" tabindex="0"
         placeholder="${() => props.placeholder.value || false}"
-        ref="${(el: Element) => (el as HTMLElement).focus()}"
+        ref="${(el: HTMLElement) => el.focus()}"
         oninput="${(e: Event) => search((e.target as HTMLElement).textContent || '')}"
         onpaste="${onPaste}"></div>`;
 
@@ -673,7 +673,7 @@ export const Dropdown = component('dropdown', {
         data-type="${() => kind()}"
         data-insert="${() => (props.insert.value ? 'true' : false)}"
         data-disabled="${() => (props.disabled.value ? 'true' : false)}"
-        ref="${(el: Element) => (root = el as HTMLElement)}"
+        ref="${(el: HTMLElement) => (root = el)}"
         onkeydown="${onKey}"
         onmousedown="${onPress}"
         onfocusout="${onFocusOut}">

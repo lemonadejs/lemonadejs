@@ -25,6 +25,7 @@ var lemonade = (() => {
     component: () => component,
     contract: () => contract,
     createWebComponent: () => createWebComponent,
+    css: () => css,
     default: () => index_default,
     explain: () => explain,
     html: () => html,
@@ -123,8 +124,10 @@ var lemonade = (() => {
   var parse = function(strings) {
     const root = { type: "#root", children: [] };
     const stack = [root];
+    const styles = [];
     let mode = 0 /* Text */;
     let text = "";
+    let rawCss = "";
     let tag = null;
     let tagName = "";
     let attrName = "";
@@ -176,6 +179,14 @@ var lemonade = (() => {
     const openTag = function() {
       commitAttr();
       const node = tag;
+      if (node.type === "style") {
+        tag = null;
+        tagName = "";
+        mode = selfClose ? 0 /* Text */ : 7 /* Style */;
+        rawCss = "";
+        selfClose = false;
+        return;
+      }
       if (typeof node.type === "string" && /^[A-Z]/.test(node.type)) {
         node.type = { name: node.type };
       }
@@ -311,6 +322,17 @@ var lemonade = (() => {
               closeTag(closeIsSlot ? null : closeName || null);
             }
             break;
+          case 7 /* Style */:
+            rawCss += c;
+            if (rawCss.length >= 8 && rawCss.slice(-8).toLowerCase() === "</style>") {
+              const trimmed = rawCss.slice(0, -8).trim();
+              if (trimmed) {
+                styles.push(trimmed);
+              }
+              rawCss = "";
+              mode = 0 /* Text */;
+            }
+            break;
         }
       }
       if (s < strings.length - 1) {
@@ -349,18 +371,28 @@ var lemonade = (() => {
             break;
           case 5 /* Comment */:
             break;
+          case 7 /* Style */:
+            fail("LJS-105", "expression inside <style>");
+            break;
           default:
             fail("LJS-105", "expression in an attribute name");
         }
       }
     }
     flushText();
+    if (mode === 7 /* Style */) {
+      fail("LJS-102", "<style>");
+    }
     if (stack.length > 1) {
       const top = stack[stack.length - 1];
       const name = typeof top.type === "string" ? top.type : "name" in top.type ? top.type.name : "component";
       fail("LJS-102", "<" + name + ">");
     }
-    return { nodes: root.children || [] };
+    const template = { nodes: root.children || [] };
+    if (styles.length) {
+      template.styles = styles;
+    }
+    return template;
   };
 
   // src/types.ts
@@ -883,7 +915,21 @@ var lemonade = (() => {
     }
     refs.length = 0;
   };
+  var styled = /* @__PURE__ */ new WeakSet();
+  var injectStyles = function(template) {
+    if (!template.styles || styled.has(template) || typeof document === "undefined") {
+      return;
+    }
+    styled.add(template);
+    for (const cssText of template.styles) {
+      const el = document.createElement("style");
+      el.setAttribute("data-lemonade", "");
+      el.textContent = cssText;
+      document.head.appendChild(el);
+    }
+  };
   var buildViewEntry = function(view, inst) {
+    injectStyles(view.template);
     const holder = { values: view.values };
     const ctx = { inst, holder, live: true, bindings: [], instances: [], cleanups: [], refs: [] };
     const nodes = buildNodes(view.template.nodes, ctx, false);
@@ -1308,6 +1354,23 @@ var lemonade = (() => {
       onUnmount: function(cb) {
         inst.unmountCbs.push(cb);
       },
+      listen: function(target, type, cb, options) {
+        target.addEventListener(type, cb, options);
+        let on = true;
+        const off = function() {
+          if (!on) {
+            return;
+          }
+          on = false;
+          target.removeEventListener(type, cb, options);
+          const at = inst.unmountCbs.indexOf(off);
+          if (at >= 0) {
+            inst.unmountCbs.splice(at, 1);
+          }
+        };
+        inst.unmountCbs.push(off);
+        return off;
+      },
       unmount: function() {
         unmountInstance(inst);
       }
@@ -1340,6 +1403,7 @@ var lemonade = (() => {
       // Root-level refs fire in runMount — after the host attached them
       refs: inst.refs
     };
+    injectStyles(view.template);
     inst.elements = buildNodes(view.template.nodes, ctx, false);
     if (inst.elements[0]) {
       registry.set(inst.elements[0], inst);
@@ -1395,10 +1459,11 @@ var lemonade = (() => {
     for (const binding of inst.bindings) {
       binding.dispose();
     }
-    for (const cb of inst.unmountCbs) {
+    const unmountCbs = inst.unmountCbs;
+    inst.unmountCbs = [];
+    for (const cb of unmountCbs) {
       cb();
     }
-    inst.unmountCbs = [];
     withDisposal(function() {
       blurWithin(inst.elements);
       for (const node of inst.elements) {
@@ -1643,6 +1708,19 @@ var lemonade = (() => {
   }
 
   // src/index.ts
+  var UNITLESS = /^(opacity|z-index|zoom|order|flex|flex-grow|flex-shrink|font-weight|line-height|scale|aspect-ratio|--.*)$/;
+  var css = function(styles) {
+    const parts = [];
+    for (const key of Object.keys(styles)) {
+      const v = styles[key];
+      if (v === false || v === null || v === void 0 || v === "") {
+        continue;
+      }
+      const name = key.indexOf("--") === 0 ? key : key.replace(/[A-Z]/g, (m) => "-" + m.toLowerCase());
+      parts.push(name + ":" + (typeof v === "number" && !UNITLESS.test(name) ? v + "px" : v));
+    }
+    return parts.join(";");
+  };
   var templates = /* @__PURE__ */ new WeakMap();
   var html = function(strings, ...values) {
     let template = templates.get(strings);
@@ -1654,6 +1732,7 @@ var lemonade = (() => {
   };
   var lemonade = {
     html,
+    css,
     mount,
     inspect,
     setComponents,

@@ -471,7 +471,7 @@ export const Login = component('login', {
             ${() =>
                 on('login', 'register') &&
                 props.google.value &&
-                html`<div class="lm-login-row" ref="${(el: Element) => (googleEl = el as HTMLElement)}">
+                html`<div class="lm-login-row" ref="${(el: HTMLElement) => (googleEl = el)}">
                     <button type="button" class="lm-login-social lm-login-google" onclick="${loginWithGoogle}">
                         Login with Google
                     </button>

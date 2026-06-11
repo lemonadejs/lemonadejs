@@ -24,6 +24,19 @@ export type { ContractInput, ContractProps, ApiOf, Schema, PropSchema, ContractT
 export { createWebComponent } from './webcomponents';
 export { explain } from './errors';
 /**
+ * Build an inline style string from an object — typed keys, automatic
+ * units, conditional values:
+ *
+ *   style="${() => css({ top: y.value, left: x.value, color: active.value && 'red' })}"
+ *
+ * Numbers get px (except unitless properties like opacity/z-index/flex);
+ * false/null/undefined entries are skipped, so conditionals compose
+ * without ternary noise. camelCase keys map to kebab-case; --custom
+ * properties pass through. A value helper, not a binding: it returns a
+ * plain string and composes with static parts.
+ */
+export declare const css: (styles: Record<string, string | number | false | null | undefined>) => string;
+/**
  * The template tag — html`...` describes what it returns: a parsed HTML
  * template plus this call's values. It renders nothing; mount() renders.
  * Static parts are parsed on first use and cached forever (the
@@ -33,6 +46,7 @@ export { explain } from './errors';
 export declare const html: (strings: TemplateStringsArray, ...values: SlotValue[]) => View;
 declare const lemonade: {
     html: (strings: TemplateStringsArray, ...values: SlotValue[]) => View;
+    css: (styles: Record<string, string | number | false | null | undefined>) => string;
     mount: <P>(component: import("./types").Component<P>, root: Element, props?: P) => import("./types").Handle;
     inspect: (target: Node) => import("./runtime").InspectReport | null;
     setComponents: (map: Record<string, import("./types").Component<never>>) => void;

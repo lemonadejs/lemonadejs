@@ -32,6 +32,34 @@ export type { ContractInput, ContractProps, ApiOf, Schema, PropSchema, ContractT
 export { createWebComponent } from './webcomponents';
 export { explain } from './errors';
 
+/** Properties whose numeric values are unitless (everything else gets px) */
+const UNITLESS = /^(opacity|z-index|zoom|order|flex|flex-grow|flex-shrink|font-weight|line-height|scale|aspect-ratio|--.*)$/;
+
+/**
+ * Build an inline style string from an object — typed keys, automatic
+ * units, conditional values:
+ *
+ *   style="${() => css({ top: y.value, left: x.value, color: active.value && 'red' })}"
+ *
+ * Numbers get px (except unitless properties like opacity/z-index/flex);
+ * false/null/undefined entries are skipped, so conditionals compose
+ * without ternary noise. camelCase keys map to kebab-case; --custom
+ * properties pass through. A value helper, not a binding: it returns a
+ * plain string and composes with static parts.
+ */
+export const css = function (styles: Record<string, string | number | false | null | undefined>): string {
+    const parts: string[] = [];
+    for (const key of Object.keys(styles)) {
+        const v = styles[key];
+        if (v === false || v === null || v === undefined || v === '') {
+            continue;
+        }
+        const name = key.indexOf('--') === 0 ? key : key.replace(/[A-Z]/g, (m) => '-' + m.toLowerCase());
+        parts.push(name + ':' + (typeof v === 'number' && !UNITLESS.test(name) ? v + 'px' : v));
+    }
+    return parts.join(';');
+};
+
 /** Templates are parsed once per call site: the strings identity is the key */
 const templates = new WeakMap<TemplateStringsArray, Template>();
 
@@ -53,6 +81,7 @@ export const html = function (strings: TemplateStringsArray, ...values: SlotValu
 
 const lemonade = {
     html,
+    css,
     mount,
     inspect,
     setComponents,

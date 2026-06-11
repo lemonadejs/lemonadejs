@@ -31,7 +31,7 @@
  * (v5 wrote self.data); assigning data later replaces it, exactly v5.
  */
 
-import { component, html } from 'lemonadejs';
+import { component, css, html } from 'lemonadejs';
 
 export interface TimelineTag {
     /** Tag text */
@@ -270,28 +270,17 @@ export const Timeline = component('timeline', {
     };
 
     const sizeOf = (): string | false => {
-        let css = '';
         const w = parseInt(String(props.width.value), 10);
         const h = parseInt(String(props.height.value), 10);
-        if (w) {
-            css += 'width:' + w + 'px;';
-        }
-        if (h) {
-            css += 'height:' + h + 'px;';
-        }
-        return css || false;
+        // || false: no style ATTRIBUTE at all when both are unset
+        return css({ width: w || false, height: h || false }) || false;
     };
 
-    const bordersOf = (item: TimelineRecord): string | false => {
-        let css = '';
-        if (item.borderColor) {
-            css += '--lm-timeline-border-color:' + item.borderColor + ';';
-        }
-        if (item.borderStyle) {
-            css += '--lm-timeline-border-style:' + item.borderStyle + ';';
-        }
-        return css || false;
-    };
+    const bordersOf = (item: TimelineRecord): string | false =>
+        css({
+            '--lm-timeline-border-color': item.borderColor || false,
+            '--lm-timeline-border-style': item.borderStyle || false,
+        }) || false;
 
     return html`<div class="lm-timeline" style="${() => sizeOf()}">
         <div class="lm-timeline-header"

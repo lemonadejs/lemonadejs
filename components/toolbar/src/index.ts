@@ -175,7 +175,7 @@ export const Toolbar = component('toolbar', {
     };
 
     return html`<div class="lm-toolbar" role="toolbar"
-        ref="${(el: Element) => (root = el as HTMLElement)}"
+        ref="${(el: HTMLElement) => (root = el)}"
         data-position="${() => (props.position.value as string) || false}"
         data-visible="${() => ((props.visible.value as boolean) === false ? 'false' : 'true')}">
         ${() => items().map((item, i) => itemView(item, i))}

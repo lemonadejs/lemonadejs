@@ -21,7 +21,7 @@
  * onmove(top, left) and onresize(width, height) fire on release.
  */
 
-import { component, html, isDisposing, unsafe } from 'lemonadejs';
+import { component, css, html, isDisposing, unsafe } from 'lemonadejs';
 
 const EDGE = 10; // resize hit zone
 const BAR = 40; // drag zone height
@@ -94,7 +94,7 @@ export const Modal = component('modal', {
     onmove: Function,
     onresize: Function,
     api: { open: Function, close: Function, toggle: Function, front: Function, back: Function },
-}, (props, { bind, state, onMount, onUnmount }) => {
+}, (props, { bind, state, onMount, onUnmount, listen }) => {
     const open = bind(props, false);
     const minimized = state(false);
     const pos = state({ top: props.top.value as number, left: props.left.value as number, fixed: false });
@@ -120,24 +120,20 @@ export const Modal = component('modal', {
 
     const track = (move: (e: MouseEvent) => void, done?: () => void) => {
         releaseInteraction?.();
-        const up = () => {
-            document.removeEventListener('mousemove', move);
-            document.removeEventListener('mouseup', up);
+        const offs = [
+            listen<MouseEvent>(document, 'mousemove', move),
+            listen(document, 'mouseup', () => releaseInteraction?.()),
+        ];
+        releaseInteraction = () => {
+            offs.forEach((off) => off());
             releaseInteraction = null;
             root?.classList.remove('lm-modal-action');
             done?.();
         };
-        releaseInteraction = up;
         root?.classList.add('lm-modal-action');
-        document.addEventListener('mousemove', move);
-        document.addEventListener('mouseup', up);
     };
 
-    const onResizeWindow = () => refreshDock();
-    onMount(() => {
-        window.addEventListener('resize', onResizeWindow);
-        return () => window.removeEventListener('resize', onResizeWindow);
-    });
+    listen(window, 'resize', () => refreshDock());
 
     // ---- open/close
     const doOpen = () => {
@@ -274,8 +270,8 @@ export const Modal = component('modal', {
         });
     };
 
-    const onOpened = (el: Element) => {
-        root = el as HTMLElement;
+    const onOpened = (el: HTMLElement) => {
+        root = el;
         scheduleSetup();
     };
 
@@ -467,26 +463,21 @@ export const Modal = component('modal', {
     };
 
     const styles = () => {
-        const parts: string[] = [];
         if (props.fullscreen.value) {
             return '';
         }
         const p = pos.value;
         const s = size.value;
-        if (p.fixed) {
+        return css({
             // One source of truth for top/left — open, dragged or docked
-            parts.push('position:fixed', 'top:' + p.top + 'px', 'left:' + p.left + 'px', 'margin:0');
-        }
-        if (s.w && !minimized.value) {
-            parts.push('width:' + s.w + 'px');
-        }
-        if (s.h && !minimized.value) {
-            parts.push('height:' + s.h + 'px');
-        }
-        if (layer.value) {
-            parts.push('z-index:' + layer.value);
-        }
-        return parts.join(';');
+            position: p.fixed && 'fixed',
+            top: p.fixed ? p.top : null,
+            left: p.fixed ? p.left : null,
+            margin: p.fixed ? 0 : null,
+            width: (!minimized.value && s.w) || null,
+            height: (!minimized.value && s.h) || null,
+            'z-index': layer.value || null,
+        });
     };
 
     return html`${() =>
@@ -500,7 +491,7 @@ export const Modal = component('modal', {
                 props.overflow.value ? 'lm-modal-overflow' : ''}"
                 style="${styles}"
                 tabindex="-1"
-                ref="${(el: Element) => onOpened(el)}"
+                ref="${(el: HTMLElement) => onOpened(el)}"
                 onmousemove="${onHover}"
                 onmousedown="${onPress}"
                 onkeydown="${onKey}"

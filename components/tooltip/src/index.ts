@@ -17,7 +17,7 @@
  * effective side is published as data-position so the arrow follows.
  */
 
-import { component, html, isDisposing } from 'lemonadejs';
+import { component, css, html, isDisposing } from 'lemonadejs';
 
 const GAP = 8; // distance between the wrapper and the popper
 
@@ -115,7 +115,7 @@ export const Tooltip = component('tooltip', {
     };
 
     return html`<span class="lm-tooltip"
-        ref="${(el: Element) => (wrapper = el as HTMLElement)}"
+        ref="${(el: HTMLElement) => (wrapper = el)}"
         onmouseenter="${show}"
         onmouseleave="${hide}"
         onfocusin="${show}"
@@ -133,10 +133,10 @@ export const Tooltip = component('tooltip', {
         html`<span class="lm-tooltip-popper ${() => (props.arrow.value ? 'lm-tooltip-arrow' : '')}"
             role="tooltip"
             data-position="${() => side.value}"
-            style="${() => 'position:fixed;top:' + pos.value.top + 'px;left:' + pos.value.left + 'px'}"
-            ref="${(el: Element) => {
+            style="${() => css({ position: 'fixed', top: pos.value.top, left: pos.value.left })}"
+            ref="${(el: HTMLElement) => {
                 // Refs fire attached: the popper is measurable right away
-                popper = el as HTMLElement;
+                popper = el;
                 place();
             }}">${props.title}</span>`}</span>`;
 });

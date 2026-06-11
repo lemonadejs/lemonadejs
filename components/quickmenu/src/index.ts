@@ -82,7 +82,7 @@ export const Quickmenu = component('quickmenu', {
 
     return html`<div class="lm-quickmenu" data-disabled="${() => (props.disabled.value ? 'true' : false)}">
         <div class="lm-quickmenu-header" role="button"
-            ref="${(el: Element) => (header = el as HTMLElement)}"
+            ref="${(el: HTMLElement) => (header = el)}"
             style="width: ${() => props.width.value}px"
             tabindex="${() => (props.disabled.value ? false : '0')}"
             aria-haspopup="true"
