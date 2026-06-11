@@ -71,8 +71,10 @@ const run = async function () {
     const min = fs.readFileSync(path.join(out, 'lemonade.min.js'));
     const gzip = gzipSync(min).length;
     console.log('lemonade.min.js: ' + (min.length / 1024).toFixed(1) + ' KB, gzip ' + (gzip / 1024).toFixed(1) + ' KB');
-    if (gzip > 8 * 1024) {
-        console.error('SIZE BUDGET EXCEEDED: gzip > 8 KB');
+    // Raised from 8 KB (June 2026) to fund keyed diff + portal — the bar
+    // stays "value per KB", not the number itself
+    if (gzip > 10 * 1024) {
+        console.error('SIZE BUDGET EXCEEDED: gzip > 10 KB');
         process.exit(1);
     }
 };

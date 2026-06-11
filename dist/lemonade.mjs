@@ -13,6 +13,7 @@ var MESSAGES = {
   "LJS-201": "In-place mutation is silent \u2014 call state.touch() after mutating, or assign a new value",
   "LJS-202": "Slot holds a snapshot \u2014 wrap dynamic expressions: ${() => ...}",
   "LJS-203": "Update loop detected \u2014 a state change keeps triggering itself",
+  "LJS-204": "Duplicate key in a list \u2014 keys must be unique for identity matching",
   "LJS-301": 'Event attributes require a function: onclick="${() => ...}"',
   "LJS-302": 'bind requires a state: bind="${state}"',
   "LJS-303": "bind works on <input>, <textarea> and <select> \u2014 on components it is a prop",
@@ -33,6 +34,7 @@ var EXPLAIN = !DEV ? {} : {
   "LJS-201": "State contents are NOT immutable (this is not React): mutating in place is allowed and free \u2014 rows.value[i].total = 9 \u2014 but it does not notify by itself. Call rows.touch() after mutating to run updates: no copies, no proxies, DOM writes are delta-only. For bulk operations wrap the work in batch(() => {...}) so thousands of changes notify once. For small data, assignment also works: state.value = [...state.value, x]. The footgun: mutate without touch() and nothing updates.",
   "LJS-202": "A template slot received a plain value (string/number/boolean) while states were being read. Plain values are one-time snapshots. If the slot should update when states change, wrap it: ${() => valid.value && html`...`}. If the snapshot is intentional, ignore this warning.",
   "LJS-203": "A state assignment inside a reactive expression triggered itself recursively more than 100 times. Do not assign to states inside template expressions; assign from event handlers or callbacks.",
+  "LJS-204": 'Two items in the same list resolved to the same key="${...}" value. Identity matching needs unique keys: the first occurrence claims the entry, duplicates rebuild from scratch every update (correct but slow, and component state in duplicates is lost). Key by a stable id, or by the item object itself when items are stable references.',
   "LJS-301": 'Attributes starting with "on" are events and must receive a function: onclick="${() => count.value++}". String handlers are not supported (CSP-safe by design).',
   "LJS-302": 'The bind directive needs the state object itself: bind="${name}" (not bind="name", which is a string, and not bind="${name.value}", which is a one-time snapshot). Create it with const name = state("").',
   "LJS-303": 'On native elements, bind is engine sugar and only <input>, <textarea> and <select> have a defined wiring. On components, bind is a plain prop: implement it with the bind() tool \u2014 const value = bind(props, fallback) \u2014 and pass <${Comp} bind="${state}" />.',
@@ -778,9 +780,15 @@ var valuesEqual = function(a, b) {
     return false;
   }
   for (let i = 0; i < a.length; i++) {
-    if (!Object.is(a[i], b[i])) {
-      return false;
+    const x = a[i];
+    const y = b[i];
+    if (Object.is(x, y)) {
+      continue;
     }
+    if (isView(x) && isView(y) && x.template === y.template && valuesEqual(x.values, y.values)) {
+      continue;
+    }
+    return false;
   }
   return true;
 };
@@ -811,6 +819,38 @@ var remove = function(node) {
   if (node.parentNode) {
     node.parentNode.removeChild(node);
   }
+};
+var keyResolvers = /* @__PURE__ */ new WeakMap();
+var keyResolver = function(template) {
+  let fn = keyResolvers.get(template);
+  if (fn !== void 0) {
+    return fn;
+  }
+  fn = null;
+  for (const node of template.nodes) {
+    if (node.type === "#text" || node.type === "#slot") {
+      continue;
+    }
+    const prop = (node.props || []).find(function(p) {
+      return p.name === "key";
+    });
+    if (prop && prop.parts.length) {
+      const parts = prop.parts;
+      if (parts.length === 1 && typeof parts[0] === "object") {
+        const slot = parts[0].slot;
+        fn = function(values) {
+          return resolve(values[slot]);
+        };
+      } else {
+        fn = function(values) {
+          return resolveProp(parts, { values });
+        };
+      }
+    }
+    break;
+  }
+  keyResolvers.set(template, fn);
+  return fn;
 };
 var disposingDepth = 0;
 var isDisposing = function() {
@@ -922,29 +962,76 @@ var applySlot = function(s, value, inst) {
   const old = s.entries;
   const next = [];
   const fresh = [];
+  let keys = null;
+  let byKey = null;
+  let seen = null;
   for (let i = 0; i < items.length; i++) {
     const item = items[i];
+    if (item.kind === "view") {
+      const kf = keyResolver(item.view.template);
+      if (kf) {
+        const k = kf(item.view.values);
+        if (k !== void 0) {
+          if (!keys) {
+            keys = new Array(items.length);
+          }
+          keys[i] = k;
+          if (DEV) {
+            if (!seen) {
+              seen = /* @__PURE__ */ new Set();
+            }
+            if (seen.has(k)) {
+              warn("LJS-204", "key " + String(k));
+            }
+            seen.add(k);
+          }
+        }
+      }
+    }
+  }
+  if (keys) {
+    byKey = /* @__PURE__ */ new Map();
+    for (const o of old) {
+      if (o.kind === "view" && o.key !== void 0 && !byKey.has(o.key)) {
+        byKey.set(o.key, o);
+      }
+    }
+  }
+  const claimed = /* @__PURE__ */ new Set();
+  const candidate = function(i) {
+    const k = keys ? keys[i] : void 0;
+    if (k !== void 0) {
+      const m = byKey.get(k);
+      if (m && !claimed.has(m)) {
+        return m;
+      }
+      return void 0;
+    }
     const o = old[i];
+    if (!o || claimed.has(o) || byKey && o.kind === "view" && o.key !== void 0) {
+      return void 0;
+    }
+    return o;
+  };
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i];
+    const o = candidate(i);
     if (item.kind === "text") {
       if (o && o.kind === "text") {
         if (o.text !== item.text) {
           o.nodes[0].nodeValue = item.text;
           o.text = item.text;
         }
+        claimed.add(o);
         next.push(o);
         continue;
-      }
-      if (o) {
-        disposeEntry(o);
       }
       next.push({ kind: "text", text: item.text, nodes: [document.createTextNode(item.text)] });
     } else if (item.kind === "node") {
       if (o && o.kind === "node" && o.node === item.node) {
+        claimed.add(o);
         next.push(o);
         continue;
-      }
-      if (o) {
-        disposeEntry(o);
       }
       next.push({ kind: "node", node: item.node, nodes: [item.node] });
     } else {
@@ -955,6 +1042,7 @@ var applySlot = function(s, value, inst) {
         });
         const equal = valuesEqual(o.holder.values, view.values);
         if (equal && !isForcing() && !hasDead) {
+          claimed.add(o);
           next.push(o);
           continue;
         }
@@ -963,20 +1051,27 @@ var applySlot = function(s, value, inst) {
           for (const binding of o.bindings) {
             binding.run();
           }
+          claimed.add(o);
           next.push(o);
           continue;
         }
       }
       if (o) {
+        claimed.add(o);
         disposeEntry(o);
       }
       const entry = buildViewEntry(view, inst);
+      if (keys && keys[i] !== void 0) {
+        entry.key = keys[i];
+      }
       fresh.push(...entry.instances);
       next.push(entry);
     }
   }
-  for (let i = items.length; i < old.length; i++) {
-    disposeEntry(old[i]);
+  for (const o of old) {
+    if (!claimed.has(o)) {
+      disposeEntry(o);
+    }
   }
   s.entries = next;
   s.detached = false;
@@ -1091,6 +1186,9 @@ var applyProp = function(el, prop, ctx, svg) {
     applyAttr(el, name, name, svg);
     return;
   }
+  if (name === "key") {
+    return;
+  }
   if (name === "bind") {
     const raw = whole >= 0 ? ctx.holder.values[whole] : parts.join("");
     if (isState(raw)) {
@@ -1192,6 +1290,9 @@ var buildComponent = function(vnode, ctx) {
   }
   const props = {};
   for (const prop of vnode.props || []) {
+    if (prop.name === "key") {
+      continue;
+    }
     checkCasing(prop.name, "<" + (fn.name || "component") + ">");
     const parts = prop.parts;
     if (!parts.length) {

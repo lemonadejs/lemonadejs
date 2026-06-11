@@ -56,6 +56,8 @@ interface ViewEntry {
     cleanups: (() => void)[];
     /** Pending refs — fired (once) when the entry first attaches */
     refs: RefEntry[];
+    /** List identity from key="${...}" — matching is by key, not position */
+    key?: unknown;
 }
 type Entry = {
     kind: 'text';

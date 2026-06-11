@@ -85,6 +85,8 @@ interface ViewEntry {
     cleanups: (() => void)[];
     /** Pending refs — fired (once) when the entry first attaches */
     refs: RefEntry[];
+    /** List identity from key="${...}" — matching is by key, not position */
+    key?: unknown;
 }
 
 type Entry =
@@ -145,9 +147,23 @@ const valuesEqual = function (a: unknown[], b: unknown[]): boolean {
         return false;
     }
     for (let i = 0; i < a.length; i++) {
-        if (!Object.is(a[i], b[i])) {
-            return false;
+        const x = a[i];
+        const y = b[i];
+        if (Object.is(x, y)) {
+            continue;
         }
+        // Nested views: a fresh html`` carrying the same template and the
+        // same values IS the same content — structural equality, so an
+        // unchanged nested view never forces its parent entry to rebuild
+        if (
+            isView(x) &&
+            isView(y) &&
+            (x as View).template === (y as View).template &&
+            valuesEqual((x as View).values, (y as View).values)
+        ) {
+            continue;
+        }
+        return false;
     }
     return true;
 };
@@ -182,6 +198,48 @@ const remove = function (node: Node): void {
     if (node.parentNode) {
         node.parentNode.removeChild(node);
     }
+};
+
+/**
+ * key="${...}" on the FIRST element/component of a template makes list
+ * matching identity-based. The resolver (values → key) is derived once per
+ * template — the same identity that caches the parse. Templates without a
+ * key resolve to null and lists of them keep the positional diff.
+ */
+type KeyFn = (values: unknown[]) => unknown;
+const keyResolvers = new WeakMap<Template, KeyFn | null>();
+const keyResolver = function (template: Template): KeyFn | null {
+    let fn = keyResolvers.get(template);
+    if (fn !== undefined) {
+        return fn;
+    }
+    fn = null;
+    for (const node of template.nodes) {
+        if (node.type === '#text' || node.type === '#slot') {
+            continue;
+        }
+        const prop = (node.props || []).find(function (p) {
+            return p.name === 'key';
+        });
+        if (prop && prop.parts.length) {
+            const parts = prop.parts;
+            if (parts.length === 1 && typeof parts[0] === 'object') {
+                const slot = (parts[0] as { slot: number }).slot;
+                // Whole-value key: any value, compared by identity (Object.is)
+                fn = function (values) {
+                    return resolve(values[slot]);
+                };
+            } else {
+                // Mixed/static parts concatenate to a string key
+                fn = function (values) {
+                    return resolveProp(parts, { values });
+                };
+            }
+        }
+        break; // only the first element/component carries the list key
+    }
+    keyResolvers.set(template, fn);
+    return fn;
 };
 
 /**
@@ -336,9 +394,70 @@ const applySlot = function (s: SlotState, value: unknown, inst: Instance): void 
     const next: Entry[] = [];
     const fresh: Instance[] = [];
 
+    // Keys: identity-based matching when items carry key="${...}". Keys are
+    // resolved up front; lists without keys never reach the Map.
+    let keys: unknown[] | null = null;
+    let byKey: Map<unknown, ViewEntry> | null = null;
+    let seen: Set<unknown> | null = null;
     for (let i = 0; i < items.length; i++) {
         const item = items[i];
+        if (item.kind === 'view') {
+            const kf = keyResolver(item.view.template);
+            if (kf) {
+                const k = kf(item.view.values);
+                if (k !== undefined) {
+                    if (!keys) {
+                        keys = new Array(items.length);
+                    }
+                    keys[i] = k;
+                    if (DEV) {
+                        if (!seen) {
+                            seen = new Set();
+                        }
+                        if (seen.has(k)) {
+                            warn('LJS-204', 'key ' + String(k));
+                        }
+                        seen.add(k);
+                    }
+                }
+            }
+        }
+    }
+    if (keys) {
+        byKey = new Map();
+        for (const o of old) {
+            if (o.kind === 'view' && o.key !== undefined && !byKey.has(o.key)) {
+                byKey.set(o.key, o);
+            }
+        }
+    }
+
+    // Every old entry ends up either claimed (reused, or disposed inline on
+    // a rebuild) or swept after the loop — keyed matches consume entries out
+    // of order, so the tail sweep alone is not enough
+    const claimed = new Set<Entry>();
+
+    /** The old entry this item matches: by key when it has one, by position
+     *  otherwise (skipping entries that belong to the key map) */
+    const candidate = function (i: number): Entry | undefined {
+        const k = keys ? keys[i] : undefined;
+        if (k !== undefined) {
+            const m = byKey!.get(k);
+            if (m && !claimed.has(m)) {
+                return m;
+            }
+            return undefined;
+        }
         const o = old[i];
+        if (!o || claimed.has(o) || (byKey && o.kind === 'view' && o.key !== undefined)) {
+            return undefined;
+        }
+        return o;
+    };
+
+    for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        const o = candidate(i);
 
         if (item.kind === 'text') {
             if (o && o.kind === 'text') {
@@ -346,20 +465,16 @@ const applySlot = function (s: SlotState, value: unknown, inst: Instance): void 
                     o.nodes[0].nodeValue = item.text;
                     o.text = item.text;
                 }
+                claimed.add(o);
                 next.push(o);
                 continue;
-            }
-            if (o) {
-                disposeEntry(o);
             }
             next.push({ kind: 'text', text: item.text, nodes: [document.createTextNode(item.text)] });
         } else if (item.kind === 'node') {
             if (o && o.kind === 'node' && o.node === item.node) {
+                claimed.add(o);
                 next.push(o);
                 continue;
-            }
-            if (o) {
-                disposeEntry(o);
             }
             next.push({ kind: 'node', node: item.node, nodes: [item.node] });
         } else {
@@ -372,7 +487,9 @@ const applySlot = function (s: SlotState, value: unknown, inst: Instance): void 
                 });
                 const equal = valuesEqual(o.holder.values, view.values);
                 if (equal && !isForcing() && !hasDead) {
-                    // Identical content — reuse as-is (reattaches if detached)
+                    // Identical content — reuse as-is (reattaches if detached,
+                    // MOVES if reordered: the ordering walk fixes positions)
+                    claimed.add(o);
                     next.push(o);
                     continue;
                 }
@@ -383,23 +500,30 @@ const applySlot = function (s: SlotState, value: unknown, inst: Instance): void 
                     for (const binding of o.bindings) {
                         binding.run();
                     }
+                    claimed.add(o);
                     next.push(o);
                     continue;
                 }
                 // Contains components (snapshot props) — rebuild for fresh props
             }
             if (o) {
+                claimed.add(o);
                 disposeEntry(o);
             }
             const entry = buildViewEntry(view, inst);
+            if (keys && keys[i] !== undefined) {
+                entry.key = keys[i];
+            }
             fresh.push(...entry.instances);
             next.push(entry);
         }
     }
 
-    // Old tail no longer produced
-    for (let i = items.length; i < old.length; i++) {
-        disposeEntry(old[i]);
+    // Sweep: every old entry not reused or already disposed inline
+    for (const o of old) {
+        if (!claimed.has(o)) {
+            disposeEntry(o);
+        }
     }
 
     s.entries = next;
@@ -544,6 +668,11 @@ const applyProp = function (el: Element, prop: VProp, ctx: BuildCtx, svg: boolea
         return;
     }
 
+    // List identity directive (consumed by applySlot, never rendered)
+    if (name === 'key') {
+        return;
+    }
+
     // Two-way binding directive (validated, never rendered as an attribute)
     if (name === 'bind') {
         const raw = whole >= 0 ? ctx.holder.values[whole] : parts.join('');
@@ -670,6 +799,9 @@ const buildComponent = function (vnode: VNode, ctx: BuildCtx): Node[] {
 
     const props: Record<string, unknown> = {};
     for (const prop of vnode.props || []) {
+        if (prop.name === 'key') {
+            continue; // list identity — consumed by applySlot, never a prop
+        }
         checkCasing(prop.name, '<' + ((fn as Function).name || 'component') + '>');
         const parts = prop.parts;
         if (!parts.length) {

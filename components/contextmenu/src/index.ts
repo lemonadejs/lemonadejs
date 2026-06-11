@@ -307,7 +307,10 @@ export const Contextmenu = component('contextmenu', {
 
     // ONE view per Level: pushing/popping levels must never rebuild the
     // surviving menus — a rebuilt Modal re-runs auto-adjust and loses the
-    // cursor anchor, visibly moving the parent when a submenu opens
+    // cursor anchor, visibly moving the parent when a submenu opens.
+    // key="${lvl}" alone cannot replace this cache yet: itemView creates
+    // fresh per-item handler closures every run, so the level's values
+    // never compare equal and a keyed component entry would still rebuild.
     const levelViews = new WeakMap<Level, unknown>();
     const levelView = (lvl: Level, li: number) => {
         let view = levelViews.get(lvl);

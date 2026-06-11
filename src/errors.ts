@@ -19,6 +19,7 @@ const MESSAGES: Record<string, string> = {
     'LJS-201': 'In-place mutation is silent — call state.touch() after mutating, or assign a new value',
     'LJS-202': 'Slot holds a snapshot — wrap dynamic expressions: ${() => ...}',
     'LJS-203': 'Update loop detected — a state change keeps triggering itself',
+    'LJS-204': 'Duplicate key in a list — keys must be unique for identity matching',
     'LJS-301': 'Event attributes require a function: onclick="${() => ...}"',
     'LJS-302': 'bind requires a state: bind="${state}"',
     'LJS-303': 'bind works on <input>, <textarea> and <select> — on components it is a prop',
@@ -68,6 +69,11 @@ const EXPLAIN: Record<string, string> = !DEV ? {} : {
     'LJS-203':
         'A state assignment inside a reactive expression triggered itself recursively more than 100 times. ' +
         'Do not assign to states inside template expressions; assign from event handlers or callbacks.',
+    'LJS-204':
+        'Two items in the same list resolved to the same key="${...}" value. Identity matching needs unique ' +
+        'keys: the first occurrence claims the entry, duplicates rebuild from scratch every update (correct ' +
+        'but slow, and component state in duplicates is lost). Key by a stable id, or by the item object ' +
+        'itself when items are stable references.',
     'LJS-301':
         'Attributes starting with "on" are events and must receive a function: onclick="${() => count.value++}". ' +
         'String handlers are not supported (CSP-safe by design).',

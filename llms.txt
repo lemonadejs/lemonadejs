@@ -40,6 +40,21 @@ A component is a plain function: (props, tools) => html`...`. No classes, no thi
 
 Slot values: string|number (text), false/true/null/undefined (nothing), html`` view, Node, array of these.
 
+KEYS — when list items can REORDER, be inserted or removed, key the item's
+root: matching becomes identity-based, the existing DOM (and any component
+instances inside it, with their state) MOVES instead of rebuilding:
+
+    ${() => rows.value.map(r => html`<tr key="${r.id}">...</tr>`)}
+    key="${r}"            // the item object itself works (identity, Object.is)
+
+key is a directive like bind/ref: consumed by the engine, never rendered,
+never a component prop. Keys must be unique per list (duplicates warn
+LJS-204 and rebuild). Lists that only append or change in place do not need
+keys — the positional diff already reuses entries. Components in keyed
+lists move WITH their state when item values are unchanged; an item whose
+values changed rebuilds (pass stable references for props you do not want
+to trigger that).
+
 Trusted HTML (plain strings are ALWAYS escaped; this is the explicit opt-out):
 
     import { unsafe } from 'lemonadejs';
@@ -351,7 +366,8 @@ code eliminated — production pays zero.
     LJS-101 mismatched closing tag               LJS-301 events need functions, not strings
     LJS-102 unclosed tag                         LJS-302 bind needs a state: bind="${state}"
     LJS-104 unknown component — setComponents    LJS-303 bind: input/textarea/select only
-    LJS-105 ${} not allowed in that position     LJS-304 bind owns value — drop the value attribute
+    LJS-105 ${} not allowed in that position     LJS-204 duplicate key in a list — keys are unique
+                                                 LJS-304 bind owns value — drop the value attribute
     LJS-401 prop violates its contract           LJS-305 callbacks are lowercase: onclick, onsave
     LJS-402 unknown prop (did-you-mean hint)     LJS-501 expose once — singletons, never touch
 
