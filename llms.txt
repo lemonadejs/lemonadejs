@@ -101,6 +101,14 @@ until you call touch():
 
 The footgun (LJS-201): mutate without touch() and nothing updates.
 
+touch() REACHES COMPONENTS: when a list re-runs under touch() and an item
+is passed by reference — <${Card} item="${r}" /> — the card's prop state is
+touched too, so the card re-reads the mutated contents. Recursive through
+nested components (the card passing item.value further down). Ownership
+holds: a shared State passed as a prop is NEVER touched by propagation —
+its owner touches it. (This is v5's loop-scope visibility, without v5
+writing framework fields onto your data.)
+
 Shared state (outside components, module scope):
 
     import { store } from 'lemonadejs';

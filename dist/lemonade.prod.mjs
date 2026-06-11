@@ -942,6 +942,29 @@ var injectStyles = function(template) {
     document.head.appendChild(el);
   }
 };
+var propagateTouch = function(ci) {
+  if (ci.dead || !ci.live) {
+    return;
+  }
+  const schema = contract(ci.component);
+  if (!schema) {
+    return;
+  }
+  for (const key of Object.keys(schema.props)) {
+    const p = schema.props[key];
+    if (p.type !== "array" && p.type !== "object" && p.type !== "any") {
+      continue;
+    }
+    const raw = ci.props[key];
+    if (raw === null || typeof raw !== "object" || isState(raw)) {
+      continue;
+    }
+    const target = ci.live.states[key];
+    if (isState(target)) {
+      target.touch();
+    }
+  }
+};
 var patchPlan = function(ci, holder) {
   const vnode = ci.vnode;
   if (!vnode || ci.dead || !ci.live) {
@@ -979,7 +1002,15 @@ var patchPlan = function(ci, holder) {
         return null;
       }
       ops.push(function() {
-        target.value = b === void 0 ? p.default : coerce(b, p);
+        const next = b === void 0 ? p.default : coerce(b, p);
+        const state = target;
+        if (Object.is(state.peek(), next)) {
+          if (isForcing() && next !== null && typeof next === "object" && !isState(next)) {
+            state.touch();
+          }
+          return;
+        }
+        state.value = next;
       });
       continue;
     }
@@ -1125,6 +1156,11 @@ var applySlot = function(s, value, inst) {
           o.holder.values = view.values;
           for (const binding of o.bindings) {
             binding.run();
+          }
+          if (o.instances.length && isForcing()) {
+            for (const ci of o.instances) {
+              propagateTouch(ci);
+            }
           }
           claimed.add(o);
           next.push(o);

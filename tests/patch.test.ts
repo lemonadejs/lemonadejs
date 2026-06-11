@@ -200,6 +200,96 @@ describe('live component-prop patching', () => {
         expect(builds).toEqual(['v1']);
     });
 
+    it('touch() reaches components: by-reference props re-read mutated contents (v5 loop-scope parity)', () => {
+        const Row = component('touchrow', { item: Object }, (props) => {
+            return html`<b>${() => (props.item.value as unknown as Item).title}</b>`;
+        });
+        let rows!: State<Item[]>;
+        const App: Component = (p, { state }) => {
+            rows = state<Item[]>([
+                { id: 1, title: 'a', count: 0 },
+                { id: 2, title: 'b', count: 0 },
+            ]);
+            return html`<div>${() =>
+                rows.value.map((r) => html`<i key="${r.id}"><${Row} item="${r}" /></i>`)}</div>`;
+        };
+        handle = t(App);
+        const b1 = handle.queryAll('b')[0];
+        expect(b1.textContent).toBe('a');
+
+        rows.value[0].title = 'mutated'; // in place — same reference
+        rows.touch();
+        expect(handle.queryAll('b')[0]).toBe(b1); // no rebuild
+        expect(b1.textContent).toBe('mutated'); // the component re-read
+    });
+
+    it('touch() propagation is recursive through nested components', () => {
+        const Leaf = component('touchleaf', { item: Object }, (props) => {
+            return html`<em>${() => (props.item.value as unknown as Item).title}</em>`;
+        });
+        const Mid = component('touchmid', { item: Object }, (props) => {
+            return html`<span>${() => [html`<u><${Leaf} item="${props.item.value}" /></u>`]}</span>`;
+        });
+        let rows!: State<Item[]>;
+        const App: Component = (p, { state }) => {
+            rows = state<Item[]>([{ id: 1, title: 'deep', count: 0 }]);
+            return html`<div>${() =>
+                rows.value.map((r) => html`<i key="${r.id}"><${Mid} item="${r}" /></i>`)}</div>`;
+        };
+        handle = t(App);
+        expect(handle.query('em')!.textContent).toBe('deep');
+
+        rows.value[0].title = 'deeper';
+        rows.touch();
+        expect(handle.query('em')!.textContent).toBe('deeper');
+    });
+
+    it('a shared State prop is NOT touched by propagation — it stays with the caller', () => {
+        const Probe = component('touchshared', { box: Object }, (props) => {
+            return html`<b>${() => (props.box.value as { n: number }).n}</b>`;
+        });
+        let rows!: State<{ id: number }[]>;
+        let shared!: State<{ n: number }>;
+        const App: Component = (p, { state }) => {
+            shared = state({ n: 1 });
+            rows = state([{ id: 1 }]);
+            return html`<div>${() =>
+                rows.value.map((r) => html`<i key="${r.id}"><${Probe} box="${shared}" /></i>`)}</div>`;
+        };
+        handle = t(App);
+        expect(handle.query('b')!.textContent).toBe('1');
+
+        shared.value.n = 2;
+        rows.touch(); // touching the LIST must not reach into the caller's state
+        expect(handle.query('b')!.textContent).toBe('1');
+        shared.touch(); // the owner touches it — now it updates
+        expect(handle.query('b')!.textContent).toBe('2');
+    });
+
+    it('patch path under touch(): changed props AND mutated same-reference props both land', () => {
+        const Row = component('touchmixed', { item: Object, pos: 0 }, (props) => {
+            return html`<b>${() => (props.item.value as unknown as Item).title}:${props.pos}</b>`;
+        });
+        let rows!: State<Item[]>;
+        const App: Component = (p, { state }) => {
+            rows = state<Item[]>([
+                { id: 1, title: 'a', count: 0 },
+                { id: 2, title: 'b', count: 0 },
+            ]);
+            return html`<div>${() =>
+                rows.value.map((r, i) => html`<i key="${r.id}"><${Row} item="${r}" pos="${i}" /></i>`)}</div>`;
+        };
+        handle = t(App);
+
+        // Reorder (pos changes → patch path) AND mutate in place, one touch
+        const [r1, r2] = rows.value;
+        r1.title = 'a2';
+        rows.value = [r2, r1];
+        rows.touch();
+        const after = handle.queryAll('b').map((el) => el.textContent);
+        expect(after).toEqual(['b:0', 'a2:1']);
+    });
+
     it('mixed-part string props patch (label="${x} items")', () => {
         const Tag = component('patchtag', { label: '' }, (props) => html`<b>${props.label}</b>`);
         let n!: State<number>;

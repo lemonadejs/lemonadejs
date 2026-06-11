@@ -355,6 +355,39 @@ const injectStyles = function (template: Template): void {
 };
 
 /**
+ * touch() propagation: when a list re-runs under forcing (the caller
+ * touched the data after in-place mutation), components holding the SAME
+ * object references must re-read the mutated contents — v5's loop-scope
+ * visibility, kept inside v6 ownership. Only wrapper-owned states for
+ * declared object/array/any props are touched; a shared State passed by
+ * the caller stays the caller's to touch. Recursive by construction: the
+ * propagated touch() also emits forcing, so nested lists repeat this.
+ */
+const propagateTouch = function (ci: Instance): void {
+    if (ci.dead || !ci.live) {
+        return;
+    }
+    const schema = contractOf(ci.component);
+    if (!schema) {
+        return;
+    }
+    for (const key of Object.keys(schema.props)) {
+        const p = schema.props[key];
+        if (p.type !== 'array' && p.type !== 'object' && p.type !== 'any') {
+            continue; // primitive contents cannot mutate
+        }
+        const raw = ci.props[key];
+        if (raw === null || typeof raw !== 'object' || isState(raw)) {
+            continue;
+        }
+        const target = ci.live.states[key];
+        if (isState(target)) {
+            (target as StateImpl<unknown>).touch();
+        }
+    }
+};
+
+/**
  * Try to PATCH one living instance for an entry whose values changed:
  * recompute its props from the vnode recipe and plan writes into the
  * contract wrapper's live states and event cells. Returns the ops, or
@@ -400,7 +433,18 @@ const patchPlan = function (ci: Instance, holder: Holder): (() => void)[] | null
                 return null;
             }
             ops.push(function () {
-                (target as StateImpl<unknown>).value = b === undefined ? p.default : coerce(b, p);
+                const next = b === undefined ? p.default : coerce(b, p);
+                const state = target as StateImpl<unknown>;
+                if (Object.is(state.peek(), next)) {
+                    // Same reference under touch(): contents may have
+                    // mutated in place — propagate the re-read instead
+                    // of letting the identity check silence it
+                    if (isForcing() && next !== null && typeof next === 'object' && !isState(next)) {
+                        state.touch();
+                    }
+                    return;
+                }
+                state.value = next;
             });
             continue;
         }
@@ -574,6 +618,13 @@ const applySlot = function (s: SlotState, value: unknown, inst: Instance): void 
                     o.holder.values = view.values;
                     for (const binding of o.bindings) {
                         binding.run();
+                    }
+                    if (o.instances.length && isForcing()) {
+                        // The mutation may live inside an object passed BY
+                        // REFERENCE into a component — push the re-read in
+                        for (const ci of o.instances) {
+                            propagateTouch(ci);
+                        }
                     }
                     claimed.add(o);
                     next.push(o);
