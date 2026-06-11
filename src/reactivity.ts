@@ -88,6 +88,20 @@ export const readCount = function (): number {
 };
 
 /**
+ * Run fn with the read counter restored afterwards: reads made inside
+ * tool-owned bindings (computed's initial evaluation) are NOT template-
+ * construction reads and must not trip the LJS-202 snapshot heuristic.
+ */
+export const withReadsRestored = function <R>(fn: () => R): R {
+    const before = reads;
+    try {
+        return fn();
+    } finally {
+        reads = before;
+    }
+};
+
+/**
  * A reactive computation with automatic dependency tracking
  */
 export class Binding {

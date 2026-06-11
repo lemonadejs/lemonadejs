@@ -21,13 +21,15 @@ export interface ButtonGroupOption {
     disabled?: boolean;
 }
 
-/** Strings/numbers normalize to { value, label } */
-const normalize = (list: unknown[]): ButtonGroupOption[] =>
-    (list || []).map((v) =>
-        typeof v === 'string' || typeof v === 'number'
-            ? { value: v, label: String(v) }
-            : (v as ButtonGroupOption)
-    );
+/** What the options array accepts: full objects or bare values */
+export type RawOption = ButtonGroupOption | string | number;
+
+/** Strings/numbers normalize to { value, label }; objects pass through
+ *  BY REFERENCE — the raw entry stays the list key (stable identity) */
+const asOption = (raw: RawOption): ButtonGroupOption =>
+    typeof raw === 'string' || typeof raw === 'number'
+        ? { value: raw, label: String(raw) }
+        : raw;
 
 /** v5 compareValues: loose equality, empty-string strict */
 const sameValue = (a: unknown, b: unknown): boolean => {
@@ -67,26 +69,29 @@ export const ButtonGroup = component('buttongroup', {
         if (props.disabled.value || item.disabled === true) {
             return;
         }
-        const mode = props.selectable.value as string;
+        const mode = props.selectable.value;
         if (!mode) {
             props.onclick?.(item.value, e);
         } else if (mode === 'multiple') {
-            const current = asList(selected.peek());
+            const current = asList(selected.value);
             const next = current.some((w) => sameValue(w, item.value))
                 ? current.filter((w) => !sameValue(w, item.value))
                 : [...current, item.value];
-            selected.set(next as never); // fires onchange (.set semantics)
+            selected.set(next); // fires onchange (.set semantics)
         } else {
-            const current = asList(selected.peek());
-            const next = current.some((w) => sameValue(w, item.value)) ? null : item.value;
-            selected.set(next as never);
+            const current = asList(selected.value);
+            selected.set(current.some((w) => sameValue(w, item.value)) ? null : item.value);
         }
     };
 
-    const view = (item: ButtonGroupOption) => html`<button type="button"
+    /** One button per option; the raw entry is the key (identity for
+     *  objects, the value itself for strings/numbers) */
+    const view = (raw: RawOption, item: ButtonGroupOption) => html`<button type="button"
+        key="${raw}"
         class="lm-buttongroup-button"
         data-selected="${() => (isSelected(item.value) ? 'true' : false)}"
-        disabled="${() => props.disabled.value || item.disabled === true || false}"
+        aria-pressed="${() => (props.selectable.value ? String(isSelected(item.value)) : false)}"
+        disabled="${() => props.disabled.value || item.disabled === true}"
         onclick="${(e: MouseEvent) => press(item, e)}">
         ${item.icon ? html`<i class="lm-buttongroup-icon material-icons">${item.icon}</i>` : ''}
         ${item.label !== undefined && item.label !== '' ? html`<span class="lm-buttongroup-label">${item.label}</span>` : ''}
@@ -99,7 +104,7 @@ export const ButtonGroup = component('buttongroup', {
         data-size="${() => props.size.value || false}"
         data-orientation="${() => props.orientation.value || false}"
         data-disabled="${() => (props.disabled.value ? 'true' : false)}">
-        ${() => normalize((props.options.value as unknown[]) || []).map(view)}
+        ${() => ((props.options.value as RawOption[]) || []).map((raw) => view(raw, asOption(raw)))}
     </div>`;
 });
 

@@ -21,7 +21,7 @@
  * onmove(top, left) and onresize(width, height) fire on release.
  */
 
-import { component, css, html, isDisposing, unsafe } from 'lemonadejs';
+import { batch, component, css, html, isDisposing, unsafe } from 'lemonadejs';
 
 const EDGE = 10; // resize hit zone
 const BAR = 40; // drag zone height
@@ -94,13 +94,23 @@ export const Modal = component('modal', {
     onmove: Function,
     onresize: Function,
     api: { open: Function, close: Function, toggle: Function, front: Function, back: Function },
-}, (props, { bind, state, onMount, onUnmount, listen }) => {
+}, (props, { bind, state, onMount, onUnmount, listen, resource }) => {
     const open = bind(props, false);
     const minimized = state(false);
-    const pos = state({ top: props.top.value as number, left: props.left.value as number, fixed: false });
-    const size = state({ w: props.width.value as number, h: props.height.value as number });
+    const pos = state({ top: props.top.value, left: props.left.value, fixed: false });
+    const size = state({ w: props.width.value, h: props.height.value });
     const layer = state(0);
-    const remote = state<Node[] | null>(null);
+
+    // Remote content is a url-loading feature with v5 semantics: load ONCE,
+    // lazily at the FIRST open that has a url, never refetch (url changes
+    // between opens are ignored, v5 parity — hence the peek). The wanted
+    // gate keeps mount network-free; resource() owns abort/race/zombie.
+    const wantRemote = state(false);
+    const remote = resource<string | null>((signal) =>
+        wantRemote.value && typeof fetch === 'function'
+            ? fetch(props.url.peek(), { signal }).then((r) => r.text())
+            : null
+    );
 
     let root: HTMLElement | null = null;
     let restoreTo = { top: 0, left: 0 };
@@ -176,20 +186,22 @@ export const Modal = component('modal', {
         // modal precisely as it looked
         const rect = root.getBoundingClientRect();
         restoreTo = { top: rect.top, left: rect.left };
-        if (rect.width && !size.value.w) {
-            size.value = { w: rect.width, h: rect.height };
-        }
-        // Consolidate before docking so the bar animates from where the
-        // modal visually is, not from a pre-margin position
-        pos.value = { top: rect.top, left: rect.left, fixed: true };
-        minimized.value = true;
-        dock.push({
-            el: root,
-            place: (top, left) => {
-                pos.value = { top, left, fixed: true };
-            },
+        batch(() => {
+            if (rect.width && !size.value.w) {
+                size.value = { w: rect.width, h: rect.height };
+            }
+            // Consolidate before docking so the bar animates from where the
+            // modal visually is, not from a pre-margin position
+            pos.value = { top: rect.top, left: rect.left, fixed: true };
+            minimized.value = true;
+            dock.push({
+                el: root!,
+                place: (top, left) => {
+                    pos.value = { top, left, fixed: true };
+                },
+            });
+            refreshDock();
         });
-        refreshDock();
     };
     const restore = () => {
         if (!root || !minimized.value) {
@@ -199,9 +211,11 @@ export const Modal = component('modal', {
         if (i >= 0) {
             dock.splice(i, 1);
         }
-        minimized.value = false;
-        pos.value = { top: restoreTo.top, left: restoreTo.left, fixed: true };
-        refreshDock();
+        batch(() => {
+            minimized.value = false;
+            pos.value = { top: restoreTo.top, left: restoreTo.left, fixed: true };
+            refreshDock();
+        });
     };
 
     // ---- v5 auto-adjust: how far back inside the viewport (10px margin)?
@@ -253,46 +267,44 @@ export const Modal = component('modal', {
         }
     };
 
-    // ---- per-open setup (v5 onload behavior)
-    // Always deferred one microtask: on first open the branch builds
-    // detached and attaches right after; measurements need layout.
-    let pendingSetup = false;
-    const scheduleSetup = () => {
-        if (pendingSetup) {
-            return;
+    // ---- per-open setup (v5 onload behavior): SYNCHRONOUS — refs fire on
+    // already-attached nodes and the open subscription runs after the branch
+    // binding re-attached the cached DOM, so measurement works directly in
+    // both paths (the old one-microtask deferral predates attached refs).
+    // The flag dedups the FIRST open, where the ref and the subscription
+    // fire in the same pass; closing re-arms it for the next open.
+    let setupDone = false;
+    const runSetup = () => {
+        if (!setupDone && root && root.isConnected && open.value) {
+            setupDone = true;
+            setup();
         }
-        pendingSetup = true;
-        queueMicrotask(() => {
-            pendingSetup = false;
-            if (root && root.isConnected && open.value) {
-                setup();
-            }
-        });
     };
 
     const onOpened = (el: HTMLElement) => {
         root = el;
-        scheduleSetup();
+        runSetup();
     };
 
     // Reopen reuses the cached branch — refs do NOT re-fire, so setup is
     // re-armed by watching the open state itself (api, bind or backdrop)
-    onMount(() => open.subscribe((v) => v && scheduleSetup()));
+    onMount(() => open.subscribe((v) => (v ? runSetup() : (setupDone = false))));
 
     // position is live while open (v5 reactive properties): drop the
     // explicit coordinates and re-place under the new positioning model
     onMount(() =>
         props.position.subscribe(() => {
             if (open.value && root) {
-                pos.value = { top: props.top.value as number, left: props.left.value as number, fixed: false };
-                scheduleSetup();
+                pos.value = { top: props.top.value, left: props.left.value, fixed: false };
+                setupDone = false;
+                runSetup();
             }
         })
     );
 
     const setup = () => {
         const el = root!;
-        const p = props.position.value as string;
+        const p = props.position.value;
         if (props.layers.value) {
             front();
         }
@@ -300,15 +312,15 @@ export const Modal = component('modal', {
             // Explicit coordinates: measure, then center unless given (v5).
             // Declared width/height/top/left are re-read EVERY open — they
             // may be live states updated between opens (anchored panels)
-            const w = (props.width.value as number) || (size.value.w as number) || el.offsetWidth;
-            const h = (props.height.value as number) || (size.value.h as number) || el.offsetHeight;
+            const w = props.width.value || size.value.w || el.offsetWidth;
+            const h = props.height.value || size.value.h || el.offsetHeight;
             if (w !== size.value.w || h !== size.value.h) {
                 size.value = { w, h };
             }
             if (p === 'absolute') {
                 pos.value = {
-                    top: (props.top.value as number) || pos.value.top,
-                    left: (props.left.value as number) || pos.value.left,
+                    top: props.top.value || pos.value.top,
+                    left: props.left.value || pos.value.left,
                     fixed: true,
                 };
             } else {
@@ -328,10 +340,8 @@ export const Modal = component('modal', {
         if (props.focus.value) {
             el.focus();
         }
-        if (props.url.value && remote.value === null && typeof fetch === 'function') {
-            fetch(props.url.value as string)
-                .then((r) => r.text())
-                .then((text) => (remote.value = unsafe(text)));
+        if (props.url.value && !wantRemote.peek()) {
+            wantRemote.value = true; // first open with a url: the resource fetches once
         }
     };
 
@@ -380,10 +390,7 @@ export const Modal = component('modal', {
                 // v5: releasing a drag re-adjusts — a modal dragged beyond
                 // the viewport nudges back in; onmove reports the final spot
                 adjustPosition();
-                props.onmove?.(
-                    pos.value.top,
-                    pos.value.left
-                );
+                props.onmove?.(pos.value.top, pos.value.left);
             }
         );
     };
@@ -418,16 +425,16 @@ export const Modal = component('modal', {
                 }
                 w = Math.max(MIN_W, w);
                 h = Math.max(MIN_H, h);
-                size.value = { w, h };
-                if (dir.includes('w') || dir.includes('n')) {
-                    pos.value = { top: t, left: l, fixed: true };
-                }
+                // hot path (every mousemove): size + pos land as ONE pass
+                batch(() => {
+                    size.value = { w, h };
+                    if (dir.includes('w') || dir.includes('n')) {
+                        pos.value = { top: t, left: l, fixed: true };
+                    }
+                });
             },
             () => {
-                props.onresize?.(
-                    size.value.w as number,
-                    size.value.h as number
-                );
+                props.onresize?.(size.value.w, size.value.h);
             }
         );
     };
@@ -530,7 +537,8 @@ export const Modal = component('modal', {
                                 html`<button class="lm-modal-close" onclick="${() => doClose('button')}">×</button>`}
                         </span>
                     </header>`}
-                <div class="lm-modal-content">${props.children}${() => remote.value}</div>
+                <div class="lm-modal-content">${props.children}${() =>
+                    remote.data.value ? unsafe(remote.data.value) : null}</div>
             </div>
         </div>`}`;
 });

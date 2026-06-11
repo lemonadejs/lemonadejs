@@ -38,7 +38,7 @@ export const Signature = component('signature', {
     api: { getValue: Function, setValue: Function, getImage: Function, clear: Function },
 }, (props, { bind, listen, onMount, onUnmount }) => {
     const initial = props.value.value;
-    const strokes = bind(props, (Array.isArray(initial) ? initial.slice() : []) as unknown[]);
+    const strokes = bind(props, Array.isArray(initial) ? initial.slice() : []);
 
     let canvas: HTMLCanvasElement | null = null;
     let ctx: CanvasRenderingContext2D | null = null;
@@ -50,9 +50,9 @@ export const Signature = component('signature', {
     /** v5 move(): start a path — thickness, round cap, color */
     const pen = (x: number, y: number) => {
         ctx!.beginPath();
-        ctx!.lineWidth = (props.line.value as number) || 3;
+        ctx!.lineWidth = props.line.value || 3;
         ctx!.lineCap = 'round';
-        ctx!.strokeStyle = (props.color.value as string) || '#000';
+        ctx!.strokeStyle = props.color.value || '#000';
         ctx!.moveTo(x, y);
     };
 

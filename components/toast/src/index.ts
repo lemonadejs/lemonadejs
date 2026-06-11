@@ -120,7 +120,7 @@ export const Toast = component('toast', {
 
     /** A slot opened up: promote waiting toasts (their clock starts NOW) */
     const promote = () => {
-        while (waiting.length && items.value.length < (props.max.value as number)) {
+        while (waiting.length && items.value.length < props.max.value) {
             activate(waiting.shift()!);
         }
     };
@@ -153,10 +153,10 @@ export const Toast = component('toast', {
             message: String(message),
             severity: options.severity || '',
             action: options.action || null,
-            duration: options.duration !== undefined ? options.duration : (props.duration.value as number),
+            duration: options.duration !== undefined ? options.duration : props.duration.value,
             leaving: false,
         };
-        if (items.value.length < (props.max.value as number)) {
+        if (items.value.length < props.max.value) {
             activate(toast);
         } else {
             waiting.push(toast);
@@ -192,7 +192,9 @@ export const Toast = component('toast', {
     return html`<div class="lm-toast"
         data-position="${() => props.position.value || false}">${() =>
         items.value.map(
-            (t) => html`<div class="lm-toast-item" role="status"
+            // keyed: dismissing a toast removes it MID-list — identity keeps
+            // the surviving toasts' DOM (and their running CSS animations)
+            (t) => html`<div class="lm-toast-item" key="${t.id}" role="status"
                 data-severity="${() => t.severity || false}"
                 data-leaving="${() => t.leaving || false}">
                 <span class="lm-toast-message">${t.message}</span>

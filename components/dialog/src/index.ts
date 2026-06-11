@@ -19,7 +19,7 @@
  * is replaced by a data-type attribute.
  */
 
-import { component, html } from 'lemonadejs';
+import { batch, component, html } from 'lemonadejs';
 import Modal from '@lemonadejs/modal';
 
 /** Per-open overrides — what v5 passed to show(options) */
@@ -58,17 +58,17 @@ export const Dialog = component('dialog', {
 
     // Effective values: the last open(options) wins over props (v5
     // setProperties merged options straight into self)
-    const title = () => overrides.value.title ?? (props.title.value as string);
-    const message = () => overrides.value.message ?? (props.message.value as string);
-    const kind = () => overrides.value.type ?? (props.type.value as string);
-    const confirmLabel = () => overrides.value.confirmlabel ?? (props.confirmlabel.value as string);
-    const cancelLabel = () => overrides.value.cancellabel ?? (props.cancellabel.value as string);
-    const placeholder = () => overrides.value.placeholder ?? (props.placeholder.value as string);
+    const title = () => overrides.value.title ?? props.title.value;
+    const message = () => overrides.value.message ?? props.message.value;
+    const kind = () => overrides.value.type ?? props.type.value;
+    const confirmLabel = () => overrides.value.confirmlabel ?? props.confirmlabel.value;
+    const cancelLabel = () => overrides.value.cancellabel ?? props.cancellabel.value;
+    const placeholder = () => overrides.value.placeholder ?? props.placeholder.value;
 
     // v5: `cancel || !(type == 'alert' || type == 'input')` — Cancel always
     // shows on the default type; cancel=false hides it on alert/input
     const cancelVisible = () => {
-        const wanted = overrides.value.cancel ?? (props.cancel.value as boolean);
+        const wanted = overrides.value.cancel ?? props.cancel.value;
         const t = kind();
         return wanted || !(t === 'alert' || t === 'input');
     };
@@ -78,11 +78,13 @@ export const Dialog = component('dialog', {
     let pending: Promise<DialogResult> | null = null;
 
     const doOpen = (options?: DialogOptions): Promise<DialogResult> => {
-        overrides.value = options ? { ...options } : {};
-        if (options && options.input !== undefined) {
-            typed.value = options.input; // preset the prompt (v5: show({ input }))
-        }
-        opened.value = true;
+        batch(() => {
+            overrides.value = options ? { ...options } : {};
+            if (options && options.input !== undefined) {
+                typed.value = options.input; // preset the prompt (v5: show({ input }))
+            }
+            opened.value = true;
+        });
         if (!pending) {
             pending = new Promise((resolve) => (resolvePending = resolve));
         }
@@ -92,7 +94,7 @@ export const Dialog = component('dialog', {
     /** Close and resolve the pending promise; returns the prompt value */
     const settle = (confirmed: boolean): string => {
         opened.value = false;
-        const current = (typed.value as string) || '';
+        const current = typed.value || '';
         const resolve = resolvePending;
         resolvePending = null;
         pending = null;
@@ -135,9 +137,8 @@ export const Dialog = component('dialog', {
                     kind() === 'input' &&
                     html`<div class="lm-dialog-prompt">
                         <input type="text" class="lm-dialog-input"
-                            value="${() => (typed.value as string) || ''}"
-                            placeholder="${() => placeholder() || false}"
-                            oninput="${(e: Event) => (typed.value = (e.target as HTMLInputElement).value)}" />
+                            bind="${typed}"
+                            placeholder="${() => placeholder() || false}" />
                     </div>`}
                 <div class="lm-dialog-option">
                     <input type="button" class="lm-dialog-confirm"

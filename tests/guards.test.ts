@@ -7,7 +7,7 @@
  *      for captured-once snapshots and hand-rolled peek pipelines
  *   3. isDisposing() — renderer-caused focusout/blur is detectable
  */
-import { describe, it, expect, afterEach } from 'vitest';
+import { describe, it, expect, afterEach, vi } from 'vitest';
 import { html, store, isDisposing, type Component, type State } from '../src/index';
 import { render as t } from '../src/test';
 
@@ -158,5 +158,34 @@ describe('guard 3: isDisposing() — renderer-caused blurs are detectable', () =
 
     it('is false in normal flow', () => {
         expect(isDisposing()).toBe(false);
+    });
+});
+
+describe('LJS-202 heuristic vs tool-owned bindings (regression)', () => {
+    it('computed() + a primitive slot does not warn LJS-202 (binding reads are not template reads)', () => {
+        const spy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+        const C: Component = (p, { state, computed }) => {
+            const anchor = state('left');
+            const position = computed(() => (anchor.value === 'top' ? 'row' : 'column'));
+            // The primitive slot below is a legitimate snapshot — with the
+            // computed() reads counted, this used to flag LJS-202 and fail verify()
+            return html`<div data-mode="${'static'}"><i>${position}</i></div>`;
+        };
+        handle = t(C);
+        expect(spy.mock.calls.some((c: unknown[]) => String(c[0]).includes('LJS-202'))).toBe(false);
+        spy.mockRestore();
+    });
+
+    it('resource() + a primitive slot does not warn LJS-202 either', () => {
+        const spy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+        const C: Component = (p, { state, resource }) => {
+            const id = state(1);
+            const r = resource(() => Promise.resolve('user' + id.value));
+            queueMicrotask(() => void r);
+            return html`<div data-mode="${'static'}"></div>`;
+        };
+        handle = t(C);
+        expect(spy.mock.calls.some((c: unknown[]) => String(c[0]).includes('LJS-202'))).toBe(false);
+        spy.mockRestore();
     });
 });

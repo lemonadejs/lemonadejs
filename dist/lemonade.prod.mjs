@@ -461,6 +461,14 @@ var reads = 0;
 var readCount = function() {
   return reads;
 };
+var withReadsRestored = function(fn) {
+  const before = reads;
+  try {
+    return fn();
+  } finally {
+    reads = before;
+  }
+};
 var Binding = class {
   constructor(fn) {
     this.fn = fn;
@@ -1633,7 +1641,9 @@ var mountComponent = function(component2, props, parent) {
       DEV && (binding.label = s.label);
       inst.states.push(s);
       inst.bindings.push(binding);
-      binding.run();
+      withReadsRestored(function() {
+        binding.run();
+      });
       return s;
     },
     bind: function(p, fallback) {
@@ -1704,7 +1714,9 @@ var mountComponent = function(component2, props, parent) {
       });
       DEV && (binding.label = inst.name + ".resource");
       inst.bindings.push(binding);
-      binding.run();
+      withReadsRestored(function() {
+        binding.run();
+      });
       inst.unmountCbs.push(function() {
         run++;
         controller?.abort();

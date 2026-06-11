@@ -20,7 +20,7 @@ import type { Bindable, Component, Handle, State, Template, Tools, View, VNode, 
 import { isView } from './types';
 import { fail, warn } from './errors';
 import { DEV } from './env';
-import { batch, Binding, BoundState, isDynamic, isForcing, isState, readCount, resolve, StateImpl, untracked } from './reactivity';
+import { batch, Binding, BoundState, isDynamic, isForcing, isState, readCount, resolve, StateImpl, untracked, withReadsRestored } from './reactivity';
 import { contract as contractOf, coerce, liveProps, type LiveProps } from './contract';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -1109,7 +1109,12 @@ export const mountComponent = function (
             DEV && (binding.label = s.label);
             inst.states.push(s as StateImpl<unknown>);
             inst.bindings.push(binding);
-            binding.run(); // initial value + dependency tracking
+            // Initial value + dependency tracking. Reads inside this run are
+            // BINDING reads, not template-construction reads — restore the
+            // counter so they cannot trip the LJS-202 snapshot heuristic
+            withReadsRestored(function () {
+                binding.run();
+            });
             return s;
         },
         bind: function <T>(p: Bindable<T>, fallback: T) {
@@ -1196,7 +1201,11 @@ export const mountComponent = function (
             });
             DEV && (binding.label = inst.name + '.resource');
             inst.bindings.push(binding);
-            binding.run();
+            // Binding reads, not template reads (see computed): the fetcher's
+            // synchronous prop reads must not trip the LJS-202 heuristic
+            withReadsRestored(function () {
+                binding.run();
+            });
             inst.unmountCbs.push(function () {
                 run++; // pending responses become writes-to-nowhere
                 controller?.abort();

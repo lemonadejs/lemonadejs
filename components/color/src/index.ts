@@ -18,7 +18,7 @@
  * onclose(origin): 'select' | 'button' | 'escape' | 'focusout' | 'api'.
  */
 
-import { component, html, isDisposing } from 'lemonadejs';
+import { batch, component, html, isDisposing } from 'lemonadejs';
 import Modal from '@lemonadejs/modal';
 
 const defaultPalette: string[][] = [
@@ -60,7 +60,7 @@ export const Color = component('color', {
 }, (props, { state, bind }) => {
     const picked = bind(props, '');
     // v5 pending-selection model: the grid marks this; Done commits it
-    const pending = state((picked.value as string) || '');
+    const pending = state(picked.value || '');
     const tab = state<'grid' | 'spectrum'>('grid');
     const opened = state(false);
     const anchorTop = state(0);
@@ -86,15 +86,18 @@ export const Color = component('color', {
         if (inline() || opened.value) {
             return;
         }
-        // v5 open(): the current value is the pending selection, marked in the grid
-        pending.value = (picked.value as string) || '';
         // Anchor the popup under the toggle (v5: position absolute inside .lm-color)
         const rect = (input || wrapper)?.getBoundingClientRect();
-        if (rect) {
-            anchorTop.value = rect.top + rect.height + 2;
-            anchorLeft.value = rect.left;
-        }
-        opened.value = true;
+        // Four state writes, one update pass; onopen fires after the DOM settled
+        batch(() => {
+            // v5 open(): the current value is the pending selection, marked in the grid
+            pending.value = picked.value || '';
+            if (rect) {
+                anchorTop.value = rect.top + rect.height + 2;
+                anchorLeft.value = rect.left;
+            }
+            opened.value = true;
+        });
         props.onopen?.();
     };
 
@@ -144,7 +147,7 @@ export const Color = component('color', {
                 picked.set(v || ''); // v5 setValue fired onchange
             }
         },
-        getValue: () => picked.value as string,
+        getValue: () => picked.value,
     });
 
     // ---- the v5 input keyboard system
@@ -293,7 +296,7 @@ export const Color = component('color', {
             props.type.value === 'input' &&
             html`<input type="text" class="lm-color-input"
                 placeholder="${() => props.placeholder.value || false}"
-                value="${() => (picked.value as string) || ''}"
+                value="${() => picked.value || ''}"
                 style="${() => (picked.value ? 'color:' + picked.value : '')}"
                 ref="${(el: HTMLInputElement) => (input = el)}"
                 onclick="${doOpen}"

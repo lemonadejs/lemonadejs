@@ -29,7 +29,7 @@ export const Rating = component('rating', {
     onchange: Function,            // fires on component-initiated changes
     api: { getValue: Function, setValue: Function }, // v5 instance methods
 }, (props, { state, bind, onUnmount }) => {
-    const rating = bind(props, props.value.value as number);
+    const rating = bind(props, props.value.value);
     const hover = state(0); // 1-based index being previewed, 0 = none
 
     const interactive = () => !props.disabled.value && !props.readonly.value;

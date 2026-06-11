@@ -31,7 +31,7 @@
  * array (or a record) and touch() — the grid re-renders once.
  */
 
-import { component, css, html, type View } from 'lemonadejs';
+import { batch, component, css, html, type View } from 'lemonadejs';
 import Modal from '@lemonadejs/modal';
 
 export interface ScheduleEvent {
@@ -213,9 +213,13 @@ export const Schedule = component('schedule', {
         props.data.value = [];
     }
 
+    // tick is NOT a redundant version counter (re-evaluated against the
+    // final engine): if the body binding tracked props.data directly, an
+    // external assignment/touch could render BEFORE this subscription
+    // normalizes the records (guids, default ends) — binding-vs-subscriber
+    // order on the same change is not a contract. tick sequences it:
+    // normalize first, then exactly one body re-render.
     const tick = state(0);
-    // subscribe() callbacks run TRACKED (they are bindings): peek
-    // everything here, or the refresh subscribes to its own writes
     const refresh = () => {
         normalize(rows()); // external assignments may carry raw events
         tick.value = tick.peek() + 1;
@@ -550,25 +554,28 @@ export const Schedule = component('schedule', {
             return false;
         }
         const removed: ScheduleEvent[] = [];
-        for (const item of list) {
-            const g = item && typeof item === 'object' ? (item as ScheduleEvent).guid : (item as string);
-            const i = rows().findIndex((e) => e.guid === g);
-            if (i < 0) {
-                continue;
+        // One update pass for N removals (selection writes + the touch)
+        batch(() => {
+            for (const item of list) {
+                const g = item && typeof item === 'object' ? (item as ScheduleEvent).guid : (item as string);
+                const i = rows().findIndex((e) => e.guid === g);
+                if (i < 0) {
+                    continue;
+                }
+                if (rows()[i].readonly) {
+                    call('onerror', 'Event is readonly');
+                    continue;
+                }
+                const rec = rows().splice(i, 1)[0];
+                removed.push(rec);
+                selection.value = selection.value.filter((s) => s !== rec.guid);
+                call('ondelete', rec);
             }
-            if (rows()[i].readonly) {
-                call('onerror', 'Event is readonly');
-                continue;
+            if (removed.length) {
+                remember({ action: 'delete', records: removed });
             }
-            const rec = rows().splice(i, 1)[0];
-            removed.push(rec);
-            selection.value = selection.value.filter((s) => s !== rec.guid);
-            call('ondelete', rec);
-        }
-        if (removed.length) {
-            remember({ action: 'delete', records: removed });
-        }
-        props.data.touch();
+            props.data.touch();
+        });
         notifyChange();
         return true;
     };
@@ -586,8 +593,10 @@ export const Schedule = component('schedule', {
             });
         }
         normalize(next);
-        selection.value = [];
-        props.data.value = next; // assignment notifies the data subscription
+        batch(() => {
+            selection.value = [];
+            props.data.value = next; // assignment notifies the data subscription
+        });
         notifyChange();
         return true;
     };
@@ -829,11 +838,19 @@ export const Schedule = component('schedule', {
 
     const commitDrag = (_e: MouseEvent): void => {
         const d = drag.peek();
-        drag.value = null;
         document.body.style.cursor = '';
         if (!d) {
+            drag.value = null;
             return;
         }
+        // Ghost removal + the committed change land in ONE update pass
+        batch(() => {
+            drag.value = null;
+            commitDragChange(d);
+        });
+    };
+
+    const commitDragChange = (d: Drag): void => {
         const lo = Math.min(d.y1, d.y2);
         const hi = Math.max(d.y1, d.y2);
         const start = intToHour(lo);
@@ -1081,7 +1098,10 @@ export const Schedule = component('schedule', {
         const endRow = hourToInt(ev.end);
         const heightRows = Math.max(1, endRow - startRow);
         const color = ev.color || '';
-        return html`<div class="lm-schedule-item ${selected ? 'lm-schedule-selected' : ''}"
+        // Keyed by guid: deletes/pastes inside a cell move the surviving
+        // siblings; a time change still rebuilds (the event leaves one
+        // cell's list for another — keys are scoped per list)
+        return html`<div key="${ev.guid}" class="lm-schedule-item ${selected ? 'lm-schedule-selected' : ''}"
             data-guid="${ev.guid}"
             data-title="${ev.title || ''}"
             data-description="${ev.description || false}"

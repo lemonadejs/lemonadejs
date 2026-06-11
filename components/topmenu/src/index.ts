@@ -23,7 +23,7 @@
  * private in v6, so a programmatic dismiss needs a surface.
  */
 
-import { component, html, isDisposing } from 'lemonadejs';
+import { batch, component, html, isDisposing } from 'lemonadejs';
 import Contextmenu, { type ContextItem } from '@lemonadejs/contextmenu';
 
 export interface TopmenuItem {
@@ -76,8 +76,11 @@ export const Topmenu = component('topmenu', {
     const selectIndex = (index: number, focus = true) => {
         const item = items()[index];
         if (item && !item.disabled) {
-            current.value = index;
-            selected.value = true;
+            batch(() => {
+                // two writes, one update pass
+                current.value = index;
+                selected.value = true;
+            });
             // v5 focuses the bar item; while the dropdown is open the
             // Contextmenu wrapper holds focus — stealing it would close it
             if (focus && !menuOpen.value) {
@@ -89,11 +92,14 @@ export const Topmenu = component('topmenu', {
     const open = (index: number) => {
         selectIndex(index);
         const at = current.value;
-        const item = at === null ? undefined : items()[at];
+        if (at === null) {
+            return;
+        }
+        const item = items()[at];
         if (item && item.submenu) {
             // v5: right under the item (+2px); viewport coords, the same
             // convention the Contextmenu itself uses
-            const rect = itemEl(at as number)?.getBoundingClientRect();
+            const rect = itemEl(at)?.getBoundingClientRect();
             menu?.open(item.submenu, rect ? rect.left : 0, rect ? rect.bottom + 2 : 0);
         }
     };
@@ -185,8 +191,10 @@ export const Topmenu = component('topmenu', {
         close: () => menu?.close(),
     });
 
+    // Items are keyed by identity: a changed options array moves the
+    // existing item DOM instead of rewriting every item after it
     const itemView = (item: TopmenuItem, index: number) =>
-        html`<div class="lm-topmenu-title" role="menuitem"
+        html`<div class="lm-topmenu-title" key="${item}" role="menuitem"
             data-disabled="${item.disabled ? 'true' : false}"
             data-selected="${() => (selected.value && current.value === index ? 'true' : false)}"
             tabindex="${item.disabled ? false : '0'}"

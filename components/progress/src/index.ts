@@ -20,7 +20,7 @@
  * animations are pure CSS keyframes driven by data-indeterminate.
  */
 
-import { component, html } from 'lemonadejs';
+import { component, css, html } from 'lemonadejs';
 
 /** Stable 3-decimal rounding so the rendered strings are assertable */
 const round = (n: number): number => Math.round(n * 1000) / 1000;
@@ -34,61 +34,65 @@ export const Progress = component('progress', {
     color: '',                // green | orange | red | purple (default blue)
     label: false,             // show the % text: beside linear, centered in circular
     onchange: Function,       // fires when the bound percent is set via set()
-}, (props, { bind }) => {
+}, (props, { bind, computed }) => {
     // No bound percent → nothing to show → indeterminate by default
     const determinate = props.bind !== undefined;
     const percent = bind(props, 0);
 
-    const clamp = (v: unknown): number => {
-        const n = Number(v);
+    // Derived values are computed(): they stay live wherever they are
+    // read — ${pct} in a slot, .value in an expression — and each one
+    // re-evaluates once per change however many bindings read it.
+    /** The bound percent clamped into 0-100 (non-numbers → 0) */
+    const pct = computed(() => {
+        const n = Number(percent.value);
         return Number.isFinite(n) ? Math.min(100, Math.max(0, n)) : 0;
-    };
+    });
 
-    const indeterminate = () => !determinate || props.indeterminate.value === true;
+    const indeterminate = computed(() => !determinate || props.indeterminate.value === true);
 
     // Circular geometry: radius from size/thickness, arc length from percent
-    const diameter = () => Number(props.size.value) || 40;
-    const stroke = () => Number(props.thickness.value) || 3.6;
-    const radius = () => Math.max(0, (diameter() - stroke()) / 2);
-    const circumference = () => 2 * Math.PI * radius();
+    const diameter = computed(() => Number(props.size.value) || 40);
+    const stroke = computed(() => Number(props.thickness.value) || 3.6);
+    const radius = computed(() => Math.max(0, (diameter.value - stroke.value) / 2));
+    const circumference = computed(() => 2 * Math.PI * radius.value);
     // Indeterminate spins a fixed 25% arc; determinate draws the percent
-    const arc = () => (indeterminate() ? 25 : clamp(percent.value));
-    const dashoffset = () => round(circumference() * (1 - arc() / 100));
+    const arc = computed(() => (indeterminate.value ? 25 : pct.value));
+    const dashoffset = computed(() => round(circumference.value * (1 - arc.value / 100)));
 
     const label = () =>
         props.label.value === true &&
-        !indeterminate() &&
-        html`<span class="lm-progress-label">${() => Math.round(clamp(percent.value))}%</span>`;
+        !indeterminate.value &&
+        html`<span class="lm-progress-label">${() => Math.round(pct.value)}%</span>`;
 
     const linear = () => html`<span class="lm-progress-track"
         style="${() => {
             const t = Number(props.thickness.value);
             return t > 0 ? 'height: ' + t + 'px' : false;
         }}"><span class="lm-progress-bar"
-            style="${() => (indeterminate() ? false : 'width: ' + clamp(percent.value) + '%')}"></span></span>${label}`;
+            style="${() => (indeterminate.value ? false : 'width: ' + pct.value + '%')}"></span></span>${label}`;
 
     const circular = () => html`<span class="lm-progress-circular"
         style="${() => {
             const s = Number(props.size.value);
-            return s > 0 ? 'width: ' + s + 'px; height: ' + s + 'px' : false;
-        }}"><svg class="lm-progress-svg" viewBox="0 0 ${() => diameter()} ${() => diameter()}">
+            return s > 0 ? css({ width: s, height: s }) : false;
+        }}"><svg class="lm-progress-svg" viewBox="0 0 ${diameter} ${diameter}">
             <circle class="lm-progress-circle-track"
-                cx="${() => diameter() / 2}" cy="${() => diameter() / 2}" r="${() => radius()}"
-                fill="none" stroke-width="${() => stroke()}" />
+                cx="${() => diameter.value / 2}" cy="${() => diameter.value / 2}" r="${radius}"
+                fill="none" stroke-width="${stroke}" />
             <circle class="lm-progress-circle-bar"
-                cx="${() => diameter() / 2}" cy="${() => diameter() / 2}" r="${() => radius()}"
-                fill="none" stroke-width="${() => stroke()}"
-                stroke-dasharray="${() => round(circumference())}"
-                stroke-dashoffset="${() => dashoffset()}" />
+                cx="${() => diameter.value / 2}" cy="${() => diameter.value / 2}" r="${radius}"
+                fill="none" stroke-width="${stroke}"
+                stroke-dasharray="${() => round(circumference.value)}"
+                stroke-dashoffset="${dashoffset}" />
         </svg>${label}</span>`;
 
     return html`<div class="lm-progress"
         role="progressbar"
         aria-valuemin="0"
         aria-valuemax="100"
-        aria-valuenow="${() => (indeterminate() ? false : clamp(percent.value))}"
+        aria-valuenow="${() => (indeterminate.value ? false : pct.value)}"
         data-type="${() => props.type.value || false}"
-        data-indeterminate="${() => (indeterminate() ? 'true' : false)}"
+        data-indeterminate="${() => (indeterminate.value ? 'true' : false)}"
         data-color="${() => props.color.value || false}">${() =>
         props.type.value === 'circular' ? circular() : linear()}</div>`;
 });

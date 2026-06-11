@@ -49,7 +49,7 @@ export const Slider = component('slider', {
     onchange: Function,           // fires on RELEASE with the final value (v5-style commit)
     oninput: Function,            // fires on every value change while interacting
 }, (props, { state, bind, listen, onUnmount }) => {
-    const current = bind(props, props.min.value as number);
+    const current = bind(props, props.min.value);
     const dragging = state(false);
     const focused = state(false);
 

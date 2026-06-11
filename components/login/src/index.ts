@@ -27,7 +27,7 @@
  * ?create opens register, ?h=<hash> opens reset — all v5 behaviors.
  */
 
-import { component, html, unsafe } from 'lemonadejs';
+import { batch, component, html, unsafe } from 'lemonadejs';
 
 export type LoginScreen = 'login' | 'register' | 'forgot' | 'code' | 'reset' | 'bind' | 'terms';
 
@@ -79,9 +79,6 @@ const INSTRUCTIONS: Partial<Record<LoginScreen, string>> = {
     bind: 'Please enter your password to bind your account.',
 };
 
-type Hook = (...args: unknown[]) => unknown;
-const hook = (fn: unknown): Hook | null => (typeof fn === 'function' ? (fn as Hook) : null);
-
 export const Login = component('login', {
     url: '',                      // endpoint (v5: url; default = current pathname)
     device: '',                   // device token, appended as ?token= (v5)
@@ -127,6 +124,10 @@ export const Login = component('login', {
     const captchaImage = state('');     // base64 png from the server
     const emailError = state(false);    // v5: blur validation adds .error
 
+    // Manual fetch, not resource(): request() is imperative RPC — a per-call
+    // payload AND a per-call continuation (callback may take over the success
+    // path) have no resource shape; converting would just move the abort
+    // bookkeeping into stashed closure vars + split subscriptions.
     let fetching: AbortController | null = null;
     let redirectTimer: ReturnType<typeof setTimeout> | null = null;
     let lastData: Record<string, unknown> = {};   // v5: self.data (bind/terms re-post it)
@@ -140,16 +141,20 @@ export const Login = component('login', {
     };
 
     const show = (next: LoginScreen, hash?: string) => {
-        if (next === 'reset') {
-            resetHash = hash ?? resetHash;
-            password.value = '';   // v5 cleared both before choosing a new password
-            repeat.value = '';
-        }
-        alertText.value = '';
-        notice.value = '';
-        instructions.value = INSTRUCTIONS[next] || '';
-        screen.value = next;
-        hook(props.onchangescreen)?.(next);
+        // One update pass for the screen swap; onchangescreen fires after
+        // the DOM settled (same observable order as the unbatched writes)
+        batch(() => {
+            if (next === 'reset') {
+                resetHash = hash ?? resetHash;
+                password.value = '';   // v5 cleared both before choosing a new password
+                repeat.value = '';
+            }
+            alertText.value = '';
+            notice.value = '';
+            instructions.value = INSTRUCTIONS[next] || '';
+            screen.value = next;
+        });
+        props.onchangescreen?.(next);
     };
 
     /** v5 getUrl: url || pathname, device token as ?token= */
@@ -189,7 +194,7 @@ export const Login = component('login', {
         if (captchaImage.value) {
             data.captcha = captcha.value;
         }
-        hook(props.onbeforesend)?.(data);
+        props.onbeforesend?.(data);
         fetching?.abort();
         const controller = new AbortController();
         fetching = controller;
@@ -216,13 +221,13 @@ export const Login = component('login', {
                             // Server-driven password reset (v5)
                             show('reset', result.hash);
                         } else if (props.onsuccess) {
-                            hook(props.onsuccess)?.(result, data);
+                            props.onsuccess(result, data);
                         } else {
                             redirect(result);
                         }
                     }
                 } else {
-                    hook(props.onerror)?.(result);
+                    props.onerror?.(result);
                     alertText.value = result.message || '';
                 }
                 // Captcha challenge arrives on ANY response (v5)
@@ -237,7 +242,7 @@ export const Login = component('login', {
                 fetching = null;
                 loading.value = false;
                 fail((e && e.message) || String(e));
-                hook(props.onerror)?.(e);
+                props.onerror?.(e);
             });
     };
 
@@ -291,7 +296,7 @@ export const Login = component('login', {
                     terms: accepted.value,
                     phone: phoneNumber.value,
                 };
-                hook(props.onbeforecreate)?.(profile);
+                props.onbeforecreate?.(profile);
                 request(profile);
             } else if (s === 'bind') {
                 if (!password.value) {
@@ -299,7 +304,7 @@ export const Login = component('login', {
                 }
                 request({ ...lastData, password: await sha512(password.value) });
             } else if (s === 'terms') {
-                hook(props.onbeforecreate)?.(lastData);
+                props.onbeforecreate?.(lastData);
                 request({ ...lastData, terms: accepted.value });
             }
         } catch (e) {
@@ -310,7 +315,7 @@ export const Login = component('login', {
     /** Social responses share one path: post, honor server-driven screens (v5) */
     const socialRequest = (data: Record<string, unknown>) => {
         if (screen.value === 'register') {
-            hook(props.onbeforecreate)?.(data);
+            props.onbeforecreate?.(data);
         }
         request(data, (result) => {
             if (result.action === 'bindSocialAccount') {
@@ -447,7 +452,7 @@ export const Login = component('login', {
                 (root.querySelector('input[name="email"]') as HTMLInputElement | null)?.focus();
             }
         }
-        hook(props.onload)?.();
+        props.onload?.();
     });
 
     onUnmount(() => {

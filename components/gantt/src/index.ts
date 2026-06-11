@@ -81,7 +81,6 @@ export const Gantt = component('gantt', {
     const range = state<{ from: number; to: number }>({ from: 0, to: 1 });
     // Drag preview: task index -> { from, to } in ms, shown live
     const preview = state<{ index: number; from: number; to: number } | null>(null);
-    const version = state(0); // bumped by refresh — rows re-render through it
 
     const computeRange = () => {
         const list = tasks();
@@ -107,12 +106,13 @@ export const Gantt = component('gantt', {
         range.value = { from, to: Math.max(to, from + DAY) };
     };
 
+    // No version counter: the rows binding tracks props.data directly
+    // (touch() and assignment both re-run it), and computeRange always
+    // ASSIGNS range a fresh object — so every refresh notifies the range
+    // subscribers (the table lanes) even when the bounds are unchanged
     const refresh = () => {
         computeRange();
         preview.value = null;
-        // Safe since subscribe() runs callbacks untracked (the engine
-        // guard born from this very line — it used to LJS-203 loop)
-        version.value++;
     };
 
     onMount(() => props.data.subscribe(refresh));
@@ -218,8 +218,8 @@ export const Gantt = component('gantt', {
     props.ref?.({
         getRange: () => ({ start: toIso(range.value.from), end: toIso(range.value.to) }),
         setRange: (start: string, end: string) => {
+            // The range assignment re-runs every % binding and the lanes
             range.value = { from: toMs(start), to: Math.max(toMs(end), toMs(start) + DAY) };
-            version.value = version.peek() + 1;
         },
     });
 
@@ -254,6 +254,24 @@ export const Gantt = component('gantt', {
                 lane.className = 'lm-gantt-lane lm-gantt-rows';
                 cell.textContent = '';
                 cell.appendChild(lane);
+                // Handlers DELEGATE from the persistent lane via listen()
+                // (one pair per created lane, auto-removed on unmount):
+                // bars are rebuilt per refresh, so per-bar listeners would
+                // either leak registrations or need manual release
+                listen<MouseEvent>(lane, 'mousedown', (e) => {
+                    const bar = (e.target as Element).closest('.lm-gantt-bar, .lm-gantt-milestone');
+                    const task = tasks()[index];
+                    if (bar && task) {
+                        startDrag(e, index, task, bar as HTMLElement);
+                    }
+                });
+                listen<MouseEvent>(lane, 'click', (e) => {
+                    const bar = (e.target as Element).closest('.lm-gantt-bar, .lm-gantt-milestone');
+                    const task = tasks()[index];
+                    if (bar && task) {
+                        props.onclick?.(task, e);
+                    }
+                });
             }
             lane.textContent = '';
             const task = list[index];
@@ -296,22 +314,19 @@ export const Gantt = component('gantt', {
             el.style.background = task.color;
         }
         el.title = (task.label || '') + ' · ' + toIso(from) + (milestone ? '' : ' → ' + toIso(to));
-        el.addEventListener('mousedown', (e) => startDrag(e, index, task, el));
-        el.addEventListener('click', (e) =>
-            props.onclick?.(task, e)
-        );
+        // No listeners here: mousedown/click delegate from the lane
         return el;
     };
 
     onMount(() => {
         if (props.table.peek()) {
             renderLanes();
-            // Lanes follow the same pipeline: data/range changes AND drag
-            // previews re-render the affected lanes
-            const stopVersion = version.subscribe(renderLanes);
+            // Lanes follow the pipeline through range (every refresh —
+            // data/start/end — assigns it) and the live drag preview
+            const stopRange = range.subscribe(renderLanes);
             const stopPreview = preview.subscribe(renderLanes);
             return () => {
-                stopVersion();
+                stopRange();
                 stopPreview();
                 for (const cell of injectedCells) {
                     cell.remove();
@@ -430,14 +445,16 @@ export const Gantt = component('gantt', {
                           props.today.value && todayLeft() !== null
                               ? html`<div class="lm-gantt-today" style="left:${todayLeft()}%"></div>`
                               : ''}
-                      ${() => {
-                          void version.value; // rows flow through refresh
-                          return tasks().map(
+                      ${() =>
+                          // Tracked read: assignment AND touch() re-run the
+                          // row list directly. Positional on purpose — rows
+                          // map 1:1 to task indices (drag previews address
+                          // them BY index) and carry no per-row state
+                          ((props.data.value as GanttTask[]) || []).map(
                               (task, index) => html`<div class="lm-gantt-row" style="height:${props.rowheight.value}px">
                                   ${() => barView(task, index)}
                               </div>`
-                          );
-                      }}
+                          )}
                   </div>`}
     </div>`;
 });

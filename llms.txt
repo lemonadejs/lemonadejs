@@ -56,6 +56,11 @@ never a component prop. Keys must be unique per list (duplicates warn
 LJS-204 and rebuild). Lists that only append or change in place do not need
 keys — the positional diff already reuses entries.
 
+KEY THE SOURCE ITEM, NOT A NORMALIZED COPY: a helper that rebuilds item
+objects every render (normalize(list).map(...)) makes object-identity keys
+churn and forces full rebuilds — worse than no keys. Normalize per item at
+render (asOption(raw)) and key by the RAW entry, or key by a stable id.
+
 KEY SCOPE — keys match within ONE list position only (like React/Vue): an
 item moving BETWEEN two lists (kanban card across columns) rebuilds on the
 other side. If cross-list identity matters, render one flat keyed list and

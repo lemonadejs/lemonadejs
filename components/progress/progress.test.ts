@@ -123,7 +123,7 @@ describe('components/progress', () => {
     it('size and thickness reshape the svg geometry', () => {
         handle = t(Progress, { type: 'circular', bind: store(50), size: 60, thickness: 6 });
         expect(svg().getAttribute('viewBox')).toBe('0 0 60 60');
-        expect(handle.query('.lm-progress-circular')!.getAttribute('style')).toBe('width: 60px; height: 60px');
+        expect(handle.query('.lm-progress-circular')!.getAttribute('style')).toBe('width:60px;height:60px'); // css() format
 
         // r = (60 - 6) / 2 = 27
         const c = circumference(60, 6);

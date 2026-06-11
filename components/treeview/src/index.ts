@@ -147,9 +147,10 @@ export const TreeView = component('treeview', {
     };
 
     // Selection commits manually (not selected.set) so onchange can carry
-    // the NODE as a second argument; parent writes stay echo-free because
-    // only doSelect ever fires the event. (Note: Bindable types onchange
-    // as (value, oldValue) — at runtime the second argument is the node.)
+    // the NODE as a second argument — the declared contract signature
+    // onchange(id, node) owns the type even with bind; set() could only
+    // pass (value, oldValue). Parent writes stay echo-free because only
+    // doSelect ever fires the event.
     const doSelect = (id: TreeNodeId) => {
         const node = find(id);
         if (!node || Object.is(selected.value, id)) {

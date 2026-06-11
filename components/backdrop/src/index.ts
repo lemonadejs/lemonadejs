@@ -17,7 +17,7 @@
  * layer backdrops without touching the stylesheet.
  */
 
-import { component, html } from 'lemonadejs';
+import { component, css, html } from 'lemonadejs';
 
 export const Backdrop = component('backdrop', {
     bind: Boolean,                // visibility two-way (default: hidden)
@@ -56,18 +56,17 @@ export const Backdrop = component('backdrop', {
     });
 
     // 0 = stylesheet defaults; anything else becomes an inline override
+    // (css() skips false entries; `|| false` keeps the attribute ABSENT —
+    // not an empty style="" — when everything is default)
     const style = () => {
-        const parts: string[] = [];
         const dim = Number(props.opacity.value);
-        if (dim) {
-            const alpha = Math.min(100, Math.max(0, dim)) / 100;
-            parts.push('background-color: rgba(0, 0, 0, ' + alpha + ')');
-        }
-        const z = Number(props.zindex.value);
-        if (z) {
-            parts.push('z-index: ' + z);
-        }
-        return parts.length ? parts.join('; ') : false;
+        const alpha = Math.min(100, Math.max(0, dim)) / 100;
+        return (
+            css({
+                'background-color': dim ? 'rgba(0, 0, 0, ' + alpha + ')' : false,
+                'z-index': Number(props.zindex.value) || false,
+            }) || false
+        );
     };
 
     return html`${() =>

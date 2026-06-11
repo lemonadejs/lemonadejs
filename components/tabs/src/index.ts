@@ -258,14 +258,18 @@ export const Tabs = component('tabs', {
                 ondragend="${onDragend}">${() =>
                 items.value.map(
                     (item, i) =>
-                        html`<li class="lm-tabs-tab ${() => (selected.value === i ? 'lm-tabs-selected' : '')}"
+                        // Keyed by the prepared item (identity — items are
+                        // cloned once and stable): drag sorting and
+                        // create-at-position MOVE the header <li> instead of
+                        // rewriting every header right of the change
+                        html`<li key="${item}" class="lm-tabs-tab ${() => (selected.value === i ? 'lm-tabs-selected' : '')}"
                             tabindex="0" role="tab" draggable="true"
                             aria-selected="${() => (selected.value === i ? 'true' : 'false')}"
                             data-icon="${item.icon || false}">${item.title || ''}</li>`
                 )}</ul>
             ${() =>
                 props.allowcreate.value &&
-                html`<div class="lm-tabs-insert-button" role="insert-tab"
+                html`<div class="lm-tabs-insert-button" role="button" aria-label="Add tab"
                     onclick="${() => create({ title: 'Untitled' }, null, true)}">add</div>`}
         </div>
         <div class="lm-tabs-content">${() => items.value.map((item) => item.el)}</div>

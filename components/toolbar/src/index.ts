@@ -88,9 +88,7 @@ export const Toolbar = component('toolbar', {
             const inner = option.onclick;
             option.onclick = (e: Event, picked: ContextItem) => {
                 inner?.(e, picked);
-                (props.onchange as
-                    | ((e: Event, item: ToolbarItem, option: ContextItem) => void)
-                    | undefined)?.(e, item, picked);
+                props.onchange?.(e, item, picked);
             };
             return option;
         });
@@ -124,9 +122,7 @@ export const Toolbar = component('toolbar', {
             return;
         }
         item.onclick?.(e, item);
-        (props.onitemclick as
-            | ((e: Event, item: ToolbarItem, index: number) => void)
-            | undefined)?.(e, item, index);
+        props.onitemclick?.(e, item, index);
     };
 
     props.ref?.({
@@ -135,12 +131,14 @@ export const Toolbar = component('toolbar', {
         close: () => menu?.close(),
     });
 
+    // Items are keyed by identity: inserting/removing/reordering options
+    // moves the existing DOM instead of rewriting every item after it
     const itemView = (item: ToolbarItem, index: number) => {
         if (item.type === 'divisor' || item.type === 'divider') {
-            return html`<div class="lm-toolbar-divisor" role="separator"></div>`;
+            return html`<div class="lm-toolbar-divisor" key="${item}" role="separator"></div>`;
         }
         if (item.type === 'select') {
-            return html`<div class="lm-toolbar-picker"
+            return html`<div class="lm-toolbar-picker" key="${item}"
                 data-selected="${item.selected ? 'true' : false}"
                 data-visible="${item.visible === undefined ? false : String(item.visible)}"
                 data-disabled="${item.disabled ? 'true' : false}">
@@ -158,7 +156,7 @@ export const Toolbar = component('toolbar', {
                     }}">${item.title || ''}</div>
             </div>`;
         }
-        return html`<div class="lm-toolbar-item"
+        return html`<div class="lm-toolbar-item" key="${item}"
             data-selected="${item.selected ? 'true' : false}"
             data-visible="${item.visible === undefined ? false : String(item.visible)}"
             data-disabled="${item.disabled ? 'true' : false}"
@@ -176,8 +174,9 @@ export const Toolbar = component('toolbar', {
 
     return html`<div class="lm-toolbar" role="toolbar"
         ref="${(el: HTMLElement) => (root = el)}"
-        data-position="${() => (props.position.value as string) || false}"
-        data-visible="${() => ((props.visible.value as boolean) === false ? 'false' : 'true')}">
+        aria-orientation="${() => (props.position.value === 'left' ? 'vertical' : false)}"
+        data-position="${() => props.position.value || false}"
+        data-visible="${() => (props.visible.value === false ? 'false' : 'true')}">
         ${() => items().map((item, i) => itemView(item, i))}
         <${Contextmenu} ref="${(a: MenuApi) => (menu = a)}"
             onclose="${() => (expanded.value = null)}" />

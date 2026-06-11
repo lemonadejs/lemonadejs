@@ -21,7 +21,7 @@
  * (cursor through data-clickable).
  */
 
-import { component, html } from 'lemonadejs';
+import { component, css, html } from 'lemonadejs';
 
 export interface ImageListItem {
     /** Image URL */
@@ -53,14 +53,15 @@ export const ImageList = component('imagelist', {
     const rootStyle = () => {
         if (props.variant.value === 'masonry') {
             // Multi-column flow: top-to-bottom fill, ragged bottom edge
-            return 'columns:' + columns() + ';column-gap:' + gap() + 'px;';
+            return css({ columns: columns(), columnGap: gap() });
         }
-        let css = 'display:grid;grid-template-columns:repeat(' + columns() + ', 1fr);gap:' + gap() + 'px;';
         const rh = parseInt(String(props.rowheight.value), 10);
-        if (rh > 0) {
-            css += 'grid-auto-rows:' + rh + 'px;';
-        }
-        return css;
+        return css({
+            display: 'grid',
+            gridTemplateColumns: 'repeat(' + columns() + ', 1fr)',
+            gap: gap(),
+            gridAutoRows: rh > 0 && rh,
+        });
     };
 
     const itemStyle = (item: ImageListItem): string | false => {
@@ -91,7 +92,7 @@ export const ImageList = component('imagelist', {
     return html`<div class="lm-imagelist"
         data-variant="${() => props.variant.value || false}"
         style="${() => rootStyle()}">${() =>
-        items().map((item, index) => html`<div class="lm-imagelist-item"
+        items().map((item, index) => html`<div class="lm-imagelist-item" key="${item}"
             data-clickable="${onitemclick ? 'true' : false}"
             style="${() => itemStyle(item)}"
             onclick="${(e: MouseEvent) => onitemclick?.(item, index, e)}">

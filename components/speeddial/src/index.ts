@@ -111,6 +111,10 @@ export const Speeddial = component('speeddial', {
             <span class="lm-speeddial-icon material-icons">${() => props.icon.value || '+'}</span>
         </button>
         <div class="lm-speeddial-actions" role="menu" aria-hidden="${() => (fanned.value ? 'false' : 'true')}">
+            <!-- deliberately UNKEYED: the buttons are stateless and the
+                 fan-out stagger is BY POSITION (index * STAGGER), so a
+                 moved action must take its new slot's delay, not carry
+                 its old one along -->
             ${() =>
                 actions().map(
                     (action, index) => html`<button type="button" class="lm-speeddial-action"

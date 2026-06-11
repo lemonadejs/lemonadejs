@@ -17,7 +17,7 @@
  * effective side is published as data-position so the arrow follows.
  */
 
-import { component, css, html, isDisposing } from 'lemonadejs';
+import { batch, component, css, html, isDisposing } from 'lemonadejs';
 
 const GAP = 8; // distance between the wrapper and the popper
 
@@ -81,8 +81,11 @@ export const Tooltip = component('tooltip', {
             top = r.top + r.height / 2 - h / 2;
             left = s === 'left' ? r.left - GAP - w : r.right + GAP;
         }
-        side.value = s;
-        pos.value = { top, left };
+        batch(() => {
+            // side + coordinates land as ONE update pass
+            side.value = s;
+            pos.value = { top, left };
+        });
     };
 
     // Placement runs SYNCHRONOUSLY from the open subscription: the popper

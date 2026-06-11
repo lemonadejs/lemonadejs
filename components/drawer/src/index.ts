@@ -35,15 +35,11 @@ export const Drawer = component('drawer', {
     onopen: Function,
     onclose: Function,            // (origin)
     api: { open: Function, close: Function, toggle: Function },
-}, (props, { bind, state, onMount }) => {
+}, (props, { bind, computed }) => {
     const visible = bind(props, false);
 
-    // The anchor-mapped Modal position — a STATE so anchor changes are
-    // live while open (Modal re-places under the new positioning model).
-    // peek: setup-time reads must not subscribe (and must stay out of the
-    // LJS-202 snapshot heuristic — header="${false}" is a primitive slot)
-    const position = state(toPosition(props.anchor.peek()));
-    onMount(() => props.anchor.subscribe(() => (position.value = toPosition(props.anchor.value))));
+    // The anchor-mapped Modal position — a pure derived value
+    const position = computed(() => toPosition(props.anchor.value as string));
 
     // Drawer-initiated transitions go through the bound chain (assignment
     // is silent to the Modal underneath) and fire the drawer's own events;

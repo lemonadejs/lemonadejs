@@ -14,7 +14,7 @@
  * changes keep the chosen values that still exist.
  */
 
-import { component, html, type State } from 'lemonadejs';
+import { batch, component, html, type State } from 'lemonadejs';
 
 export type TransferValue = string | number;
 
@@ -92,11 +92,12 @@ export const Transferlist = component('transferlist', {
     };
 
     // ---- moves: user-initiated commits go through set() → onchange
-    const commit = (next: TransferValue[]) => {
-        chosen.set(next);
-        checkedLeft.value = new Set();
-        checkedRight.value = new Set();
-    };
+    const commit = (next: TransferValue[]) =>
+        batch(() => {
+            chosen.set(next);
+            checkedLeft.value = new Set();
+            checkedRight.value = new Set();
+        });
 
     const moveRight = () => {
         const marked = checkedLeft.peek();
@@ -179,14 +180,15 @@ export const Transferlist = component('transferlist', {
     props.ref?.({
         getChosen: () => [...peekChosen()],
         moveAll: (direction?: 'right' | 'left') => moveAll(direction),
-        reset: () => {
-            // Programmatic restore: silent, like an external write
-            chosen.value = [];
-            checkedLeft.value = new Set();
-            checkedRight.value = new Set();
-            queryLeft.value = '';
-            queryRight.value = '';
-        },
+        reset: () =>
+            batch(() => {
+                // Programmatic restore: silent, like an external write
+                chosen.value = [];
+                checkedLeft.value = new Set();
+                checkedRight.value = new Set();
+                queryLeft.value = '';
+                queryRight.value = '';
+            }),
     });
 
     // ---- rendering
@@ -197,7 +199,12 @@ export const Transferlist = component('transferlist', {
 
     const matches = (item: TransferItem, q: string) => !q || text(item).toLowerCase().includes(q.toLowerCase());
 
+    // Keyed by item.value — the identity the whole component reasons in.
+    // Within a side, moves remove items MID-LIST (and search filters them):
+    // keys move the surviving rows instead of rebuilding them. A move
+    // ACROSS sides still rebuilds (keys are scoped per list — engine rule).
     const rowView = (item: TransferItem, checked: State<Set<TransferValue>>) => html`<label
+        key="${item.value}"
         class="lm-transferlist-item"
         data-disabled="${item.disabled === true ? 'true' : false}">
         <input type="checkbox" class="lm-transferlist-checkbox"
@@ -221,7 +228,7 @@ export const Transferlist = component('transferlist', {
             </div>
             ${() =>
                 props.search.value
-                    ? html`<input type="search" class="lm-transferlist-search" placeholder="Search"
+                    ? html`<input type="search" class="lm-transferlist-search" placeholder="Search" aria-label="Search"
                           value="${() => query.value}"
                           oninput="${(e: Event) => (query.value = (e.target as HTMLInputElement).value)}" />`
                     : ''}

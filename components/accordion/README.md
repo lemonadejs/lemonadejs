@@ -21,7 +21,10 @@ Panels come from a data array ({ title, content?, disabled? }):
     uncontrolled behavior, made explicit)
 
 Headers are real <button>s: native Enter/Space toggling, native disabled
-semantics; ArrowUp/ArrowDown walk focus between enabled headers.
+semantics; ArrowUp/ArrowDown walk focus between enabled headers. Each
+body is a labelled ARIA region (header aria-controls ⇄ body
+aria-labelledby); panels are keyed by item identity so kept-alive
+bodies move with their item when the options array changes.
 
 Bound state semantics (the v6 protocol): expanded.set() on user toggles
 fires onchange(expanded, previous); external writes through the bound

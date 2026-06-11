@@ -27,30 +27,34 @@ export const Button = component('button', {
     type: '',                     // button type: submit | reset ('' = button)
     icon: '',                     // material icon name shown before the label
     onclick: Function,            // fires on activation (never while disabled/loading)
-}, (props) => {
-    const blocked = () => props.disabled.value || props.loading.value;
+}, (props, { computed }) => {
+    // Derived, not hand-rolled: computed() stays live wherever it is read
+    const blocked = computed(() => props.disabled.value || props.loading.value);
 
     const press = (e: MouseEvent) => {
-        if (blocked()) {
+        if (blocked.value) {
             e.preventDefault();
             return;
         }
         props.onclick?.(e);
     };
 
-    const classes = () =>
-        (props.fullwidth.value ? ' lm-button-fullwidth' : '') +
-        (blocked() ? ' lm-button-disabled' : '');
+    /** Modifier classes joined without ternary noise */
+    const classes = computed(() =>
+        [props.fullwidth.value && 'lm-button-fullwidth', blocked.value && 'lm-button-disabled']
+            .filter(Boolean)
+            .join(' ')
+    );
 
     /** Spinner while loading; icon + label + children otherwise */
-    const content = () => html`${() =>
+    const content = () =>
         props.loading.value
             ? html`<span class="lm-button-spinner"></span>`
             : html`${() =>
                   props.icon.value &&
                   html`<i class="lm-button-icon material-icons">${props.icon}</i>`}${() =>
                   props.label.value &&
-                  html`<span class="lm-button-label">${props.label}</span>`}${props.children}`}`;
+                  html`<span class="lm-button-label">${props.label}</span>`}${props.children}`;
 
     return html`${() =>
         props.href.value
@@ -59,15 +63,15 @@ export const Button = component('button', {
                   data-variant="${() => props.variant.value || false}"
                   data-color="${() => props.color.value || false}"
                   data-size="${() => props.size.value || false}"
-                  aria-disabled="${() => (blocked() ? 'true' : false)}"
-                  onclick="${press}">${content()}</a>`
+                  aria-disabled="${() => (blocked.value ? 'true' : false)}"
+                  onclick="${press}">${content}</a>`
             : html`<button class="lm-button ${classes}"
                   type="${() => props.type.value || 'button'}"
                   data-variant="${() => props.variant.value || false}"
                   data-color="${() => props.color.value || false}"
                   data-size="${() => props.size.value || false}"
                   disabled="${blocked}"
-                  onclick="${press}">${content()}</button>`}`;
+                  onclick="${press}">${content}</button>`}`;
 });
 
 export default Button;

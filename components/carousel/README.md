@@ -16,9 +16,9 @@ so every selector is prefixed lm-carousel-*.
 
 Model: slides sit side by side in a flex strip (each 100% wide); the
 position is a translateX on the strip — `-index·100% + dragPx` — fully
-deterministic (jsdom has no layout), built with css(). The snap
-animation is one CSS transition, suspended while dragging via the
-lm-carousel-dragging class.
+deterministic (jsdom has no layout). The snap animation is one CSS
+transition, suspended while dragging via the lm-carousel-dragging
+class. Slides and dots are keyed by slide identity.
 
 Gestures (the llms.txt listen() pattern): pointer-down arms document
 mousemove/touchmove/mouseup/touchend (+ keydown for Escape) per

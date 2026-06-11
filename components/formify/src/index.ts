@@ -201,7 +201,7 @@ export const Formify = component('formify', {
     onload: Function,             // (data) after url / api.load() data lands
     api: { get: Function, set: Function, load: Function, save: Function },
 }, (props, { bind, onMount }) => {
-    const values = bind(props, {} as FormifyData);
+    const values = bind(props, {});
 
     let root: HTMLFormElement | null = null;
     let applying = false;         // an external write being applied to the DOM
@@ -234,6 +234,9 @@ export const Formify = component('formify', {
         applying = false;
     };
 
+    // Manual fetch, not resource(): load(url) is an imperative call with a
+    // CALLER-supplied url returning the data promise (api.load contract) —
+    // resource() models a prop-tracked lifecycle, not parameterized RPC.
     const load = (url: string): Promise<FormifyData | null> => {
         if (!url || typeof fetch !== 'function') {
             return Promise.resolve(null);
@@ -295,7 +298,7 @@ export const Formify = component('formify', {
             writeDom(initial);
         }
         if (props.url.value) {
-            load(props.url.value as string);
+            load(props.url.value);
         }
         // External writes (bound state or api.set) flow into the DOM
         return values.subscribe((v) => {
@@ -309,10 +312,9 @@ export const Formify = component('formify', {
         oninput="${sync}"
         onchange="${sync}"
         onsubmit="${(e: Event) => {
-            const handler = props.onsubmit as ((data: FormifyData, e: Event) => void) | undefined;
-            if (handler) {
+            if (props.onsubmit) {
                 e.preventDefault();
-                handler(get(), e);
+                props.onsubmit(get(), e);
             }
         }}">${props.children}</form>`;
 });

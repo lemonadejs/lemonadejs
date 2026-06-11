@@ -132,7 +132,12 @@ export const Router = component('router', {
         return true;
     };
 
-    /** Create on demand — fetching the remote view first when needed */
+    /** Create on demand — fetching the remote view first when needed.
+     *  Deliberately NOT resource(): a resource owns ONE latest-wins fetch
+     *  lifecycle, but the router runs N independent per-page fetches
+     *  (parallel preloads + the current navigation, each cached forever
+     *  after success) and sequences history.pushState on completion —
+     *  the abort-on-navigate policy here is per PAGE, not per resource. */
     const ensure = (
         page: Page,
         params: Record<string, string>,

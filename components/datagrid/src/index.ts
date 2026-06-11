@@ -22,7 +22,7 @@
  * Not a spreadsheet: no formulas, no merged cells — that is jspreadsheet.
  */
 
-import { component, css, html, type View } from 'lemonadejs';
+import { batch, component, css, html, isDisposing, type View } from 'lemonadejs';
 
 export interface Column {
     /** Key into each row object */
@@ -134,13 +134,15 @@ export const Datagrid = component('datagrid', {
         // Close any edit BEFORE the window re-renders: the engine blurs
         // nodes it disposes, and a live editing state would turn that
         // disposal blur into an unintended commit
-        editing.value = null;
-        view.value = indices;
-        if (props.pagination.value) {
-            page.value = Math.min(page.value, Math.max(0, pageCount() - 1));
-        } else if (scroller) {
-            onScroll();
-        }
+        batch(() => {
+            editing.value = null;
+            view.value = indices;
+            if (props.pagination.value) {
+                page.value = Math.min(page.value, Math.max(0, pageCount() - 1));
+            } else if (scroller) {
+                onScroll(); // writes `first`
+            }
+        });
     };
 
     // External data changes: assignment AND touch() re-enter the pipeline
@@ -278,8 +280,10 @@ export const Datagrid = component('datagrid', {
                   : current.dir === 1
                     ? { name, dir: -1 as const }
                     : null;
-        sortBy.value = next || null;
-        refresh();
+        batch(() => {
+            sortBy.value = next || null;
+            refresh();
+        });
         props.onsort?.(name, next ? next.dir : null);
     };
 
@@ -391,11 +395,12 @@ export const Datagrid = component('datagrid', {
 
     props.ref?.({
         getSelected: () => [...selected.value],
-        setSearch: (q: string) => {
-            query.value = String(q ?? '');
-            page.value = 0;
-            refresh();
-        },
+        setSearch: (q: string) =>
+            batch(() => {
+                query.value = String(q ?? '');
+                page.value = 0;
+                refresh();
+            }),
         sort,
         page: (p: number) => {
             page.value = Math.min(Math.max(0, p), pageCount() - 1);
@@ -494,6 +499,11 @@ export const Datagrid = component('datagrid', {
                           e.stopPropagation();
                       }}"
                       onblur="${(e: FocusEvent) => {
+                          // A renderer-caused blur (grid unmounted or the
+                          // branch swapped mid-edit) must not commit
+                          if (isDisposing()) {
+                              return;
+                          }
                           if (editing.value) {
                               commit(row, col, (e.target as HTMLElement).textContent || '');
                           }
@@ -503,7 +513,11 @@ export const Datagrid = component('datagrid', {
 
     const rowView = (entry: { dataIndex: number; viewIndex: number }) => {
         const row = rows()[entry.dataIndex];
-        return html`<div class="lm-datagrid-row ${() => (selected.value.has(row) ? 'lm-datagrid-selected' : '')}"
+        // Keyed by ROW IDENTITY (the data object — the same identity the
+        // selection Set uses): a scroll keeps the overlapping window rows,
+        // a sort/filter MOVES surviving rows (and any component a cell
+        // render() mounted, with its state) instead of rebuilding them
+        return html`<div key="${row}" class="lm-datagrid-row ${() => (selected.value.has(row) ? 'lm-datagrid-selected' : '')}"
             role="row"
             style="${() => 'height:' + rowHeight() + 'px;grid-template-columns:' + gridTemplate()}"
             onclick="${(e: MouseEvent) => {
@@ -558,11 +572,13 @@ export const Datagrid = component('datagrid', {
             props.search.value &&
             html`<div class="lm-datagrid-toolbar">
                 <input class="lm-datagrid-search" type="search" placeholder="Search..."
-                    oninput="${(e: Event) => {
-                        query.value = (e.target as HTMLInputElement).value;
-                        page.value = 0;
-                        refresh();
-                    }}" />
+                    aria-label="Search"
+                    oninput="${(e: Event) =>
+                        batch(() => {
+                            query.value = (e.target as HTMLInputElement).value;
+                            page.value = 0;
+                            refresh();
+                        })}" />
                 <span class="lm-datagrid-count">${() => view.value.length} rows</span>
             </div>`}
         ${headerView()}

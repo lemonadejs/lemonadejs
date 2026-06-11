@@ -308,6 +308,9 @@ export const Timeline = component('timeline', {
             data-mode="${() => props.position.value || false}"
             data-align="${() => alignOf()}">${() =>
             records.value.length
+                // Positional on purpose: publish() rebuilds every record
+                // object ({ ...item, day }), so no identity survives a
+                // recompute for a key to match on; items carry no state
                 ? records.value.map((item) => html`<div class="lm-timeline-item"
                     data-bullet="${item.day}"
                     style="${bordersOf(item)}">

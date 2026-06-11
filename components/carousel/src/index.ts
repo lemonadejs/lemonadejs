@@ -9,9 +9,9 @@
  *
  * Model: slides sit side by side in a flex strip (each 100% wide); the
  * position is a translateX on the strip — `-index·100% + dragPx` — fully
- * deterministic (jsdom has no layout), built with css(). The snap
- * animation is one CSS transition, suspended while dragging via the
- * lm-carousel-dragging class.
+ * deterministic (jsdom has no layout). The snap animation is one CSS
+ * transition, suspended while dragging via the lm-carousel-dragging
+ * class. Slides and dots are keyed by slide identity.
  *
  * Gestures (the llms.txt listen() pattern): pointer-down arms document
  * mousemove/touchmove/mouseup/touchend (+ keydown for Escape) per
@@ -33,7 +33,7 @@
  * slides aria-hidden.
  */
 
-import { component, css, html } from 'lemonadejs';
+import { batch, component, html } from 'lemonadejs';
 
 export type CarouselSlide = {
     image?: string;
@@ -51,21 +51,22 @@ export const Carousel = component('carousel', {
     dots: true,                   // one dot per slide, clickable
     onchange: Function,           // (index) on user/component-initiated changes
     api: { next: Function, prev: Function, goto: Function },
-}, (props, { bind, state, listen, onMount, onUnmount }) => {
+}, (props, { bind, state, computed, listen, onMount, onUnmount }) => {
     const index = bind(props, 0);
 
     const slides = () => ((props.data.value as CarouselSlide[]) || []);
     const count = () => slides().length;
 
-    /** The displayed index: the bound value clamped into the slide range */
-    const cur = () => {
+    /** The displayed index — derived, so computed(): the bound value
+     *  clamped into the slide range, live wherever it is read */
+    const cur = computed(() => {
         const n = count();
         if (!n) {
             return 0;
         }
         const i = Math.round(Number(index.value) || 0);
         return Math.min(Math.max(0, i), n - 1);
-    };
+    });
 
     // Gesture state: px offset while dragging (live in the strip transform)
     const drag = state(0);
@@ -85,8 +86,8 @@ export const Carousel = component('carousel', {
         t = props.loop.value ? ((t % n) + n) % n : Math.min(Math.max(0, t), n - 1);
         index.set(t);
     };
-    const next = () => goto(cur() + 1);
-    const prev = () => goto(cur() - 1);
+    const next = () => goto(cur.value + 1);
+    const prev = () => goto(cur.value - 1);
 
     // ---- autoplay: one interval, re-armed on prop change, paused on
     // hover/drag, cleared on unmount (onMount cleanup)
@@ -102,7 +103,7 @@ export const Carousel = component('carousel', {
         const ms = Number(props.autoplay.value) || 0;
         if (ms > 0 && !hovering && !dragging.value && count() > 1) {
             // autoplay always wraps — a stuck end frame helps nobody
-            timer = setInterval(() => index.set((cur() + 1) % count()), ms);
+            timer = setInterval(() => index.set((cur.value + 1) % count()), ms);
         }
     };
     onMount(() => {
@@ -179,17 +180,21 @@ export const Carousel = component('carousel', {
         release = () => {
             offs.forEach((off) => off());
             release = null;
-            const dx = drag.value;
-            drag.value = 0;
-            dragging.value = false;
-            if (!cancelled && width > 0 && Math.abs(dx) > width / 4) {
-                // a blocked edge (loop=false) is a silent no-op → snap back
-                if (dx < 0) {
-                    next();
-                } else {
-                    prev();
+            // the commit writes drag, dragging and possibly the index —
+            // batch() folds them into ONE update pass
+            batch(() => {
+                const dx = drag.value;
+                drag.value = 0;
+                dragging.value = false;
+                if (!cancelled && width > 0 && Math.abs(dx) > width / 4) {
+                    // a blocked edge (loop=false) is a silent no-op → snap back
+                    if (dx < 0) {
+                        next();
+                    } else {
+                        prev();
+                    }
                 }
-            }
+            });
             startAuto();
         };
     };
@@ -205,11 +210,7 @@ export const Carousel = component('carousel', {
         e.preventDefault();
     };
 
-    props.ref?.({
-        next,
-        prev,
-        goto: (i: number) => goto(i),
-    });
+    props.ref?.({ next, prev, goto });
 
     return html`<div class="lm-carousel ${() => (dragging.value ? 'lm-carousel-dragging' : '')}"
         role="region"
@@ -253,15 +254,16 @@ export const Carousel = component('carousel', {
             onmousedown="${onDown}"
             ontouchstart="${onDown}">
             <div class="lm-carousel-track"
-                style="${() => css({ transform: 'translateX(calc(' + cur() * -100 + '% + ' + drag.value + 'px))' })}">
+                style="${() => 'transform: translateX(calc(' + cur.value * -100 + '% + ' + drag.value + 'px))'}">
                 ${() =>
                     slides().map((raw, i, arr) => {
                         const s = (raw || {}) as CarouselSlide;
-                        return html`<div class="lm-carousel-slide"
+                        // key: the slide object — reordered data moves DOM
+                        return html`<div class="lm-carousel-slide" key="${raw}"
                             role="group"
                             aria-roledescription="slide"
                             aria-label="${i + 1 + ' of ' + arr.length}"
-                            aria-hidden="${() => (cur() === i ? 'false' : 'true')}">
+                            aria-hidden="${() => (cur.value === i ? 'false' : 'true')}">
                             ${s.image
                                 ? html`<img class="lm-carousel-image" src="${s.image}"
                                       alt="${s.title || ''}" draggable="false" />`
@@ -285,21 +287,22 @@ export const Carousel = component('carousel', {
             props.arrows.value && count() > 1 &&
             html`<button type="button" class="lm-carousel-arrow lm-carousel-prev"
                 aria-label="Previous slide"
-                disabled="${() => !props.loop.value && cur() === 0}"
+                disabled="${() => !props.loop.value && cur.value === 0}"
                 onclick="${prev}">&#8249;</button>`}
         ${() =>
             props.arrows.value && count() > 1 &&
             html`<button type="button" class="lm-carousel-arrow lm-carousel-next"
                 aria-label="Next slide"
-                disabled="${() => !props.loop.value && cur() === count() - 1}"
+                disabled="${() => !props.loop.value && cur.value === count() - 1}"
                 onclick="${next}">&#8250;</button>`}
         ${() =>
             props.dots.value && count() > 1 &&
             html`<div class="lm-carousel-dots">
                 ${slides().map(
-                    (_, i) => html`<button type="button" class="lm-carousel-dot"
+                    // keyed like the slides: a dot follows its slide
+                    (s, i) => html`<button type="button" class="lm-carousel-dot" key="${s}"
                         aria-label="${'Go to slide ' + (i + 1)}"
-                        data-active="${() => (cur() === i ? 'true' : false)}"
+                        data-active="${() => (cur.value === i ? 'true' : false)}"
                         onclick="${() => goto(i)}"></button>`
                 )}
             </div>`}

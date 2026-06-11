@@ -384,6 +384,9 @@ describe('components/cropper', () => {
                         this.cb = cb;
                     }
                 }
+                removeEventListener() {
+                    this.cb = null;
+                }
                 readAsDataURL(file: File) {
                     this.cb?.({ target: { result: 'data:image/png;base64,' + file.name } });
                 }
@@ -418,6 +421,9 @@ describe('components/cropper', () => {
                     if (type === 'load') {
                         this.cb = cb;
                     }
+                }
+                removeEventListener() {
+                    this.cb = null;
                 }
                 readAsDataURL() {
                     this.cb?.({ target: { result: 'data:image/png;base64,DROPPED' } });

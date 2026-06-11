@@ -61,11 +61,11 @@ export const Cropper = component('cropper', {
         zoom: Function, rotate: Function, brightness: Function, contrast: Function,
         save: Function, reset: Function, upload: Function,
     },
-}, (props, { bind, state, listen, onMount, onUnmount }) => {
+}, (props, { bind, state, listen, onMount }) => {
     const photo = bind(props as unknown as { bind?: CropData | null }, null as CropData | null);
 
-    const num = (key: 'width' | 'height' | 'cropwidth' | 'cropheight') =>
-        props[key]!.value as number;
+    // Declared props are non-optional live states: no ! and no casts
+    const num = (key: 'width' | 'height' | 'cropwidth' | 'cropheight') => props[key].value;
 
     const hasImage = state(false);
     const dragging = state(false);
@@ -112,7 +112,7 @@ export const Cropper = component('cropper', {
 
     const image = document.createElement('img');
     const filtered = document.createElement('img');
-    filtered.addEventListener('load', () => {
+    listen(filtered, 'load', () => {
         if (view.brightness || view.contrast) {
             redraw();
         }
@@ -254,7 +254,7 @@ export const Cropper = component('cropper', {
         redraw();
         props.onload?.(image);
     };
-    image.addEventListener('load', onImageLoad);
+    listen(image, 'load', onImageLoad);
 
     // ---- level subscriptions: ranges, api and gestures all land here
     onMount(() => zoomLevel.subscribe((v) => {
@@ -287,15 +287,15 @@ export const Cropper = component('cropper', {
     // src is live: any write loads a new image (initial value in init)
     onMount(() => props.src.subscribe((v) => {
         if (v) {
-            image.src = v as string;
+            image.src = v;
         }
     }));
 
-    // ---- pointer interactions: one in flight, armed per gesture on listen;
-    // ONE setup-time release covers a mid-drag unmount (a single cleanup
-    // releasing every off keeps the engine's unmount iteration intact)
+    // ---- pointer interactions: one in flight, armed per gesture on listen.
+    // A mid-drag unmount needs no bookkeeping (the engine removes armed
+    // listeners; off() is self-pruning) — release exists only so a NEW
+    // gesture supersedes a previous one whose mouseup was lost
     let release: (() => void) | null = null;
-    onUnmount(() => release?.());
 
     const track = (move: (e: MouseEvent) => void) => {
         release?.();
@@ -533,8 +533,11 @@ export const Cropper = component('cropper', {
     const addFromFile = (file: File) => {
         if (file.type && file.type.split('/')[0] === 'image') {
             const reader = new FileReader();
-            reader.addEventListener('load', (v) => {
+            // listen (not raw addEventListener): a read landing after unmount
+            // is dropped; off() inside the handler releases the reader to GC
+            const off = listen(reader, 'load', (v) => {
                 image.src = String((v.target as FileReader).result);
+                off();
             });
             reader.readAsDataURL(file);
         } else if (typeof alert === 'function') {
@@ -651,7 +654,7 @@ export const Cropper = component('cropper', {
         filterCanvas = document.createElement('canvas');
         filterCtx = filterCanvas.getContext('2d', { willReadFrequently: true });
         if (props.src.value) {
-            image.src = props.src.value as string;
+            image.src = props.src.value;
         }
     };
 

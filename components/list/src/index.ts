@@ -255,7 +255,11 @@ export const List = component('list', {
         const onitemclick = props.onitemclick as
             | ((item: unknown, index: number, e: MouseEvent) => void)
             | undefined;
-        return html`<div class="lm-list-item" role="listitem"
+        // Keyed by data index — the item's identity here (records may be
+        // primitives, so the object itself cannot be the key): the virtual
+        // window reuses overlapping rows on scroll, and a search narrowing
+        // the view moves surviving rows instead of rebuilding them
+        return html`<div class="lm-list-item" role="listitem" key="${dataIndex}"
             style="${virtual() ? 'height:' + rowHeight() + 'px' : false}"
             data-clickable="${onitemclick ? 'true' : false}"
             onclick="${(e: MouseEvent) => onitemclick?.(item, dataIndex, e)}">${
@@ -268,6 +272,7 @@ export const List = component('list', {
             props.search.value &&
             html`<div class="lm-list-toolbar">
                 <input class="lm-list-search" type="search" placeholder="Search..."
+                    aria-label="Search"
                     oninput="${(e: Event) => setSearch((e.target as HTMLInputElement).value)}" />
             </div>`}
         <div class="lm-list-content" role="list"

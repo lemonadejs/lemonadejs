@@ -29,7 +29,7 @@ export const Switch = component('switch', {
     onchange: Function,           // fires on user-initiated changes
     api: { toggle: Function },    // imperative surface via ref
 }, (props, { bind }) => {
-    const current = bind(props, props.checked.value as boolean);
+    const current = bind(props, props.checked.value);
 
     const toggle = () => {
         if (!props.disabled.value) {

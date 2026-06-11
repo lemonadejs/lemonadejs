@@ -14,7 +14,10 @@
  *     uncontrolled behavior, made explicit)
  *
  * Headers are real <button>s: native Enter/Space toggling, native disabled
- * semantics; ArrowUp/ArrowDown walk focus between enabled headers.
+ * semantics; ArrowUp/ArrowDown walk focus between enabled headers. Each
+ * body is a labelled ARIA region (header aria-controls ⇄ body
+ * aria-labelledby); panels are keyed by item identity so kept-alive
+ * bodies move with their item when the options array changes.
  *
  * Bound state semantics (the v6 protocol): expanded.set() on user toggles
  * fires onchange(expanded, previous); external writes through the bound
@@ -65,8 +68,12 @@ export type AccordionProps = Omit<ContractInput<typeof CONTRACT>, 'bind' | 'onch
         | ((value: number[], oldValue: number[]) => unknown);
 };
 
+/** Document-unique id base per instance — pairs headers and region bodies */
+let uid = 0;
+
 export const Accordion = component('accordion', CONTRACT, (props, { bind }) => {
     const expanded = bind(props as Bindable<Expanded>, props.multiple.value ? [] : -1);
+    const id = 'lm-accordion-' + ++uid;
 
     const items = (): AccordionItem[] => (props.options.value as AccordionItem[]) || [];
 
@@ -128,18 +135,24 @@ export const Accordion = component('accordion', CONTRACT, (props, { bind }) => {
         ref="${(el: HTMLElement) => (root = el)}"
         onkeydown="${onKeydown}">${() =>
         items().map(
-            (item, i) => html`<div class="lm-accordion-panel"
+            // key: panels move with their item on insert/remove/reorder, so
+            // a kept-alive body (inputs, nested components) survives intact
+            (item, i) => html`<div class="lm-accordion-panel" key="${item}"
                 data-open="${() => (isOpen(i) ? 'true' : false)}"
                 data-disabled="${item.disabled ? 'true' : false}">
                 <button type="button" class="lm-accordion-header"
+                    id="${id + '-header-' + i}"
                     aria-expanded="${() => (isOpen(i) ? 'true' : 'false')}"
+                    aria-controls="${id + '-body-' + i}"
                     disabled="${item.disabled ? 'true' : false}"
                     onclick="${() => toggle(i)}">
                     <span class="lm-accordion-title">${item.title || ''}</span>
                     <span class="lm-accordion-chevron"
                         data-open="${() => (isOpen(i) ? 'true' : false)}"></span>
                 </button>
-                <div class="lm-accordion-body"
+                <div class="lm-accordion-body" role="region"
+                    id="${id + '-body-' + i}"
+                    aria-labelledby="${id + '-header-' + i}"
                     data-open="${() => (isOpen(i) ? 'true' : false)}">
                     <div class="lm-accordion-content">${() => body(item, i)}</div>
                 </div>

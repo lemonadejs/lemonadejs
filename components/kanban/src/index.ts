@@ -26,7 +26,7 @@
  * (--lm-kanban-column-width, --lm-kanban-header-height, --lm-kanban-*).
  */
 
-import { component, css, html } from 'lemonadejs';
+import { batch, component, css, html } from 'lemonadejs';
 
 export interface KanbanCard {
     id: string | number;
@@ -183,22 +183,28 @@ export const Kanban = component('kanban', {
             offKey();
             releaseGesture = null;
             const target = drop.peek();
-            drag.value = null;
-            drop.value = null;
             if (moved) {
                 suppressClick = true; // the click a browser synthesizes after mouseup
             }
-            if (commit && moved && target) {
-                performMove(card.id, target.col, target.index);
-            }
+            batch(() => {
+                // One update pass: gesture reset + the committed move (touch)
+                drag.value = null;
+                drop.value = null;
+                if (commit && moved && target) {
+                    performMove(card.id, target.col, target.index);
+                }
+            });
         };
         const offMove = listen<MouseEvent>(document, 'mousemove', (ev) => {
             if (!moved && Math.abs(ev.clientX - startX) + Math.abs(ev.clientY - startY) < DRAG_THRESHOLD) {
                 return;
             }
             moved = true;
-            drag.value = { id: card.id, dx: ev.clientX - startX, dy: ev.clientY - startY };
-            drop.value = computeDrop(ev.clientX, ev.clientY, card.id);
+            // The hot path: two writes per mousemove — one update pass
+            batch(() => {
+                drag.value = { id: card.id, dx: ev.clientX - startX, dy: ev.clientY - startY };
+                drop.value = computeDrop(ev.clientX, ev.clientY, card.id);
+            });
         });
         const offUp = listen(document, 'mouseup', () => finish(true));
         const offKey = listen<KeyboardEvent>(document, 'keydown', (ev) => {
@@ -263,7 +269,13 @@ export const Kanban = component('kanban', {
             )}
         ${() => {
             // THE flat keyed list: every card on the board, one list, so
-            // a cross-column move is a coordinate change on the SAME node
+            // a cross-column move is a coordinate change on the SAME node.
+            // Cards stay PLAIN elements deliberately: live prop patching
+            // would let a <Card> component ride the keyed move too, but a
+            // card here has no internal state to preserve and no public
+            // customization contract — a component would only add a
+            // register-element callback prop to rebuild the hit-testing
+            // registry the board already owns via refs.
             const out: ReturnType<typeof html>[] = [];
             columns().forEach((col, ci) => {
                 cardsOf(col).forEach((card, ri) => {

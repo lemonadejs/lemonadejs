@@ -54,7 +54,7 @@ export const Alert = component('alert', {
                 props.icon.value &&
                 html`<span class="lm-alert-icon"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path
                     fill="currentColor"
-                    d="${() => PATHS[props.severity.value as string] || PATHS.info}"></path></svg></span>`}
+                    d="${() => PATHS[props.severity.value] || PATHS.info}"></path></svg></span>`}
             <div class="lm-alert-body">
                 ${() => props.title.value && html`<div class="lm-alert-title">${props.title}</div>`}
                 ${() => props.message.value && html`<div class="lm-alert-message">${props.message}</div>`}

@@ -34,7 +34,7 @@
  * onopen(), onclose(origin: 'button' | 'escape' | 'focusout').
  */
 
-import { component, html, isDisposing } from 'lemonadejs';
+import { batch, component, html, isDisposing } from 'lemonadejs';
 import Modal from '@lemonadejs/modal';
 
 export interface CalendarEvent {
@@ -434,7 +434,7 @@ export const Calendar = component('calendar', {
         getValue: Function, setValue: Function, update: Function, reset: Function,
         next: Function, prev: Function, setView: Function,
     },
-}, (props, { bind, state, onMount, onUnmount }) => {
+}, (props, { bind, state, onMount }) => {
     const picked = bind(props, '');
 
     const boot = new Date();
@@ -643,20 +643,23 @@ export const Calendar = component('calendar', {
             i: now.getMinutes(),
             s: 0,
         };
-        cursor.value = { y: p.y, m: p.m, d: p.d };
-        page.value = { y: p.y, m: p.m };
-        hour.value = p.h;
-        minute.value = p.i;
-        rangeStart = null;
-        rangeEnd = null;
-        hovered = null;
-        if (props.range.peek() && first) {
-            rangeStart = toSerial(p.y, p.m, p.d);
-            const second = entries.length > 1 ? parseEntry(entries[1], fmt()) : null;
-            rangeEnd = second ? toSerial(second.y, second.m, second.d) : null;
-        }
-        display.value = renderDisplay(v);
-        refresh();
+        // Five state writes + the rebuild: one update pass
+        batch(() => {
+            cursor.value = { y: p.y, m: p.m, d: p.d };
+            page.value = { y: p.y, m: p.m };
+            hour.value = p.h;
+            minute.value = p.i;
+            rangeStart = null;
+            rangeEnd = null;
+            hovered = null;
+            if (props.range.peek() && first) {
+                rangeStart = toSerial(p.y, p.m, p.d);
+                const second = entries.length > 1 ? parseEntry(entries[1], fmt()) : null;
+                rangeEnd = second ? toSerial(second.y, second.m, second.d) : null;
+            }
+            display.value = renderDisplay(v);
+            refresh();
+        });
     };
 
     // ---- commit (the ONLY paths that write the bound value)
@@ -853,16 +856,18 @@ export const Calendar = component('calendar', {
                 }
             }
         }
-        display.value = el.value;
-        if (!props.range.peek() && !SERIAL.test(el.value.trim())) {
-            const p = parseEntry(el.value, fmt());
-            if (p) {
-                cursor.value = { y: p.y, m: p.m, d: p.d };
-                page.value = { y: p.y, m: p.m };
-                hour.value = p.h;
-                minute.value = p.i;
+        batch(() => {
+            display.value = el.value;
+            if (!props.range.peek() && !SERIAL.test(el.value.trim())) {
+                const p = parseEntry(el.value, fmt());
+                if (p) {
+                    cursor.value = { y: p.y, m: p.m, d: p.d };
+                    page.value = { y: p.y, m: p.m };
+                    hour.value = p.h;
+                    minute.value = p.i;
+                }
             }
-        }
+        });
     };
 
     // ---- keyboard (v5 events.keydown + el keydown, one root handler)
@@ -1018,7 +1023,10 @@ export const Calendar = component('calendar', {
         <div class="lm-calendar-content" tabindex="0"
             ref="${(el: HTMLElement) => (gridEl = el)}"
             onwheel="${onWheel}">
-            ${() => cells.value.map(cellView)}
+            ${() =>
+                // Positional on purpose: a fixed 42/12/16-cell page that is
+                // recomputed wholesale — cells never reorder mid-list
+                cells.value.map(cellView)}
         </div>
         <div class="lm-calendar-footer" data-visible="${() => (props.footer.value === false ? 'false' : 'true')}">
             <div class="lm-calendar-time" data-visible="${() => (props.time.value ? 'true' : 'false')}">

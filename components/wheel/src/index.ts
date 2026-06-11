@@ -38,7 +38,7 @@ export const Wheel = component('wheel', {
 }, (props, { bind, state, listen, onMount, onUnmount }) => {
     const index = bind(props, Number(props.selected.value) || 0);
 
-    const items = () => (props.options.value as unknown[]) || [];
+    const items = () => props.options.value || [];
     const rh = () => Number(props.rowheight.value) || 40;
     const visible = () => Math.max(1, Math.floor(Number(props.visible.value)) || 5);
     /** The blank run above/below the column that centers a row (v5: 80px) */
@@ -51,6 +51,14 @@ export const Wheel = component('wheel', {
     const offset = state(clampIndex(Number(index.value) || 0) * rh());
     const dragging = state(false);
     const nearest = () => clampIndex(offset.value / rh());
+
+    /**
+     * Row style stays STRING CONCAT, not css(): line-height is a unitless
+     * property there (per the CSS spec), but the wheel centers each label
+     * by setting line-height to the row height in PX — css({ lineHeight:
+     * rh() }) would emit "line-height:40". Documented decision.
+     */
+    const rowStyle = () => 'height:' + rh() + 'px;line-height:' + rh() + 'px';
 
     /** v5 li reads {{self.title}}; primitives render as their own label */
     const titleOf = (opt: unknown): string =>
@@ -227,7 +235,7 @@ export const Wheel = component('wheel', {
                         data-index="${String(i)}"
                         data-selected="${() => (nearest() === i ? 'true' : false)}"
                         aria-selected="${() => (nearest() === i ? 'true' : 'false')}"
-                        style="${() => 'height:' + rh() + 'px;line-height:' + rh() + 'px'}">${titleOf(opt)}</li>`
+                        style="${rowStyle}">${titleOf(opt)}</li>`
                 )}
         </ul>
         <div class="lm-wheel-mask lm-wheel-mask-top" style="${() => 'height:' + pad() + 'px'}"></div>

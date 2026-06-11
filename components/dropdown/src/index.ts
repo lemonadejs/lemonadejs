@@ -24,7 +24,7 @@
  *     viewport width at open)
  */
 
-import { component, html, isDisposing } from 'lemonadejs';
+import { batch, component, html, isDisposing } from 'lemonadejs';
 import Modal from '@lemonadejs/modal';
 
 export interface DropdownItem {
@@ -106,7 +106,7 @@ export const Dropdown = component('dropdown', {
         getValue: Function, setValue: Function, getText: Function,
         getData: Function, setData: Function, add: Function, reset: Function,
     },
-}, (props, { bind, state, onMount, onUnmount }) => {
+}, (props, { bind, state, onMount, onUnmount, resource }) => {
     const picked = bind(props, '');
 
     const opened = state(false);
@@ -137,7 +137,7 @@ export const Dropdown = component('dropdown', {
     });
 
     // ---- effective flags (v5: insert/remote/searchbar force autocomplete)
-    const kind = () => resolvedType.value || (props.type.value as string) || 'default';
+    const kind = () => resolvedType.value || props.type.value || 'default';
     const autocomplete = () =>
         !!props.autocomplete.value || !!props.insert.value || !!props.remote.value || kind() === 'searchbar';
     const inline = () => kind() === 'inline';
@@ -157,7 +157,7 @@ export const Dropdown = component('dropdown', {
     };
 
     const process = () => {
-        items = normalize((props.data.peek() as unknown[]) || []);
+        items = normalize(props.data.peek() || []);
         items.sort((a, b) => (a.group && b.group ? a.group.localeCompare(b.group) : 0));
         rows.value = flatten(items);
     };
@@ -168,7 +168,7 @@ export const Dropdown = component('dropdown', {
             return v;
         }
         if (typeof v === 'string' && v !== '') {
-            return v.split((props.divisor.value as string) || ';');
+            return v.split(props.divisor.value || ';');
         }
         return isEmpty(v) ? [] : [v];
     };
@@ -222,9 +222,9 @@ export const Dropdown = component('dropdown', {
     );
 
     // ---- virtualization (datagrid pattern, fixed rowheight)
-    const rowHeight = () => (props.rowheight.value as number) || 28;
-    const viewportHeight = () => Math.min((props.height.value as number) || 300, rows.value.length * rowHeight());
-    const visibleCount = () => Math.ceil(((props.height.value as number) || 300) / rowHeight()) + OVERSCAN * 2;
+    const rowHeight = () => props.rowheight.value || 28;
+    const viewportHeight = () => Math.min(props.height.value || 300, rows.value.length * rowHeight());
+    const visibleCount = () => Math.ceil((props.height.value || 300) / rowHeight()) + OVERSCAN * 2;
 
     const onScroll = () => {
         if (!scroller) {
@@ -260,13 +260,35 @@ export const Dropdown = component('dropdown', {
                       matches(item.keywords, lower) ||
                       matches(item.synonym, lower)
               );
-        cursor.value = null;
-        rows.value = flatten(filtered);
-        first.value = 0;
+        batch(() => {
+            cursor.value = null;
+            rows.value = flatten(filtered);
+            first.value = 0;
+        });
         if (scroller) {
             scroller.scrollTop = 0;
         }
     };
+
+    // Remote search on the resource() tool: the debounce timer commits the
+    // query (term/termHttp) and reload() decides WHEN — the fetcher PEEKS,
+    // and the engine owns the lifecycle: a newer search aborts the stale
+    // request, only the latest response lands (the old then-chain could
+    // paint out-of-order results), unmount aborts (no zombie onsearch).
+    // The veto and the loading flag stay OUTSIDE: onbeforesearch runs per
+    // keystroke (it may mutate http headers) and v5 shows the loading
+    // state through the debounce window, not just during the fetch.
+    let term: string | null = null; // null = no search committed yet ('' is a valid query)
+    let termHttp: RequestInit = {};
+    const searched = resource<unknown>((signal) => {
+        if (term === null) {
+            return undefined; // the resource's setup run: nothing committed
+        }
+        const url = props.url.peek() + (props.url.peek().includes('?') ? '&' : '?') + 'q=' + encodeURIComponent(term);
+        return fetch(url, { ...termHttp, signal }).then((r) => r.json());
+    });
+    onMount(() => searched.data.subscribe((result) => term !== null && resetRows(normalize(result as unknown[]))));
+    onMount(() => searched.error.subscribe((e) => e !== undefined && term !== null && resetRows([])));
 
     const remoteSearch = (q: string) => {
         const http = { headers: { 'Content-Type': 'text/json' } };
@@ -279,20 +301,20 @@ export const Dropdown = component('dropdown', {
         }
         loading.value = true;
         searchTimer = setTimeout(() => {
-            const url = (props.url.value as string) + ((props.url.value as string).includes('?') ? '&' : '?') + 'q=' + encodeURIComponent(q);
-            fetch(url, http)
-                .then((r) => r.json())
-                .then((result) => resetRows(normalize(result)))
-                .catch(() => resetRows([]));
+            term = q;
+            termHttp = http;
+            searched.reload();
         }, SEARCH_DEBOUNCE);
     };
 
     /** Remote results land BEHIND the already-selected items (v5) */
     const resetRows = (result: DropdownItem[]) => {
-        loading.value = false;
-        cursor.value = null;
-        rows.value = flatten([...chosen, ...result.filter((r) => !chosen.some((c) => sameValue(c.value, r.value)))]);
-        first.value = 0;
+        batch(() => {
+            loading.value = false;
+            cursor.value = null;
+            rows.value = flatten([...chosen, ...result.filter((r) => !chosen.some((c) => sameValue(c.value, r.value)))]);
+            first.value = 0;
+        });
         props.onsearch?.(result);
     };
 
@@ -353,7 +375,7 @@ export const Dropdown = component('dropdown', {
         if (opened.value || props.disabled.value || inline()) {
             return;
         }
-        if ((props.type.value as string) === 'auto') {
+        if (props.type.value === 'auto') {
             resolvedType.value = window.innerWidth > 640 ? 'default' : autocomplete() ? 'searchbar' : 'picker';
         }
         panelPosition.value = kind() === 'default' ? 'absolute' : 'bottom';
@@ -367,7 +389,7 @@ export const Dropdown = component('dropdown', {
             const rect = input.getBoundingClientRect();
             anchorTop.value = rect.bottom + 1;
             anchorLeft.value = rect.left;
-            let width = Math.max((props.width.value as number) || 0, rect.width);
+            let width = Math.max(props.width.value || 0, rect.width);
             for (const item of items) {
                 width = Math.max(width, (item.text || '').length * 7.5);
             }
@@ -439,7 +461,7 @@ export const Dropdown = component('dropdown', {
             }
         }
         items.push(item);
-        (props.data.peek() as DropdownItem[]).push(item);
+        props.data.peek().push(item);
         rows.value = [{ kind: 'item', item }, ...rows.value];
         first.value = 0;
         props.oninsert?.(item);
@@ -602,7 +624,9 @@ export const Dropdown = component('dropdown', {
         },
     });
 
-    // ---- initial data (v5: plain url loads once; remote starts empty)
+    // ---- initial data (v5: plain url loads once; remote starts empty).
+    // One-shot prop-driven load on resource(): everything peeked, the
+    // setup run fires it once; unmount aborts (no zombie data push).
     const ready = () => {
         process();
         applyValue(picked.peek());
@@ -610,21 +634,24 @@ export const Dropdown = component('dropdown', {
         props.onload?.();
     };
 
+    const wantInitial = () => !!(props.url.peek() && !props.remote.peek());
+    const initial = resource<unknown>((signal) =>
+        wantInitial()
+            ? fetch(props.url.peek(), { headers: { 'Content-Type': 'text/json' }, signal }).then((r) => r.json())
+            : undefined
+    );
+    if (wantInitial()) {
+        loading.value = true;
+    }
+    const loaded = (result: unknown[]) => {
+        props.data.peek().push(...normalize(result));
+        loading.value = false;
+        ready();
+    };
+    onMount(() => initial.data.subscribe((result) => result !== undefined && loaded(result as unknown[])));
+    onMount(() => initial.error.subscribe((e) => e !== undefined && loaded([])));
     onMount(() => {
-        if (props.url.value && !props.remote.value) {
-            loading.value = true;
-            fetch(props.url.value as string, { headers: { 'Content-Type': 'text/json' } })
-                .then((r) => r.json())
-                .then((result) => {
-                    (props.data.peek() as unknown[]).push(...normalize(result as unknown[]));
-                    loading.value = false;
-                    ready();
-                })
-                .catch(() => {
-                    loading.value = false;
-                    ready();
-                });
-        } else {
+        if (!wantInitial()) {
             ready();
         }
     });
@@ -653,6 +680,9 @@ export const Dropdown = component('dropdown', {
         <div class="lm-dropdown-canvas" style="${() => 'height:' + rows.value.length * rowHeight() + 'px'}">
             <div class="lm-dropdown-window"
                 style="${() => 'transform:translateY(' + first.value * rowHeight() + 'px)'}">
+                <!-- deliberately UNKEYED: a fixed-size window over virtualized
+                     rows recycles each DOM slot in place on scroll — keys would
+                     make nodes physically move every scroll tick for no gain -->
                 ${() => rows.value.slice(first.value, first.value + visibleCount()).map((entry, i) => rowView(entry, first.value + i))}
             </div>
         </div>

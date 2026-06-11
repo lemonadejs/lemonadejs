@@ -27,6 +27,12 @@ export declare const untracked: <R>(fn: () => R) => R;
 export declare const batch: <R>(fn: () => R) => R;
 export declare const readCount: () => number;
 /**
+ * Run fn with the read counter restored afterwards: reads made inside
+ * tool-owned bindings (computed's initial evaluation) are NOT template-
+ * construction reads and must not trip the LJS-202 snapshot heuristic.
+ */
+export declare const withReadsRestored: <R>(fn: () => R) => R;
+/**
  * A reactive computation with automatic dependency tracking
  */
 export declare class Binding {

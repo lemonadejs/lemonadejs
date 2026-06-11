@@ -12,7 +12,7 @@
  * their signatures; the per-item render() DOM hook was dropped.
  */
 
-import { component, html, isDisposing } from 'lemonadejs';
+import { batch, component, html, isDisposing } from 'lemonadejs';
 import Modal from '@lemonadejs/modal';
 
 export interface ContextItem {
@@ -62,12 +62,19 @@ export const Contextmenu = component('contextmenu', {
     onopen: Function,
     onclose: Function,
     api: { open: Function, openAt: Function, close: Function },
-}, (props, { state, listen }) => {
+}, (props, { state, listen, onUnmount }) => {
     const levels = state<Level[]>([]);
     const cursors = state<Record<number, number>>({});
 
     let wrapper: HTMLElement | null = null;
     let hoverTimer: ReturnType<typeof setTimeout> | null = null;
+
+    // destroy-clean: an unmount mid-hover must leave no submenu timer behind
+    onUnmount(() => {
+        if (hoverTimer) {
+            clearTimeout(hoverTimer);
+        }
+    });
 
     const modalEl = (level: number): HTMLElement | null =>
         (wrapper?.querySelectorAll('.lm-modal')[level] as HTMLElement) || null;
@@ -78,14 +85,16 @@ export const Contextmenu = component('contextmenu', {
             hoverTimer = null;
         }
         if (levels.value.length > level) {
-            levels.value = levels.value.slice(0, level);
-            const next: Record<number, number> = {};
-            for (const k of Object.keys(cursors.value)) {
-                if (Number(k) < level) {
-                    next[Number(k)] = cursors.value[Number(k)];
+            batch(() => {
+                levels.value = levels.value.slice(0, level);
+                const next: Record<number, number> = {};
+                for (const k of Object.keys(cursors.value)) {
+                    if (Number(k) < level) {
+                        next[Number(k)] = cursors.value[Number(k)];
+                    }
                 }
-            }
-            cursors.value = next;
+                cursors.value = next;
+            });
             if (level === 0) {
                 wrapper?.classList.remove('lm-menu-focus');
                 props.onclose?.();
@@ -94,45 +103,43 @@ export const Contextmenu = component('contextmenu', {
     };
 
     const doOpen = (options: ContextItem[] | null, x: number, y: number, adjustToCursor = false) => {
-        levels.value = [
-            {
-                options: options || (props.options.value as ContextItem[]) || [],
-                top: y,
-                left: x,
-                openedLeft: false,
-            },
-        ];
-        cursors.value = {};
+        batch(() => {
+            levels.value = [
+                {
+                    options: options || (props.options.value as ContextItem[]) || [],
+                    top: y,
+                    left: x,
+                    openedLeft: false,
+                },
+            ];
+            cursors.value = {};
+        });
         wrapper?.classList.add('lm-menu-focus');
         wrapper?.focus();
         props.onopen?.();
         if (adjustToCursor) {
             // v5: when Modal's auto-adjust flipped the menu, anchor the
-            // right/bottom edge at the cursor instead (two microtasks:
-            // after the Modal's own deferred setup)
-            queueMicrotask(() =>
-                queueMicrotask(() => {
-                    const el = modalEl(0);
-                    if (!el) {
-                        return;
+            // right/bottom edge at the cursor instead. Synchronous: the
+            // level write above mounted the Modal and its per-open setup
+            // (auto-adjust margins included) ran inside it — measurable now.
+            const el = modalEl(0);
+            if (el) {
+                const rect = el.getBoundingClientRect();
+                if (parseFloat(el.style.marginLeft) || 0) {
+                    let margin = -rect.width - 1;
+                    if (x + margin < 10) {
+                        margin = 10 - x;
                     }
-                    const rect = el.getBoundingClientRect();
-                    if (parseFloat(el.style.marginLeft) || 0) {
-                        let margin = -rect.width - 1;
-                        if (x + margin < 10) {
-                            margin = 10 - x;
-                        }
-                        el.style.marginLeft = margin + 'px';
+                    el.style.marginLeft = margin + 'px';
+                }
+                if (parseFloat(el.style.marginTop) || 0) {
+                    let margin = -rect.height - 1;
+                    if (y + margin < 10) {
+                        margin = 10 - y;
                     }
-                    if (parseFloat(el.style.marginTop) || 0) {
-                        let margin = -rect.height - 1;
-                        if (y + margin < 10) {
-                            margin = 10 - y;
-                        }
-                        el.style.marginTop = margin + 'px';
-                    }
-                })
-            );
+                    el.style.marginTop = margin + 'px';
+                }
+            }
         }
     };
 
@@ -169,29 +176,27 @@ export const Contextmenu = component('contextmenu', {
         }
         const left = openLeft ? Math.max(10, rect.x - MENU_WIDTH + 2) : rect.x + rect.width - 2;
 
-        levels.value = [
-            ...levels.value.slice(0, level + 1),
-            { options: item.submenu, top, left, openedLeft: openLeft },
-        ];
-        if (withCursor) {
-            const first = findEnabled(item.submenu, 0, true);
-            if (first !== null) {
-                cursors.value = { ...cursors.value, [level + 1]: first };
+        batch(() => {
+            levels.value = [
+                ...levels.value.slice(0, level + 1),
+                { options: item.submenu!, top, left, openedLeft: openLeft },
+            ];
+            if (withCursor) {
+                const first = findEnabled(item.submenu!, 0, true);
+                if (first !== null) {
+                    cursors.value = { ...cursors.value, [level + 1]: first };
+                }
+            }
+        });
+        // Vertical overflow correction — synchronous: the submenu's Modal
+        // mounted (and ran its setup) inside the batch above
+        const el = modalEl(level + 1);
+        if (el) {
+            const r = el.getBoundingClientRect();
+            if (r.bottom > window.innerHeight - 10) {
+                el.style.top = Math.max(10, top - (r.bottom - (window.innerHeight - 10))) + 'px';
             }
         }
-        // Vertical overflow correction after the submenu's Modal settles
-        queueMicrotask(() =>
-            queueMicrotask(() => {
-                const el = modalEl(level + 1);
-                if (!el) {
-                    return;
-                }
-                const r = el.getBoundingClientRect();
-                if (r.bottom > window.innerHeight - 10) {
-                    el.style.top = Math.max(10, top - (r.bottom - (window.innerHeight - 10))) + 'px';
-                }
-            })
-        );
     };
 
     const activate = (level: number, index: number, e: Event) => {

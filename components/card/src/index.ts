@@ -81,6 +81,7 @@ export const Card = component('card', {
             return (
                 Array.isArray(actions) &&
                 actions.length > 0 &&
+                // positional: a footer button row never reorders mid-list
                 html`<div class="lm-card-actions">${actions.map(
                     (action) => html`<button type="button" class="lm-card-action"
                         data-color="${action.color || false}"
