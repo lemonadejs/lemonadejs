@@ -1,5 +1,44 @@
 [
     {
+        "name": "actionsheet",
+        "path": "components/actionsheet",
+        "verified": true,
+        "checks": 13,
+        "contract": {
+            "name": "actionsheet",
+            "props": {
+                "actions": {
+                    "type": "array"
+                },
+                "title": {
+                    "type": "string",
+                    "default": ""
+                },
+                "message": {
+                    "type": "string",
+                    "default": ""
+                },
+                "closable": {
+                    "type": "boolean",
+                    "default": false
+                }
+            },
+            "bind": {
+                "type": "boolean"
+            },
+            "events": [
+                "onopen",
+                "onclose"
+            ],
+            "api": [
+                "open",
+                "close",
+                "toggle",
+                "isOpened"
+            ]
+        }
+    },
+    {
         "name": "color",
         "path": "components/color",
         "verified": true,
@@ -121,6 +160,56 @@
         }
     },
     {
+        "name": "dialog",
+        "path": "components/dialog",
+        "verified": true,
+        "checks": 19,
+        "contract": {
+            "name": "dialog",
+            "props": {
+                "title": {
+                    "type": "string",
+                    "default": ""
+                },
+                "message": {
+                    "type": "string",
+                    "default": ""
+                },
+                "type": {
+                    "type": "string",
+                    "default": ""
+                },
+                "confirmlabel": {
+                    "type": "string",
+                    "default": "OK"
+                },
+                "cancellabel": {
+                    "type": "string",
+                    "default": "Cancel"
+                },
+                "placeholder": {
+                    "type": "string",
+                    "default": "Value"
+                },
+                "cancel": {
+                    "type": "boolean",
+                    "default": true
+                }
+            },
+            "bind": {
+                "type": "string"
+            },
+            "events": [
+                "onconfirm",
+                "oncancel"
+            ],
+            "api": [
+                "open",
+                "close"
+            ]
+        }
+    },
+    {
         "name": "dropdown",
         "path": "components/dropdown",
         "verified": true,
@@ -209,6 +298,68 @@
                 "setData",
                 "add",
                 "reset"
+            ]
+        }
+    },
+    {
+        "name": "list",
+        "path": "components/list",
+        "verified": true,
+        "checks": 26,
+        "contract": {
+            "name": "list",
+            "props": {
+                "data": {
+                    "type": "array"
+                },
+                "render": {
+                    "type": "function"
+                },
+                "search": {
+                    "type": "boolean",
+                    "default": false
+                },
+                "pagination": {
+                    "type": "number",
+                    "default": 0
+                },
+                "total": {
+                    "type": "number",
+                    "default": 0
+                },
+                "message": {
+                    "type": "string",
+                    "default": "No records found"
+                },
+                "dense": {
+                    "type": "boolean",
+                    "default": false
+                },
+                "divider": {
+                    "type": "boolean",
+                    "default": false
+                },
+                "height": {
+                    "type": "number",
+                    "default": 0
+                },
+                "rowheight": {
+                    "type": "number",
+                    "default": 40
+                }
+            },
+            "bind": null,
+            "events": [
+                "onbeforesearch",
+                "onsearch",
+                "onchangepage",
+                "onitemclick"
+            ],
+            "api": [
+                "setPage",
+                "getPage",
+                "setSearch",
+                "refresh"
             ]
         }
     },
@@ -320,6 +471,78 @@
                 "toggle",
                 "front",
                 "back"
+            ]
+        }
+    },
+    {
+        "name": "navbar",
+        "path": "components/navbar",
+        "verified": true,
+        "checks": 13,
+        "contract": {
+            "name": "navbar",
+            "props": {
+                "title": {
+                    "type": "string",
+                    "default": ""
+                },
+                "left": {
+                    "type": "string",
+                    "default": ""
+                },
+                "right": {
+                    "type": "string",
+                    "default": ""
+                },
+                "prev": {
+                    "type": "string",
+                    "default": ""
+                },
+                "next": {
+                    "type": "string",
+                    "default": ""
+                }
+            },
+            "bind": null,
+            "events": [
+                "onprev",
+                "onnext"
+            ],
+            "api": []
+        }
+    },
+    {
+        "name": "quickmenu",
+        "path": "components/quickmenu",
+        "verified": true,
+        "checks": 12,
+        "contract": {
+            "name": "quickmenu",
+            "props": {
+                "title": {
+                    "type": "string",
+                    "default": ""
+                },
+                "options": {
+                    "type": "array"
+                },
+                "width": {
+                    "type": "number",
+                    "default": 200
+                },
+                "disabled": {
+                    "type": "boolean",
+                    "default": false
+                }
+            },
+            "bind": null,
+            "events": [
+                "onopen",
+                "onclose"
+            ],
+            "api": [
+                "open",
+                "close"
             ]
         }
     },
@@ -675,6 +898,37 @@
             ],
             "api": [
                 "toggle"
+            ]
+        }
+    },
+    {
+        "name": "toolbar",
+        "path": "components/toolbar",
+        "verified": true,
+        "checks": 10,
+        "contract": {
+            "name": "toolbar",
+            "props": {
+                "options": {
+                    "type": "array"
+                },
+                "position": {
+                    "type": "string",
+                    "default": ""
+                },
+                "visible": {
+                    "type": "boolean",
+                    "default": true
+                }
+            },
+            "bind": null,
+            "events": [
+                "onitemclick",
+                "onchange"
+            ],
+            "api": [
+                "open",
+                "close"
             ]
         }
     },

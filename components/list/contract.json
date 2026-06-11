@@ -1,0 +1,56 @@
+{
+    "name": "list",
+    "props": {
+        "data": {
+            "type": "array"
+        },
+        "render": {
+            "type": "function"
+        },
+        "search": {
+            "type": "boolean",
+            "default": false
+        },
+        "pagination": {
+            "type": "number",
+            "default": 0
+        },
+        "total": {
+            "type": "number",
+            "default": 0
+        },
+        "message": {
+            "type": "string",
+            "default": "No records found"
+        },
+        "dense": {
+            "type": "boolean",
+            "default": false
+        },
+        "divider": {
+            "type": "boolean",
+            "default": false
+        },
+        "height": {
+            "type": "number",
+            "default": 0
+        },
+        "rowheight": {
+            "type": "number",
+            "default": 40
+        }
+    },
+    "bind": null,
+    "events": [
+        "onbeforesearch",
+        "onsearch",
+        "onchangepage",
+        "onitemclick"
+    ],
+    "api": [
+        "setPage",
+        "getPage",
+        "setSearch",
+        "refresh"
+    ]
+}

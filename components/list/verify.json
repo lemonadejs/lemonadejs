@@ -1,0 +1,110 @@
+{
+    "component": "list",
+    "pass": true,
+    "checks": [
+        {
+            "name": "mounts with defaults",
+            "pass": true
+        },
+        {
+            "name": "prop data",
+            "pass": true
+        },
+        {
+            "name": "prop data (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop render",
+            "pass": true
+        },
+        {
+            "name": "prop render (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop search",
+            "pass": true
+        },
+        {
+            "name": "prop search (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop pagination",
+            "pass": true
+        },
+        {
+            "name": "prop pagination (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop total",
+            "pass": true
+        },
+        {
+            "name": "prop total (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop message",
+            "pass": true
+        },
+        {
+            "name": "prop message (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop dense",
+            "pass": true
+        },
+        {
+            "name": "prop dense (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop divider",
+            "pass": true
+        },
+        {
+            "name": "prop divider (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop height",
+            "pass": true
+        },
+        {
+            "name": "prop height (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop rowheight",
+            "pass": true
+        },
+        {
+            "name": "prop rowheight (live state)",
+            "pass": true
+        },
+        {
+            "name": "event onbeforesearch",
+            "pass": true
+        },
+        {
+            "name": "event onsearch",
+            "pass": true
+        },
+        {
+            "name": "event onchangepage",
+            "pass": true
+        },
+        {
+            "name": "event onitemclick",
+            "pass": true
+        },
+        {
+            "name": "api via ref",
+            "pass": true
+        }
+    ]
+}

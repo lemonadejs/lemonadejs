@@ -1,0 +1,189 @@
+/* <List /> — default styling, lm-list-* convention */
+.lm-list {
+    font: 14px/1.45 system-ui, sans-serif;
+    color: #18181b;
+    border: 1px solid #e4e4e7;
+    border-radius: 10px;
+    background: #fff;
+    overflow: hidden;
+}
+
+.lm-list-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    border-bottom: 1px solid #e4e4e7;
+}
+
+.lm-list-search {
+    flex: 1;
+    min-width: 0;
+    padding: 6px 10px;
+    border: 1px solid #d4d4d8;
+    border-radius: 6px;
+    font: inherit;
+}
+
+.lm-list-content {
+    position: relative;
+    overscroll-behavior: contain;
+}
+
+.lm-list-canvas {
+    position: relative;
+}
+
+.lm-list-window {
+    will-change: transform;
+}
+
+/* The MUI item: [avatar | icon] + primary/secondary text */
+.lm-list-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    box-sizing: border-box;
+}
+
+.lm-list-item[data-clickable='true'] {
+    cursor: pointer;
+    user-select: none;
+}
+
+.lm-list-item[data-clickable='true']:hover {
+    background: #fafafa;
+}
+
+.lm-list-divider .lm-list-item {
+    border-bottom: 1px solid #f4f4f5;
+}
+
+.lm-list-divider .lm-list-item:last-child {
+    border-bottom: none;
+}
+
+.lm-list-avatar {
+    flex: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    object-fit: cover;
+    background: #e4e4e7;
+}
+
+.lm-list-icon {
+    flex: none;
+    width: 36px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #71717a;
+}
+
+.lm-list-text {
+    flex: 1;
+    min-width: 0;
+}
+
+.lm-list-primary {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.lm-list-secondary {
+    font-size: 12.5px;
+    color: #71717a;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Dense variant (MUI dense): tighter rows, smaller media */
+.lm-list-dense .lm-list-item {
+    padding: 4px 16px;
+    gap: 10px;
+    font-size: 13px;
+}
+
+.lm-list-dense .lm-list-avatar,
+.lm-list-dense .lm-list-icon {
+    width: 28px;
+}
+
+.lm-list-dense .lm-list-avatar {
+    height: 28px;
+}
+
+.lm-list-message {
+    padding: 28px;
+    text-align: center;
+    color: #a1a1aa;
+}
+
+/* Three zones: info | CENTERED pager | (balance) — the pager sits on
+   the true middle of the row, vertically and horizontally */
+.lm-list-footer {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 16px;
+    padding: 8px 14px;
+    border-top: 1px solid #e4e4e7;
+    background: #fafafa;
+    font-size: 12.5px;
+    color: #52525b;
+}
+
+.lm-list-footer::after {
+    content: '';
+}
+
+.lm-list-pageinfo {
+    font-variant-numeric: tabular-nums;
+}
+
+.lm-list-pages {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    line-height: 1;
+}
+
+.lm-list-pages button {
+    min-width: 28px;
+    height: 28px;
+    padding: 0 6px;
+    border: 1px solid transparent;
+    background: transparent;
+    border-radius: 6px;
+    font: inherit;
+    color: #3f3f46;
+    cursor: pointer;
+    font-variant-numeric: tabular-nums;
+}
+
+.lm-list-pages button:hover:not(:disabled):not([data-current]) {
+    background: #e4e4e7;
+}
+
+.lm-list-pages button[data-current] {
+    background: #2563eb;
+    border-color: #2563eb;
+    color: #fff;
+    font-weight: 600;
+}
+
+.lm-list-pages button:disabled {
+    opacity: 0.35;
+    cursor: default;
+}
+
+.lm-list-gap {
+    color: #a1a1aa;
+    padding: 0 2px;
+    user-select: none;
+}

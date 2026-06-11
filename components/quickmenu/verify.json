@@ -1,0 +1,54 @@
+{
+    "component": "quickmenu",
+    "pass": true,
+    "checks": [
+        {
+            "name": "mounts with defaults",
+            "pass": true
+        },
+        {
+            "name": "prop title",
+            "pass": true
+        },
+        {
+            "name": "prop title (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop options",
+            "pass": true
+        },
+        {
+            "name": "prop options (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop width",
+            "pass": true
+        },
+        {
+            "name": "prop width (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop disabled",
+            "pass": true
+        },
+        {
+            "name": "prop disabled (live state)",
+            "pass": true
+        },
+        {
+            "name": "event onopen",
+            "pass": true
+        },
+        {
+            "name": "event onclose",
+            "pass": true
+        },
+        {
+            "name": "api via ref",
+            "pass": true
+        }
+    ]
+}

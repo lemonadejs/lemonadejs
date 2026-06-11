@@ -1,0 +1,85 @@
+/* <Actionsheet /> — default styling, lm-actionsheet-* convention.
+   Ported from the v5 jactionsheet stylesheet; the sheet rides on the
+   Modal primitive (headerless, position bottom, backdrop). */
+
+/* The Modal shell becomes the full-width transparent bottom sheet */
+.lm-actionsheet .lm-modal-backdrop {
+    background: rgba(0, 0, 0, 0.5); /* v5 overlay */
+}
+
+.lm-actionsheet .lm-modal {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    background: transparent;
+    box-shadow: none;
+    border-radius: 0;
+    animation: lm-actionsheet-slide 0.2s ease; /* v5 slide-bottom-in */
+}
+
+.lm-actionsheet .lm-modal-content {
+    padding: 0;
+}
+
+@keyframes lm-actionsheet-slide {
+    from {
+        transform: translateY(100%);
+    }
+    to {
+        transform: translateY(0);
+    }
+}
+
+/* Group card (v5 .jactionsheet-group) */
+.lm-actionsheet-group {
+    box-sizing: border-box;
+    margin: 10px;
+    background-color: #fff;
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+/* Header card (v5 shipped .jactionsheet-title/-message styles) */
+.lm-actionsheet-title {
+    font-size: 1em;
+    font-weight: bold;
+    padding: 8px;
+    text-align: center;
+}
+
+.lm-actionsheet-message {
+    padding: 4px 8px 8px;
+    text-align: center;
+    color: #52525b;
+}
+
+/* Action rows (v5: 1.4em bold rows, hairline separators, blue text) */
+.lm-actionsheet-option {
+    display: block;
+    box-sizing: border-box;
+    width: 100%;
+    margin: 0;
+    border: 0;
+    border-top: 1px solid #ccc;
+    background-color: transparent;
+    padding: 8px 4px;
+    font-size: 1.4em;
+    font-weight: bold;
+    font-family: inherit;
+    text-align: center;
+    color: var(--active-color, #2563eb);
+    cursor: pointer;
+    outline: none;
+}
+
+.lm-actionsheet-option:first-child {
+    border-top: 0;
+}
+
+.lm-actionsheet-option:focus-visible {
+    background-color: #f4f4f5;
+}
+
+.lm-actionsheet-option[data-action='cancel'] {
+    color: red; /* v5 */
+}

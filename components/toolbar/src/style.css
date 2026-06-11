@@ -1,0 +1,161 @@
+/* <Toolbar /> — lm-toolbar-* convention, v5 visual parity; the picker
+   dropdown chrome comes from the composed Contextmenu
+   (contextmenu/style.css + modal/style.css) */
+.lm-toolbar {
+    display: flex;
+    margin: 0;
+    background: #f9f9f9;
+    width: 100%;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    box-shadow: 0 -1px 2px rgba(0, 0, 0, 0.1);
+    border-radius: 0;
+    z-index: 1;
+    justify-content: space-evenly;
+    align-items: center;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    padding: 8px 0 8px 0;
+    text-align: center;
+    box-sizing: border-box;
+}
+
+.lm-toolbar[data-visible="false"] {
+    display: none;
+}
+
+/* v5 set the per-item attribute but shipped no rule for it */
+.lm-toolbar-item[data-visible="false"],
+.lm-toolbar-picker[data-visible="false"] {
+    display: none;
+}
+
+.lm-toolbar-item[data-disabled="true"],
+.lm-toolbar-picker[data-disabled="true"] {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+.lm-toolbar-item a {
+    text-decoration: none;
+    color: var(--lm-secondary-color, #303030);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+    font-size: 0.9em;
+    cursor: pointer;
+}
+
+.lm-toolbar img {
+    width: 30px;
+}
+
+.lm-toolbar img[src=""] {
+    display: none;
+}
+
+/* Dividers: v5 only styled them inside the static bar — base rule added */
+.lm-toolbar-divisor {
+    width: 1px;
+    height: 24px;
+    background-color: #ccc;
+    margin: 0 5px;
+}
+
+/* Pickers: v5 shipped no styles for them at all */
+.lm-toolbar-picker-header {
+    cursor: pointer;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 0.9em;
+    white-space: nowrap;
+    color: var(--lm-secondary-color, #303030);
+}
+
+.lm-toolbar-picker-header:hover,
+.lm-toolbar-picker-header:focus {
+    background-color: var(--lm-background-color-highlight, #ebebeb);
+}
+
+.lm-toolbar[data-position="static"] {
+    position: unset;
+    justify-content: flex-start;
+    padding: 2px;
+}
+
+.lm-toolbar[data-position="static"] .lm-toolbar-item {
+    padding: 5px;
+}
+
+.lm-toolbar[data-position="static"] .lm-toolbar-item[data-selected="true"] {
+    background-color: var(--lm-background-color-highlight, #ebebeb);
+    border-radius: 4px;
+}
+
+.lm-toolbar[data-position="static"] .lm-toolbar-item i {
+    font-size: 18px;
+    width: 24px;
+    height: 24px;
+    line-height: 24px;
+    transform: rotate(0.03deg);
+}
+
+.lm-toolbar[data-position="static"] .lm-toolbar-divisor {
+    width: 1px;
+    height: 24px;
+    background-color: #ccc;
+    margin: 0 5px;
+}
+
+.lm-toolbar[data-position="left"] {
+    top: 0;
+    width: 60px;
+    height: 100%;
+    flex-direction: column;
+    justify-content: start;
+    padding: 8px 0 8px 0;
+    position: unset;
+}
+
+.lm-toolbar[data-position="left"] .lm-toolbar-divisor {
+    width: 24px;
+    height: 1px;
+    margin: 5px 0;
+}
+
+.lm-toolbar[data-position="left"] .lm-toolbar-item img {
+    margin-bottom: 30px;
+}
+
+.lm-toolbar[data-position="left"] .lm-toolbar-item {
+    display: block;
+    margin: 5px;
+}
+
+.lm-toolbar[data-position="left"] .lm-toolbar-item a {
+    display: block;
+}
+
+.lm-toolbar[data-position="left"] .lm-toolbar-item i {
+    width: 24px;
+    background-color: var(--lm-background-color, #fff);
+    padding: 8px;
+    border-radius: 30px;
+}
+
+.lm-toolbar[data-position="left"] .lm-toolbar-item i:empty {
+    display: none;
+}
+
+.lm-toolbar[data-position="left"] .lm-toolbar-item[data-selected="true"] i {
+    background-color: var(--lm-secondary-color, #303030);
+    color: #fff;
+}
+
+.lm-toolbar[data-position="left"] .lm-toolbar-item[data-gap="true"] {
+    flex: 1;
+}

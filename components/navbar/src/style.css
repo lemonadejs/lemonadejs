@@ -1,0 +1,41 @@
+/* <Navbar /> — lm-navbar-* convention. v5 geometry preserved: a 44px bar
+   pinned to the bottom of its positioned ancestor. The v5 stylesheet
+   targeted .title/.icon while the template rendered lm-title/lm-icon —
+   those rules never applied; this port applies their intent under the
+   correct names. */
+.lm-navbar-container {
+    padding: 0 8px;
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    height: 44px;
+    box-sizing: border-box;
+    vertical-align: middle;
+    display: flex;
+    flex-flow: row wrap;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.lm-navbar-container div {
+    line-height: 24px;
+    text-align: center;
+}
+
+.lm-navbar-title {
+    width: 90%;
+    position: absolute;
+    display: inline-block;
+}
+
+.lm-navbar-icon {
+    width: 24px;
+}
+
+.lm-navbar-icon a {
+    color: var(--lm-active-color, #2563eb);
+    text-decoration: none;
+    display: block;
+    white-space: nowrap;
+}

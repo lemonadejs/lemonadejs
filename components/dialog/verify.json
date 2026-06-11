@@ -1,0 +1,82 @@
+{
+    "component": "dialog",
+    "pass": true,
+    "checks": [
+        {
+            "name": "mounts with defaults",
+            "pass": true
+        },
+        {
+            "name": "prop title",
+            "pass": true
+        },
+        {
+            "name": "prop title (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop message",
+            "pass": true
+        },
+        {
+            "name": "prop message (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop type",
+            "pass": true
+        },
+        {
+            "name": "prop type (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop confirmlabel",
+            "pass": true
+        },
+        {
+            "name": "prop confirmlabel (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop cancellabel",
+            "pass": true
+        },
+        {
+            "name": "prop cancellabel (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop placeholder",
+            "pass": true
+        },
+        {
+            "name": "prop placeholder (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop cancel",
+            "pass": true
+        },
+        {
+            "name": "prop cancel (live state)",
+            "pass": true
+        },
+        {
+            "name": "event onconfirm",
+            "pass": true
+        },
+        {
+            "name": "event oncancel",
+            "pass": true
+        },
+        {
+            "name": "bind",
+            "pass": true
+        },
+        {
+            "name": "api via ref",
+            "pass": true
+        }
+    ]
+}

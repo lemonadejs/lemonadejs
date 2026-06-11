@@ -1,0 +1,25 @@
+{
+    "name": "toolbar",
+    "props": {
+        "options": {
+            "type": "array"
+        },
+        "position": {
+            "type": "string",
+            "default": ""
+        },
+        "visible": {
+            "type": "boolean",
+            "default": true
+        }
+    },
+    "bind": null,
+    "events": [
+        "onitemclick",
+        "onchange"
+    ],
+    "api": [
+        "open",
+        "close"
+    ]
+}

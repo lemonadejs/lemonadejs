@@ -1,0 +1,33 @@
+{
+    "name": "actionsheet",
+    "props": {
+        "actions": {
+            "type": "array"
+        },
+        "title": {
+            "type": "string",
+            "default": ""
+        },
+        "message": {
+            "type": "string",
+            "default": ""
+        },
+        "closable": {
+            "type": "boolean",
+            "default": false
+        }
+    },
+    "bind": {
+        "type": "boolean"
+    },
+    "events": [
+        "onopen",
+        "onclose"
+    ],
+    "api": [
+        "open",
+        "close",
+        "toggle",
+        "isOpened"
+    ]
+}

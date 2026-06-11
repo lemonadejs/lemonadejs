@@ -1,0 +1,29 @@
+{
+    "name": "quickmenu",
+    "props": {
+        "title": {
+            "type": "string",
+            "default": ""
+        },
+        "options": {
+            "type": "array"
+        },
+        "width": {
+            "type": "number",
+            "default": 200
+        },
+        "disabled": {
+            "type": "boolean",
+            "default": false
+        }
+    },
+    "bind": null,
+    "events": [
+        "onopen",
+        "onclose"
+    ],
+    "api": [
+        "open",
+        "close"
+    ]
+}

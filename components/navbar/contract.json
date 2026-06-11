@@ -1,0 +1,31 @@
+{
+    "name": "navbar",
+    "props": {
+        "title": {
+            "type": "string",
+            "default": ""
+        },
+        "left": {
+            "type": "string",
+            "default": ""
+        },
+        "right": {
+            "type": "string",
+            "default": ""
+        },
+        "prev": {
+            "type": "string",
+            "default": ""
+        },
+        "next": {
+            "type": "string",
+            "default": ""
+        }
+    },
+    "bind": null,
+    "events": [
+        "onprev",
+        "onnext"
+    ],
+    "api": []
+}

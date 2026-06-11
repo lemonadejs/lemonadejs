@@ -1,0 +1,88 @@
+/* <Dialog /> — lm-dialog-* only. Compose with ../modal/style.css. */
+
+/* The v5 jdialog box: a compact 280px centered card (Modal provides the
+   backdrop, centering and elevation) */
+.lm-dialog .lm-modal {
+    width: 280px;
+    min-width: initial;
+    min-height: initial;
+    max-width: calc(100vw - 20px);
+    border-radius: 10px;
+}
+
+.lm-dialog .lm-modal-content {
+    padding: 0;
+}
+
+.lm-dialog-header {
+    padding: 10px;
+    text-align: center;
+}
+
+.lm-dialog-title {
+    font-size: 1em;
+    font-weight: bold;
+    padding: 8px;
+}
+
+.lm-dialog-message {
+    padding: 4px;
+}
+
+/* One flex row: [prompt] | OK | Cancel — exactly the v5 footer */
+.lm-dialog-footer {
+    border-top: 1px solid var(--lm-border-color, #ccc);
+    display: flex;
+    flex-wrap: wrap;
+    align-content: stretch;
+    align-items: center;
+    text-align: center;
+}
+
+.lm-dialog-footer > div {
+    padding: 4px;
+    border-left: 1px solid var(--lm-border-color, #ccc);
+    text-align: center;
+    flex: 1;
+}
+
+.lm-dialog-footer > div:first-child {
+    border-left: 0;
+}
+
+.lm-dialog-footer input {
+    border: 0;
+    margin: 0;
+    background-color: transparent;
+    color: var(--lm-active-color, #1976d2);
+    width: 100%;
+    outline: none;
+    font: inherit;
+    box-sizing: border-box;
+}
+
+.lm-dialog-confirm,
+.lm-dialog-cancel {
+    cursor: pointer;
+}
+
+.lm-dialog-input {
+    color: inherit;
+}
+
+/* Alert variant: left-aligned text, right-justified compact buttons */
+.lm-dialog[data-type='alert'] .lm-dialog-title,
+.lm-dialog[data-type='alert'] .lm-dialog-message {
+    text-align: left;
+}
+
+.lm-dialog[data-type='alert'] .lm-dialog-footer {
+    border: unset;
+    justify-content: flex-end;
+}
+
+.lm-dialog[data-type='alert'] .lm-dialog-footer > div {
+    flex: unset;
+    margin-right: 10px;
+    border-left: 0;
+}

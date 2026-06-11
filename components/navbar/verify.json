@@ -1,0 +1,58 @@
+{
+    "component": "navbar",
+    "pass": true,
+    "checks": [
+        {
+            "name": "mounts with defaults",
+            "pass": true
+        },
+        {
+            "name": "prop title",
+            "pass": true
+        },
+        {
+            "name": "prop title (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop left",
+            "pass": true
+        },
+        {
+            "name": "prop left (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop right",
+            "pass": true
+        },
+        {
+            "name": "prop right (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop prev",
+            "pass": true
+        },
+        {
+            "name": "prop prev (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop next",
+            "pass": true
+        },
+        {
+            "name": "prop next (live state)",
+            "pass": true
+        },
+        {
+            "name": "event onprev",
+            "pass": true
+        },
+        {
+            "name": "event onnext",
+            "pass": true
+        }
+    ]
+}

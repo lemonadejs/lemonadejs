@@ -1,0 +1,34 @@
+{
+    "name": "@lemonadejs/list",
+    "version": "6.0.0-beta.0",
+    "description": "LemonadeJS list block — search, pagination, remote mode and MUI-style items, contract-verified, framework-agnostic.",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/lemonadejs/lemonadejs.git",
+        "directory": "components/list"
+    },
+    "main": "dist/index.js",
+    "module": "dist/index.mjs",
+    "types": "dist/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.mjs",
+            "require": "./dist/index.js"
+        },
+        "./style.css": "./dist/style.css",
+        "./contract.json": "./contract.json"
+    },
+    "sideEffects": [
+        "**/*.css"
+    ],
+    "files": [
+        "dist",
+        "contract.json",
+        "verify.json"
+    ],
+    "peerDependencies": {
+        "lemonadejs": "^6.0.0-beta.0"
+    }
+}

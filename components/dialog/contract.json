@@ -1,0 +1,44 @@
+{
+    "name": "dialog",
+    "props": {
+        "title": {
+            "type": "string",
+            "default": ""
+        },
+        "message": {
+            "type": "string",
+            "default": ""
+        },
+        "type": {
+            "type": "string",
+            "default": ""
+        },
+        "confirmlabel": {
+            "type": "string",
+            "default": "OK"
+        },
+        "cancellabel": {
+            "type": "string",
+            "default": "Cancel"
+        },
+        "placeholder": {
+            "type": "string",
+            "default": "Value"
+        },
+        "cancel": {
+            "type": "boolean",
+            "default": true
+        }
+    },
+    "bind": {
+        "type": "string"
+    },
+    "events": [
+        "onconfirm",
+        "oncancel"
+    ],
+    "api": [
+        "open",
+        "close"
+    ]
+}
