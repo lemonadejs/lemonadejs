@@ -1,0 +1,53 @@
+{
+    "name": "gantt",
+    "props": {
+        "data": {
+            "type": "array"
+        },
+        "start": {
+            "type": "string",
+            "default": ""
+        },
+        "end": {
+            "type": "string",
+            "default": ""
+        },
+        "header": {
+            "type": "boolean",
+            "default": true
+        },
+        "grid": {
+            "type": "boolean",
+            "default": true
+        },
+        "rowheight": {
+            "type": "number",
+            "default": 36
+        },
+        "today": {
+            "type": "boolean",
+            "default": true
+        },
+        "editable": {
+            "type": "boolean",
+            "default": false
+        },
+        "snap": {
+            "type": "number",
+            "default": 1
+        },
+        "table": {
+            "type": "string",
+            "default": ""
+        }
+    },
+    "bind": null,
+    "events": [
+        "onchange",
+        "onclick"
+    ],
+    "api": [
+        "getRange",
+        "setRange"
+    ]
+}

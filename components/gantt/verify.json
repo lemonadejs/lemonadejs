@@ -1,0 +1,102 @@
+{
+    "component": "gantt",
+    "pass": true,
+    "checks": [
+        {
+            "name": "mounts with defaults",
+            "pass": true
+        },
+        {
+            "name": "prop data",
+            "pass": true
+        },
+        {
+            "name": "prop data (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop start",
+            "pass": true
+        },
+        {
+            "name": "prop start (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop end",
+            "pass": true
+        },
+        {
+            "name": "prop end (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop header",
+            "pass": true
+        },
+        {
+            "name": "prop header (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop grid",
+            "pass": true
+        },
+        {
+            "name": "prop grid (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop rowheight",
+            "pass": true
+        },
+        {
+            "name": "prop rowheight (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop today",
+            "pass": true
+        },
+        {
+            "name": "prop today (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop editable",
+            "pass": true
+        },
+        {
+            "name": "prop editable (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop snap",
+            "pass": true
+        },
+        {
+            "name": "prop snap (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop table",
+            "pass": true
+        },
+        {
+            "name": "prop table (live state)",
+            "pass": true
+        },
+        {
+            "name": "event onchange",
+            "pass": true
+        },
+        {
+            "name": "event onclick",
+            "pass": true
+        },
+        {
+            "name": "api via ref",
+            "pass": true
+        }
+    ]
+}

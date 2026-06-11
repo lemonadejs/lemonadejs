@@ -1,0 +1,209 @@
+/* <Gantt /> — default styling, lm-gantt-* convention.
+   Everything horizontal is %-positioned: instances sharing a range
+   align across any containers (the table-row embedding story). */
+.lm-gantt {
+    font: 12.5px/1.4 system-ui, sans-serif;
+    color: #18181b;
+    position: relative;
+    width: 100%;
+}
+
+/* ---- timeline header */
+.lm-gantt-header {
+    position: relative;
+    user-select: none;
+    border-bottom: 1px solid #e4e4e7;
+}
+
+.lm-gantt-months {
+    position: relative;
+    height: 22px;
+}
+
+.lm-gantt-month {
+    position: absolute;
+    top: 0;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    padding-left: 8px;
+    box-sizing: border-box;
+    font-weight: 600;
+    font-size: 11.5px;
+    color: #3f3f46;
+    border-left: 1px solid #e4e4e7;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.lm-gantt-days {
+    position: relative;
+    height: 18px;
+}
+
+.lm-gantt-day {
+    position: absolute;
+    top: 0;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    color: #a1a1aa;
+    overflow: hidden;
+}
+
+.lm-gantt-day[data-weekend='true'] {
+    color: #d4d4d8;
+}
+
+/* ---- chart area */
+.lm-gantt-rows {
+    position: relative;
+    overflow: hidden;
+}
+
+.lm-gantt-grid {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+
+.lm-gantt-weekend {
+    position: absolute;
+    top: 0;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.03);
+}
+
+.lm-gantt-today {
+    position: absolute;
+    top: 0;
+    height: 100%;
+    width: 0;
+    border-left: 2px dashed #f59e0b;
+    pointer-events: none;
+    z-index: 2;
+}
+
+.lm-gantt-row {
+    position: relative;
+    box-sizing: border-box;
+}
+
+/* ---- the bars: the sexy part */
+.lm-gantt-bar {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    height: 62%;
+    min-width: 6px;
+    background: #2563eb;
+    background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0) 55%);
+    border-radius: 999px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+    box-sizing: border-box;
+    transition: box-shadow 0.15s ease, filter 0.15s ease;
+    z-index: 1;
+}
+
+.lm-gantt-bar:hover {
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.28);
+    filter: brightness(1.06);
+    z-index: 3;
+}
+
+.lm-gantt-editable {
+    cursor: grab;
+}
+
+/* edge affordances appear on hover of an editable bar */
+.lm-gantt-editable:hover::before,
+.lm-gantt-editable:hover::after {
+    content: '';
+    position: absolute;
+    top: 20%;
+    height: 60%;
+    width: 3px;
+    border-radius: 2px;
+    background: rgba(255, 255, 255, 0.75);
+    cursor: ew-resize;
+}
+
+.lm-gantt-editable:hover::before {
+    left: 3px;
+}
+
+.lm-gantt-editable:hover::after {
+    right: 3px;
+}
+
+.lm-gantt-dragging {
+    opacity: 0.85;
+    cursor: grabbing;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+    transition: none;
+    z-index: 4;
+}
+
+.lm-gantt-progress {
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: inherit;
+    pointer-events: none;
+}
+
+.lm-gantt-label {
+    position: relative;
+    padding: 0 10px;
+    color: #fff;
+    font-weight: 600;
+    font-size: 11.5px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    pointer-events: none;
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
+}
+
+/* ---- milestones: a diamond on the date */
+.lm-gantt-milestone {
+    position: absolute;
+    top: 50%;
+    width: 12px;
+    height: 12px;
+    background: #7c3aed;
+    transform: translate(-50%, -50%) rotate(45deg);
+    border-radius: 2px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+    transition: box-shadow 0.15s ease;
+    z-index: 1;
+}
+
+.lm-gantt-milestone:hover {
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.35);
+}
+
+/* During any drag: keep the grabbing cursor everywhere */
+.lm-gantt[data-editable='true']:active {
+    user-select: none;
+}
+
+/* ---- table mode: the injected lane cell */
+.lm-gantt-cell {
+    padding: 0 !important;
+}
+
+.lm-gantt-lane {
+    position: relative;
+    height: 100%;
+    min-height: 32px;
+    width: 100%;
+    overflow: hidden;
+}
