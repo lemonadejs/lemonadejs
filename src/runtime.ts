@@ -788,6 +788,7 @@ const bindForm = function (el: Element, state: StateImpl<unknown>, ctx: BuildCtx
         }
     };
     const binding = new Binding(write);
+    DEV && (binding.label = ctx.inst.name + '#bind:' + tag);
     ctx.bindings.push(binding);
     binding.run();
 
@@ -900,6 +901,7 @@ const applyProp = function (el: Element, prop: VProp, ctx: BuildCtx, svg: boolea
 
     if (dynamic) {
         const binding = new Binding(run);
+        DEV && (binding.label = ctx.inst.name + '#' + name);
         ctx.bindings.push(binding);
         binding.run();
     } else {
@@ -922,6 +924,7 @@ const buildSlot = function (vnode: VNode, ctx: BuildCtx): Node[] {
 
     if (isDynamic(holder.values[idx]) || ctx.live) {
         const binding = new Binding(apply);
+        DEV && (binding.label = inst.name + '#slot');
         ctx.bindings.push(binding);
         binding.run();
     } else {
@@ -1093,14 +1096,17 @@ export const mountComponent = function (
     const tools: Tools = {
         state: function <T>(initial: T, onchange?: (v: T, o: T) => void) {
             const s = new StateImpl<T>(initial, onchange);
+            DEV && (s.label = inst.name + '.s' + inst.states.length);
             inst.states.push(s as StateImpl<unknown>);
             return s;
         },
         computed: function <T>(fn: () => T) {
             const s = new StateImpl<T>(undefined as T);
+            DEV && (s.label = inst.name + '.computed' + inst.states.length);
             const binding = new Binding(function () {
                 s.value = fn();
             });
+            DEV && (binding.label = s.label);
             inst.states.push(s as StateImpl<unknown>);
             inst.bindings.push(binding);
             binding.run(); // initial value + dependency tracking
@@ -1113,6 +1119,7 @@ export const mountComponent = function (
                 ? (raw as StateImpl<T>)
                 : new StateImpl<T>(raw !== undefined ? (raw as T) : fallback);
             const bound = new BoundState<T>(target, p ? p.onchange : undefined);
+            DEV && (bound.label = inst.name + '.bind');
             inst.states.push(bound as unknown as StateImpl<unknown>);
             return bound;
         },

@@ -11,6 +11,9 @@
 
 import type { State } from './types';
 import { StateImpl } from './reactivity';
+import { DEV } from './env';
+
+let storeSeq = 0;
 
 export const store = function <T>(initial: T, storage?: string): State<T> {
     let value = initial;
@@ -33,5 +36,7 @@ export const store = function <T>(initial: T, storage?: string): State<T> {
               }
           }
         : undefined;
-    return new StateImpl<T>(value, persist);
+    const s = new StateImpl<T>(value, persist);
+    DEV && (s.label = 'store.' + (storage || storeSeq++));
+    return s;
 };

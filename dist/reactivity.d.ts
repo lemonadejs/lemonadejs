@@ -32,6 +32,10 @@ export declare const readCount: () => number;
 export declare class Binding {
     private fn;
     deps: Set<StateImpl<unknown>>;
+    /** Dev label for trace()/containment messages (component#slot, ...) */
+    label?: string;
+    /** A previous run threw — suppresses repeat logging until it recovers */
+    failed: boolean;
     constructor(fn: () => void);
     run(): void;
     dispose(): void;
@@ -48,6 +52,8 @@ export declare class Binding {
 export declare class StateImpl<T> {
     private onchange?;
     subs: Set<Binding>;
+    /** Dev label for trace() (component.prop, component.s0, store.key) */
+    label?: string;
     private v;
     constructor(initial: T, onchange?: ((value: T, oldValue: T) => void) | undefined);
     get value(): T;

@@ -7,6 +7,8 @@
  */
 
 import { fail } from './errors';
+import { DEV } from './env';
+import { isTracing, record, summarize } from './trace';
 
 let current: Binding | null = null;
 let depth = 0;
@@ -69,6 +71,7 @@ export const batch = function <R>(fn: () => R): R {
         forcing = forcing || wasForcing;
         try {
             for (const binding of queue) {
+                DEV && isTracing() && record!({ kind: 'run', binding: binding.label, cause: 'batch' });
                 binding.run();
             }
         } finally {
@@ -89,6 +92,10 @@ export const readCount = function (): number {
  */
 export class Binding {
     deps = new Set<StateImpl<unknown>>();
+    /** Dev label for trace()/containment messages (component#slot, ...) */
+    label?: string;
+    /** A previous run threw — suppresses repeat logging until it recovers */
+    failed = false;
 
     constructor(private fn: () => void) {}
 
@@ -102,6 +109,25 @@ export class Binding {
         current = this;
         try {
             this.fn();
+            this.failed = false; // a clean run re-arms error logging
+        } catch (e) {
+            // CONTAINMENT SEAM: one broken expression must not take down
+            // the whole update pass — siblings still run, the app stays
+            // consistent everywhere else. Engine diagnostics (LJS-xxx,
+            // e.g. the LJS-203 loop guard) PROPAGATE: they are the
+            // engine refusing to continue, not a user expression failing.
+            if (e instanceof Error && /^LJS-\d/.test(e.message)) {
+                throw e;
+            }
+            DEV && isTracing() && record!({ kind: 'error', binding: this.label, detail: String(e) });
+            if (!this.failed) {
+                this.failed = true; // log once until it recovers
+                console.error(
+                    'LJS-205: expression threw — contained, other updates continued' +
+                        (this.label ? ' — ' + this.label : ''),
+                    e
+                );
+            }
         } finally {
             current = previous;
         }
@@ -126,6 +152,8 @@ export class Binding {
  */
 export class StateImpl<T> {
     subs = new Set<Binding>();
+    /** Dev label for trace() (component.prop, component.s0, store.key) */
+    label?: string;
     private v: T;
 
     constructor(initial: T, private onchange?: (value: T, oldValue: T) => void) {
@@ -147,6 +175,15 @@ export class StateImpl<T> {
         }
         const old = this.v;
         this.v = next;
+        DEV &&
+            isTracing() &&
+            record!({
+                kind: 'write',
+                state: this.label,
+                by: current ? current.label : undefined,
+                old: summarize!(old),
+                value: summarize!(next),
+            });
         this.emit(old);
     }
 
@@ -157,6 +194,9 @@ export class StateImpl<T> {
     touch(): void {
         const previous = forcing;
         forcing = true;
+        DEV &&
+            isTracing() &&
+            record!({ kind: 'touch', state: this.label, by: current ? current.label : undefined });
         try {
             this.emit(this.v);
         } finally {
@@ -181,6 +221,7 @@ export class StateImpl<T> {
             try {
                 // Copy: a binding re-run mutates the subscription set
                 for (const binding of [...this.subs]) {
+                    DEV && isTracing() && record!({ kind: 'run', binding: binding.label, cause: this.label });
                     binding.run();
                 }
             } finally {

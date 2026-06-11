@@ -7,6 +7,7 @@
  */
 
 import { DEV } from './env';
+import { isTracing, record } from './trace';
 
 const MESSAGES: Record<string, string> = {
     'LJS-001': 'Component is not a function',
@@ -20,6 +21,7 @@ const MESSAGES: Record<string, string> = {
     'LJS-202': 'Slot holds a snapshot — wrap dynamic expressions: ${() => ...}',
     'LJS-203': 'Update loop detected — a state change keeps triggering itself',
     'LJS-204': 'Duplicate key in a list — keys must be unique for identity matching',
+    'LJS-205': 'A template expression threw — contained, other updates continued',
     'LJS-301': 'Event attributes require a function: onclick="${() => ...}"',
     'LJS-302': 'bind requires a state: bind="${state}"',
     'LJS-303': 'bind works on <input>, <textarea> and <select> — on components it is a prop',
@@ -74,6 +76,13 @@ const EXPLAIN: Record<string, string> = !DEV ? {} : {
         'keys: the first occurrence claims the entry, duplicates rebuild from scratch every update (correct ' +
         'but slow, and component state in duplicates is lost). Key by a stable id, or by the item object ' +
         'itself when items are stable references.',
+    'LJS-205':
+        'An exception was thrown inside a reactive expression (a ${() => ...} slot, an attribute binding, a ' +
+        'computed, or a subscribe callback). The engine CONTAINS it: the failing binding is skipped, every ' +
+        'other binding in the update pass still runs, and the error is logged once until the expression ' +
+        'recovers (a later update that does not throw re-arms logging). The DOM region owned by the failing ' +
+        'expression keeps its last good content. Fix the expression — guard reads that can be undefined. ' +
+        'Engine diagnostics (LJS-xxx failures like the LJS-203 loop guard) are NOT contained: they propagate.',
     'LJS-301':
         'Attributes starting with "on" are events and must receive a function: onclick="${() => count.value++}". ' +
         'String handlers are not supported (CSP-safe by design).',
@@ -122,6 +131,7 @@ export const fail = function (code: string, detail?: string): never {
 
 /** Print a development-mode warning with a stable code */
 export const warn = function (code: string, detail?: string): void {
+    DEV && isTracing() && record!({ kind: 'warn', code, detail });
     if (DEV && typeof console !== 'undefined') {
         console.warn(format(code, detail));
     }

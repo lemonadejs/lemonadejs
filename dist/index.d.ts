@@ -23,6 +23,8 @@ export { component, contract, use } from './contract';
 export type { ContractInput, ContractProps, ApiOf, Schema, PropSchema, ContractType } from './contract';
 export { createWebComponent } from './webcomponents';
 export { explain } from './errors';
+export { trace } from './trace';
+export type { TraceEvent } from './trace';
 /**
  * Build an inline style string from an object — typed keys, automatic
  * units, conditional values:
@@ -58,6 +60,7 @@ declare const lemonade: {
     use: <T = Record<string, unknown>>(c: Function) => T | null;
     createWebComponent: typeof createWebComponent;
     explain: (code: string) => string;
+    trace: (arg?: number | false) => import("./trace").TraceEvent[];
     version: number;
 };
 export default lemonade;

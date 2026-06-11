@@ -393,9 +393,33 @@ focusout must check:
 
 ## Debugging
 
-    import { inspect, explain, setComponents } from 'lemonadejs';
+    import { inspect, explain, trace } from 'lemonadejs';
     inspect(element)        // live component tree for any element: names, state values, children
     explain('LJS-202')      // long-form doc for any error code, offline
+
+trace() — causality as data (dev builds only; returns [] in production).
+The loop for "my update did not happen" / "what did this write trigger":
+
+    trace(50);              // arm: record the last 50 events
+    count.value++;          // act
+    trace();                // read, plain JSON:
+    // [{ at:0, kind:'write', state:'counter.s0', old:0, value:1 },
+    //  { at:1, kind:'run',   binding:'counter#slot', cause:'counter.s0' }]
+    trace(false);           // disarm and clear
+
+Event kinds: write (state, old, value, by = the binding that wrote, if
+any), touch, run (binding, cause), warn (LJS code + detail), error
+(contained LJS-205 exceptions). Labels are readable: component.s0 /
+component.propname / component.computed1 / store.key for states;
+component#slot / component#attr / component#bind:tag for bindings.
+Values in events are SUMMARIES ('Array(5)', 'Object', truncated strings)
+— tracing never retains references to your data.
+
+ERROR CONTAINMENT (LJS-205, dev AND production): an exception inside one
+reactive expression is contained — the failing binding keeps its last
+good DOM, every other binding in the pass still runs, and the error is
+logged once until the expression recovers. Engine diagnostics (LJS-xxx,
+e.g. the LJS-203 loop guard) are never contained — they propagate.
 
 Dev vs production is decided by the BUILD you load, not a runtime flag:
 dist/lemonade.dev.js (script tag) and the bundler "development" condition give
@@ -411,6 +435,7 @@ code eliminated — production pays zero.
     LJS-102 unclosed tag                         LJS-302 bind needs a state: bind="${state}"
     LJS-104 unknown component — setComponents    LJS-303 bind: input/textarea/select only
     LJS-105 ${} not allowed in that position     LJS-204 duplicate key in a list — keys are unique
+    LJS-205 expression threw — contained, rest of the update pass ran (see Debugging)
                                                  LJS-304 bind owns value — drop the value attribute
     LJS-401 prop violates its contract           LJS-305 callbacks are lowercase: onclick, onsave
     LJS-402 unknown prop (did-you-mean hint)     LJS-501 expose once — singletons, never touch

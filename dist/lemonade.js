@@ -34,6 +34,7 @@ __export(index_exports, {
   ref: () => ref,
   setComponents: () => setComponents,
   store: () => store,
+  trace: () => trace,
   unsafe: () => unsafe,
   use: () => use
 });
@@ -41,6 +42,55 @@ module.exports = __toCommonJS(index_exports);
 
 // src/env.ts
 var DEV = false ? true : true;
+
+// src/trace.ts
+var armed = 0;
+var seq = 0;
+var buffer = [];
+var isTracing = function() {
+  return armed > 0;
+};
+var record = !DEV ? null : function(e) {
+  const event = e;
+  event.at = seq++;
+  buffer.push(event);
+  if (buffer.length > armed) {
+    buffer.shift();
+  }
+};
+var summarize = !DEV ? null : function(v) {
+  if (v === null || v === void 0 || typeof v === "number" || typeof v === "boolean") {
+    return v;
+  }
+  if (typeof v === "string") {
+    return v.length > 40 ? v.slice(0, 40) + "\u2026" : v;
+  }
+  if (Array.isArray(v)) {
+    return "Array(" + v.length + ")";
+  }
+  if (typeof v === "function") {
+    return "fn";
+  }
+  return "Object";
+};
+var trace = function(arg) {
+  if (!DEV) {
+    return [];
+  }
+  if (arg === false) {
+    armed = 0;
+    seq = 0;
+    buffer = [];
+    return [];
+  }
+  if (typeof arg === "number") {
+    armed = Math.max(1, Math.floor(arg));
+    seq = 0;
+    buffer = [];
+    return [];
+  }
+  return buffer.slice();
+};
 
 // src/errors.ts
 var MESSAGES = {
@@ -55,6 +105,7 @@ var MESSAGES = {
   "LJS-202": "Slot holds a snapshot \u2014 wrap dynamic expressions: ${() => ...}",
   "LJS-203": "Update loop detected \u2014 a state change keeps triggering itself",
   "LJS-204": "Duplicate key in a list \u2014 keys must be unique for identity matching",
+  "LJS-205": "A template expression threw \u2014 contained, other updates continued",
   "LJS-301": 'Event attributes require a function: onclick="${() => ...}"',
   "LJS-302": 'bind requires a state: bind="${state}"',
   "LJS-303": "bind works on <input>, <textarea> and <select> \u2014 on components it is a prop",
@@ -76,6 +127,7 @@ var EXPLAIN = !DEV ? {} : {
   "LJS-202": "A template slot received a plain value (string/number/boolean) while states were being read. Plain values are one-time snapshots. If the slot should update when states change, wrap it: ${() => valid.value && html`...`}. If the snapshot is intentional, ignore this warning.",
   "LJS-203": "A state assignment inside a reactive expression triggered itself recursively more than 100 times. Do not assign to states inside template expressions; assign from event handlers or callbacks.",
   "LJS-204": 'Two items in the same list resolved to the same key="${...}" value. Identity matching needs unique keys: the first occurrence claims the entry, duplicates rebuild from scratch every update (correct but slow, and component state in duplicates is lost). Key by a stable id, or by the item object itself when items are stable references.',
+  "LJS-205": "An exception was thrown inside a reactive expression (a ${() => ...} slot, an attribute binding, a computed, or a subscribe callback). The engine CONTAINS it: the failing binding is skipped, every other binding in the update pass still runs, and the error is logged once until the expression recovers (a later update that does not throw re-arms logging). The DOM region owned by the failing expression keeps its last good content. Fix the expression \u2014 guard reads that can be undefined. Engine diagnostics (LJS-xxx failures like the LJS-203 loop guard) are NOT contained: they propagate.",
   "LJS-301": 'Attributes starting with "on" are events and must receive a function: onclick="${() => count.value++}". String handlers are not supported (CSP-safe by design).',
   "LJS-302": 'The bind directive needs the state object itself: bind="${name}" (not bind="name", which is a string, and not bind="${name.value}", which is a one-time snapshot). Create it with const name = state("").',
   "LJS-303": 'On native elements, bind is engine sugar and only <input>, <textarea> and <select> have a defined wiring. On components, bind is a plain prop: implement it with the bind() tool \u2014 const value = bind(props, fallback) \u2014 and pass <${Comp} bind="${state}" />.',
@@ -93,6 +145,7 @@ var fail = function(code, detail) {
   throw new Error(format(code, detail));
 };
 var warn = function(code, detail) {
+  DEV && isTracing() && record({ kind: "warn", code, detail });
   if (DEV && typeof console !== "undefined") {
     console.warn(format(code, detail));
   }
@@ -436,6 +489,7 @@ var batch = function(fn) {
     forcing = forcing || wasForcing;
     try {
       for (const binding of queue) {
+        DEV && isTracing() && record({ kind: "run", binding: binding.label, cause: "batch" });
         binding.run();
       }
     } finally {
@@ -451,6 +505,8 @@ var Binding = class {
   constructor(fn) {
     this.fn = fn;
     this.deps = /* @__PURE__ */ new Set();
+    /** A previous run threw — suppresses repeat logging until it recovers */
+    this.failed = false;
   }
   run() {
     for (const dep of this.deps) {
@@ -461,6 +517,19 @@ var Binding = class {
     current = this;
     try {
       this.fn();
+      this.failed = false;
+    } catch (e) {
+      if (e instanceof Error && /^LJS-\d/.test(e.message)) {
+        throw e;
+      }
+      DEV && isTracing() && record({ kind: "error", binding: this.label, detail: String(e) });
+      if (!this.failed) {
+        this.failed = true;
+        console.error(
+          "LJS-205: expression threw \u2014 contained, other updates continued" + (this.label ? " \u2014 " + this.label : ""),
+          e
+        );
+      }
     } finally {
       current = previous;
     }
@@ -492,6 +561,13 @@ var StateImpl = class {
     }
     const old = this.v;
     this.v = next;
+    DEV && isTracing() && record({
+      kind: "write",
+      state: this.label,
+      by: current ? current.label : void 0,
+      old: summarize(old),
+      value: summarize(next)
+    });
     this.emit(old);
   }
   /**
@@ -501,6 +577,7 @@ var StateImpl = class {
   touch() {
     const previous = forcing;
     forcing = true;
+    DEV && isTracing() && record({ kind: "touch", state: this.label, by: current ? current.label : void 0 });
     try {
       this.emit(this.v);
     } finally {
@@ -522,6 +599,7 @@ var StateImpl = class {
       depth++;
       try {
         for (const binding of [...this.subs]) {
+          DEV && isTracing() && record({ kind: "run", binding: binding.label, cause: this.label });
           binding.run();
         }
       } finally {
@@ -725,7 +803,9 @@ var component = function(name, contractDef, fn) {
       if (DEV && v !== void 0 && !matches(v, p.type)) {
         warn("LJS-401", key + " expects " + p.type + ", got " + typeof v + " in <" + name + ">");
       }
-      final[key] = new StateImpl(v);
+      const s = new StateImpl(v);
+      DEV && (s.label = name + "." + key);
+      final[key] = s;
     }
     DEV && warnUnknownProps(incoming, schema);
     if (schema.bind && incoming.bind === void 0 && schema.bind.default !== void 0) {
@@ -1336,6 +1416,7 @@ var bindForm = function(el, state, ctx) {
     }
   };
   const binding = new Binding(write);
+  DEV && (binding.label = ctx.inst.name + "#bind:" + tag);
   ctx.bindings.push(binding);
   binding.run();
   const isNumeric = tag === "input" && (input.type === "number" || input.type === "range");
@@ -1422,6 +1503,7 @@ var applyProp = function(el, prop, ctx, svg) {
   });
   if (dynamic) {
     const binding = new Binding(run);
+    DEV && (binding.label = ctx.inst.name + "#" + name);
     ctx.bindings.push(binding);
     binding.run();
   } else {
@@ -1440,6 +1522,7 @@ var buildSlot = function(vnode, ctx) {
   };
   if (isDynamic(holder.values[idx]) || ctx.live) {
     const binding = new Binding(apply);
+    DEV && (binding.label = inst.name + "#slot");
     ctx.bindings.push(binding);
     binding.run();
   } else {
@@ -1577,14 +1660,17 @@ var mountComponent = function(component2, props, parent) {
   const tools = {
     state: function(initial, onchange) {
       const s = new StateImpl(initial, onchange);
+      DEV && (s.label = inst.name + ".s" + inst.states.length);
       inst.states.push(s);
       return s;
     },
     computed: function(fn) {
       const s = new StateImpl(void 0);
+      DEV && (s.label = inst.name + ".computed" + inst.states.length);
       const binding = new Binding(function() {
         s.value = fn();
       });
+      DEV && (binding.label = s.label);
       inst.states.push(s);
       inst.bindings.push(binding);
       binding.run();
@@ -1594,6 +1680,7 @@ var mountComponent = function(component2, props, parent) {
       const raw = p ? p.bind : void 0;
       const target = isState(raw) ? raw : new StateImpl(raw !== void 0 ? raw : fallback);
       const bound = new BoundState(target, p ? p.onchange : void 0);
+      DEV && (bound.label = inst.name + ".bind");
       inst.states.push(bound);
       return bound;
     },
@@ -1786,6 +1873,7 @@ var inspect = function(target) {
 };
 
 // src/store.ts
+var storeSeq = 0;
 var store = function(initial, storage) {
   let value = initial;
   if (storage && typeof localStorage !== "undefined") {
@@ -1803,7 +1891,9 @@ var store = function(initial, storage) {
     } catch {
     }
   } : void 0;
-  return new StateImpl(value, persist);
+  const s = new StateImpl(value, persist);
+  DEV && (s.label = "store." + (storage || storeSeq++));
+  return s;
 };
 
 // src/webcomponents.ts
@@ -1996,6 +2086,7 @@ var lemonade = {
   use,
   createWebComponent,
   explain,
+  trace,
   version: 6
 };
 var index_default = lemonade;

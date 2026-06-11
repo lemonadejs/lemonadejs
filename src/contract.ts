@@ -310,7 +310,9 @@ export const component = function <C extends Record<string, unknown>, P = Contra
                 warn('LJS-401', key + ' expects ' + p.type + ', got ' + typeof v + ' in <' + name + '>');
             }
             // Published props are live by construction
-            final[key] = new StateImpl(v);
+            const s = new StateImpl(v);
+            DEV && (s.label = name + '.' + key);
+            final[key] = s;
         }
 
         DEV && warnUnknownProps!(incoming, schema);

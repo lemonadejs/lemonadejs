@@ -22,6 +22,7 @@ import { store } from './store';
 import { batch } from './reactivity';
 import { component, contract, use } from './contract';
 import { createWebComponent } from './webcomponents';
+import { trace } from './trace';
 
 export type { Bindable, Bound, Component, Handle, Props, Ref, SlotValue, State, Template, Tools, View } from './types';
 export { isDisposing, mount, inspect, ref, setComponents, unsafe } from './runtime';
@@ -31,6 +32,8 @@ export { component, contract, use } from './contract';
 export type { ContractInput, ContractProps, ApiOf, Schema, PropSchema, ContractType } from './contract';
 export { createWebComponent } from './webcomponents';
 export { explain } from './errors';
+export { trace } from './trace';
+export type { TraceEvent } from './trace';
 
 /** Properties whose numeric values are unitless (everything else gets px) */
 const UNITLESS =
@@ -94,6 +97,7 @@ const lemonade = {
     use,
     createWebComponent,
     explain,
+    trace,
     version: 6,
 };
 
