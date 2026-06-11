@@ -1,94 +1,95 @@
 {
-    "name": "lemonadejs",
-    "title": "Agnostic micro reactive JavaScript library with two-way data binding.",
-    "description": "Lemonade is a lightweight, micro reactive agnostic JavaScript library to create quick and reusable reactive JS components, with no dependencies.",
-    "author": {
-        "name": "Contact <contact@jspreadsheet.com>",
-        "url": "https://lemonadejs.com"
-    },
-    "keywords": [
-        "reactive",
-        "two-way binding",
-        "two-way data binding",
-        "javascript two-way data binding",
-        "reactive micro library",
-        "reactive javascript library",
-        "hooks",
-        "javascript",
-        "micro library",
-        "js",
-        "library"
-    ],
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/lemonadejs/lemonadejs.git"
-    },
-    "scripts": {
-        "test": "vitest run",
-        "test:watch": "vitest",
-        "dev": "node scripts/dev.js",
-        "probe": "node scripts/probe.mjs",
-        "registry": "node scripts/registry.js",
-        "build": "node build.js",
-        "build:components": "node scripts/registry.js && node scripts/build-components.js && node scripts/docs.js",
-        "docs": "node scripts/docs.js",
-        "typecheck": "tsc --noEmit"
-    },
-    "devDependencies": {
-        "@types/react": "^18.3.31",
-        "@types/react-dom": "^18.3.7",
-        "esbuild": "^0.24.0",
-        "jsdom": "^22.0.0",
-        "react": "^18.3.1",
-        "react-dom": "^18.3.1",
-        "typescript": "^5.6.0",
-        "vitest": "^2.1.0"
-    },
-    "peerDependencies": {
-        "react": ">=17"
-    },
-    "peerDependenciesMeta": {
-        "react": {
-            "optional": true
-        }
-    },
-    "main": "dist/lemonade.js",
-    "types": "dist/index.d.ts",
-    "unpkg": "dist/lemonade.min.js",
-    "jsdelivr": "dist/lemonade.min.js",
-    "files": [
-        "dist",
-        "llms.txt"
-    ],
-    "exports": {
-        ".": {
-            "types": "./dist/index.d.ts",
-            "import": {
-                "development": "./dist/lemonade.mjs",
-                "default": "./dist/lemonade.prod.mjs"
-            },
-            "require": {
-                "development": "./dist/lemonade.js",
-                "default": "./dist/lemonade.prod.js"
-            },
-            "default": "./dist/lemonade.prod.mjs"
-        },
-        "./test": {
-            "types": "./dist/test.d.ts",
-            "import": "./dist/test.mjs",
-            "default": "./dist/test.js"
-        },
-        "./forms": {
-            "types": "./dist/forms.d.ts",
-            "import": "./dist/forms.mjs",
-            "default": "./dist/forms.js"
-        },
-        "./react": {
-            "types": "./dist/react.d.ts",
-            "import": "./dist/react.mjs",
-            "default": "./dist/react.js"
-        },
-        "./llms.txt": "./llms.txt"
-    },
-    "version": "6.0.0-beta.0"
+ "name": "lemonadejs",
+ "title": "Agnostic micro reactive JavaScript library with two-way data binding.",
+ "description": "Lemonade is a lightweight, micro reactive agnostic JavaScript library to create quick and reusable reactive JS components, with no dependencies.",
+ "author": {
+  "name": "Contact <contact@jspreadsheet.com>",
+  "url": "https://lemonadejs.com"
+ },
+ "keywords": [
+  "reactive",
+  "two-way binding",
+  "two-way data binding",
+  "javascript two-way data binding",
+  "reactive micro library",
+  "reactive javascript library",
+  "hooks",
+  "javascript",
+  "micro library",
+  "js",
+  "library"
+ ],
+ "repository": {
+  "type": "git",
+  "url": "https://github.com/lemonadejs/lemonadejs.git"
+ },
+ "scripts": {
+  "test": "vitest run",
+  "test:watch": "vitest",
+  "dev": "node scripts/dev.js",
+  "probe": "node scripts/probe.mjs",
+  "registry": "node scripts/registry.js",
+  "build": "node build.js",
+  "build:components": "node scripts/registry.js && node scripts/build-components.js && node scripts/docs.js",
+  "docs": "node scripts/docs.js",
+  "typecheck": "tsc --noEmit",
+  "probe:demos": "node scripts/probe-demos.mjs"
+ },
+ "devDependencies": {
+  "@types/react": "^18.3.31",
+  "@types/react-dom": "^18.3.7",
+  "esbuild": "^0.24.0",
+  "jsdom": "^22.0.0",
+  "react": "^18.3.1",
+  "react-dom": "^18.3.1",
+  "typescript": "^5.6.0",
+  "vitest": "^2.1.0"
+ },
+ "peerDependencies": {
+  "react": ">=17"
+ },
+ "peerDependenciesMeta": {
+  "react": {
+   "optional": true
+  }
+ },
+ "main": "dist/lemonade.js",
+ "types": "dist/index.d.ts",
+ "unpkg": "dist/lemonade.min.js",
+ "jsdelivr": "dist/lemonade.min.js",
+ "files": [
+  "dist",
+  "llms.txt"
+ ],
+ "exports": {
+  ".": {
+   "types": "./dist/index.d.ts",
+   "import": {
+    "development": "./dist/lemonade.mjs",
+    "default": "./dist/lemonade.prod.mjs"
+   },
+   "require": {
+    "development": "./dist/lemonade.js",
+    "default": "./dist/lemonade.prod.js"
+   },
+   "default": "./dist/lemonade.prod.mjs"
+  },
+  "./test": {
+   "types": "./dist/test.d.ts",
+   "import": "./dist/test.mjs",
+   "default": "./dist/test.js"
+  },
+  "./forms": {
+   "types": "./dist/forms.d.ts",
+   "import": "./dist/forms.mjs",
+   "default": "./dist/forms.js"
+  },
+  "./react": {
+   "types": "./dist/react.d.ts",
+   "import": "./dist/react.mjs",
+   "default": "./dist/react.js"
+  },
+  "./llms.txt": "./llms.txt"
+ },
+ "version": "6.0.0-beta.0"
 }
