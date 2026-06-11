@@ -1,0 +1,167 @@
+/* <Speeddial /> — default styling, lm-speeddial-* convention */
+.lm-speeddial {
+    position: relative;
+    display: inline-flex;
+    z-index: 10;
+}
+
+/* position="fixed": bottom-right of the viewport */
+.lm-speeddial.lm-speeddial-fixed {
+    position: fixed;
+    right: 24px;
+    bottom: 24px;
+}
+
+/* ---- the FAB */
+.lm-speeddial .lm-speeddial-fab {
+    width: 56px;
+    height: 56px;
+    border: none;
+    border-radius: 50%;
+    background: #2563eb;
+    color: #fff;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow:
+        0 3px 5px -1px rgba(0, 0, 0, 0.2),
+        0 6px 10px 0 rgba(0, 0, 0, 0.14);
+    transition: background 0.15s ease;
+}
+
+.lm-speeddial .lm-speeddial-fab:hover {
+    background: #1d4ed8;
+}
+
+.lm-speeddial .lm-speeddial-fab:focus-visible {
+    outline: 2px solid #2563eb;
+    outline-offset: 2px;
+}
+
+.lm-speeddial .lm-speeddial-icon {
+    font-size: 24px;
+    line-height: 1;
+    transition: transform 0.2s ease;
+}
+
+/* open: the FAB icon rotates 45° (a '+' becomes an '×') */
+.lm-speeddial.lm-speeddial-open .lm-speeddial-icon {
+    transform: rotate(45deg);
+}
+
+.lm-speeddial.lm-speeddial-disabled .lm-speeddial-fab {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+/* ---- the fan: absolute beside the FAB, direction-aware */
+.lm-speeddial .lm-speeddial-actions {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    pointer-events: none;
+    /* default direction: up */
+    bottom: calc(100% + 12px);
+    left: 50%;
+    transform: translateX(-50%);
+    flex-direction: column-reverse;
+}
+
+.lm-speeddial.lm-speeddial-open .lm-speeddial-actions {
+    pointer-events: auto;
+}
+
+.lm-speeddial[data-direction='down'] .lm-speeddial-actions {
+    bottom: auto;
+    top: calc(100% + 12px);
+    flex-direction: column;
+}
+
+.lm-speeddial[data-direction='left'] .lm-speeddial-actions,
+.lm-speeddial[data-direction='right'] .lm-speeddial-actions {
+    bottom: auto;
+    left: auto;
+    transform: translateY(-50%);
+    top: 50%;
+}
+
+.lm-speeddial[data-direction='left'] .lm-speeddial-actions {
+    right: calc(100% + 12px);
+    flex-direction: row-reverse;
+}
+
+.lm-speeddial[data-direction='right'] .lm-speeddial-actions {
+    left: calc(100% + 12px);
+    flex-direction: row;
+}
+
+/* ---- the small action buttons: hidden until open, staggered by the
+   per-item inline transition-delay (index * 30ms) */
+.lm-speeddial .lm-speeddial-action {
+    position: relative;
+    width: 40px;
+    height: 40px;
+    border: none;
+    border-radius: 50%;
+    background: #fff;
+    color: #3f3f46;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow:
+        0 2px 4px -1px rgba(0, 0, 0, 0.2),
+        0 4px 6px 0 rgba(0, 0, 0, 0.14);
+    opacity: 0;
+    transform: scale(0.4);
+    transition:
+        opacity 0.2s ease,
+        transform 0.2s ease;
+}
+
+.lm-speeddial .lm-speeddial-action:hover {
+    background: #f4f4f5;
+}
+
+.lm-speeddial.lm-speeddial-open .lm-speeddial-action {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.lm-speeddial .lm-speeddial-action-icon {
+    font-size: 20px;
+    line-height: 1;
+}
+
+/* ---- side tooltip: the action's name, plain CSS, visible while open */
+.lm-speeddial .lm-speeddial-action-label {
+    position: absolute;
+    right: calc(100% + 10px);
+    top: 50%;
+    transform: translateY(-50%);
+    background: #3f3f46;
+    color: #fff;
+    font: 12px/1 system-ui, sans-serif;
+    padding: 5px 8px;
+    border-radius: 4px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+}
+
+.lm-speeddial.lm-speeddial-open .lm-speeddial-action-label {
+    opacity: 1;
+}
+
+/* horizontal fans: the label sits above the button instead of beside it */
+.lm-speeddial[data-direction='left'] .lm-speeddial-action-label,
+.lm-speeddial[data-direction='right'] .lm-speeddial-action-label {
+    right: auto;
+    top: auto;
+    bottom: calc(100% + 10px);
+    left: 50%;
+    transform: translateX(-50%);
+}

@@ -47,6 +47,7 @@
 }
 
 .lm-datagrid-th {
+    position: relative; /* anchors the resize handle */
     display: flex;
     align-items: center;
     gap: 4px;
@@ -56,6 +57,29 @@
     color: #3f3f46;
     white-space: nowrap;
     overflow: hidden;
+}
+
+/* Column resize: a 6px hit zone on the th right edge */
+.lm-datagrid-resize {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 6px;
+    height: 100%;
+    cursor: col-resize;
+    user-select: none;
+}
+
+.lm-datagrid-resize:hover {
+    background: rgba(37, 99, 235, 0.35);
+}
+
+/* While a resize drag is in flight: the cursor stays col-resize and
+   text selection is suspended everywhere in the grid */
+.lm-datagrid-resizing,
+.lm-datagrid-resizing * {
+    cursor: col-resize !important;
+    user-select: none;
 }
 
 .lm-datagrid-th[data-sortable='true'] {

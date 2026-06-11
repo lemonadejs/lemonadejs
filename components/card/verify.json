@@ -1,0 +1,86 @@
+{
+    "component": "card",
+    "pass": true,
+    "checks": [
+        {
+            "name": "mounts with defaults",
+            "pass": true
+        },
+        {
+            "name": "prop title",
+            "pass": true
+        },
+        {
+            "name": "prop title (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop subtitle",
+            "pass": true
+        },
+        {
+            "name": "prop subtitle (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop image",
+            "pass": true
+        },
+        {
+            "name": "prop image (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop imageheight",
+            "pass": true
+        },
+        {
+            "name": "prop imageheight (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop avatar",
+            "pass": true
+        },
+        {
+            "name": "prop avatar (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop content",
+            "pass": true
+        },
+        {
+            "name": "prop content (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop actions",
+            "pass": true
+        },
+        {
+            "name": "prop actions (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop variant",
+            "pass": true
+        },
+        {
+            "name": "prop variant (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop clickable",
+            "pass": true
+        },
+        {
+            "name": "prop clickable (live state)",
+            "pass": true
+        },
+        {
+            "name": "event onclick",
+            "pass": true
+        }
+    ]
+}

@@ -1,0 +1,121 @@
+/* <Transferlist /> — default styling, lm-transferlist-* convention */
+.lm-transferlist {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    font: 14px/1.4 system-ui, sans-serif;
+    color: #1e293b;
+}
+
+.lm-transferlist .lm-transferlist-list {
+    display: flex;
+    flex-direction: column;
+    width: 220px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background: #fff;
+    overflow: hidden;
+}
+
+.lm-transferlist .lm-transferlist-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 10px 12px;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.lm-transferlist .lm-transferlist-title {
+    font-weight: 600;
+}
+
+.lm-transferlist .lm-transferlist-count {
+    font-size: 12px;
+    color: #64748b;
+    white-space: nowrap;
+}
+
+.lm-transferlist .lm-transferlist-search {
+    margin: 8px 12px 2px;
+    padding: 6px 8px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    font: inherit;
+}
+
+.lm-transferlist .lm-transferlist-search:focus-visible {
+    outline: 2px solid #2563eb;
+    outline-offset: 1px;
+}
+
+.lm-transferlist .lm-transferlist-items {
+    overflow-y: auto;
+    padding: 6px 0;
+}
+
+.lm-transferlist .lm-transferlist-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.lm-transferlist .lm-transferlist-item:hover {
+    background: #f1f5f9;
+}
+
+.lm-transferlist .lm-transferlist-item[data-disabled='true'] {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.lm-transferlist .lm-transferlist-checkbox {
+    accent-color: #2563eb;
+}
+
+.lm-transferlist .lm-transferlist-label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.lm-transferlist .lm-transferlist-empty {
+    padding: 16px 12px;
+    color: #94a3b8;
+    font-size: 13px;
+    text-align: center;
+}
+
+.lm-transferlist .lm-transferlist-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.lm-transferlist .lm-transferlist-button {
+    width: 34px;
+    height: 28px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    background: #fff;
+    color: #334155;
+    font: 14px/1 system-ui, sans-serif;
+    cursor: pointer;
+}
+
+.lm-transferlist .lm-transferlist-button:hover:not(:disabled) {
+    background: #f1f5f9;
+}
+
+.lm-transferlist .lm-transferlist-button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.lm-transferlist .lm-transferlist-button:focus-visible {
+    outline: 2px solid #2563eb;
+    outline-offset: 1px;
+}

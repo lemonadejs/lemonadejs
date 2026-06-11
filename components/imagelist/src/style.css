@@ -1,0 +1,58 @@
+/* <ImageList /> — default styling, lm-imagelist-* convention.
+   The layout itself (grid/columns/gaps/spans) is inline — this file only
+   covers the cosmetic surface: tiles, images, the overlay bar. */
+.lm-imagelist {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.lm-imagelist .lm-imagelist-item {
+    position: relative;
+    overflow: hidden;
+    border-radius: 4px;
+    background: #f1f5f9;
+}
+
+.lm-imagelist .lm-imagelist-item[data-clickable='true'] {
+    cursor: pointer;
+}
+
+.lm-imagelist .lm-imagelist-img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Natural image heights when the rows are not fixed */
+.lm-imagelist[data-variant='masonry'] .lm-imagelist-img {
+    height: auto;
+}
+
+.lm-imagelist .lm-imagelist-bar {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 8px 12px;
+    background: rgba(0, 0, 0, 0.55);
+    color: #fff;
+    font-family: system-ui, sans-serif;
+}
+
+.lm-imagelist .lm-imagelist-title {
+    font-size: 14px;
+    line-height: 1.4;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.lm-imagelist .lm-imagelist-subtitle {
+    font-size: 12px;
+    line-height: 1.4;
+    opacity: 0.75;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}

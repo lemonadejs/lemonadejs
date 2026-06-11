@@ -1,0 +1,33 @@
+{
+    "name": "backdrop",
+    "props": {
+        "blur": {
+            "type": "boolean",
+            "default": false
+        },
+        "opacity": {
+            "type": "number",
+            "default": 0
+        },
+        "zindex": {
+            "type": "number",
+            "default": 0
+        },
+        "closable": {
+            "type": "boolean",
+            "default": false
+        }
+    },
+    "bind": {
+        "type": "boolean"
+    },
+    "events": [
+        "onclick",
+        "onclose"
+    ],
+    "api": [
+        "open",
+        "close",
+        "toggle"
+    ]
+}

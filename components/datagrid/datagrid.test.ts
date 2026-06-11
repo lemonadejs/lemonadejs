@@ -4,7 +4,7 @@
  * virtualization is fully testable: row counts, window shifts, canvas
  * height, plus sort/search/select/edit/touch() semantics.
  */
-import { describe, it, expect, afterEach } from 'vitest';
+import { describe, it, expect, afterEach, vi } from 'vitest';
 import { html, store } from 'lemonadejs';
 import { render as t, verify } from 'lemonadejs/test';
 import Datagrid, { type Column } from '@lemonadejs/datagrid';
@@ -15,6 +15,7 @@ type Api = {
     sort(name: string, dir?: 1 | -1 | null): void;
     page(p: number): void;
     refresh(): void;
+    setColumn(name: string, options: { hidden?: boolean; width?: string; title?: string }): void;
 };
 
 let handle: ReturnType<typeof t> | null = null;
@@ -304,5 +305,164 @@ describe('components/datagrid — the virtualized grid', () => {
         api.setSearch('zzz-nothing');
         expect(renderedRows()).toHaveLength(0);
         expect(handle!.query('.lm-datagrid-empty')).not.toBeNull();
+    });
+});
+
+// ---- column resize + customization -------------------------------------
+
+/** Fresh columns per test: setColumn MUTATES the column objects */
+const freshColumns = (): Column[] => [
+    { name: 'id', title: 'ID', type: 'number', width: '70px' },
+    { name: 'name', title: 'Name' },
+    { name: 'amount', title: 'Amount', type: 'number', editable: true },
+];
+
+const headerEl = () => handle!.query('.lm-datagrid-header') as HTMLElement;
+/** Read the grid template off the RAW style attribute — jsdom's CSSOM
+ *  does not parse grid properties, but the attribute keeps the truth */
+const templateOf = (el: Element) =>
+    ((el.getAttribute('style') || '').match(/grid-template-columns:\s*([^;]+)/) || [])[1]?.trim();
+const thAt = (i: number) => handle!.queryAll('.lm-datagrid-th')[i];
+const gripAt = (i: number) => thAt(i).querySelector('.lm-datagrid-resize') as HTMLElement;
+const mouse = (type: string, x: number) => new MouseEvent(type, { bubbles: true, clientX: x, clientY: 5 });
+/** jsdom has no layout: stub the th width where the px math needs it */
+const setRect = (el: HTMLElement, width: number) => {
+    el.getBoundingClientRect = () =>
+        ({ top: 0, left: 0, width, height: 36, right: width, bottom: 36, x: 0, y: 0, toJSON: () => '' }) as DOMRect;
+};
+
+describe('components/datagrid — column resize + customization', () => {
+    it('RESIZE: dragging the handle resizes live (px) and fires oncolumnresize on release', () => {
+        const resizes: [string, number][] = [];
+        open({ oncolumnresize: (n: string, w: number) => resizes.push([n, w]) });
+        expect(templateOf(headerEl())).toBe('70px 1fr 1fr 1fr');
+
+        setRect(thAt(1), 150);
+        gripAt(1).dispatchEvent(mouse('mousedown', 200));
+        document.dispatchEvent(mouse('mousemove', 240)); // +40px
+        expect(templateOf(headerEl())).toBe('70px 190px 1fr 1fr'); // px from now on
+        expect(templateOf(renderedRows()[0])).toBe('70px 190px 1fr 1fr'); // body follows LIVE
+        expect(resizes).toEqual([]); // release reports, moves do not
+
+        document.dispatchEvent(mouse('mouseup', 240));
+        expect(resizes).toEqual([['name', 190]]);
+        expect(templateOf(headerEl())).toBe('70px 190px 1fr 1fr'); // sticks after release
+    });
+
+    it('RESIZE: the width clamps at the 60px minimum', () => {
+        const resizes: [string, number][] = [];
+        open({ oncolumnresize: (n: string, w: number) => resizes.push([n, w]) });
+        setRect(thAt(1), 150);
+        gripAt(1).dispatchEvent(mouse('mousedown', 200));
+        document.dispatchEvent(mouse('mousemove', -400)); // way past zero
+        expect(templateOf(headerEl())).toBe('70px 60px 1fr 1fr');
+        document.dispatchEvent(mouse('mouseup', -400));
+        expect(resizes).toEqual([['name', 60]]);
+    });
+
+    it('RESIZE: mousedown/click on the handle never reaches the sort handler', () => {
+        const sorts: unknown[][] = [];
+        open({ onsort: (...args: unknown[]) => sorts.push(args) });
+        setRect(thAt(2), 120);
+        gripAt(2).dispatchEvent(mouse('mousedown', 100));
+        document.dispatchEvent(mouse('mouseup', 100));
+        gripAt(2).click(); // the post-drag click a real browser synthesizes
+        expect(sorts).toEqual([]);
+        expect(firstName()).toBe('Person 1'); // order untouched
+    });
+
+    it('RESIZE: gestures never accumulate document listeners — even unmounting mid-drag', () => {
+        const adds = vi.spyOn(document, 'addEventListener');
+        const removes = vi.spyOn(document, 'removeEventListener');
+        const drag = (spy: { mock: { calls: unknown[][] } }) =>
+            spy.mock.calls.filter(([t]) => t === 'mousemove' || t === 'mouseup').length;
+        try {
+            open();
+            setRect(thAt(1), 150);
+            gripAt(1).dispatchEvent(mouse('mousedown', 100));
+            document.dispatchEvent(mouse('mousemove', 120));
+            // A second gesture BEFORE release: track() frees the first pair
+            gripAt(2).dispatchEvent(mouse('mousedown', 100));
+            expect(drag(adds)).toBe(4);
+            expect(drag(removes)).toBe(2);
+            handle!.unmount(); // mid-drag: the ONE persistent cleanup releases it
+            handle = null;
+            expect(drag(removes)).toBe(4); // balanced — nothing leaked
+        } finally {
+            adds.mockRestore();
+            removes.mockRestore();
+        }
+    });
+
+    it('column.hidden: excluded from the header, the cells and the grid template', () => {
+        open({
+            data: makeRows(5),
+            columns: [
+                { name: 'id', title: 'ID', type: 'number', width: '70px' },
+                { name: 'name', title: 'Name', hidden: true },
+                { name: 'amount', title: 'Amount', type: 'number' },
+            ] as Column[],
+        });
+        expect(handle!.queryAll('.lm-datagrid-th').map((t) => t.textContent!.trim())).toEqual(['ID', 'Amount']);
+        expect(cellTexts(renderedRows()[0])).toEqual(['1', '1']); // no name cell
+        expect(templateOf(headerEl())).toBe('70px 1fr');
+        expect(templateOf(renderedRows()[0])).toBe('70px 1fr');
+    });
+
+    it('api.setColumn hides and shows a column at runtime', () => {
+        const api = open({ data: makeRows(5), columns: freshColumns() });
+        api.setColumn('name', { hidden: true });
+        expect(handle!.queryAll('.lm-datagrid-th').map((t) => t.textContent!.trim())).toEqual(['ID', 'Amount']);
+        expect(cellTexts(renderedRows()[0])).toHaveLength(2);
+        expect(templateOf(headerEl())).toBe('70px 1fr');
+        api.setColumn('name', { hidden: false });
+        expect(handle!.queryAll('.lm-datagrid-th').map((t) => t.textContent!.trim())).toEqual(['ID', 'Name', 'Amount']);
+        expect(cellTexts(renderedRows()[0])).toHaveLength(3);
+        expect(templateOf(headerEl())).toBe('70px 1fr 1fr');
+    });
+
+    it('api.setColumn updates width and title live; a declared width supersedes a drag override', () => {
+        const api = open({ data: makeRows(5), columns: freshColumns() });
+        api.setColumn('id', { title: 'Ident', width: '120px' });
+        expect(thAt(0).textContent!.trim()).toBe('Ident');
+        expect(templateOf(headerEl())).toBe('120px 1fr 1fr');
+
+        // Drag id down to 90px, then DECLARE 200px: the declaration wins
+        setRect(thAt(0), 120);
+        gripAt(0).dispatchEvent(mouse('mousedown', 100));
+        document.dispatchEvent(mouse('mousemove', 70));
+        document.dispatchEvent(mouse('mouseup', 70));
+        expect(templateOf(headerEl())).toBe('90px 1fr 1fr');
+        api.setColumn('id', { width: '200px' });
+        expect(templateOf(headerEl())).toBe('200px 1fr 1fr');
+    });
+
+    it('column.headerrender: string or view content, sort arrow still appended', () => {
+        open({
+            data: makeRows(3),
+            columns: [
+                { name: 'id', title: 'ID', headerrender: (c: Column) => '#' + c.name },
+                { name: 'name', headerrender: () => html`<button class="hdr-btn">menu</button>` },
+            ] as Column[],
+        });
+        expect(thAt(0).textContent).toContain('#id');
+        expect(thAt(1).querySelector('.hdr-btn')).not.toBeNull(); // a live view in the header
+        thAt(0).click(); // custom content does not break sorting
+        expect(thAt(0).querySelector('.lm-datagrid-arrow')!.textContent).toBe('▲');
+    });
+
+    it('column.class lands on body cells of that column only', () => {
+        open({
+            data: makeRows(3),
+            columns: [
+                { name: 'amount', title: 'Amount', type: 'number', class: 'money' },
+                { name: 'active', title: 'Active', type: 'checkbox', class: 'flag' },
+            ] as Column[],
+        });
+        const cells = renderedRows()[0].querySelectorAll('.lm-datagrid-cell');
+        expect(cells[0].className).toContain('money');
+        expect(cells[1].className).toContain('flag'); // checkbox cells too
+        expect(cells[0].className).not.toContain('flag');
+        expect(thAt(0).className).not.toContain('money'); // headers untouched
     });
 });

@@ -1,0 +1,34 @@
+{
+    "name": "transferlist",
+    "props": {
+        "data": {
+            "type": "array"
+        },
+        "titles": {
+            "type": "array",
+            "default": [
+                "Available",
+                "Chosen"
+            ]
+        },
+        "search": {
+            "type": "boolean",
+            "default": false
+        },
+        "height": {
+            "type": "number",
+            "default": 280
+        }
+    },
+    "bind": {
+        "type": "array"
+    },
+    "events": [
+        "onchange"
+    ],
+    "api": [
+        "getChosen",
+        "moveAll",
+        "reset"
+    ]
+}

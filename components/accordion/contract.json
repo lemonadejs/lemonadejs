@@ -1,0 +1,22 @@
+{
+    "name": "accordion",
+    "props": {
+        "options": {
+            "type": "array"
+        },
+        "render": {
+            "type": "function"
+        },
+        "multiple": {
+            "type": "boolean",
+            "default": false
+        }
+    },
+    "bind": {
+        "type": "number"
+    },
+    "events": [
+        "onchange"
+    ],
+    "api": []
+}

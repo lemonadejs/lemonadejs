@@ -14,6 +14,10 @@
  *   - keyboard: arrows move the active cell, Enter edits, Space toggles
  *     selection
  *   - pagination mode (pagination > 0) instead of virtual scroll
+ *   - column customization: drag the header edge to resize (widths turn
+ *     px, oncolumnresize on release), column.hidden + api.setColumn for
+ *     runtime changes, headerrender for custom header content,
+ *     column.class on body cells
  *
  * Not a spreadsheet: no formulas, no merged cells — that is jspreadsheet.
  */
@@ -35,11 +39,20 @@ export interface Column {
     render?: (value: unknown, row: Record<string, unknown>) => string | View;
     sortable?: boolean;
     editable?: boolean;
+    /** Hide the column entirely (header, cells, grid track). Live: flip
+     *  it and touch() the columns state, or use api.setColumn */
+    hidden?: boolean;
+    /** Custom header content: a string or an html`` view. The sort
+     *  arrow and the resize handle are still appended */
+    headerrender?: (col: Column) => string | View;
+    /** Extra class on every body cell of this column */
+    class?: string;
 }
 
 type Row = Record<string, unknown>;
 
 const OVERSCAN = 4;
+const MIN_COL = 60; // px floor while drag-resizing a column
 
 export const Datagrid = component('datagrid', {
     data: Array,                  // row objects BY REFERENCE (mutate + touch())
@@ -54,14 +67,22 @@ export const Datagrid = component('datagrid', {
     onselect: Function,           // (selectedRows)
     onsort: Function,             // (columnName, direction | null)
     onrowclick: Function,         // (row, event)
-    api: { getSelected: Function, setSearch: Function, sort: Function, page: Function, refresh: Function },
-}, (props, { state, onMount }) => {
+    oncolumnresize: Function,     // (columnName, widthPx) on handle release
+    api: { getSelected: Function, setSearch: Function, sort: Function, page: Function, refresh: Function, setColumn: Function },
+}, (props, { state, onMount, onUnmount }) => {
     // peek, not value: render bindings must NOT track data directly —
     // every data change (assignment or touch) flows through the refresh
     // subscription into `view`, so the window re-renders exactly once,
     // always with indices that match the current data
     const rows = () => (props.data!.peek() as Row[]) || [];
-    const columns = () => (props.columns!.value as Column[]) || [];
+    // Same peek discipline as data: imperative paths and row builds must
+    // not track the columns prop — column changes flow through the
+    // refresh subscription (rows) and the tracked header bindings below
+    const columns = () => (props.columns!.peek() as Column[]) || [];
+    const visibleColumns = () => columns().filter((c) => !c.hidden);
+    // Tracked read ON PURPOSE: the header cells and every grid-template
+    // binding re-run when the columns prop is assigned or touch()ed
+    const liveColumns = () => ((props.columns!.value as Column[]) || []).filter((c) => !c.hidden);
 
     // ---- the view pipeline: data -> filter(query) -> sort -> indices.
     // Recomputed ONCE per change (not per binding) into a state.
@@ -73,8 +94,12 @@ export const Datagrid = component('datagrid', {
     const selected = state<Set<Row>>(new Set());
     const editing = state<{ index: number; name: string } | null>(null);
     const active = state<{ r: number; c: number } | null>(null);
+    // Drag-resized columns: name → px. Overrides column.width in
+    // gridTemplate() — once resized, a column leaves fr-land for good
+    const widths = state<Record<string, number>>({});
 
     let scroller: HTMLElement | null = null;
+    let rootEl: HTMLElement | null = null;
 
     const refresh = () => {
         const data = rows();
@@ -120,6 +145,62 @@ export const Datagrid = component('datagrid', {
 
     // External data changes: assignment AND touch() re-enter the pipeline
     onMount(() => props.data!.subscribe(refresh));
+    // Column changes (setColumn api or an external touch) take the same
+    // path: refresh rebuilds the window with the current column set
+    onMount(() => props.columns!.subscribe(refresh));
+
+    // ---- drag gesture: document listeners with ONE persistent cleanup.
+    // An unmount mid-drag releases the in-flight gesture (modal pattern);
+    // registering onUnmount per drag would accumulate dead callbacks
+    let releaseGesture: (() => void) | null = null;
+    onUnmount(() => releaseGesture?.());
+
+    const track = (move: (e: MouseEvent) => void, done?: () => void) => {
+        releaseGesture?.();
+        const up = () => {
+            document.removeEventListener('mousemove', move);
+            document.removeEventListener('mouseup', up);
+            releaseGesture = null;
+            rootEl?.classList.remove('lm-datagrid-resizing');
+            done?.();
+        };
+        releaseGesture = up;
+        rootEl?.classList.add('lm-datagrid-resizing');
+        document.addEventListener('mousemove', move);
+        document.addEventListener('mouseup', up);
+    };
+
+    // ---- column resize: 6px handle on the th right edge
+    const startResize = (e: MouseEvent, col: Column) => {
+        // The handle lives INSIDE the sortable th: the gesture must
+        // never bubble into the sort click handler
+        e.stopPropagation();
+        e.preventDefault();
+        const th = (e.target as Element).closest('.lm-datagrid-th') as HTMLElement | null;
+        let startWidth = widths.value[col.name] || 0;
+        if (!startWidth && th) {
+            startWidth = th.getBoundingClientRect().width;
+        }
+        if (!startWidth && col.width && col.width.slice(-2) === 'px') {
+            startWidth = parseFloat(col.width);
+        }
+        if (!startWidth) {
+            startWidth = 100;
+        }
+        const sx = e.clientX;
+        track(
+            (ev: MouseEvent) => {
+                const w = Math.max(MIN_COL, Math.round(startWidth + ev.clientX - sx));
+                widths.value = { ...widths.value, [col.name]: w };
+            },
+            () => {
+                (props.oncolumnresize as ((n: string, w: number) => void) | undefined)?.(
+                    col.name,
+                    widths.value[col.name] || Math.round(startWidth)
+                );
+            }
+        );
+    };
 
     // ---- virtual window
     const rowHeight = () => (props.rowheight!.value as number) || 36;
@@ -271,7 +352,7 @@ export const Datagrid = component('datagrid', {
         }
         const a = active.value || { r: 0, c: 0 };
         const lastR = view.value.length - 1;
-        const lastC = columns().length - 1;
+        const lastC = visibleColumns().length - 1;
         let handled = true;
         if (e.key === 'ArrowDown') {
             active.value = { r: Math.min(a.r + 1, lastR), c: a.c };
@@ -282,7 +363,10 @@ export const Datagrid = component('datagrid', {
         } else if (e.key === 'ArrowLeft') {
             active.value = { r: a.r, c: Math.max(a.c - 1, 0) };
         } else if (e.key === 'Enter' && active.value) {
-            startEdit(view.value[a.r], columns()[a.c]);
+            const col = visibleColumns()[a.c];
+            if (col) {
+                startEdit(view.value[a.r], col);
+            }
         } else if (e.key === ' ' && active.value && props.selectable!.value) {
             toggleRow(rows()[view.value[a.r]], props.selectable!.value === 'single');
         } else {
@@ -315,11 +399,40 @@ export const Datagrid = component('datagrid', {
             page.value = Math.min(Math.max(0, p), pageCount() - 1);
         },
         refresh,
+        setColumn: (name: string, options: { hidden?: boolean; width?: string; title?: string } = {}) => {
+            const col = columns().find((c) => c.name === name);
+            if (!col) {
+                return;
+            }
+            if (options.hidden !== undefined) {
+                col.hidden = options.hidden;
+            }
+            if (options.title !== undefined) {
+                col.title = options.title;
+            }
+            if (options.width !== undefined) {
+                col.width = options.width;
+                if (widths.value[name] !== undefined) {
+                    // An explicit width supersedes any drag-resize override
+                    const next = { ...widths.value };
+                    delete next[name];
+                    widths.value = next;
+                }
+            }
+            // The columns prop is the source of truth: touch() re-renders
+            // the header (tracked bindings) and re-enters the pipeline
+            // through the columns subscription (window rows)
+            props.columns!.touch();
+        },
     });
 
     // ---- rendering
+    // Tracked on purpose (liveColumns + widths): the header style AND
+    // every row style binding re-run live while a column is resized,
+    // shown or hidden
     const gridTemplate = () => {
-        const tracks = columns().map((c) => c.width || '1fr');
+        const w = widths.value;
+        const tracks = liveColumns().map((c) => (w[c.name] ? w[c.name] + 'px' : c.width || '1fr'));
         if (props.selectable!.value === 'multiple') {
             tracks.unshift('40px');
         }
@@ -337,13 +450,13 @@ export const Datagrid = component('datagrid', {
     const cellView = (entry: { dataIndex: number; viewIndex: number }, col: Column, c: number) => {
         const row = rows()[entry.dataIndex];
         if (col.type === 'checkbox') {
-            return html`<div class="lm-datagrid-cell" data-align="center" role="gridcell">
+            return html`<div class="lm-datagrid-cell ${col.class || ''}" data-align="center" role="gridcell">
                 <input type="checkbox" checked="${() => !!row[col.name]}"
                     disabled="${!editable(col)}"
                     onchange="${(e: Event) => setChecked(row, col, (e.target as HTMLInputElement).checked)}" />
             </div>`;
         }
-        return html`<div class="lm-datagrid-cell ${() =>
+        return html`<div class="lm-datagrid-cell ${col.class || ''} ${() =>
             active.value && active.value.r === entry.viewIndex && active.value.c === c ? 'lm-datagrid-active' : ''}"
             data-align="${col.align || (col.type === 'number' ? 'right' : false)}"
             role="gridcell"
@@ -396,7 +509,7 @@ export const Datagrid = component('datagrid', {
         const row = rows()[entry.dataIndex];
         return html`<div class="lm-datagrid-row ${() => (selected.value.has(row) ? 'lm-datagrid-selected' : '')}"
             role="row"
-            style="height:${rowHeight()}px;grid-template-columns:${gridTemplate()}"
+            style="${() => 'height:' + rowHeight() + 'px;grid-template-columns:' + gridTemplate()}"
             onclick="${(e: MouseEvent) => {
                 if (props.selectable!.value === 'single') {
                     toggleRow(row, true);
@@ -411,9 +524,12 @@ export const Datagrid = component('datagrid', {
                               onchange="${() => toggleRow(row, false)}" />
                       </div>`
                     : ''}
-            ${columns().map((col, c) => cellView(entry, col, c))}
+            ${visibleColumns().map((col, c) => cellView(entry, col, c))}
         </div>`;
     };
+
+    const headerContent = (col: Column): string | View =>
+        col.headerrender ? col.headerrender(col) : col.title || col.name;
 
     const headerView = () => html`<div class="lm-datagrid-header" role="row"
         style="grid-template-columns:${() => gridTemplate()}">
@@ -423,19 +539,24 @@ export const Datagrid = component('datagrid', {
                       <input type="checkbox" checked="${() => allVisibleSelected()}" onchange="${toggleAll}" />
                   </div>`
                 : ''}
-        ${columns().map(
-            (col) => html`<div class="lm-datagrid-th" data-align="${col.align || (col.type === 'number' ? 'right' : false)}"
-                data-sortable="${col.sortable !== false}"
-                onclick="${() => sort(col.name)}">
-                <span>${col.title || col.name}</span>
-                <span class="lm-datagrid-arrow">${() =>
-                    sortBy.value && sortBy.value.name === col.name ? (sortBy.value.dir === 1 ? '▲' : '▼') : ''}</span>
-            </div>`
-        )}
+        ${() =>
+            liveColumns().map(
+                (col) => html`<div class="lm-datagrid-th" data-align="${col.align || (col.type === 'number' ? 'right' : false)}"
+                    data-sortable="${col.sortable !== false}"
+                    onclick="${() => sort(col.name)}">
+                    <span>${headerContent(col)}</span>
+                    <span class="lm-datagrid-arrow">${() =>
+                        sortBy.value && sortBy.value.name === col.name ? (sortBy.value.dir === 1 ? '▲' : '▼') : ''}</span>
+                    <span class="lm-datagrid-resize"
+                        onmousedown="${(e: MouseEvent) => startResize(e, col)}"
+                        onclick="${(e: MouseEvent) => e.stopPropagation()}"></span>
+                </div>`
+            )}
     </div>`;
 
     return html`<div class="lm-datagrid" tabindex="0" role="grid"
         aria-rowcount="${() => view.value.length}"
+        ref="${(el: Element) => (rootEl = el as HTMLElement)}"
         onkeydown="${onKey}">
         ${() =>
             props.search!.value &&

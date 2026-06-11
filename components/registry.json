@@ -1,5 +1,33 @@
 [
     {
+        "name": "accordion",
+        "path": "components/accordion",
+        "verified": true,
+        "checks": 9,
+        "contract": {
+            "name": "accordion",
+            "props": {
+                "options": {
+                    "type": "array"
+                },
+                "render": {
+                    "type": "function"
+                },
+                "multiple": {
+                    "type": "boolean",
+                    "default": false
+                }
+            },
+            "bind": {
+                "type": "number"
+            },
+            "events": [
+                "onchange"
+            ],
+            "api": []
+        }
+    },
+    {
         "name": "actionsheet",
         "path": "components/actionsheet",
         "verified": true,
@@ -78,6 +106,45 @@
                 "onclose"
             ],
             "api": []
+        }
+    },
+    {
+        "name": "backdrop",
+        "path": "components/backdrop",
+        "verified": true,
+        "checks": 13,
+        "contract": {
+            "name": "backdrop",
+            "props": {
+                "blur": {
+                    "type": "boolean",
+                    "default": false
+                },
+                "opacity": {
+                    "type": "number",
+                    "default": 0
+                },
+                "zindex": {
+                    "type": "number",
+                    "default": 0
+                },
+                "closable": {
+                    "type": "boolean",
+                    "default": false
+                }
+            },
+            "bind": {
+                "type": "boolean"
+            },
+            "events": [
+                "onclick",
+                "onclose"
+            ],
+            "api": [
+                "open",
+                "close",
+                "toggle"
+            ]
         }
     },
     {
@@ -277,6 +344,57 @@
         }
     },
     {
+        "name": "card",
+        "path": "components/card",
+        "verified": true,
+        "checks": 20,
+        "contract": {
+            "name": "card",
+            "props": {
+                "title": {
+                    "type": "string",
+                    "default": ""
+                },
+                "subtitle": {
+                    "type": "string",
+                    "default": ""
+                },
+                "image": {
+                    "type": "string",
+                    "default": ""
+                },
+                "imageheight": {
+                    "type": "number",
+                    "default": 180
+                },
+                "avatar": {
+                    "type": "string",
+                    "default": ""
+                },
+                "content": {
+                    "type": "string",
+                    "default": ""
+                },
+                "actions": {
+                    "type": "array"
+                },
+                "variant": {
+                    "type": "string",
+                    "default": ""
+                },
+                "clickable": {
+                    "type": "boolean",
+                    "default": false
+                }
+            },
+            "bind": null,
+            "events": [
+                "onclick"
+            ],
+            "api": []
+        }
+    },
+    {
         "name": "color",
         "path": "components/color",
         "verified": true,
@@ -408,7 +526,7 @@
         "name": "datagrid",
         "path": "components/datagrid",
         "verified": true,
-        "checks": 22,
+        "checks": 23,
         "contract": {
             "name": "datagrid",
             "props": {
@@ -448,14 +566,16 @@
                 "onchange",
                 "onselect",
                 "onsort",
-                "onrowclick"
+                "onrowclick",
+                "oncolumnresize"
             ],
             "api": [
                 "getSelected",
                 "setSearch",
                 "sort",
                 "page",
-                "refresh"
+                "refresh",
+                "setColumn"
             ]
         }
     },
@@ -506,6 +626,49 @@
             "api": [
                 "open",
                 "close"
+            ]
+        }
+    },
+    {
+        "name": "drawer",
+        "path": "components/drawer",
+        "verified": true,
+        "checks": 15,
+        "contract": {
+            "name": "drawer",
+            "props": {
+                "anchor": {
+                    "type": "string",
+                    "default": ""
+                },
+                "width": {
+                    "type": "number",
+                    "default": 280
+                },
+                "backdrop": {
+                    "type": "boolean",
+                    "default": true
+                },
+                "closable": {
+                    "type": "boolean",
+                    "default": true
+                },
+                "title": {
+                    "type": "string",
+                    "default": ""
+                }
+            },
+            "bind": {
+                "type": "boolean"
+            },
+            "events": [
+                "onopen",
+                "onclose"
+            ],
+            "api": [
+                "open",
+                "close",
+                "toggle"
             ]
         }
     },
@@ -628,6 +791,45 @@
                 "load",
                 "save"
             ]
+        }
+    },
+    {
+        "name": "imagelist",
+        "path": "components/imagelist",
+        "verified": true,
+        "checks": 14,
+        "contract": {
+            "name": "imagelist",
+            "props": {
+                "data": {
+                    "type": "array"
+                },
+                "columns": {
+                    "type": "number",
+                    "default": 3
+                },
+                "gap": {
+                    "type": "number",
+                    "default": 8
+                },
+                "rowheight": {
+                    "type": "number",
+                    "default": 164
+                },
+                "variant": {
+                    "type": "string",
+                    "default": ""
+                },
+                "bar": {
+                    "type": "boolean",
+                    "default": false
+                }
+            },
+            "bind": null,
+            "events": [
+                "onitemclick"
+            ],
+            "api": []
         }
     },
     {
@@ -1272,6 +1474,53 @@
         }
     },
     {
+        "name": "speeddial",
+        "path": "components/speeddial",
+        "verified": true,
+        "checks": 18,
+        "contract": {
+            "name": "speeddial",
+            "props": {
+                "options": {
+                    "type": "array"
+                },
+                "icon": {
+                    "type": "string",
+                    "default": ""
+                },
+                "direction": {
+                    "type": "string",
+                    "default": ""
+                },
+                "position": {
+                    "type": "string",
+                    "default": ""
+                },
+                "label": {
+                    "type": "string",
+                    "default": ""
+                },
+                "disabled": {
+                    "type": "boolean",
+                    "default": false
+                }
+            },
+            "bind": {
+                "type": "boolean"
+            },
+            "events": [
+                "onopen",
+                "onclose",
+                "onaction"
+            ],
+            "api": [
+                "open",
+                "close",
+                "toggle"
+            ]
+        }
+    },
+    {
         "name": "switch",
         "path": "components/switch",
         "verified": true,
@@ -1447,6 +1696,45 @@
         }
     },
     {
+        "name": "toast",
+        "path": "components/toast",
+        "verified": true,
+        "checks": 11,
+        "contract": {
+            "name": "toast",
+            "props": {
+                "position": {
+                    "type": "string",
+                    "default": ""
+                },
+                "duration": {
+                    "type": "number",
+                    "default": 4000
+                },
+                "max": {
+                    "type": "number",
+                    "default": 5
+                },
+                "closable": {
+                    "type": "boolean",
+                    "default": true
+                }
+            },
+            "bind": null,
+            "events": [
+                "onclose"
+            ],
+            "api": [
+                "show",
+                "success",
+                "error",
+                "warning",
+                "info",
+                "clear"
+            ]
+        }
+    },
+    {
         "name": "toggle",
         "path": "components/toggle",
         "verified": true,
@@ -1571,6 +1859,46 @@
             "api": [
                 "open",
                 "close"
+            ]
+        }
+    },
+    {
+        "name": "transferlist",
+        "path": "components/transferlist",
+        "verified": true,
+        "checks": 12,
+        "contract": {
+            "name": "transferlist",
+            "props": {
+                "data": {
+                    "type": "array"
+                },
+                "titles": {
+                    "type": "array",
+                    "default": [
+                        "Available",
+                        "Chosen"
+                    ]
+                },
+                "search": {
+                    "type": "boolean",
+                    "default": false
+                },
+                "height": {
+                    "type": "number",
+                    "default": 280
+                }
+            },
+            "bind": {
+                "type": "array"
+            },
+            "events": [
+                "onchange"
+            ],
+            "api": [
+                "getChosen",
+                "moveAll",
+                "reset"
             ]
         }
     },

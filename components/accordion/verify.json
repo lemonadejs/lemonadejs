@@ -1,0 +1,42 @@
+{
+    "component": "accordion",
+    "pass": true,
+    "checks": [
+        {
+            "name": "mounts with defaults",
+            "pass": true
+        },
+        {
+            "name": "prop options",
+            "pass": true
+        },
+        {
+            "name": "prop options (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop render",
+            "pass": true
+        },
+        {
+            "name": "prop render (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop multiple",
+            "pass": true
+        },
+        {
+            "name": "prop multiple (live state)",
+            "pass": true
+        },
+        {
+            "name": "event onchange",
+            "pass": true
+        },
+        {
+            "name": "bind",
+            "pass": true
+        }
+    ]
+}

@@ -1,0 +1,62 @@
+{
+    "component": "imagelist",
+    "pass": true,
+    "checks": [
+        {
+            "name": "mounts with defaults",
+            "pass": true
+        },
+        {
+            "name": "prop data",
+            "pass": true
+        },
+        {
+            "name": "prop data (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop columns",
+            "pass": true
+        },
+        {
+            "name": "prop columns (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop gap",
+            "pass": true
+        },
+        {
+            "name": "prop gap (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop rowheight",
+            "pass": true
+        },
+        {
+            "name": "prop rowheight (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop variant",
+            "pass": true
+        },
+        {
+            "name": "prop variant (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop bar",
+            "pass": true
+        },
+        {
+            "name": "prop bar (live state)",
+            "pass": true
+        },
+        {
+            "name": "event onitemclick",
+            "pass": true
+        }
+    ]
+}

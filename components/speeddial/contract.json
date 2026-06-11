@@ -1,0 +1,41 @@
+{
+    "name": "speeddial",
+    "props": {
+        "options": {
+            "type": "array"
+        },
+        "icon": {
+            "type": "string",
+            "default": ""
+        },
+        "direction": {
+            "type": "string",
+            "default": ""
+        },
+        "position": {
+            "type": "string",
+            "default": ""
+        },
+        "label": {
+            "type": "string",
+            "default": ""
+        },
+        "disabled": {
+            "type": "boolean",
+            "default": false
+        }
+    },
+    "bind": {
+        "type": "boolean"
+    },
+    "events": [
+        "onopen",
+        "onclose",
+        "onaction"
+    ],
+    "api": [
+        "open",
+        "close",
+        "toggle"
+    ]
+}

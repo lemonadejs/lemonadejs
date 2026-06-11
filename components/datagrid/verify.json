@@ -87,6 +87,10 @@
             "pass": true
         },
         {
+            "name": "event oncolumnresize",
+            "pass": true
+        },
+        {
             "name": "api via ref",
             "pass": true
         }

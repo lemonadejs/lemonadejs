@@ -1,0 +1,54 @@
+{
+    "component": "transferlist",
+    "pass": true,
+    "checks": [
+        {
+            "name": "mounts with defaults",
+            "pass": true
+        },
+        {
+            "name": "prop data",
+            "pass": true
+        },
+        {
+            "name": "prop data (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop titles",
+            "pass": true
+        },
+        {
+            "name": "prop titles (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop search",
+            "pass": true
+        },
+        {
+            "name": "prop search (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop height",
+            "pass": true
+        },
+        {
+            "name": "prop height (live state)",
+            "pass": true
+        },
+        {
+            "name": "event onchange",
+            "pass": true
+        },
+        {
+            "name": "bind",
+            "pass": true
+        },
+        {
+            "name": "api via ref",
+            "pass": true
+        }
+    ]
+}

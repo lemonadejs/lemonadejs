@@ -37,13 +37,15 @@
         "onchange",
         "onselect",
         "onsort",
-        "onrowclick"
+        "onrowclick",
+        "oncolumnresize"
     ],
     "api": [
         "getSelected",
         "setSearch",
         "sort",
         "page",
-        "refresh"
+        "refresh",
+        "setColumn"
     ]
 }

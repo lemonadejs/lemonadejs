@@ -1,0 +1,58 @@
+{
+    "component": "backdrop",
+    "pass": true,
+    "checks": [
+        {
+            "name": "mounts with defaults",
+            "pass": true
+        },
+        {
+            "name": "prop blur",
+            "pass": true
+        },
+        {
+            "name": "prop blur (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop opacity",
+            "pass": true
+        },
+        {
+            "name": "prop opacity (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop zindex",
+            "pass": true
+        },
+        {
+            "name": "prop zindex (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop closable",
+            "pass": true
+        },
+        {
+            "name": "prop closable (live state)",
+            "pass": true
+        },
+        {
+            "name": "event onclick",
+            "pass": true
+        },
+        {
+            "name": "event onclose",
+            "pass": true
+        },
+        {
+            "name": "bind",
+            "pass": true
+        },
+        {
+            "name": "api via ref",
+            "pass": true
+        }
+    ]
+}

@@ -1,0 +1,160 @@
+/* <Card /> — default styling, lm-card-* convention.
+   '' = elevated (subtle shadow); outlined = 1px border, no shadow. */
+
+.lm-card {
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+    font: 14px/1.45 system-ui, sans-serif;
+    color: #1f2937;
+    box-sizing: border-box;
+    box-shadow:
+        0 1px 2px rgba(0, 0, 0, 0.12),
+        0 1px 4px rgba(0, 0, 0, 0.08);
+    transition:
+        box-shadow 0.15s ease,
+        transform 0.15s ease;
+}
+
+.lm-card[data-variant='outlined'] {
+    box-shadow: none;
+    border: 1px solid #e5e7eb;
+}
+
+/* Clickable surface: hover lift + pointer + keyboard focus ring */
+.lm-card.lm-card-clickable {
+    cursor: pointer;
+}
+
+.lm-card.lm-card-clickable:hover {
+    transform: translateY(-2px);
+    box-shadow:
+        0 4px 8px rgba(0, 0, 0, 0.14),
+        0 2px 12px rgba(0, 0, 0, 0.1);
+}
+
+.lm-card.lm-card-clickable[data-variant='outlined']:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.lm-card.lm-card-clickable:focus-visible {
+    outline: 2px solid #2563eb;
+    outline-offset: 2px;
+}
+
+/* Media: top image, full width, cover (height comes from imageheight) */
+.lm-card .lm-card-media {
+    display: block;
+    width: 100%;
+    object-fit: cover;
+}
+
+/* Header: optional avatar beside the title/subtitle column */
+.lm-card .lm-card-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 16px 0;
+}
+
+.lm-card .lm-card-avatar {
+    flex: 0 0 auto;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.lm-card .lm-card-headings {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.lm-card .lm-card-title {
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.lm-card .lm-card-subtitle {
+    font-size: 13px;
+    color: #6b7280;
+}
+
+/* Content: body text, then children */
+.lm-card .lm-card-content {
+    padding: 16px;
+    color: #374151;
+}
+
+.lm-card .lm-card-text {
+    margin: 0;
+}
+
+.lm-card .lm-card-text + * {
+    margin-top: 8px;
+}
+
+/* Actions: footer row, right-aligned text buttons */
+.lm-card .lm-card-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 4px;
+    padding: 8px;
+    margin-top: auto;
+}
+
+.lm-card .lm-card-action {
+    appearance: none;
+    background: transparent;
+    border: 0;
+    border-radius: 6px;
+    padding: 6px 10px;
+    font: 600 13px/1 system-ui, sans-serif;
+    letter-spacing: 0.02em;
+    color: #2563eb; /* primary — the default */
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.lm-card .lm-card-action:hover {
+    background: rgba(37, 99, 235, 0.08);
+}
+
+.lm-card .lm-card-action:focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: 1px;
+}
+
+.lm-card .lm-card-action[data-color='secondary'] {
+    color: #6b7280;
+}
+
+.lm-card .lm-card-action[data-color='secondary']:hover {
+    background: rgba(107, 114, 128, 0.1);
+}
+
+.lm-card .lm-card-action[data-color='success'] {
+    color: #16a34a;
+}
+
+.lm-card .lm-card-action[data-color='success']:hover {
+    background: rgba(22, 163, 74, 0.08);
+}
+
+.lm-card .lm-card-action[data-color='error'] {
+    color: #dc2626;
+}
+
+.lm-card .lm-card-action[data-color='error']:hover {
+    background: rgba(220, 38, 38, 0.08);
+}
+
+.lm-card .lm-card-action[data-color='warning'] {
+    color: #d97706;
+}
+
+.lm-card .lm-card-action[data-color='warning']:hover {
+    background: rgba(217, 119, 6, 0.08);
+}

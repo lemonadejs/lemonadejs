@@ -13,7 +13,13 @@ setComponents({ Datagrid: Datagrid as never });
 createWebComponent(Datagrid as never);
 
 type Row = Record<string, unknown>;
-type Api = { getSelected(): Row[]; setSearch(q: string): void; sort(n: string): void; refresh(): void };
+type Api = {
+    getSelected(): Row[];
+    setSearch(q: string): void;
+    sort(n: string): void;
+    refresh(): void;
+    setColumn(name: string, options: { hidden?: boolean; width?: string; title?: string }): void;
+};
 
 const FIRST = ['Ana', 'Bruno', 'Carla', 'Daniel', 'Eva', 'Felix', 'Gina', 'Hugo', 'Iris', 'Jonas'];
 const LAST = ['Silva', 'Mendes', 'Rocha', 'Keller', 'Tanaka', 'Moreau', 'Costa', 'Weber', 'Olsen', 'Russo'];
@@ -55,6 +61,7 @@ const App: Component = (props, { state }) => {
     const log = state<string[]>([]);
     const note = (m: string) => (log.value = [...log.value.slice(-8), m]);
     let grid!: Api;
+    let countryHidden = false;
 
     const mutateInPlace = () => {
         // The big-data promise: touch 5,000 rows WITHOUT cloning 100k
@@ -70,12 +77,19 @@ const App: Component = (props, { state }) => {
     return html`<div>
         <h1>&lt;Datagrid /&gt; — 100,000 rows</h1>
         <p>Data built in ${buildMs}ms and passed BY REFERENCE. Scroll it, sort it,
-        search it, double-click Name/Amount to edit. Only a window of rows exists in the DOM.</p>
+        search it, double-click Name/Amount to edit. Only a window of rows exists in the DOM.
+        Drag a header's right edge to resize the column (it turns px); columns can be
+        hidden/retitled at runtime via api.setColumn.</p>
 
         <button onclick="${mutateInPlace}">Mutate 5,000 rows in place + touch()</button>
         <button onclick="${() => grid.sort('amount')}">Sort by amount</button>
         <button onclick="${() => grid.setSearch('Ana')}">Search "Ana"</button>
         <button onclick="${() => grid.setSearch('')}">Clear search</button>
+        <button onclick="${() => {
+            countryHidden = !countryHidden;
+            grid.setColumn('country', { hidden: countryHidden });
+            note((countryHidden ? 'hid' : 'showed') + ' the Country column');
+        }}">Hide/show Country</button>
 
         <${Datagrid} ref="${(a: Api) => (grid = a)}"
             data="${big}" columns="${columns}"
@@ -84,7 +98,8 @@ const App: Component = (props, { state }) => {
             onchange="${(row: Row, name: string, v: unknown, old: unknown) =>
                 note('row #' + row.id + ' ' + name + ': ' + old + ' → ' + v)}"
             onselect="${(rows: Row[]) => note(rows.length + ' selected')}"
-            onsort="${(name: string, dir: number | null) => note('sort ' + name + ' ' + (dir || 'off'))}">
+            onsort="${(name: string, dir: number | null) => note('sort ' + name + ' ' + (dir || 'off'))}"
+            oncolumnresize="${(name: string, w: number) => note('resized ' + name + ' to ' + w + 'px')}">
         </${Datagrid}>
 
         <h3>Paginated flavor — deployed BY NAME: &lt;Datagrid /&gt;</h3>

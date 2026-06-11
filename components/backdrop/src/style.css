@@ -1,0 +1,26 @@
+/* <Backdrop /> — default styling, lm-backdrop-* convention */
+.lm-backdrop {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1200;
+    -webkit-tap-highlight-color: transparent;
+    animation: lm-backdrop-fade 0.2s ease;
+}
+
+.lm-backdrop[data-blur='true'] {
+    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: blur(4px);
+}
+
+@keyframes lm-backdrop-fade {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}

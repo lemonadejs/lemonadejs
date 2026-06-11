@@ -1,0 +1,45 @@
+{
+    "name": "card",
+    "props": {
+        "title": {
+            "type": "string",
+            "default": ""
+        },
+        "subtitle": {
+            "type": "string",
+            "default": ""
+        },
+        "image": {
+            "type": "string",
+            "default": ""
+        },
+        "imageheight": {
+            "type": "number",
+            "default": 180
+        },
+        "avatar": {
+            "type": "string",
+            "default": ""
+        },
+        "content": {
+            "type": "string",
+            "default": ""
+        },
+        "actions": {
+            "type": "array"
+        },
+        "variant": {
+            "type": "string",
+            "default": ""
+        },
+        "clickable": {
+            "type": "boolean",
+            "default": false
+        }
+    },
+    "bind": null,
+    "events": [
+        "onclick"
+    ],
+    "api": []
+}

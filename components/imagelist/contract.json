@@ -1,0 +1,33 @@
+{
+    "name": "imagelist",
+    "props": {
+        "data": {
+            "type": "array"
+        },
+        "columns": {
+            "type": "number",
+            "default": 3
+        },
+        "gap": {
+            "type": "number",
+            "default": 8
+        },
+        "rowheight": {
+            "type": "number",
+            "default": 164
+        },
+        "variant": {
+            "type": "string",
+            "default": ""
+        },
+        "bar": {
+            "type": "boolean",
+            "default": false
+        }
+    },
+    "bind": null,
+    "events": [
+        "onitemclick"
+    ],
+    "api": []
+}

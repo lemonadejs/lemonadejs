@@ -1,0 +1,37 @@
+{
+    "name": "drawer",
+    "props": {
+        "anchor": {
+            "type": "string",
+            "default": ""
+        },
+        "width": {
+            "type": "number",
+            "default": 280
+        },
+        "backdrop": {
+            "type": "boolean",
+            "default": true
+        },
+        "closable": {
+            "type": "boolean",
+            "default": true
+        },
+        "title": {
+            "type": "string",
+            "default": ""
+        }
+    },
+    "bind": {
+        "type": "boolean"
+    },
+    "events": [
+        "onopen",
+        "onclose"
+    ],
+    "api": [
+        "open",
+        "close",
+        "toggle"
+    ]
+}

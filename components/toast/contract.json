@@ -1,0 +1,33 @@
+{
+    "name": "toast",
+    "props": {
+        "position": {
+            "type": "string",
+            "default": ""
+        },
+        "duration": {
+            "type": "number",
+            "default": 4000
+        },
+        "max": {
+            "type": "number",
+            "default": 5
+        },
+        "closable": {
+            "type": "boolean",
+            "default": true
+        }
+    },
+    "bind": null,
+    "events": [
+        "onclose"
+    ],
+    "api": [
+        "show",
+        "success",
+        "error",
+        "warning",
+        "info",
+        "clear"
+    ]
+}
