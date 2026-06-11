@@ -22,6 +22,7 @@ const MESSAGES: Record<string, string> = {
     'LJS-203': 'Update loop detected — a state change keeps triggering itself',
     'LJS-204': 'Duplicate key in a list — keys must be unique for identity matching',
     'LJS-205': 'A template expression threw — contained, other updates continued',
+    'LJS-206': 'resource fetcher reads its own data/loading/error — async update loop',
     'LJS-301': 'Event attributes require a function: onclick="${() => ...}"',
     'LJS-302': 'bind requires a state: bind="${state}"',
     'LJS-303': 'bind works on <input>, <textarea> and <select> — on components it is a prop',
@@ -83,6 +84,11 @@ const EXPLAIN: Record<string, string> = !DEV ? {} : {
         'recovers (a later update that does not throw re-arms logging). The DOM region owned by the failing ' +
         'expression keeps its last good content. Fix the expression — guard reads that can be undefined. ' +
         'Engine diagnostics (LJS-xxx failures like the LJS-203 loop guard) are NOT contained: they propagate.',
+    'LJS-206':
+        'The resource() fetcher read one of the states the resource itself writes (data, loading or error). ' +
+        'The fetcher is tracked, so when the response lands and writes data, the fetcher re-runs and fetches ' +
+        'again — an update loop the synchronous loop guard cannot see (the cycle crosses an await). Read other ' +
+        'states (props, filters, ids) in the fetcher; derive FROM resource.data elsewhere (computed, slots).',
     'LJS-301':
         'Attributes starting with "on" are events and must receive a function: onclick="${() => count.value++}". ' +
         'String handlers are not supported (CSP-safe by design).',

@@ -109,6 +109,30 @@ holds: a shared State passed as a prop is NEVER touched by propagation —
 its owner touches it. (This is v5's loop-scope visibility, without v5
 writing framework fields onto your data.)
 
+## Async data (resource)
+
+    const User = component('user', { id: 0 }, (props, { resource }) => {
+        const user = resource((signal) =>
+            fetch('/api/users/' + props.id.value, { signal }).then((r) => r.json())
+        );
+        return html`<div>
+            ${() => user.loading.value && html`<i>loading…</i>`}
+            ${() => user.error.value && html`<i>failed</i>`}
+            ${() => user.data.value && html`<b>${user.data.value.name}</b>`}
+        </div>`;
+    });
+
+The fetcher is TRACKED: props.id changing re-runs it. The engine owns the
+lifecycle — the previous request is aborted (pass the signal to fetch),
+only the LATEST response ever writes, unmount aborts everything: the
+out-of-order race and the zombie write are not writable. data/loading/
+error are plain states; reload() re-runs imperatively (no re-tracking —
+use peek() inside the fetcher when YOU decide the timing via reload()).
+Do NOT read the resource's own data/loading/error inside its fetcher:
+that is an async update loop, warned as LJS-206 in dev.
+Scope is fetch lifecycle ONLY — caching, dedup, retry are app policies
+(compose with store()).
+
 Shared state (outside components, module scope):
 
     import { store } from 'lemonadejs';
@@ -436,6 +460,7 @@ code eliminated — production pays zero.
     LJS-104 unknown component — setComponents    LJS-303 bind: input/textarea/select only
     LJS-105 ${} not allowed in that position     LJS-204 duplicate key in a list — keys are unique
     LJS-205 expression threw — contained, rest of the update pass ran (see Debugging)
+    LJS-206 resource fetcher reads its own data/loading/error — async update loop
                                                  LJS-304 bind owns value — drop the value attribute
     LJS-401 prop violates its contract           LJS-305 callbacks are lowercase: onclick, onsave
     LJS-402 unknown prop (did-you-mean hint)     LJS-501 expose once — singletons, never touch

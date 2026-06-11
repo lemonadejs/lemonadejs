@@ -64,6 +64,7 @@ var MESSAGES = {
   "LJS-203": "Update loop detected \u2014 a state change keeps triggering itself",
   "LJS-204": "Duplicate key in a list \u2014 keys must be unique for identity matching",
   "LJS-205": "A template expression threw \u2014 contained, other updates continued",
+  "LJS-206": "resource fetcher reads its own data/loading/error \u2014 async update loop",
   "LJS-301": 'Event attributes require a function: onclick="${() => ...}"',
   "LJS-302": 'bind requires a state: bind="${state}"',
   "LJS-303": "bind works on <input>, <textarea> and <select> \u2014 on components it is a prop",
@@ -86,6 +87,7 @@ var EXPLAIN = !DEV ? {} : {
   "LJS-203": "A state assignment inside a reactive expression triggered itself recursively more than 100 times. Do not assign to states inside template expressions; assign from event handlers or callbacks.",
   "LJS-204": 'Two items in the same list resolved to the same key="${...}" value. Identity matching needs unique keys: the first occurrence claims the entry, duplicates rebuild from scratch every update (correct but slow, and component state in duplicates is lost). Key by a stable id, or by the item object itself when items are stable references.',
   "LJS-205": "An exception was thrown inside a reactive expression (a ${() => ...} slot, an attribute binding, a computed, or a subscribe callback). The engine CONTAINS it: the failing binding is skipped, every other binding in the update pass still runs, and the error is logged once until the expression recovers (a later update that does not throw re-arms logging). The DOM region owned by the failing expression keeps its last good content. Fix the expression \u2014 guard reads that can be undefined. Engine diagnostics (LJS-xxx failures like the LJS-203 loop guard) are NOT contained: they propagate.",
+  "LJS-206": "The resource() fetcher read one of the states the resource itself writes (data, loading or error). The fetcher is tracked, so when the response lands and writes data, the fetcher re-runs and fetches again \u2014 an update loop the synchronous loop guard cannot see (the cycle crosses an await). Read other states (props, filters, ids) in the fetcher; derive FROM resource.data elsewhere (computed, slots).",
   "LJS-301": 'Attributes starting with "on" are events and must receive a function: onclick="${() => count.value++}". String handlers are not supported (CSP-safe by design).',
   "LJS-302": 'The bind directive needs the state object itself: bind="${name}" (not bind="name", which is a string, and not bind="${name.value}", which is a one-time snapshot). Create it with const name = state("").',
   "LJS-303": 'On native elements, bind is engine sugar and only <input>, <textarea> and <select> have a defined wiring. On components, bind is a plain prop: implement it with the bind() tool \u2014 const value = bind(props, fallback) \u2014 and pass <${Comp} bind="${state}" />.',
@@ -1641,6 +1643,80 @@ var mountComponent = function(component2, props, parent) {
       DEV && (bound.label = inst.name + ".bind");
       inst.states.push(bound);
       return bound;
+    },
+    resource: function(fetcher) {
+      const data = new StateImpl(void 0);
+      const loading = new StateImpl(false);
+      const error = new StateImpl(void 0);
+      DEV && (data.label = inst.name + ".resource.data");
+      DEV && (loading.label = inst.name + ".resource.loading");
+      DEV && (error.label = inst.name + ".resource.error");
+      inst.states.push(data, loading, error);
+      let controller = null;
+      let run = 0;
+      const load = function() {
+        controller?.abort();
+        const c = typeof AbortController !== "undefined" ? new AbortController() : null;
+        controller = c;
+        const id = ++run;
+        batch(function() {
+          loading.value = true;
+          error.value = void 0;
+        });
+        let result;
+        try {
+          result = fetcher(c ? c.signal : void 0);
+        } catch (e) {
+          if (id === run) {
+            batch(function() {
+              error.value = e;
+              loading.value = false;
+            });
+          }
+          return;
+        }
+        Promise.resolve(result).then(
+          function(v) {
+            if (id !== run) {
+              return;
+            }
+            batch(function() {
+              data.value = v;
+              loading.value = false;
+            });
+          },
+          function(e) {
+            if (id !== run) {
+              return;
+            }
+            batch(function() {
+              error.value = e;
+              loading.value = false;
+            });
+          }
+        );
+      };
+      const binding = new Binding(function() {
+        load();
+        if (DEV && (binding.deps.has(data) || binding.deps.has(loading) || binding.deps.has(error))) {
+          warn("LJS-206", "in <" + inst.name + ">");
+        }
+      });
+      DEV && (binding.label = inst.name + ".resource");
+      inst.bindings.push(binding);
+      binding.run();
+      inst.unmountCbs.push(function() {
+        run++;
+        controller?.abort();
+      });
+      return {
+        data,
+        loading,
+        error,
+        reload: function() {
+          untracked(load);
+        }
+      };
     },
     onMount: function(cb) {
       inst.mountCbs.push(cb);

@@ -124,6 +124,16 @@ export interface Tools {
     /** Called when the component is unmounted. */
     onUnmount(callback: () => void): void;
     /**
+     * Async data whose lifecycle the COMPONENT owns. The fetcher runs
+     * once at setup, TRACKED: states read inside it re-run it (auto
+     * re-fetch), the previous request is aborted through the provided
+     * signal, only the LATEST response ever writes, and unmount aborts
+     * everything — the out-of-order race and the zombie write are not
+     * writable. Fetch lifecycle only: caching/dedup/retry are app
+     * policies (compose with store()).
+     */
+    resource<T>(fetcher: (signal: AbortSignal) => Promise<T> | T): Resource<T>;
+    /**
      * addEventListener whose removal the COMPONENT owns: the listener is
      * removed automatically on unmount, and the returned off() removes it
      * earlier (idempotent). Safe to call anywhere — setup, onMount, or
@@ -145,6 +155,18 @@ export interface Tools {
      * created — permanent removal belongs to the owner's data.
      */
     unmount(): void;
+}
+
+/** The handle returned by the resource() tool — three states + reload */
+export interface Resource<T> {
+    /** The latest successful value (undefined until the first success) */
+    data: State<T | undefined>;
+    /** True while a request is in flight */
+    loading: State<boolean>;
+    /** The latest failure (cleared when a new request starts) */
+    error: State<unknown>;
+    /** Re-run the fetcher imperatively (tracked dependencies unchanged) */
+    reload(): void;
 }
 
 /** Props as a component receives them: read-only, plus children nodes */

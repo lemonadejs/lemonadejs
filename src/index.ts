@@ -24,7 +24,7 @@ import { component, contract, use } from './contract';
 import { createWebComponent } from './webcomponents';
 import { trace } from './trace';
 
-export type { Bindable, Bound, Component, Handle, Props, Ref, SlotValue, State, Template, Tools, View } from './types';
+export type { Bindable, Bound, Component, Handle, Props, Ref, Resource, SlotValue, State, Template, Tools, View } from './types';
 export { isDisposing, mount, inspect, ref, setComponents, unsafe } from './runtime';
 export { store } from './store';
 export { batch } from './reactivity';

@@ -20,7 +20,7 @@ import type { Bindable, Component, Handle, State, Template, Tools, View, VNode, 
 import { isView } from './types';
 import { fail, warn } from './errors';
 import { DEV } from './env';
-import { Binding, BoundState, isDynamic, isForcing, isState, readCount, resolve, StateImpl, untracked } from './reactivity';
+import { batch, Binding, BoundState, isDynamic, isForcing, isState, readCount, resolve, StateImpl, untracked } from './reactivity';
 import { contract as contractOf, coerce, liveProps, type LiveProps } from './contract';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -1122,6 +1122,95 @@ export const mountComponent = function (
             DEV && (bound.label = inst.name + '.bind');
             inst.states.push(bound as unknown as StateImpl<unknown>);
             return bound;
+        },
+        resource: function <T>(fetcher: (signal: AbortSignal) => Promise<T> | T) {
+            const data = new StateImpl<T | undefined>(undefined);
+            const loading = new StateImpl<boolean>(false);
+            const error = new StateImpl<unknown>(undefined);
+            DEV && (data.label = inst.name + '.resource.data');
+            DEV && (loading.label = inst.name + '.resource.loading');
+            DEV && (error.label = inst.name + '.resource.error');
+            inst.states.push(data as StateImpl<unknown>, loading as StateImpl<unknown>, error as StateImpl<unknown>);
+
+            let controller: AbortController | null = null;
+            let run = 0; // only the LATEST run may write — out-of-order responses are dropped
+            const load = function (): void {
+                controller?.abort(); // a new request supersedes the previous one
+                const c = typeof AbortController !== 'undefined' ? new AbortController() : null;
+                controller = c;
+                const id = ++run;
+                batch(function () {
+                    loading.value = true;
+                    error.value = undefined;
+                });
+                let result: Promise<T> | T;
+                try {
+                    result = fetcher((c ? c.signal : undefined) as AbortSignal);
+                } catch (e) {
+                    if (id === run) {
+                        batch(function () {
+                            error.value = e;
+                            loading.value = false;
+                        });
+                    }
+                    return;
+                }
+                Promise.resolve(result).then(
+                    function (v) {
+                        if (id !== run) {
+                            return; // superseded or unmounted: never write
+                        }
+                        batch(function () {
+                            data.value = v;
+                            loading.value = false;
+                        });
+                    },
+                    function (e) {
+                        if (id !== run) {
+                            return; // an aborted request fails silently
+                        }
+                        batch(function () {
+                            error.value = e;
+                            loading.value = false;
+                        });
+                    }
+                );
+            };
+
+            // TRACKED: states read in the fetcher's synchronous part re-run
+            // it — change props.id and the resource re-fetches, aborting
+            // the in-flight request. Disposed with the instance. The
+            // LJS-206 check runs after EVERY tracked run: the handle only
+            // exists on re-runs, which is exactly when an own-read can
+            // start the async fetch loop the sync loop guard cannot see.
+            const binding: Binding = new Binding(function () {
+                load();
+                if (
+                    DEV &&
+                    (binding.deps.has(data as StateImpl<unknown>) ||
+                        binding.deps.has(loading as StateImpl<unknown>) ||
+                        binding.deps.has(error as StateImpl<unknown>))
+                ) {
+                    warn('LJS-206', 'in <' + inst.name + '>');
+                }
+            });
+            DEV && (binding.label = inst.name + '.resource');
+            inst.bindings.push(binding);
+            binding.run();
+            inst.unmountCbs.push(function () {
+                run++; // pending responses become writes-to-nowhere
+                controller?.abort();
+            });
+
+            return {
+                data,
+                loading,
+                error,
+                reload: function () {
+                    // Imperative re-run: no tracking (dependencies unchanged)
+                    untracked(load);
+                },
+            };
         },
         onMount: function (cb) {
             inst.mountCbs.push(cb);

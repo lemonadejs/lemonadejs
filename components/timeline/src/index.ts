@@ -124,7 +124,7 @@ export const Timeline = component('timeline', {
     onupdate: Function,           // (records) after every recompute
     onedition: Function,          // (record) when an item's edit button is clicked
     api: { next: Function, prev: Function },
-}, (props, { state, onMount, onUnmount }) => {
+}, (props, { state, onMount, resource }) => {
     // v5 extractFromHtml: element children become items
     const extracted: TimelineItem[] = [];
     for (const node of props.children || []) {
@@ -149,21 +149,16 @@ export const Timeline = component('timeline', {
 
     // url-fetched data (v5 overwrote self.data; a data assignment replaces it)
     let fetched: TimelineItem[] | null = null;
-    let alive = true;
-    onUnmount(() => {
-        alive = false;
-    });
 
     const isRemote = () => !!(props.remote.value && props.url.value && props.type.value === 'monthly');
 
     const maskOf = () =>
         (props.format.value as string) || (props.type.value === 'monthly' ? 'dd mmm yyyy' : 'dddd, dd');
 
+    // Subscriptions die with the instance, so publish needs no alive guard
     const publish = (list: TimelineRecord[]) => {
-        if (alive) {
-            records.value = list;
-            props.onupdate?.(list);
-        }
+        records.value = list;
+        props.onupdate?.(list);
     };
 
     /** v5 updateResult: month filter (monthly), date sort, day labels */
@@ -182,53 +177,68 @@ export const Timeline = component('timeline', {
     };
 
     /**
-     * v5 fetchRemote: accepts { result: [...] } or a plain array. Remote
-     * monthly results arrive filtered/sorted by the server and get the
-     * en-GB day label with consecutive duplicates suppressed (the v5
-     * dateSignature grouping); otherwise the payload becomes the data.
+     * v5 fetchRemote on the resource() tool: accepts { result: [...] } or
+     * a plain array. The fetcher PEEKS everything — refresh() decides WHEN
+     * via reload() — and the engine owns the lifecycle: a new request
+     * aborts the stale one, only the latest response lands, unmount
+     * aborts (v5's alive flag and its out-of-order race are gone).
      */
-    const fetchRemote = () => {
-        if (typeof fetch !== 'function') {
-            return;
+    const remote = resource<{ body: unknown; grouped: boolean } | null>((signal) => {
+        if (typeof fetch !== 'function' || !props.url.peek()) {
+            return null;
         }
-        let u = props.url.value as string;
-        const remote = isRemote();
-        if (remote) {
-            const { year, month } = period.value;
-            u += `?year=${year}&month=${month}&asc=${props.order.value === 'asc'}`;
+        let u = props.url.peek() as string;
+        const grouped = !!(props.remote.peek() && props.type.peek() === 'monthly');
+        if (grouped) {
+            const { year, month } = period.peek();
+            u += `?year=${year}&month=${month}&asc=${props.order.peek() === 'asc'}`;
         }
-        fetch(u, { headers: { 'Content-Type': 'text/json' } })
-            .then((res) => {
-                if (!res.ok) {
-                    console.error('Failed to fetch data. Status code: ' + res.status);
-                    return null;
-                }
-                return res.json();
-            })
-            .then((res) => {
-                if (!res || !alive) {
-                    return;
-                }
-                const raw = res as { result?: TimelineItem[] };
-                const result = Array.isArray(raw.result) ? raw.result : Array.isArray(res) ? (res as TimelineItem[]) : [];
-                if (remote) {
-                    let signature = '';
-                    publish(result.map((item) => {
-                        const d = toDate(item.date);
-                        const label = d.toLocaleDateString('en-GB', { year: 'numeric', month: 'short', day: '2-digit' });
-                        const day = label === signature ? '' : label;
-                        signature = label;
-                        return { ...item, date: d, day };
-                    }));
-                } else {
-                    fetched = result;
-                    compute();
-                }
-            })
-            .catch((e) => console.error('Failed to fetch data. ' + (e as Error).message));
-    };
+        return fetch(u, { headers: { 'Content-Type': 'text/json' }, signal }).then((res) => {
+            if (!res.ok) {
+                console.error('Failed to fetch data. Status code: ' + res.status);
+                return null;
+            }
+            return res.json().then((body: unknown) => ({ body, grouped }));
+        });
+    });
 
-    const refresh = () => (isRemote() ? fetchRemote() : compute());
+    onMount(() =>
+        remote.data.subscribe((payload) => {
+            if (!payload) {
+                return;
+            }
+            const raw = payload.body as { result?: TimelineItem[] };
+            const result = Array.isArray(raw?.result)
+                ? raw.result
+                : Array.isArray(payload.body)
+                  ? (payload.body as TimelineItem[])
+                  : [];
+            if (payload.grouped) {
+                // Server-filtered month: en-GB day labels, consecutive
+                // duplicates suppressed (the v5 dateSignature grouping)
+                let signature = '';
+                publish(result.map((item) => {
+                    const d = toDate(item.date);
+                    const label = d.toLocaleDateString('en-GB', { year: 'numeric', month: 'short', day: '2-digit' });
+                    const day = label === signature ? '' : label;
+                    signature = label;
+                    return { ...item, date: d, day };
+                }));
+            } else {
+                fetched = result;
+                compute();
+            }
+        })
+    );
+    onMount(() =>
+        remote.error.subscribe((e) => {
+            if (e) {
+                console.error('Failed to fetch data. ' + (e as Error).message);
+            }
+        })
+    );
+
+    const refresh = () => (isRemote() ? remote.reload() : compute());
 
     // v5 tracked data / order / month (value changes land as month changes);
     // one period state means a year rollover refetches once, not twice
@@ -245,10 +255,9 @@ export const Timeline = component('timeline', {
         }
     }));
 
-    // v5 onload: remote when a url exists, local processing otherwise
-    if (props.url.value) {
-        fetchRemote();
-    } else {
+    // v5 onload: the resource's setup run already fetched when a url
+    // exists; local processing otherwise
+    if (!props.url.value) {
         compute();
     }
 
