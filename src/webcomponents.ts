@@ -183,6 +183,14 @@ export function createWebComponent(
     // The core-of-HTML surface: declared props become element properties
     if (schema) {
         for (const key of propNames) {
+            if (key === 'value' && schema.bind) {
+                // bind OWNS el.value (form semantics, defined below) — a
+                // contract declaring BOTH bind and a value prop must not
+                // define the property twice (it threw, killing the whole
+                // registration). The value PROP stays reachable as a live
+                // attribute: el.setAttribute('value', ...)
+                continue;
+            }
             Object.defineProperty(LemonadeElement.prototype, key, {
                 get(this: LemonadeElement) {
                     return this._ensure()[key].peek();

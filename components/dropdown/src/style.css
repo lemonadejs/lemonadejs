@@ -21,22 +21,28 @@
 }
 
 .lm-dropdown-input {
-    padding: 7px 26px 7px 10px;
+    padding: 7px 28px 7px 12px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     cursor: pointer;
     box-sizing: border-box;
     width: 100%;
-    min-height: 32px;
+    min-height: 34px;
     background: #fff;
-    border: 1px solid #d4d4d8;
-    border-radius: 6px;
+    border: 1px solid #e4e4e7;
+    border-radius: 8px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
     position: relative;
     display: flex;
     align-items: center;
     font: inherit;
     outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.lm-dropdown-input:hover {
+    border-color: #c8c8cf;
 }
 
 .lm-dropdown-input[contenteditable='true'] {
@@ -44,9 +50,10 @@
 }
 
 .lm-dropdown-input:focus-visible,
-.lm-dropdown-input[contenteditable='true']:focus {
+.lm-dropdown-input[contenteditable='true']:focus,
+.lm-dropdown[data-state='true'] .lm-dropdown-input {
     border-color: #2563eb;
-    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
 }
 
 .lm-dropdown-input > br {
@@ -63,8 +70,8 @@
     right: 2px;
     background-repeat: no-repeat;
     background-position: center;
-    background-image: url("data:image/svg+xml,%0A%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2724%27 height=%2724%27 viewBox=%270 0 24 24%27%3E%3Cpath fill=%27none%27 d=%27M0 0h24v24H0V0z%27/%3E%3Cpath d=%27M7 10l5 5 5-5H7z%27 fill=%27gray%27/%3E%3C/svg%3E");
-    transition: transform 0.1s ease-in-out;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2716%27 height=%2716%27 viewBox=%270 0 24 24%27 fill=%27none%27 stroke=%27%2371717a%27 stroke-width=%272.2%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27%3E%3Cpath d=%27M6 9l6 6 6-6%27/%3E%3C/svg%3E");
+    transition: transform 0.18s cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 
 .lm-dropdown[data-state='true'] .lm-dropdown-input::after {
@@ -109,9 +116,26 @@
     padding: 0;
     min-width: 0;
     min-height: 5px;
-    border: 1px solid #d4d4d8;
-    border-radius: 6px;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    border: 1px solid #e4e4e7;
+    border-radius: 10px;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.06);
+    overflow: hidden;
+    animation: lm-dropdown-in 0.14s ease-out;
+}
+
+@keyframes lm-dropdown-in {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .lm-dropdown .lm-modal {
+        animation: none;
+    }
 }
 
 .lm-dropdown .lm-modal-content {
@@ -140,36 +164,37 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 0 36px 0 10px;
+    padding: 0 36px 0 12px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     position: relative;
     cursor: pointer;
+    transition: background-color 0.1s;
 }
 
-.lm-dropdown-item:hover {
-    background-color: #1e90ff;
-    color: #fff;
+.lm-dropdown-item:hover,
+.lm-dropdown-item[data-cursor='true'] {
+    background-color: #f4f4f5;
 }
 
 .lm-dropdown-item[data-selected='true'] {
-    background-color: #1e90ff;
-    color: #fff;
+    background-color: rgba(37, 99, 235, 0.08);
+    color: #1d4ed8;
+    font-weight: 500;
 }
 
 .lm-dropdown-item[data-selected='true']::after {
-    content: '✓';
+    content: '';
     position: absolute;
-    right: 10px;
-}
-
-.lm-dropdown-item[data-cursor='true'] {
-    background-color: #e0e7ff;
+    right: 12px;
+    width: 14px;
+    height: 14px;
+    background: url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2714%27 height=%2714%27 viewBox=%270 0 24 24%27 fill=%27none%27 stroke=%27%232563eb%27 stroke-width=%273%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27%3E%3Cpath d=%27M20 6L9 17l-5-5%27/%3E%3C/svg%3E") center no-repeat;
 }
 
 .lm-dropdown-item[data-cursor='true'][data-selected='true'] {
-    background-color: #1d86ed;
+    background-color: rgba(37, 99, 235, 0.14);
 }
 
 .lm-dropdown-item[data-disabled='true'] {
@@ -186,12 +211,14 @@
 .lm-dropdown-group {
     box-sizing: border-box;
     display: flex;
-    align-items: center;
-    padding: 0 10px;
-    font-weight: 700;
-    font-size: 12px;
-    color: #52525b;
-    background: #fafafa;
+    align-items: flex-end;
+    padding: 0 12px 4px;
+    font-weight: 600;
+    font-size: 11px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: #71717a;
+    background: transparent;
 }
 
 .lm-dropdown-empty {

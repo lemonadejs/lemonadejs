@@ -2069,6 +2069,9 @@ function createWebComponent(a, b, c) {
   }
   if (schema) {
     for (const key of propNames) {
+      if (key === "value" && schema.bind) {
+        continue;
+      }
       Object.defineProperty(LemonadeElement.prototype, key, {
         get() {
           return this._ensure()[key].peek();

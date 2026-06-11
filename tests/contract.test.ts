@@ -151,6 +151,31 @@ suite('Contract-driven web components', () => {
         el.remove();
     });
 
+    it('a contract with BOTH bind and a value prop registers without throwing (bind owns el.value)', () => {
+        // Regression: rating/signature/switch declare bind AND value —
+        // createWebComponent defined el.value twice and threw, killing
+        // the whole page before anything mounted
+        const Both = component('wcboth', {
+            bind: false,
+            value: '',
+            label: '',
+        }, (props, { bind }) => {
+            const on = bind(props, false);
+            return html`<i class="${() => (on.value ? 'on' : 'off')}">${props.value}:${props.label}</i>`;
+        });
+        expect(() => createWebComponent(Both as Component<Record<string, unknown>>)).not.toThrow();
+
+        const el = document.createElement('lm-wcboth') as HTMLElement & { value: boolean };
+        el.setAttribute('value', 'form-v'); // the value PROP, via attribute
+        document.body.appendChild(el);
+        expect(el.querySelector('i')!.textContent).toBe('form-v:');
+
+        el.value = true; // el.value drives BIND, not the prop
+        expect(el.querySelector('i')!.className).toBe('on');
+        expect(el.querySelector('i')!.textContent).toBe('form-v:');
+        el.remove();
+    });
+
     it('bind maps to the value property and dispatches change events', () => {
         createWebComponent(Switch as Component<Record<string, unknown>>);
         const el = document.createElement('lm-switch') as HTMLElement & { value: boolean };
