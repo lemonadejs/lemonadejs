@@ -1,56 +1,128 @@
-# `<Modal />`
+# `<Modal />` — @lemonadejs/modal
 
-Full v5 property parity plus MUI Dialog's `fullscreen`. Draggable, resizable,
-minimizable, layered, with origin-aware close events.
+LemonadeJS modal block — contract-verified, framework-agnostic.
 
-## Snippet
+**✓ verified** — 49 contract checks · framework-agnostic · zero dependencies
 
-```ts
-import { html, mount } from 'lemonadejs';
-import Modal from './modal';
+## Overview
 
-let modal;
-mount(() => html`<main>
-    <button onclick="${() => modal.open()}">Open</button>
-    <${Modal} ref="${(api) => (modal = api)}" title="Hello" backdrop closable draggable
-        onclose="${(origin) => console.log('closed via', origin)}">
-        <p>Content goes here as children.</p>
-    </${Modal}>
-</main>`, document.getElementById('app'));
+<Modal /> — the platform primitive. Floating panels, dropdown lists,
+autocomplete, corner chats and the context menu are all built on these
+behaviors, ported faithfully from v5:
+
+  - resize from all 8 edges/corners (10px hit zone) with live cursor
+    feedback; Shift preserves the aspect ratio
+  - drag by the top 40px zone with a move cursor — improved over v5:
+    the grab zone is CLAMPED to the viewport, a modal can never be
+    dragged irrecoverably off-screen
+  - minimize DOCKS to a taskbar row at the bottom of the screen
+    (205px slots, wrapping), restore returns to the remembered spot
+  - explicit coordinates on open (centered unless positioned), margin
+    based auto-adjust, responsive fullscreen on small screens
+  - Escape/focus handling scoped to the ELEMENT (multiple modals never
+    fight over a document listener), v5 close origins preserved
+
+v5 → v6 mapping: closed → bind (inverted: bind is the OPEN state);
+auto-close → autoclose; auto-adjust → autoadjust; content → children.
+onclose(origin): 'button' | 'backdrop' | 'escape' | 'focusout' | 'api'.
+onmove(top, left) and onresize(width, height) fire on release.
+
+## Install
+
+```bash
+npm install @lemonadejs/modal
 ```
 
-## Contract
+```js
+import Modal from '@lemonadejs/modal';
+import '@lemonadejs/modal/style.css';
+```
 
-| Key | Type | Default | Notes |
+## Usage
+
+```js
+import { html, mount } from 'lemonadejs';
+
+const App = () => html`<div>
+    <${Modal} />
+</div>`;
+
+mount(App, document.getElementById('root'));
+```
+
+Three deployment forms, one component:
+
+```js
+html`<${Modal} />`                       // by value (no registration)
+setComponents({ Modal });               // then <Modal /> by name anywhere
+createWebComponent(Modal);              // <lm-modal> in plain HTML/any framework
+```
+
+## Props
+
+Every declared prop arrives as a **live state** — pass a value for a snapshot or a
+state for a two-way live wire. Attribute strings are coerced to the declared type.
+
+| Prop | Type | Default | Description |
 |---|---|---|---|
-| `bind` | boolean | — | the OPEN state (v5: `closed`, inverted) |
-| `title` | string | `''` | header title |
-| `width` / `height` | number | `0` | px; 0 = auto |
-| `top` / `left` | number | `0` | px, for `position="absolute"` |
-| `position` | string | `''` | `center` \| `left` \| `right` \| `bottom` \| `absolute` |
-| `backdrop` | boolean | `false` | dim the page (click closes when closable) |
-| `closable` | boolean | `false` | × button + Escape + backdrop click |
-| `draggable` | boolean | `false` | top 40px zone; CLAMPED — can never leave the screen |
-| `resizable` | boolean | `false` | ALL 8 edges/corners (10px zones), live cursors, Shift = aspect ratio |
-| `minimizable` / `minimized` | boolean | `false` | docks to a bottom taskbar row (205px slots, wrapping); restore remembers position |
-| `fullscreen` | boolean | `false` | MUI: cover the viewport |
-| `autoclose` | boolean | `false` | close on focusout (v5: `auto-close`) |
-| `autoadjust` | boolean | `false` | clamp into viewport on open (v5: `auto-adjust`) |
-| `focus` | boolean | `true` | focus the modal when opened |
-| `overflow` | boolean | `false` | scroll oversized content |
-| `responsive` | boolean | `true` | small screens: full width |
-| `layers` | boolean | `false` | bring to front on mousedown |
-| `url` | string | `''` | load remote content on first open |
-| `onopen` / `onclose(origin)` / `onmove(top,left)` / `onresize(width,height)` — move/resize fire on release | events | — | |
-| `api` | — | — | `open()`, `close()`, `toggle()`, `front()`, `back()` via `ref` |
+| `bind` | boolean | — | Two-way bound value. `.set()` fires `onchange`; plain assignment is silent.  |
+| `title` | string | `''` |  |
+| `width` | number | `0` |  |
+| `height` | number | `0` |  |
+| `top` | number | `0` |  |
+| `left` | number | `0` |  |
+| `position` | string | `''` |  |
+| `backdrop` | boolean | `false` |  |
+| `closable` | boolean | `false` |  |
+| `draggable` | boolean | `false` |  |
+| `resizable` | boolean | `false` |  |
+| `minimizable` | boolean | `false` |  |
+| `minimized` | boolean | `false` |  |
+| `fullscreen` | boolean | `false` |  |
+| `header` | boolean | `true` |  |
+| `autoclose` | boolean | `false` |  |
+| `autoadjust` | boolean | `false` |  |
+| `focus` | boolean | `true` |  |
+| `overflow` | boolean | `false` |  |
+| `responsive` | boolean | `true` |  |
+| `layers` | boolean | `false` |  |
+| `url` | string | `''` |  |
 
-Origins reported by `onclose`: `button`, `backdrop`, `escape`, `focusout`, `api`.
+## Events
 
-Machine-readable: [contract.json](contract.json) · proof: [verify.json](verify.json) ·
-types: [modal.d.ts](modal.d.ts) (generated)
+All event names are lowercase (the platform convention — LJS-305 warns otherwise).
+
+- `onopen`
+- `onclose`
+- `onmove`
+- `onresize`
+
+## API (via `ref`)
+
+```js
+import { ref } from 'lemonadejs';
+const modal = ref();
+html`<${Modal} ref="${modal}" />`;
+// modal.current.open(...)  ·  modal.current.close(...)  ·  modal.current.toggle(...)  ·  modal.current.front(...)  ·  modal.current.back(...)
+```
+
+- `open()`
+- `close()`
+- `toggle()`
+- `front()`
+- `back()`
 
 ## Styling
 
-`lm-modal-*` convention: `.lm-modal`, `.lm-modal-root[data-position]`,
-parts `-backdrop/-header/-title/-controls/-content/-resizer`, states
-`-minimized/-fullscreen/-responsive/-overflow`.
+All classes follow the `lm-modal-*` convention; visual variants are `data-*`
+attributes on the root. Override freely — there is no styling engine to fight.
+
+## Contract
+
+The machine-readable schema ships with the package:
+
+```js
+import contract from '@lemonadejs/modal/contract.json';
+```
+
+`verify.json` carries the conformance proof produced by `verify(Modal)`.

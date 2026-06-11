@@ -1,0 +1,50 @@
+# LemonadeJS Studio — the block catalog
+
+40 contract-verified blocks. Every block: a publishable npm package,
+a machine-readable contract, a conformance proof, a live playground demo, and
+three deployment forms (by value, by name, custom element).
+
+| Block | Package | Checks | Description |
+|---|---|---|---|
+| [Accordion](./accordion/README.md) | `@lemonadejs/accordion` | 9 | LemonadeJS accordion block — contract-verified, framework-agnostic. |
+| [Actionsheet](./actionsheet/README.md) | `@lemonadejs/actionsheet` | 13 | LemonadeJS actionsheet block — contract-verified, framework-agnostic. |
+| [Alert](./alert/README.md) | `@lemonadejs/alert` | 15 | LemonadeJS alert block — contract-verified, framework-agnostic. |
+| [Backdrop](./backdrop/README.md) | `@lemonadejs/backdrop` | 13 | LemonadeJS backdrop block — contract-verified, framework-agnostic. |
+| [Button](./button/README.md) | `@lemonadejs/button` | 22 | LemonadeJS button block — contract-verified, framework-agnostic. |
+| [Buttongroup](./buttongroup/README.md) | `@lemonadejs/buttongroup` | 18 | LemonadeJS buttongroup block — contract-verified, framework-agnostic. |
+| [Calendar](./calendar/README.md) | `@lemonadejs/calendar` | 39 | LemonadeJS calendar block — date, datetime and range picker on the Modal primitive; contract-verified, framework-agnostic. |
+| [Card](./card/README.md) | `@lemonadejs/card` | 20 | LemonadeJS card block — contract-verified, framework-agnostic. |
+| [Color](./color/README.md) | `@lemonadejs/color` | 14 | LemonadeJS color block — contract-verified, framework-agnostic. |
+| [Contextmenu](./contextmenu/README.md) | `@lemonadejs/contextmenu` | 6 | LemonadeJS contextmenu block — contract-verified, framework-agnostic. |
+| [Cropper](./cropper/README.md) | `@lemonadejs/cropper` | 21 | LemonadeJS cropper block — contract-verified, framework-agnostic. |
+| [Datagrid](./datagrid/README.md) | `@lemonadejs/datagrid` | 23 | LemonadeJS datagrid block — virtualized big-data grid, contract-verified, framework-agnostic. |
+| [Dialog](./dialog/README.md) | `@lemonadejs/dialog` | 19 | LemonadeJS dialog block — contract-verified, framework-agnostic. |
+| [Drawer](./drawer/README.md) | `@lemonadejs/drawer` | 15 | LemonadeJS drawer block — anchored side panels and the bottom sheet on the Modal primitive; contract-verified, framework-agnostic. |
+| [Dropdown](./dropdown/README.md) | `@lemonadejs/dropdown` | 39 | LemonadeJS dropdown block — select, autocomplete and picker on the Modal primitive; contract-verified, framework-agnostic. |
+| [Formify](./formify/README.md) | `@lemonadejs/formify` | 8 | LemonadeJS formify block — smart HTML forms: your markup in, one data object out (get/set/load/save, two-way bind). Contract-verified, framework-agnostic. |
+| [Gantt](./gantt/README.md) | `@lemonadejs/gantt` | 24 | LemonadeJS gantt block — %-positioned bars that align across embedded instances; contract-verified, framework-agnostic. |
+| [Imagelist](./imagelist/README.md) | `@lemonadejs/imagelist` | 14 | LemonadeJS imagelist block — contract-verified, framework-agnostic. |
+| [List](./list/README.md) | `@lemonadejs/list` | 26 | LemonadeJS list block — search, pagination, remote mode and MUI-style items, contract-verified, framework-agnostic. |
+| [Login](./login/README.md) | `@lemonadejs/login` | 36 | LemonadeJS login block — multi-screen authentication (login, register, forgot password, code confirmation, password reset), contract-verified. |
+| [Modal](./modal/README.md) | `@lemonadejs/modal` | 49 | LemonadeJS modal block — contract-verified, framework-agnostic. |
+| [Navbar](./navbar/README.md) | `@lemonadejs/navbar` | 13 | LemonadeJS navbar block — contract-verified, framework-agnostic. |
+| [Progress](./progress/README.md) | `@lemonadejs/progress` | 15 | LemonadeJS progress block — contract-verified, framework-agnostic. |
+| [Quickmenu](./quickmenu/README.md) | `@lemonadejs/quickmenu` | 12 | LemonadeJS quickmenu block — contract-verified, framework-agnostic. |
+| [Rating](./rating/README.md) | `@lemonadejs/rating` | 20 | LemonadeJS rating block — contract-verified, framework-agnostic. |
+| [Router](./router/README.md) | `@lemonadejs/router` | 11 | LemonadeJS router block — contract-verified, framework-agnostic. |
+| [Schedule](./schedule/README.md) | `@lemonadejs/schedule` | 35 | LemonadeJS schedule block — contract-verified, framework-agnostic. |
+| [Signature](./signature/README.md) | `@lemonadejs/signature` | 21 | LemonadeJS signature block — contract-verified, framework-agnostic. |
+| [Slider](./slider/README.md) | `@lemonadejs/slider` | 20 | LemonadeJS slider block — contract-verified, framework-agnostic. |
+| [Speeddial](./speeddial/README.md) | `@lemonadejs/speeddial` | 18 | LemonadeJS speeddial block — contract-verified, framework-agnostic. |
+| [Switch](./switch/README.md) | `@lemonadejs/switch` | 22 | LemonadeJS switch block — contract-verified, framework-agnostic. |
+| [Tabs](./tabs/README.md) | `@lemonadejs/tabs` | 18 | LemonadeJS tabs block — contract-verified, framework-agnostic. |
+| [Timeline](./timeline/README.md) | `@lemonadejs/timeline` | 32 | LemonadeJS timeline block — contract-verified, framework-agnostic. |
+| [Toast](./toast/README.md) | `@lemonadejs/toast` | 11 | LemonadeJS toast block — contract-verified, framework-agnostic. |
+| [Toggle](./toggle/README.md) | `@lemonadejs/toggle` | 14 | LemonadeJS toggle block — contract-verified, framework-agnostic. |
+| [Toolbar](./toolbar/README.md) | `@lemonadejs/toolbar` | 10 | LemonadeJS toolbar block — contract-verified, framework-agnostic. |
+| [Tooltip](./tooltip/README.md) | `@lemonadejs/tooltip` | 13 | LemonadeJS tooltip block — contract-verified, framework-agnostic. |
+| [Topmenu](./topmenu/README.md) | `@lemonadejs/topmenu` | 4 | LemonadeJS topmenu block — contract-verified, framework-agnostic. |
+| [Transferlist](./transferlist/README.md) | `@lemonadejs/transferlist` | 12 | LemonadeJS transfer list block — contract-verified, framework-agnostic. |
+| [Wheel](./wheel/README.md) | `@lemonadejs/wheel` | 14 | LemonadeJS wheel block — contract-verified, framework-agnostic. |
+
+Run `npm run dev` and open http://localhost:3000/ for the live playground.

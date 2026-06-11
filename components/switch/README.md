@@ -1,59 +1,101 @@
-# `<Switch />`
+# `<Switch />` — @lemonadejs/switch
 
-Two-way bindable toggle on a real `<input type="checkbox">` — native form
-participation, native disabled, native keyboard accessibility. The canonical
-LemonadeJS block: contract, proof, types and snippet in one folder. Full
-property parity with the v5 plugin plus the best of MUI's Switch.
+LemonadeJS switch block — contract-verified, framework-agnostic.
 
-## Snippet
+**✓ verified** — 22 contract checks · framework-agnostic · zero dependencies
 
-```ts
-import { html, mount, store } from 'lemonadejs';
-import Switch from './switch';
+## Overview
 
-const enabled = store(false);
+<Switch /> — the canonical LemonadeJS v6 block
 
-mount(() => html`<main>
-    <${Switch} bind="${enabled}" label="Dark mode" color="purple" size="large"
-        onchange="${(v) => console.log('changed:', v)}" />
-</main>`, document.getElementById('app'));
+Full property parity with the v5 plugin (label as text, checked, color, name,
+disabled, position) plus the best of MUI's Switch (size, required,
+value) on the v6 contract model. Built on a real
+<input type="checkbox">: native form participation, native disabled
+semantics, native keyboard accessibility.
+
+bind vs checked vs value (closer, but different — by design):
+  bind="${state}"  the live two-way state (wins when present)
+  checked          the INITIAL state when unbound
+  value            the string submitted with the form when on (DOM semantics)
+
+## Install
+
+```bash
+npm install @lemonadejs/switch
 ```
 
-## Contract
+```js
+import Switch from '@lemonadejs/switch';
+import '@lemonadejs/switch/style.css';
+```
 
-| Key | Type | Default | Notes |
+## Usage
+
+```js
+import { html, mount } from 'lemonadejs';
+
+const App = () => html`<div>
+    <${Switch} />
+</div>`;
+
+mount(App, document.getElementById('root'));
+```
+
+Three deployment forms, one component:
+
+```js
+html`<${Switch} />`                       // by value (no registration)
+setComponents({ Switch });               // then <Switch /> by name anywhere
+createWebComponent(Switch);              // <lm-switch> in plain HTML/any framework
+```
+
+## Props
+
+Every declared prop arrives as a **live state** — pass a value for a snapshot or a
+state for a two-way live wire. Attribute strings are coerced to the declared type.
+
+| Prop | Type | Default | Description |
 |---|---|---|---|
-| `bind` | boolean | — | the live two-way state (wins when present) |
-| `checked` | boolean | `false` | the INITIAL state when unbound |
-| `label` | string | `''` | text beside the switch (`.lm-switch-label`) |
-| `color` | string | `''` | `green` (default) \| `orange` \| `red` \| `purple` |
-| `size` | string | `''` | `small` \| `large` |
-| `name` | string | `''` | form identification name (on the input) |
-| `value` | string | `''` | form submit value when on (DOM semantics) |
+| `bind` | boolean | — | Two-way bound value. `.set()` fires `onchange`; plain assignment is silent. two-way state (v5: value) |
+| `checked` | boolean | `false` | initial state when unbound |
+| `label` | string | `''` | label displayed beside the switch |
+| `color` | string | `''` | green | orange | red | purple |
+| `size` | string | `''` | small | large (default in between) |
+| `name` | string | `''` | form identification name |
+| `value` | string | `''` | form submit value when checked |
 | `required` | boolean | `false` | native form validation |
-| `disabled` | boolean | `false` | native, blocks interaction |
-| `position` | string | `''` | `right` moves the label before the track |
-| `onchange` | event | — | user-initiated changes only |
-| `api.toggle` | function | — | imperative, via `ref` |
+| `disabled` | boolean | `false` | blocks interaction (native) |
+| `position` | string | `''` | text position: 'right' moves it before the track |
 
-`bind` vs `checked` vs `value` — closer, but different, by design: `bind` is
-the live state, `checked` is the initial fallback, `value` is the string a
-form submits (exactly like a native checkbox).
+## Events
 
-Machine-readable: [contract.json](contract.json) · proof: [verify.json](verify.json) ·
-types: [switch.d.ts](switch.d.ts) (generated from the contract)
+All event names are lowercase (the platform convention — LJS-305 warns otherwise).
+
+- `onchange` — fires on user-initiated changes
+
+## API (via `ref`)
+
+```js
+import { ref } from 'lemonadejs';
+const switch = ref();
+html`<${Switch} ref="${switch}" />`;
+// switch.current.toggle(...)
+```
+
+- `toggle()`
 
 ## Styling
 
-All hooks follow the `lm-switch-*` convention: `.lm-switch`, states
-`.lm-switch-on/off/disabled`, sizes `.lm-switch-small/large`, parts
-`.lm-switch-input/track/thumb/label`. Styling variants render as valid
-`data-*` attributes: `[data-color]` and `[data-position]`.
+All classes follow the `lm-switch-*` convention; visual variants are `data-*`
+attributes on the root. Override freely — there is no styling engine to fight.
 
-## Deployments
+## Contract
 
-```ts
-createWebComponent(Switch);          // <lm-switch label="..." /> anywhere in HTML
-adaptReact(Switch);                  // <Switch checked label="..." /> in React
-mount(Switch, el, { bind: state });  // native / island
+The machine-readable schema ships with the package:
+
+```js
+import contract from '@lemonadejs/switch/contract.json';
 ```
+
+`verify.json` carries the conformance proof produced by `verify(Switch)`.

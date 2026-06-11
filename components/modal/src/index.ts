@@ -21,7 +21,7 @@
  * onmove(top, left) and onresize(width, height) fire on release.
  */
 
-import { component, html, unsafe } from 'lemonadejs';
+import { component, html, isDisposing, unsafe } from 'lemonadejs';
 
 const EDGE = 10; // resize hit zone
 const BAR = 40; // drag zone height
@@ -506,6 +506,9 @@ export const Modal = component('modal', {
                 onkeydown="${onKey}"
                 onfocusin="${() => root?.classList.add('lm-modal-focus')}"
                 onfocusout="${(e: FocusEvent) => {
+                    if (isDisposing()) {
+                        return; // renderer-caused blur, not the user leaving
+                    }
                     if (root && !root.contains(e.relatedTarget as Node)) {
                         root.classList.remove('lm-modal-focus');
                         if (props.autoclose!.value) {

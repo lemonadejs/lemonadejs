@@ -1,46 +1,95 @@
-# `<Contextmenu />`
+# `<Contextmenu />` — @lemonadejs/contextmenu
 
-Full v5 property parity: items with icons, shortcuts, tooltips, disabled
-states, separators and nested submenus (pure CSS hover). MUI Menu review
-added nothing — the v5 item model is richer.
+LemonadeJS contextmenu block — contract-verified, framework-agnostic.
 
-## Snippet
+**✓ verified** — 6 contract checks · framework-agnostic · zero dependencies beyond `@lemonadejs/modal`
 
-```ts
-import { html, mount } from 'lemonadejs';
-import Contextmenu from './contextmenu';
+## Overview
 
-let menu;
-mount(() => html`<main>
-    <div oncontextmenu="${(e) => menu.openAt(e)}">Right-click me</div>
-    <${Contextmenu} ref="${(api) => (menu = api)}" options="${[
-        { title: 'Open', icon: 'folder_open', shortcut: 'Ctrl+O', onclick: () => open() },
-        { type: 'line' },
-        { title: 'Export', submenu: [{ title: 'CSV' }, { title: 'JSON' }] },
-    ]}" />
-</main>`, document.getElementById('app'));
+<Contextmenu /> — built ON the Modal primitive, exactly like v5:
+every menu level is a headerless, auto-adjusting Modal. Submenus flip
+horizontally when out of space (inheriting the parent's direction),
+correct vertical overflow, open on a 200ms hover delay — and the full
+v5 keyboard system: ArrowUp/Down cursor skipping disabled items and
+separators with wrap-around, ArrowRight into a submenu (cursor on its
+first enabled item), ArrowLeft back out, Enter activates, Escape
+closes everything.
+
+v5 → v6 mapping: open(options, x, y) and openAt(x, y | event) keep
+their signatures; the per-item render() DOM hook was dropped.
+
+## Install
+
+```bash
+npm install @lemonadejs/contextmenu
 ```
 
-## Contract
+```js
+import Contextmenu from '@lemonadejs/contextmenu';
+import '@lemonadejs/contextmenu/style.css';
+import '@lemonadejs/modal/style.css'; // composed primitive
+```
 
-| Key | Type | Notes |
-|---|---|---|
-| `options` | array | `ContextItem[]` — the default item set |
-| `onopen` / `onclose` | events | |
-| `api` | — | `open(items, x, y)`, `openAt(x, y \| event)`, `close()` via `ref` |
+## Usage
 
-`ContextItem`: `title`, `icon` (material icon name), `shortcut`, `tooltip`,
-`disabled`, `type: 'line'`, `submenu: ContextItem[]`, `onclick(e, item)`.
-The v5 per-item `render()` DOM hook was dropped — compose components instead.
+```js
+import { html, mount } from 'lemonadejs';
 
-Dismissal: outside mousedown, Escape, or item click. Position is clamped to
-the viewport.
+const App = () => html`<div>
+    <${Contextmenu} />
+</div>`;
 
-Machine-readable: [contract.json](contract.json) · proof: [verify.json](verify.json) ·
-types: [contextmenu.d.ts](contextmenu.d.ts) (generated)
+mount(App, document.getElementById('root'));
+```
+
+Three deployment forms, one component:
+
+```js
+html`<${Contextmenu} />`                       // by value (no registration)
+setComponents({ Contextmenu });               // then <Contextmenu /> by name anywhere
+createWebComponent(Contextmenu);              // <lm-contextmenu> in plain HTML/any framework
+```
+
+## Props
+
+Every declared prop arrives as a **live state** — pass a value for a snapshot or a
+state for a two-way live wire. Attribute strings are coerced to the declared type.
+
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `options` | array | — |  |
+
+## Events
+
+All event names are lowercase (the platform convention — LJS-305 warns otherwise).
+
+- `onopen`
+- `onclose`
+
+## API (via `ref`)
+
+```js
+import { ref } from 'lemonadejs';
+const contextmenu = ref();
+html`<${Contextmenu} ref="${contextmenu}" />`;
+// contextmenu.current.open(...)  ·  contextmenu.current.openAt(...)  ·  contextmenu.current.close(...)
+```
+
+- `open()`
+- `openAt()`
+- `close()`
 
 ## Styling
 
-`lm-contextmenu-*` convention: `.lm-contextmenu`, parts
-`-list/-item/-icon/-title/-shortcut/-arrow/-line/-submenu`, states
-`-disabled/-parent`.
+All classes follow the `lm-contextmenu-*` convention; visual variants are `data-*`
+attributes on the root. Override freely — there is no styling engine to fight.
+
+## Contract
+
+The machine-readable schema ships with the package:
+
+```js
+import contract from '@lemonadejs/contextmenu/contract.json';
+```
+
+`verify.json` carries the conformance proof produced by `verify(Contextmenu)`.

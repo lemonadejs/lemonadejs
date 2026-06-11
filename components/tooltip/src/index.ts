@@ -17,7 +17,7 @@
  * effective side is published as data-position so the arrow follows.
  */
 
-import { component, html } from 'lemonadejs';
+import { component, html, isDisposing } from 'lemonadejs';
 
 const GAP = 8; // distance between the wrapper and the popper
 
@@ -131,6 +131,9 @@ export const Tooltip = component('tooltip', {
         onmouseleave="${hide}"
         onfocusin="${show}"
         onfocusout="${(e: FocusEvent) => {
+            if (isDisposing()) {
+                return; // renderer-caused blur
+            }
             // Focus moving WITHIN the children keeps the tooltip up
             if (!wrapper || !wrapper.contains(e.relatedTarget as Node)) {
                 hide();

@@ -30,7 +30,8 @@
         "probe": "node scripts/probe.mjs",
         "registry": "node scripts/registry.js",
         "build": "node build.js",
-        "build:components": "node scripts/registry.js && node scripts/build-components.js",
+        "build:components": "node scripts/registry.js && node scripts/build-components.js && node scripts/docs.js",
+        "docs": "node scripts/docs.js",
         "typecheck": "tsc --noEmit"
     },
     "devDependencies": {

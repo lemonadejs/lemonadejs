@@ -18,7 +18,7 @@
  * onclose(origin): 'select' | 'button' | 'escape' | 'focusout' | 'api'.
  */
 
-import { component, html } from 'lemonadejs';
+import { component, html, isDisposing } from 'lemonadejs';
 import Modal from '@lemonadejs/modal';
 
 const defaultPalette: string[][] = [
@@ -167,8 +167,12 @@ export const Color = component('color', {
         }
     };
 
-    // v5: focus leaving the control (input AND panel) closes the popup
+    // v5: focus leaving the control (input AND panel) closes the popup —
+    // ignoring renderer-caused blurs (branch swaps/disposal)
     const onFocusOut = (e: FocusEvent) => {
+        if (isDisposing()) {
+            return;
+        }
         if (opened.value && !(e.relatedTarget && wrapper?.contains(e.relatedTarget as Node))) {
             doClose('focusout');
         }

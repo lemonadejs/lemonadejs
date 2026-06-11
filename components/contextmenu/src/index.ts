@@ -12,7 +12,7 @@
  * their signatures; the per-item render() DOM hook was dropped.
  */
 
-import { component, html } from 'lemonadejs';
+import { component, html, isDisposing } from 'lemonadejs';
 import Modal from '@lemonadejs/modal';
 
 export interface ContextItem {
@@ -332,6 +332,9 @@ export const Contextmenu = component('contextmenu', {
         ref="${(el: Element) => (wrapper = el as HTMLElement)}"
         onkeydown="${onKey}"
         onfocusout="${(e: FocusEvent) => {
+            if (isDisposing()) {
+                return; // renderer disposing a level is not the user leaving
+            }
             if (!wrapper?.contains(e.relatedTarget as Node)) {
                 closeFrom(0);
             }

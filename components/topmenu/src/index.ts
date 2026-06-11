@@ -23,7 +23,7 @@
  * private in v6, so a programmatic dismiss needs a surface.
  */
 
-import { component, html } from 'lemonadejs';
+import { component, html, isDisposing } from 'lemonadejs';
 import Contextmenu, { type ContextItem } from '@lemonadejs/contextmenu';
 
 export interface TopmenuItem {
@@ -163,6 +163,9 @@ export const Topmenu = component('topmenu', {
     };
 
     const onFocusOut = (e: FocusEvent) => {
+        if (isDisposing()) {
+            return; // renderer-caused blur (menu level disposal)
+        }
         if (!(e.relatedTarget && root?.contains(e.relatedTarget as Node))) {
             selected.value = false; // v5: clear the highlight, keep the index
         }

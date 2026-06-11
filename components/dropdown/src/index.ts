@@ -24,7 +24,7 @@
  *     viewport width at open)
  */
 
-import { component, html } from 'lemonadejs';
+import { component, html, isDisposing } from 'lemonadejs';
 import Modal from '@lemonadejs/modal';
 
 export interface DropdownItem {
@@ -129,7 +129,6 @@ export const Dropdown = component('dropdown', {
     let root: HTMLElement | null = null;
     let scroller: HTMLElement | null = null;
     let modalApi: { open(): void; close(): void } | null = null;
-    let muteFocusOut = false; // the label→search swap blurs a disposed node
 
     onUnmount(() => {
         if (searchTimer) {
@@ -362,13 +361,6 @@ export const Dropdown = component('dropdown', {
         query.value = '';
         cursor.value = null;
         localSearch('');
-        // Opening swaps the focused label for the search field: the blur
-        // of the disposed label must not read as the user leaving. The
-        // mute window closes after the search field takes focus.
-        muteFocusOut = true;
-        setTimeout(() => {
-            muteFocusOut = false;
-        }, 0);
         // Anchor the panel under the input; width from the longest text (v5)
         const input = root?.querySelector('.lm-dropdown-header') as HTMLElement | null;
         if (input && kind() === 'default') {
@@ -555,7 +547,10 @@ export const Dropdown = component('dropdown', {
     };
 
     const onFocusOut = (e: FocusEvent) => {
-        if (muteFocusOut || !opened.value || !root) {
+        // The renderer disposing a focused node (the label→search swap)
+        // is not the user leaving — the engine guard replaces the old
+        // hand-rolled mute window
+        if (isDisposing() || !opened.value || !root) {
             return;
         }
         // Focus landing inside the dropdown (search field, panel) stays

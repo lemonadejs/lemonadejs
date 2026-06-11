@@ -34,7 +34,7 @@
  * onopen(), onclose(origin: 'button' | 'escape' | 'focusout').
  */
 
-import { component, html } from 'lemonadejs';
+import { component, html, isDisposing } from 'lemonadejs';
 import Modal from '@lemonadejs/modal';
 
 export interface CalendarEvent {
@@ -464,14 +464,6 @@ export const Calendar = component('calendar', {
     let root: HTMLElement | null = null;
     let gridEl: HTMLElement | null = null;
     let modalApi: { open(): void; close(): void } | null = null;
-    let muteFocusOut = false; // open/close swap branches; disposal blurs are not the user leaving
-    let muteTimer: ReturnType<typeof setTimeout> | null = null;
-
-    onUnmount(() => {
-        if (muteTimer) {
-            clearTimeout(muteTimer);
-        }
-    });
 
     const kind = () => resolvedType.value || (props.type!.value as string) || 'default';
     const inline = () => kind() === 'inline';
@@ -796,21 +788,10 @@ export const Calendar = component('calendar', {
     };
 
     // ---- open / close (v5 modal + onopen/onclose semantics)
-    const mute = () => {
-        muteFocusOut = true;
-        if (muteTimer) {
-            clearTimeout(muteTimer);
-        }
-        muteTimer = setTimeout(() => {
-            muteFocusOut = false;
-        }, 0);
-    };
-
     const open = () => {
         if (inline() || opened.peek()) {
             return;
         }
-        mute(); // resolvedType may swap branches under a focused input
         if ((props.type!.peek() as string) === 'auto') {
             resolvedType.value = window.innerWidth > 640 ? 'default' : 'picker';
         }
@@ -840,7 +821,6 @@ export const Calendar = component('calendar', {
             return;
         }
         opened.value = false;
-        mute(); // panel disposal blurs whatever was focused inside it
         modalApi?.close();
         // Anything uncommitted reverts: cursor, range preview, typed text
         syncFromValue(picked.peek());
@@ -948,7 +928,7 @@ export const Calendar = component('calendar', {
     };
 
     const onFocusOut = (e: FocusEvent) => {
-        if (muteFocusOut || inline() || !opened.peek() || !root) {
+        if (isDisposing() || inline() || !opened.peek() || !root) {
             return;
         }
         if (e.relatedTarget && root.contains(e.relatedTarget as Node)) {
