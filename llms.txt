@@ -212,6 +212,26 @@ Interop with other reactive worlds (React, Svelte, Rx) — subscribe + peek:
     const value = useSyncExternalStore(rows.subscribe, rows.peek);   // React reads
     useEffect(() => { rows.value = props.data; }, [props.data]);     // React writes
 
+subscribe(cb) has addEventListener semantics: cb runs UNTRACKED, pinned to that
+one state — reads inside it never create dependencies, so read-modify-write
+(count.value++) and reading other states are both safe.
+
+Derived values: computed (a tool) — the fix for "captured once" snapshots:
+
+    const C: Component = (props, { state, computed }) => {
+        const qty = state(2);
+        const total = computed(() => qty.value * (props.price?.value ?? 0));  // stays LIVE
+        return html`<b>${total}</b>`;   // re-renders when qty OR props.price change
+    };
+    // write the sources, never the computed; disposed with the component
+
+Renderer-caused focus events: removing a focused element (branch swap, unmount)
+fires focusout exactly like a user leaving. Anything that closes/commits on
+focusout must check:
+
+    import { isDisposing } from 'lemonadejs';
+    onfocusout="${(e) => { if (isDisposing()) return; close(); }}"
+
 ## Lifecycle
 
     const C: Component = (props, { state, onMount, onUnmount, unmount }) => {

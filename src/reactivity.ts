@@ -206,8 +206,18 @@ export class StateImpl<T> {
     subscribe(cb: (value: T) => void): () => void {
         const self = this;
         const binding = new Binding(function () {
-            // Tracked read: every run re-subscribes (Binding re-tracks deps)
-            cb(self.value);
+            // addEventListener semantics: the callback is IMPERATIVE —
+            // it runs UNTRACKED so reads inside it never collect
+            // dependencies. (A read-modify-write like count.value++
+            // would otherwise subscribe the callback to the very state
+            // it writes: the LJS-203 self-loop class.) The subscription
+            // stays pinned to THIS state only, re-added after each run
+            // because Binding.run() re-tracks from scratch.
+            untracked(function () {
+                cb(self.peek());
+            });
+            self.subs.add(binding);
+            binding.deps.add(self as StateImpl<unknown>);
         });
         // Initial wiring without running cb
         this.subs.add(binding);

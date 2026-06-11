@@ -88,6 +88,15 @@ export interface Tools {
      * a plain props.bind or the fallback). set() also fires props.onchange.
      */
     bind<T>(props: Bindable<T>, fallback: T): Bound<T>;
+    /**
+     * Derived state: fn re-evaluates whenever any state read inside it
+     * changes, and the result is itself a readable state. The idiomatic
+     * fix for "captured once" snapshots and hand-rolled peek pipelines:
+     *   const total = computed(() => price.value * qty.value);
+     * Read-only by convention — write the sources, not the result.
+     * Disposed with the component.
+     */
+    computed<T>(fn: () => T): State<T>;
     /** Called after the component DOM is attached. Return a cleanup
      *  FUNCTION to run on unmount; any other return value is ignored
      *  (so `onMount(() => count++)` stays legal). */

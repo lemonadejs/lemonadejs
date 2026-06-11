@@ -69,6 +69,7 @@ interface SlotState {
  * and match exactly. Embedding by value (<${Card} />) needs no registration.
  */
 export declare const setComponents: (map: Record<string, Component<never>>) => void;
+export declare const isDisposing: () => boolean;
 /** Create an object ref: <div ref="${r}"> — r.current is the element
  *  (or the component api), nulled automatically on unmount. */
 export declare const ref: <T>(initial?: T) => {

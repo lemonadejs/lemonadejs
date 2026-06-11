@@ -110,10 +110,9 @@ export const Gantt = component('gantt', {
     const refresh = () => {
         computeRange();
         preview.value = null;
-        // peek + write, never ++: refresh runs inside tracked
-        // subscriptions, and version.value++ READS version — the
-        // callback would subscribe to the state it writes (LJS-203)
-        version.value = version.peek() + 1;
+        // Safe since subscribe() runs callbacks untracked (the engine
+        // guard born from this very line — it used to LJS-203 loop)
+        version.value++;
     };
 
     onMount(() => props.data!.subscribe(refresh));

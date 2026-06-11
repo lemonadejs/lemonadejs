@@ -172,21 +172,63 @@ const remove = function (node: Node): void {
     }
 };
 
+/**
+ * True while the RENDERER is removing or blurring DOM (branch swaps,
+ * slot detaches, unmounts). Removing a focused node makes the browser
+ * fire focusout/blur exactly like a user leaving — handlers that close
+ * or commit on focusout should ignore renderer-caused events:
+ *
+ *   onfocusout="${(e) => { if (isDisposing()) return; ... }}"
+ */
+let disposingDepth = 0;
+
+export const isDisposing = function (): boolean {
+    return disposingDepth > 0;
+};
+
+const withDisposal = function (fn: () => void): void {
+    disposingDepth++;
+    try {
+        fn();
+    } finally {
+        disposingDepth--;
+    }
+};
+
+/** Blur before removal when the subtree holds focus — consistent
+ *  across browsers (Chrome fires focusout on removal, jsdom doesn't)
+ *  and across both disposal paths (entries and instances) */
+const blurWithin = function (nodes: Node[]): void {
+    if (typeof document === 'undefined' || !document.activeElement) {
+        return;
+    }
+    const active = document.activeElement as HTMLElement;
+    for (const node of nodes) {
+        if (node === active || node.contains(active)) {
+            active.blur?.();
+            return;
+        }
+    }
+};
+
 const disposeEntry = function (entry: Entry): void {
-    if (entry.kind === 'view') {
-        for (const binding of entry.bindings) {
-            binding.dispose();
+    withDisposal(function () {
+        if (entry.kind === 'view') {
+            for (const binding of entry.bindings) {
+                binding.dispose();
+            }
+            for (const instance of entry.instances) {
+                unmountInstance(instance);
+            }
+            for (const cleanup of entry.cleanups) {
+                cleanup();
+            }
         }
-        for (const instance of entry.instances) {
-            unmountInstance(instance);
+        blurWithin(entry.nodes);
+        for (const node of entry.nodes) {
+            remove(node);
         }
-        for (const cleanup of entry.cleanups) {
-            cleanup();
-        }
-    }
-    for (const node of entry.nodes) {
-        remove(node);
-    }
+    });
 };
 
 /** Build the DOM for a View inside a branch entry (live mode) */
@@ -216,11 +258,13 @@ const applySlot = function (s: SlotState, value: unknown, inst: Instance): void 
     // Nothing to render: detach (keep entries for reuse — show/hide is free)
     if (!items.length) {
         if (s.entries.length && !s.detached) {
-            for (const entry of s.entries) {
-                for (const node of entry.nodes) {
-                    remove(node);
+            withDisposal(function () {
+                for (const entry of s.entries) {
+                    for (const node of entry.nodes) {
+                        remove(node);
+                    }
                 }
-            }
+            });
             s.detached = true;
         }
         return;
@@ -692,6 +736,16 @@ export const mountComponent = function (
             inst.states.push(s as StateImpl<unknown>);
             return s;
         },
+        computed: function <T>(fn: () => T) {
+            const s = new StateImpl<T>(undefined as T);
+            const binding = new Binding(function () {
+                s.value = fn();
+            });
+            inst.states.push(s as StateImpl<unknown>);
+            inst.bindings.push(binding);
+            binding.run(); // initial value + dependency tracking
+            return s;
+        },
         bind: function <T>(p: Bindable<T>, fallback: T) {
             const raw = p ? (p.bind as State<T> | T | undefined) : undefined;
             // External state → two-way; plain value → initial; nothing → fallback
@@ -800,18 +854,12 @@ export const unmountInstance = function (inst: Instance): void {
     inst.unmountCbs = [];
     // Never leave focus on a node being removed: correct UX, and the
     // document's last-focused reference would otherwise retain the subtree
-    if (typeof document !== 'undefined' && document.activeElement) {
-        const active = document.activeElement as HTMLElement;
+    withDisposal(function () {
+        blurWithin(inst.elements);
         for (const node of inst.elements) {
-            if (node === active || node.contains(active)) {
-                active.blur?.();
-                break;
-            }
+            remove(node);
         }
-    }
-    for (const node of inst.elements) {
-        remove(node);
-    }
+    });
     if (inst.elements[0]) {
         registry.delete(inst.elements[0]);
     }

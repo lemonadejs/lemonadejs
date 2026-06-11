@@ -28,6 +28,7 @@ __export(index_exports, {
   explain: () => explain,
   html: () => html,
   inspect: () => inspect,
+  isDisposing: () => isDisposing,
   mount: () => mount,
   ref: () => ref,
   setComponents: () => setComponents,
@@ -508,7 +509,11 @@ var StateImpl = class {
   subscribe(cb) {
     const self = this;
     const binding = new Binding(function() {
-      cb(self.value);
+      untracked(function() {
+        cb(self.peek());
+      });
+      self.subs.add(binding);
+      binding.deps.add(self);
     });
     this.subs.add(binding);
     binding.deps.add(this);
@@ -777,21 +782,48 @@ var remove = function(node) {
     node.parentNode.removeChild(node);
   }
 };
+var disposingDepth = 0;
+var isDisposing = function() {
+  return disposingDepth > 0;
+};
+var withDisposal = function(fn) {
+  disposingDepth++;
+  try {
+    fn();
+  } finally {
+    disposingDepth--;
+  }
+};
+var blurWithin = function(nodes) {
+  if (typeof document === "undefined" || !document.activeElement) {
+    return;
+  }
+  const active = document.activeElement;
+  for (const node of nodes) {
+    if (node === active || node.contains(active)) {
+      active.blur?.();
+      return;
+    }
+  }
+};
 var disposeEntry = function(entry) {
-  if (entry.kind === "view") {
-    for (const binding of entry.bindings) {
-      binding.dispose();
+  withDisposal(function() {
+    if (entry.kind === "view") {
+      for (const binding of entry.bindings) {
+        binding.dispose();
+      }
+      for (const instance of entry.instances) {
+        unmountInstance(instance);
+      }
+      for (const cleanup of entry.cleanups) {
+        cleanup();
+      }
     }
-    for (const instance of entry.instances) {
-      unmountInstance(instance);
+    blurWithin(entry.nodes);
+    for (const node of entry.nodes) {
+      remove(node);
     }
-    for (const cleanup of entry.cleanups) {
-      cleanup();
-    }
-  }
-  for (const node of entry.nodes) {
-    remove(node);
-  }
+  });
 };
 var buildViewEntry = function(view, inst) {
   const holder = { values: view.values };
@@ -812,11 +844,13 @@ var applySlot = function(s, value, inst) {
   normalize(value, items);
   if (!items.length) {
     if (s.entries.length && !s.detached) {
-      for (const entry of s.entries) {
-        for (const node of entry.nodes) {
-          remove(node);
+      withDisposal(function() {
+        for (const entry of s.entries) {
+          for (const node of entry.nodes) {
+            remove(node);
+          }
         }
-      }
+      });
       s.detached = true;
     }
     return;
@@ -1195,6 +1229,16 @@ var mountComponent = function(component2, props, parent) {
       inst.states.push(s);
       return s;
     },
+    computed: function(fn) {
+      const s = new StateImpl(void 0);
+      const binding = new Binding(function() {
+        s.value = fn();
+      });
+      inst.states.push(s);
+      inst.bindings.push(binding);
+      binding.run();
+      return s;
+    },
     bind: function(p, fallback) {
       const raw = p ? p.bind : void 0;
       const target = isState(raw) ? raw : new StateImpl(raw !== void 0 ? raw : fallback);
@@ -1285,18 +1329,12 @@ var unmountInstance = function(inst) {
     cb();
   }
   inst.unmountCbs = [];
-  if (typeof document !== "undefined" && document.activeElement) {
-    const active = document.activeElement;
+  withDisposal(function() {
+    blurWithin(inst.elements);
     for (const node of inst.elements) {
-      if (node === active || node.contains(active)) {
-        active.blur?.();
-        break;
-      }
+      remove(node);
     }
-  }
-  for (const node of inst.elements) {
-    remove(node);
-  }
+  });
   if (inst.elements[0]) {
     registry.delete(inst.elements[0]);
   }
