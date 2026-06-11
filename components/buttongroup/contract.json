@@ -1,0 +1,40 @@
+{
+    "name": "buttongroup",
+    "props": {
+        "options": {
+            "type": "array"
+        },
+        "selectable": {
+            "type": "string",
+            "default": ""
+        },
+        "variant": {
+            "type": "string",
+            "default": ""
+        },
+        "color": {
+            "type": "string",
+            "default": ""
+        },
+        "size": {
+            "type": "string",
+            "default": ""
+        },
+        "orientation": {
+            "type": "string",
+            "default": ""
+        },
+        "disabled": {
+            "type": "boolean",
+            "default": false
+        }
+    },
+    "bind": {
+        "type": "string"
+    },
+    "events": [
+        "onchange",
+        "onclick"
+    ],
+    "api": []
+}

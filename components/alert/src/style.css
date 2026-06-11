@@ -1,0 +1,100 @@
+/* <Alert /> — default styling, lm-alert-* convention.
+   Severity sets the palette variables; variant decides how they apply. */
+
+.lm-alert {
+    /* info — the default severity */
+    --lm-alert-main: #0288d1;
+    --lm-alert-bg: #e5f6fd;
+    --lm-alert-text: #014361;
+
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 10px 16px;
+    border-radius: 6px;
+    font: 14px/1.45 system-ui, sans-serif;
+    background: var(--lm-alert-bg);
+    color: var(--lm-alert-text);
+    box-sizing: border-box;
+}
+
+.lm-alert[data-severity='success'] {
+    --lm-alert-main: #2e7d32;
+    --lm-alert-bg: #edf7ed;
+    --lm-alert-text: #1e4620;
+}
+
+.lm-alert[data-severity='warning'] {
+    --lm-alert-main: #ed6c02;
+    --lm-alert-bg: #fff4e5;
+    --lm-alert-text: #663c00;
+}
+
+.lm-alert[data-severity='error'] {
+    --lm-alert-main: #d32f2f;
+    --lm-alert-bg: #fdeded;
+    --lm-alert-text: #5f2120;
+}
+
+/* Variants: standard is the base; outlined and filled re-apply the palette */
+.lm-alert[data-variant='outlined'] {
+    background: transparent;
+    border: 1px solid var(--lm-alert-main);
+}
+
+.lm-alert[data-variant='filled'] {
+    background: var(--lm-alert-main);
+    color: #fff;
+}
+
+/* Icon */
+.lm-alert .lm-alert-icon {
+    display: inline-flex;
+    flex: 0 0 auto;
+    padding-top: 1px;
+    color: var(--lm-alert-main);
+}
+
+.lm-alert[data-variant='filled'] .lm-alert-icon {
+    color: #fff;
+}
+
+/* Body: title, message, children */
+.lm-alert .lm-alert-body {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.lm-alert .lm-alert-title {
+    font-weight: 600;
+    margin: 0 0 2px;
+}
+
+/* Close button */
+.lm-alert .lm-alert-close {
+    flex: 0 0 auto;
+    appearance: none;
+    background: transparent;
+    border: 0;
+    margin: -2px -6px 0 0;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font: 18px/1 system-ui, sans-serif;
+    color: inherit;
+    opacity: 0.6;
+    cursor: pointer;
+}
+
+.lm-alert .lm-alert-close:hover {
+    opacity: 1;
+}
+
+.lm-alert .lm-alert-close:focus-visible {
+    outline: 2px solid var(--lm-alert-main);
+    outline-offset: 1px;
+    opacity: 1;
+}
+
+.lm-alert[data-variant='filled'] .lm-alert-close:focus-visible {
+    outline-color: #fff;
+}

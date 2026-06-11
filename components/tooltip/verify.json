@@ -1,0 +1,58 @@
+{
+    "component": "tooltip",
+    "pass": true,
+    "checks": [
+        {
+            "name": "mounts with defaults",
+            "pass": true
+        },
+        {
+            "name": "prop title",
+            "pass": true
+        },
+        {
+            "name": "prop title (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop position",
+            "pass": true
+        },
+        {
+            "name": "prop position (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop delay",
+            "pass": true
+        },
+        {
+            "name": "prop delay (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop arrow",
+            "pass": true
+        },
+        {
+            "name": "prop arrow (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop disabled",
+            "pass": true
+        },
+        {
+            "name": "prop disabled (live state)",
+            "pass": true
+        },
+        {
+            "name": "event onopen",
+            "pass": true
+        },
+        {
+            "name": "event onclose",
+            "pass": true
+        }
+    ]
+}

@@ -1,0 +1,162 @@
+{
+    "component": "calendar",
+    "pass": true,
+    "checks": [
+        {
+            "name": "mounts with defaults",
+            "pass": true
+        },
+        {
+            "name": "prop range",
+            "pass": true
+        },
+        {
+            "name": "prop range (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop time",
+            "pass": true
+        },
+        {
+            "name": "prop time (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop numeric",
+            "pass": true
+        },
+        {
+            "name": "prop numeric (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop format",
+            "pass": true
+        },
+        {
+            "name": "prop format (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop type",
+            "pass": true
+        },
+        {
+            "name": "prop type (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop data",
+            "pass": true
+        },
+        {
+            "name": "prop data (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop min",
+            "pass": true
+        },
+        {
+            "name": "prop min (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop max",
+            "pass": true
+        },
+        {
+            "name": "prop max (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop validate",
+            "pass": true
+        },
+        {
+            "name": "prop validate (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop startingday",
+            "pass": true
+        },
+        {
+            "name": "prop startingday (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop disabled",
+            "pass": true
+        },
+        {
+            "name": "prop disabled (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop grid",
+            "pass": true
+        },
+        {
+            "name": "prop grid (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop footer",
+            "pass": true
+        },
+        {
+            "name": "prop footer (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop wheel",
+            "pass": true
+        },
+        {
+            "name": "prop wheel (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop placeholder",
+            "pass": true
+        },
+        {
+            "name": "prop placeholder (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop width",
+            "pass": true
+        },
+        {
+            "name": "prop width (live state)",
+            "pass": true
+        },
+        {
+            "name": "event onchange",
+            "pass": true
+        },
+        {
+            "name": "event onupdate",
+            "pass": true
+        },
+        {
+            "name": "event onopen",
+            "pass": true
+        },
+        {
+            "name": "event onclose",
+            "pass": true
+        },
+        {
+            "name": "bind",
+            "pass": true
+        },
+        {
+            "name": "api via ref",
+            "pass": true
+        }
+    ]
+}

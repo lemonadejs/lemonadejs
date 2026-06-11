@@ -1,0 +1,63 @@
+/* <Tooltip /> — default styling, lm-tooltip-* convention */
+.lm-tooltip {
+    display: inline-block;
+    position: relative;
+}
+
+.lm-tooltip .lm-tooltip-popper {
+    position: fixed;
+    z-index: 1500;
+    background: #27272a;
+    color: #fafafa;
+    font: 12px/1.5 system-ui, sans-serif;
+    padding: 4px 12px;
+    border-radius: 999px;
+    white-space: nowrap;
+    max-width: 320px;
+    pointer-events: none;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+    animation: lm-tooltip-in 0.12s ease-out;
+}
+
+@keyframes lm-tooltip-in {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+/* Small arrow: a rotated square peeking out of the pill, side-aware */
+.lm-tooltip .lm-tooltip-popper.lm-tooltip-arrow::before {
+    content: '';
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background: inherit;
+    transform: rotate(45deg);
+}
+
+.lm-tooltip .lm-tooltip-popper.lm-tooltip-arrow[data-position='top']::before {
+    bottom: -3px;
+    left: 50%;
+    margin-left: -4px;
+}
+
+.lm-tooltip .lm-tooltip-popper.lm-tooltip-arrow[data-position='bottom']::before {
+    top: -3px;
+    left: 50%;
+    margin-left: -4px;
+}
+
+.lm-tooltip .lm-tooltip-popper.lm-tooltip-arrow[data-position='left']::before {
+    right: -3px;
+    top: 50%;
+    margin-top: -4px;
+}
+
+.lm-tooltip .lm-tooltip-popper.lm-tooltip-arrow[data-position='right']::before {
+    left: -3px;
+    top: 50%;
+    margin-top: -4px;
+}

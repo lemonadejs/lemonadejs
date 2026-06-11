@@ -1,0 +1,35 @@
+{
+    "name": "wheel",
+    "props": {
+        "selected": {
+            "type": "number",
+            "default": 0
+        },
+        "options": {
+            "type": "array"
+        },
+        "rowheight": {
+            "type": "number",
+            "default": 40
+        },
+        "visible": {
+            "type": "number",
+            "default": 5
+        },
+        "disabled": {
+            "type": "boolean",
+            "default": false
+        }
+    },
+    "bind": {
+        "type": "number"
+    },
+    "events": [
+        "onchange"
+    ],
+    "api": [
+        "getIndex",
+        "setIndex",
+        "getValue"
+    ]
+}

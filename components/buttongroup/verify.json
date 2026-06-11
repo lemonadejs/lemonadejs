@@ -1,0 +1,78 @@
+{
+    "component": "buttongroup",
+    "pass": true,
+    "checks": [
+        {
+            "name": "mounts with defaults",
+            "pass": true
+        },
+        {
+            "name": "prop options",
+            "pass": true
+        },
+        {
+            "name": "prop options (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop selectable",
+            "pass": true
+        },
+        {
+            "name": "prop selectable (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop variant",
+            "pass": true
+        },
+        {
+            "name": "prop variant (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop color",
+            "pass": true
+        },
+        {
+            "name": "prop color (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop size",
+            "pass": true
+        },
+        {
+            "name": "prop size (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop orientation",
+            "pass": true
+        },
+        {
+            "name": "prop orientation (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop disabled",
+            "pass": true
+        },
+        {
+            "name": "prop disabled (live state)",
+            "pass": true
+        },
+        {
+            "name": "event onchange",
+            "pass": true
+        },
+        {
+            "name": "event onclick",
+            "pass": true
+        },
+        {
+            "name": "bind",
+            "pass": true
+        }
+    ]
+}

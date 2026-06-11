@@ -1,0 +1,23 @@
+{
+    "name": "formify",
+    "props": {
+        "url": {
+            "type": "string",
+            "default": ""
+        }
+    },
+    "bind": {
+        "type": "object"
+    },
+    "events": [
+        "onchange",
+        "onsubmit",
+        "onload"
+    ],
+    "api": [
+        "get",
+        "set",
+        "load",
+        "save"
+    ]
+}

@@ -1,0 +1,56 @@
+{
+    "name": "cropper",
+    "props": {
+        "src": {
+            "type": "string",
+            "default": ""
+        },
+        "width": {
+            "type": "number",
+            "default": 800
+        },
+        "height": {
+            "type": "number",
+            "default": 360
+        },
+        "cropwidth": {
+            "type": "number",
+            "default": 300
+        },
+        "cropheight": {
+            "type": "number",
+            "default": 240
+        },
+        "resizable": {
+            "type": "boolean",
+            "default": false
+        },
+        "controls": {
+            "type": "boolean",
+            "default": true
+        },
+        "original": {
+            "type": "boolean",
+            "default": false
+        }
+    },
+    "bind": {
+        "type": "object"
+    },
+    "events": [
+        "onchange",
+        "onload"
+    ],
+    "api": [
+        "getValue",
+        "setValue",
+        "getImage",
+        "zoom",
+        "rotate",
+        "brightness",
+        "contrast",
+        "save",
+        "reset",
+        "upload"
+    ]
+}

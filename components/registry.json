@@ -39,6 +39,244 @@
         }
     },
     {
+        "name": "alert",
+        "path": "components/alert",
+        "verified": true,
+        "checks": 15,
+        "contract": {
+            "name": "alert",
+            "props": {
+                "severity": {
+                    "type": "string",
+                    "default": ""
+                },
+                "variant": {
+                    "type": "string",
+                    "default": ""
+                },
+                "title": {
+                    "type": "string",
+                    "default": ""
+                },
+                "message": {
+                    "type": "string",
+                    "default": ""
+                },
+                "closable": {
+                    "type": "boolean",
+                    "default": false
+                },
+                "icon": {
+                    "type": "boolean",
+                    "default": true
+                }
+            },
+            "bind": {
+                "type": "boolean"
+            },
+            "events": [
+                "onclose"
+            ],
+            "api": []
+        }
+    },
+    {
+        "name": "button",
+        "path": "components/button",
+        "verified": true,
+        "checks": 22,
+        "contract": {
+            "name": "button",
+            "props": {
+                "label": {
+                    "type": "string",
+                    "default": ""
+                },
+                "variant": {
+                    "type": "string",
+                    "default": ""
+                },
+                "color": {
+                    "type": "string",
+                    "default": ""
+                },
+                "size": {
+                    "type": "string",
+                    "default": ""
+                },
+                "disabled": {
+                    "type": "boolean",
+                    "default": false
+                },
+                "loading": {
+                    "type": "boolean",
+                    "default": false
+                },
+                "fullwidth": {
+                    "type": "boolean",
+                    "default": false
+                },
+                "href": {
+                    "type": "string",
+                    "default": ""
+                },
+                "type": {
+                    "type": "string",
+                    "default": ""
+                },
+                "icon": {
+                    "type": "string",
+                    "default": ""
+                }
+            },
+            "bind": null,
+            "events": [
+                "onclick"
+            ],
+            "api": []
+        }
+    },
+    {
+        "name": "buttongroup",
+        "path": "components/buttongroup",
+        "verified": true,
+        "checks": 18,
+        "contract": {
+            "name": "buttongroup",
+            "props": {
+                "options": {
+                    "type": "array"
+                },
+                "selectable": {
+                    "type": "string",
+                    "default": ""
+                },
+                "variant": {
+                    "type": "string",
+                    "default": ""
+                },
+                "color": {
+                    "type": "string",
+                    "default": ""
+                },
+                "size": {
+                    "type": "string",
+                    "default": ""
+                },
+                "orientation": {
+                    "type": "string",
+                    "default": ""
+                },
+                "disabled": {
+                    "type": "boolean",
+                    "default": false
+                }
+            },
+            "bind": {
+                "type": "string"
+            },
+            "events": [
+                "onchange",
+                "onclick"
+            ],
+            "api": []
+        }
+    },
+    {
+        "name": "calendar",
+        "path": "components/calendar",
+        "verified": true,
+        "checks": 39,
+        "contract": {
+            "name": "calendar",
+            "props": {
+                "range": {
+                    "type": "boolean",
+                    "default": false
+                },
+                "time": {
+                    "type": "boolean",
+                    "default": false
+                },
+                "numeric": {
+                    "type": "boolean",
+                    "default": false
+                },
+                "format": {
+                    "type": "string",
+                    "default": ""
+                },
+                "type": {
+                    "type": "string",
+                    "default": ""
+                },
+                "data": {
+                    "type": "array"
+                },
+                "min": {
+                    "type": "string",
+                    "default": ""
+                },
+                "max": {
+                    "type": "string",
+                    "default": ""
+                },
+                "validate": {
+                    "type": "function"
+                },
+                "startingday": {
+                    "type": "number",
+                    "default": 0
+                },
+                "disabled": {
+                    "type": "boolean",
+                    "default": false
+                },
+                "grid": {
+                    "type": "boolean",
+                    "default": false
+                },
+                "footer": {
+                    "type": "boolean",
+                    "default": true
+                },
+                "wheel": {
+                    "type": "boolean",
+                    "default": true
+                },
+                "placeholder": {
+                    "type": "string",
+                    "default": ""
+                },
+                "width": {
+                    "type": "number",
+                    "default": 300
+                }
+            },
+            "bind": {
+                "type": "string"
+            },
+            "events": [
+                "onchange",
+                "onupdate",
+                "onopen",
+                "onclose"
+            ],
+            "api": [
+                "open",
+                "close",
+                "isClosed",
+                "getValue",
+                "setValue",
+                "update",
+                "reset",
+                "next",
+                "prev",
+                "setView"
+            ]
+        }
+    },
+    {
         "name": "color",
         "path": "components/color",
         "verified": true,
@@ -101,6 +339,68 @@
                 "open",
                 "openAt",
                 "close"
+            ]
+        }
+    },
+    {
+        "name": "cropper",
+        "path": "components/cropper",
+        "verified": true,
+        "checks": 21,
+        "contract": {
+            "name": "cropper",
+            "props": {
+                "src": {
+                    "type": "string",
+                    "default": ""
+                },
+                "width": {
+                    "type": "number",
+                    "default": 800
+                },
+                "height": {
+                    "type": "number",
+                    "default": 360
+                },
+                "cropwidth": {
+                    "type": "number",
+                    "default": 300
+                },
+                "cropheight": {
+                    "type": "number",
+                    "default": 240
+                },
+                "resizable": {
+                    "type": "boolean",
+                    "default": false
+                },
+                "controls": {
+                    "type": "boolean",
+                    "default": true
+                },
+                "original": {
+                    "type": "boolean",
+                    "default": false
+                }
+            },
+            "bind": {
+                "type": "object"
+            },
+            "events": [
+                "onchange",
+                "onload"
+            ],
+            "api": [
+                "getValue",
+                "setValue",
+                "getImage",
+                "zoom",
+                "rotate",
+                "brightness",
+                "contrast",
+                "save",
+                "reset",
+                "upload"
             ]
         }
     },
@@ -302,6 +602,35 @@
         }
     },
     {
+        "name": "formify",
+        "path": "components/formify",
+        "verified": true,
+        "checks": 8,
+        "contract": {
+            "name": "formify",
+            "props": {
+                "url": {
+                    "type": "string",
+                    "default": ""
+                }
+            },
+            "bind": {
+                "type": "object"
+            },
+            "events": [
+                "onchange",
+                "onsubmit",
+                "onload"
+            ],
+            "api": [
+                "get",
+                "set",
+                "load",
+                "save"
+            ]
+        }
+    },
+    {
         "name": "list",
         "path": "components/list",
         "verified": true,
@@ -360,6 +689,85 @@
                 "getPage",
                 "setSearch",
                 "refresh"
+            ]
+        }
+    },
+    {
+        "name": "login",
+        "path": "components/login",
+        "verified": true,
+        "checks": 36,
+        "contract": {
+            "name": "login",
+            "props": {
+                "url": {
+                    "type": "string",
+                    "default": ""
+                },
+                "device": {
+                    "type": "string",
+                    "default": ""
+                },
+                "logo": {
+                    "type": "string",
+                    "default": ""
+                },
+                "fullscreen": {
+                    "type": "boolean",
+                    "default": false
+                },
+                "google": {
+                    "type": "string",
+                    "default": ""
+                },
+                "facebook": {
+                    "type": "boolean",
+                    "default": false
+                },
+                "microsoft": {
+                    "type": "string",
+                    "default": ""
+                },
+                "remember": {
+                    "type": "boolean",
+                    "default": false
+                },
+                "profile": {
+                    "type": "boolean",
+                    "default": false
+                },
+                "company": {
+                    "type": "boolean",
+                    "default": false
+                },
+                "phone": {
+                    "type": "boolean",
+                    "default": false
+                },
+                "username": {
+                    "type": "boolean",
+                    "default": false
+                },
+                "terms": {
+                    "type": "boolean",
+                    "default": false
+                },
+                "termstext": {
+                    "type": "string",
+                    "default": ""
+                }
+            },
+            "bind": null,
+            "events": [
+                "onload",
+                "onsuccess",
+                "onerror",
+                "onbeforesend",
+                "onbeforecreate",
+                "onchangescreen"
+            ],
+            "api": [
+                "show"
             ]
         }
     },
@@ -512,6 +920,48 @@
         }
     },
     {
+        "name": "progress",
+        "path": "components/progress",
+        "verified": true,
+        "checks": 15,
+        "contract": {
+            "name": "progress",
+            "props": {
+                "type": {
+                    "type": "string",
+                    "default": ""
+                },
+                "indeterminate": {
+                    "type": "boolean",
+                    "default": false
+                },
+                "size": {
+                    "type": "number",
+                    "default": 0
+                },
+                "thickness": {
+                    "type": "number",
+                    "default": 0
+                },
+                "color": {
+                    "type": "string",
+                    "default": ""
+                },
+                "label": {
+                    "type": "boolean",
+                    "default": false
+                }
+            },
+            "bind": {
+                "type": "number"
+            },
+            "events": [
+                "onchange"
+            ],
+            "api": []
+        }
+    },
+    {
         "name": "quickmenu",
         "path": "components/quickmenu",
         "verified": true,
@@ -632,6 +1082,90 @@
         }
     },
     {
+        "name": "schedule",
+        "path": "components/schedule",
+        "verified": true,
+        "checks": 35,
+        "contract": {
+            "name": "schedule",
+            "props": {
+                "data": {
+                    "type": "array"
+                },
+                "value": {
+                    "type": "string",
+                    "default": ""
+                },
+                "type": {
+                    "type": "string",
+                    "default": "week"
+                },
+                "weekly": {
+                    "type": "boolean",
+                    "default": false
+                },
+                "grid": {
+                    "type": "number",
+                    "default": 15
+                },
+                "snap": {
+                    "type": "number",
+                    "default": 0
+                },
+                "overlap": {
+                    "type": "boolean",
+                    "default": false
+                },
+                "validrange": {
+                    "type": "array"
+                },
+                "readonlyrange": {
+                    "type": "array"
+                },
+                "editor": {
+                    "type": "boolean",
+                    "default": true
+                },
+                "weekdays": {
+                    "type": "array"
+                }
+            },
+            "bind": null,
+            "events": [
+                "onchange",
+                "oncreate",
+                "onbeforecreate",
+                "onbeforeinsert",
+                "onupdate",
+                "onbeforechange",
+                "onbeforedrag",
+                "ondelete",
+                "ondblclick",
+                "onedition",
+                "onerror"
+            ],
+            "api": [
+                "addEvents",
+                "updateEvent",
+                "deleteEvents",
+                "getData",
+                "setData",
+                "getEvent",
+                "getSelected",
+                "resetSelection",
+                "setRange",
+                "setReadOnly",
+                "undo",
+                "redo",
+                "next",
+                "prev",
+                "today",
+                "openEditor",
+                "refresh"
+            ]
+        }
+    },
+    {
         "name": "signature",
         "path": "components/signature",
         "verified": true,
@@ -684,6 +1218,57 @@
                 "getImage",
                 "clear"
             ]
+        }
+    },
+    {
+        "name": "slider",
+        "path": "components/slider",
+        "verified": true,
+        "checks": 20,
+        "contract": {
+            "name": "slider",
+            "props": {
+                "min": {
+                    "type": "number",
+                    "default": 0
+                },
+                "max": {
+                    "type": "number",
+                    "default": 100
+                },
+                "step": {
+                    "type": "number",
+                    "default": 1
+                },
+                "marks": {
+                    "type": "boolean",
+                    "default": false
+                },
+                "label": {
+                    "type": "string",
+                    "default": ""
+                },
+                "disabled": {
+                    "type": "boolean",
+                    "default": false
+                },
+                "showvalue": {
+                    "type": "boolean",
+                    "default": false
+                },
+                "color": {
+                    "type": "string",
+                    "default": ""
+                }
+            },
+            "bind": {
+                "type": "number"
+            },
+            "events": [
+                "onchange",
+                "oninput"
+            ],
+            "api": []
         }
     },
     {
@@ -933,6 +1518,43 @@
         }
     },
     {
+        "name": "tooltip",
+        "path": "components/tooltip",
+        "verified": true,
+        "checks": 13,
+        "contract": {
+            "name": "tooltip",
+            "props": {
+                "title": {
+                    "type": "string",
+                    "default": ""
+                },
+                "position": {
+                    "type": "string",
+                    "default": ""
+                },
+                "delay": {
+                    "type": "number",
+                    "default": 100
+                },
+                "arrow": {
+                    "type": "boolean",
+                    "default": true
+                },
+                "disabled": {
+                    "type": "boolean",
+                    "default": false
+                }
+            },
+            "bind": null,
+            "events": [
+                "onopen",
+                "onclose"
+            ],
+            "api": []
+        }
+    },
+    {
         "name": "topmenu",
         "path": "components/topmenu",
         "verified": true,
@@ -949,6 +1571,47 @@
             "api": [
                 "open",
                 "close"
+            ]
+        }
+    },
+    {
+        "name": "wheel",
+        "path": "components/wheel",
+        "verified": true,
+        "checks": 14,
+        "contract": {
+            "name": "wheel",
+            "props": {
+                "selected": {
+                    "type": "number",
+                    "default": 0
+                },
+                "options": {
+                    "type": "array"
+                },
+                "rowheight": {
+                    "type": "number",
+                    "default": 40
+                },
+                "visible": {
+                    "type": "number",
+                    "default": 5
+                },
+                "disabled": {
+                    "type": "boolean",
+                    "default": false
+                }
+            },
+            "bind": {
+                "type": "number"
+            },
+            "events": [
+                "onchange"
+            ],
+            "api": [
+                "getIndex",
+                "setIndex",
+                "getValue"
             ]
         }
     }

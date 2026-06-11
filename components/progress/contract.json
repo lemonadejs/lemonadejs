@@ -1,0 +1,36 @@
+{
+    "name": "progress",
+    "props": {
+        "type": {
+            "type": "string",
+            "default": ""
+        },
+        "indeterminate": {
+            "type": "boolean",
+            "default": false
+        },
+        "size": {
+            "type": "number",
+            "default": 0
+        },
+        "thickness": {
+            "type": "number",
+            "default": 0
+        },
+        "color": {
+            "type": "string",
+            "default": ""
+        },
+        "label": {
+            "type": "boolean",
+            "default": false
+        }
+    },
+    "bind": {
+        "type": "number"
+    },
+    "events": [
+        "onchange"
+    ],
+    "api": []
+}

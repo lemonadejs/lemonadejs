@@ -1,0 +1,78 @@
+{
+    "name": "schedule",
+    "props": {
+        "data": {
+            "type": "array"
+        },
+        "value": {
+            "type": "string",
+            "default": ""
+        },
+        "type": {
+            "type": "string",
+            "default": "week"
+        },
+        "weekly": {
+            "type": "boolean",
+            "default": false
+        },
+        "grid": {
+            "type": "number",
+            "default": 15
+        },
+        "snap": {
+            "type": "number",
+            "default": 0
+        },
+        "overlap": {
+            "type": "boolean",
+            "default": false
+        },
+        "validrange": {
+            "type": "array"
+        },
+        "readonlyrange": {
+            "type": "array"
+        },
+        "editor": {
+            "type": "boolean",
+            "default": true
+        },
+        "weekdays": {
+            "type": "array"
+        }
+    },
+    "bind": null,
+    "events": [
+        "onchange",
+        "oncreate",
+        "onbeforecreate",
+        "onbeforeinsert",
+        "onupdate",
+        "onbeforechange",
+        "onbeforedrag",
+        "ondelete",
+        "ondblclick",
+        "onedition",
+        "onerror"
+    ],
+    "api": [
+        "addEvents",
+        "updateEvent",
+        "deleteEvents",
+        "getData",
+        "setData",
+        "getEvent",
+        "getSelected",
+        "resetSelection",
+        "setRange",
+        "setReadOnly",
+        "undo",
+        "redo",
+        "next",
+        "prev",
+        "today",
+        "openEditor",
+        "refresh"
+    ]
+}

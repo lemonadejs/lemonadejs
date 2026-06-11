@@ -1,0 +1,36 @@
+{
+    "name": "alert",
+    "props": {
+        "severity": {
+            "type": "string",
+            "default": ""
+        },
+        "variant": {
+            "type": "string",
+            "default": ""
+        },
+        "title": {
+            "type": "string",
+            "default": ""
+        },
+        "message": {
+            "type": "string",
+            "default": ""
+        },
+        "closable": {
+            "type": "boolean",
+            "default": false
+        },
+        "icon": {
+            "type": "boolean",
+            "default": true
+        }
+    },
+    "bind": {
+        "type": "boolean"
+    },
+    "events": [
+        "onclose"
+    ],
+    "api": []
+}

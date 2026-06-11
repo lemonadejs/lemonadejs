@@ -1,0 +1,316 @@
+/* <Schedule /> — ported from the v5 plugin stylesheet (lm-schedule-*) */
+
+.lm-schedule {
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--lm-border-color-highlight, #aaa) var(--lm-border-color-light, #e9e9e9);
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-content: stretch;
+    max-height: calc(100vh - 100px);
+    position: relative;
+    border-bottom: 1px solid var(--lm-border-color-light, #e9e9e9);
+    outline: none;
+    box-sizing: border-box;
+}
+
+.lm-schedule table {
+    table-layout: fixed;
+    font-size: 0.8em;
+    border-collapse: collapse;
+    white-space: nowrap;
+    empty-cells: show;
+    width: 100%;
+}
+
+.lm-schedule thead td {
+    background-color: var(--lm-background-color, #fff);
+    padding-top: 20px;
+    padding-bottom: 20px;
+    font-size: 2.2em;
+    text-align: center;
+    position: sticky;
+    top: 0;
+    z-index: 4;
+}
+
+.lm-schedule thead td:first-child {
+    width: 50px;
+}
+
+.lm-schedule[data-type="day"] thead td {
+    text-align: center;
+}
+
+.lm-schedule .lm-schedule-hour > td {
+    width: auto;
+    border-top: 1px solid var(--lm-border-color-light, #e9e9e9);
+}
+
+.lm-schedule .lm-schedule-index {
+    position: absolute;
+    font-size: 0.9em;
+    margin-top: 5px;
+    z-index: 1;
+    width: 100%;
+    text-align: center;
+}
+
+.lm-schedule td {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    -webkit-user-drag: none;
+    position: relative;
+}
+
+.lm-schedule tbody td {
+    border-top: 1px solid transparent;
+    padding: 0;
+}
+
+.lm-schedule .lm-schedule-hour > td:first-child {
+    width: 50px;
+}
+
+.lm-schedule thead td[data-selected='true'] {
+    background-color: var(--lm-background-color-header, #ececec);
+}
+
+.lm-schedule thead td:before {
+    content: attr(data-weekday);
+    font-size: 0.5em;
+    text-transform: uppercase;
+    padding-bottom: 6px;
+    display: block;
+}
+
+.lm-schedule thead td:after {
+    content: '';
+    border-bottom: 1px solid var(--lm-border-color, #ddd);
+    width: 100%;
+    bottom: 0;
+    left: 0;
+    position: absolute;
+}
+
+.lm-schedule thead td[data-selected='true']:after {
+    border-bottom: 1px solid var(--lm-border-outline, #000);
+}
+
+.lm-schedule table tbody td:first-child {
+    border-right: 1px solid var(--lm-border-color, #ddd);
+}
+
+.lm-schedule-item {
+    position: absolute;
+    height: 10px;
+    top: 0;
+    color: var(--lm-schedule-color, white);
+    background-color: var(--lm-schedule-background, #66b244);
+    z-index: 1;
+    border: 1px solid var(--lm-background-color, #fff);
+    box-sizing: border-box;
+    border-radius: 4px;
+    padding: 6px;
+    display: flex;
+    justify-content: space-between;
+    align-content: flex-start;
+    flex-wrap: wrap;
+    -webkit-font-smoothing: antialiased;
+    width: 100%;
+}
+
+.lm-schedule-item[data-readonly="true"] {
+    opacity: 0.8;
+    background-size: 10px 10px;
+    background-image: repeating-linear-gradient(45deg, #ffffff11 0, #ffffff11 1px, #ffffff33 0, #ffffff33 50%);
+}
+
+.lm-schedule-item:not([data-readonly="true"]) {
+    opacity: var(--entries-opacity, 1);
+}
+
+.lm-schedule-item[data-warning="true"] {
+    outline: 2px solid red;
+    outline-offset: -3px;
+}
+
+.lm-schedule-item[data-visible="false"] {
+    display: none;
+}
+
+.lm-schedule-item[data-height="1"],
+.lm-schedule-item[data-height="2"],
+.lm-schedule-item[data-height="3"] {
+    font-size: 0.7em;
+    padding: 1px 4px 0 4px;
+    flex-wrap: nowrap;
+}
+
+.lm-schedule-large .lm-schedule-item[data-height="1"] {
+    font-size: 0.7em;
+    padding: 1px 4px 0 4px;
+    flex-wrap: nowrap;
+}
+
+.lm-schedule-large .lm-schedule-item[data-height="2"] {
+    font-size: 0.9em;
+    padding: 4px;
+    flex-wrap: nowrap;
+}
+
+.lm-schedule-large .lm-schedule-item[data-height="3"] {
+    font-size: 1em;
+    padding: 6px;
+    flex-wrap: nowrap;
+}
+
+.lm-schedule-item:before {
+    content: attr(data-title);
+    font-size: 0.9em;
+    margin-left: 2px;
+    margin-bottom: 4px;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    max-width: 100%;
+    height: 16px;
+}
+
+.lm-schedule-item[data-description]:not([data-description=""]):before {
+    content: attr(data-title) '\A' attr(data-description);
+    white-space: pre-line;
+    height: auto;
+}
+
+.lm-schedule-item:after {
+    content: attr(data-start) ' - ' attr(data-end);
+    font-size: 0.7em;
+    margin-left: 2px;
+    display: block;
+    margin-top: 1px;
+    margin-right: 2px;
+}
+
+/* The drag ghost: pointer-events off so cells under the cursor receive
+   the mousemove (v5 reached them via elementsFromPoint instead) */
+.lm-schedule-dragging {
+    pointer-events: none;
+    opacity: 0.85;
+    z-index: 3;
+}
+
+.lm-schedule-pointer {
+    position: absolute;
+    background-color: var(--lm-main-color-deep, #66b244);
+    height: 2px;
+    width: 100%;
+    left: 0;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.lm-schedule-pointer:before {
+    content: '';
+    position: absolute;
+    background-color: var(--lm-main-color-deep, #66b244);
+    border-radius: 6px;
+    border: 1px solid #fff;
+    width: 10px;
+    height: 10px;
+    margin: -5px;
+}
+
+.lm-schedule-disabled {
+    background: repeating-linear-gradient(
+        90deg,
+        var(--lm-background-color, #fff),
+        var(--lm-background-color, #fff) 5px,
+        var(--lm-background-color-highlight, #f4f4f4) 5px,
+        var(--lm-background-color-highlight, #f4f4f4) 10px
+    );
+}
+
+.lm-schedule-disabled.lm-schedule-hour {
+    color: #aaa;
+}
+
+.lm-schedule-selected {
+    opacity: 0.9;
+    z-index: 2;
+}
+
+.lm-schedule::-webkit-scrollbar {
+    width: 8px;
+}
+
+.lm-schedule::-webkit-scrollbar-track {
+    background: #eee;
+}
+
+.lm-schedule::-webkit-scrollbar-thumb {
+    background: #888;
+}
+
+/* ---- the built-in event editor (v5 dist/event.js form) ---- */
+
+.lm-schedule-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px;
+    font-size: 14px;
+}
+
+.lm-schedule-form input[type="text"],
+.lm-schedule-form input[type="date"],
+.lm-schedule-form select {
+    padding: 8px;
+    border: 1px solid var(--lm-border-color, #ddd);
+    border-radius: 4px;
+    font: inherit;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+.lm-schedule-editor-when {
+    display: flex;
+    gap: 8px;
+}
+
+.lm-schedule-editor-when > input,
+.lm-schedule-editor-when > select {
+    min-width: 0;
+}
+
+.lm-schedule-editor-palette {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 6px;
+}
+
+.lm-schedule-editor-palette button {
+    border: 1px solid transparent;
+    border-radius: 4px;
+    height: 24px;
+    cursor: pointer;
+}
+
+.lm-schedule-editor-palette button[data-selected="true"] {
+    outline: 2px solid var(--lm-border-outline, #000);
+    outline-offset: 1px;
+}
+
+.lm-schedule-editor-save {
+    padding: 10px;
+    border: 0;
+    border-radius: 4px;
+    background-color: var(--lm-main-color, #2196f3);
+    color: #fff;
+    font: inherit;
+    cursor: pointer;
+}

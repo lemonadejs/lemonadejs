@@ -1,0 +1,31 @@
+{
+    "name": "tooltip",
+    "props": {
+        "title": {
+            "type": "string",
+            "default": ""
+        },
+        "position": {
+            "type": "string",
+            "default": ""
+        },
+        "delay": {
+            "type": "number",
+            "default": 100
+        },
+        "arrow": {
+            "type": "boolean",
+            "default": true
+        },
+        "disabled": {
+            "type": "boolean",
+            "default": false
+        }
+    },
+    "bind": null,
+    "events": [
+        "onopen",
+        "onclose"
+    ],
+    "api": []
+}

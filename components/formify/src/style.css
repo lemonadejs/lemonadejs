@@ -1,0 +1,39 @@
+/* <Formify /> — default styling, lm-formify-* convention.
+   v5 shipped no stylesheet (forms are YOUR markup); these are light,
+   opt-in layout helpers in the spirit of v5's form-group examples. */
+.lm-formify {
+    display: block;
+}
+
+/* One labeled field: <div class="lm-formify-group"><label/>field</div> */
+.lm-formify .lm-formify-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin: 0 0 14px;
+}
+
+.lm-formify .lm-formify-group > label {
+    font: 13px/1.4 system-ui, sans-serif;
+    color: #374151;
+}
+
+/* Horizontal row of groups: <div class="lm-formify-row"> */
+.lm-formify .lm-formify-row {
+    display: flex;
+    gap: 12px;
+}
+
+.lm-formify .lm-formify-row > .lm-formify-group {
+    flex: 1;
+}
+
+/* Inline choice (checkbox/radio + caption) */
+.lm-formify .lm-formify-choice {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font: 14px/1.4 system-ui, sans-serif;
+    margin: 0 12px 14px 0;
+    cursor: pointer;
+}

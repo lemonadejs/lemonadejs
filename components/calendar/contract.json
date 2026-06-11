@@ -1,0 +1,88 @@
+{
+    "name": "calendar",
+    "props": {
+        "range": {
+            "type": "boolean",
+            "default": false
+        },
+        "time": {
+            "type": "boolean",
+            "default": false
+        },
+        "numeric": {
+            "type": "boolean",
+            "default": false
+        },
+        "format": {
+            "type": "string",
+            "default": ""
+        },
+        "type": {
+            "type": "string",
+            "default": ""
+        },
+        "data": {
+            "type": "array"
+        },
+        "min": {
+            "type": "string",
+            "default": ""
+        },
+        "max": {
+            "type": "string",
+            "default": ""
+        },
+        "validate": {
+            "type": "function"
+        },
+        "startingday": {
+            "type": "number",
+            "default": 0
+        },
+        "disabled": {
+            "type": "boolean",
+            "default": false
+        },
+        "grid": {
+            "type": "boolean",
+            "default": false
+        },
+        "footer": {
+            "type": "boolean",
+            "default": true
+        },
+        "wheel": {
+            "type": "boolean",
+            "default": true
+        },
+        "placeholder": {
+            "type": "string",
+            "default": ""
+        },
+        "width": {
+            "type": "number",
+            "default": 300
+        }
+    },
+    "bind": {
+        "type": "string"
+    },
+    "events": [
+        "onchange",
+        "onupdate",
+        "onopen",
+        "onclose"
+    ],
+    "api": [
+        "open",
+        "close",
+        "isClosed",
+        "getValue",
+        "setValue",
+        "update",
+        "reset",
+        "next",
+        "prev",
+        "setView"
+    ]
+}

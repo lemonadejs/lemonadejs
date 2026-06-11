@@ -1,0 +1,119 @@
+/* <Slider /> — default styling, lm-slider-* convention.
+   Geometry (fill width%, thumb left%) arrives as inline styles from the
+   component; everything positional here must not collide with them. */
+.lm-slider {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    width: 100%;
+    max-width: 320px;
+    font: 14px/1.4 system-ui, sans-serif;
+    --lm-slider-color: #2563eb;
+}
+
+.lm-slider[data-color='green'] {
+    --lm-slider-color: #16a34a;
+}
+
+.lm-slider[data-color='orange'] {
+    --lm-slider-color: #ea580c;
+}
+
+.lm-slider[data-color='red'] {
+    --lm-slider-color: #dc2626;
+}
+
+.lm-slider[data-color='purple'] {
+    --lm-slider-color: #9333ea;
+}
+
+.lm-slider .lm-slider-label {
+    user-select: none;
+}
+
+.lm-slider .lm-slider-track {
+    position: relative;
+    height: 24px;
+    cursor: pointer;
+    touch-action: none;
+}
+
+.lm-slider .lm-slider-rail {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 100%;
+    height: 4px;
+    border-radius: 2px;
+    background: #cbd5e1;
+}
+
+.lm-slider .lm-slider-fill {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    height: 4px;
+    border-radius: 2px;
+    background: var(--lm-slider-color);
+}
+
+.lm-slider .lm-slider-mark {
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 2px;
+    height: 2px;
+    border-radius: 50%;
+    background: #64748b;
+}
+
+.lm-slider .lm-slider-mark[data-active='1'] {
+    background: #fff;
+}
+
+.lm-slider .lm-slider-thumb {
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--lm-slider-color);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+    cursor: grab;
+    outline: none;
+}
+
+.lm-slider .lm-slider-thumb:focus-visible {
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.25);
+}
+
+.lm-slider.lm-slider-active .lm-slider-thumb {
+    cursor: grabbing;
+    box-shadow: 0 0 0 6px rgba(37, 99, 235, 0.2);
+}
+
+.lm-slider .lm-slider-bubble {
+    position: absolute;
+    bottom: 22px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: #1e293b;
+    color: #fff;
+    font-size: 12px;
+    line-height: 1.5;
+    white-space: nowrap;
+    pointer-events: none;
+    user-select: none;
+}
+
+.lm-slider.lm-slider-disabled {
+    opacity: 0.45;
+}
+
+.lm-slider.lm-slider-disabled .lm-slider-track,
+.lm-slider.lm-slider-disabled .lm-slider-thumb {
+    cursor: not-allowed;
+}

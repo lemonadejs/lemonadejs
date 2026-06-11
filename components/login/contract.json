@@ -1,0 +1,73 @@
+{
+    "name": "login",
+    "props": {
+        "url": {
+            "type": "string",
+            "default": ""
+        },
+        "device": {
+            "type": "string",
+            "default": ""
+        },
+        "logo": {
+            "type": "string",
+            "default": ""
+        },
+        "fullscreen": {
+            "type": "boolean",
+            "default": false
+        },
+        "google": {
+            "type": "string",
+            "default": ""
+        },
+        "facebook": {
+            "type": "boolean",
+            "default": false
+        },
+        "microsoft": {
+            "type": "string",
+            "default": ""
+        },
+        "remember": {
+            "type": "boolean",
+            "default": false
+        },
+        "profile": {
+            "type": "boolean",
+            "default": false
+        },
+        "company": {
+            "type": "boolean",
+            "default": false
+        },
+        "phone": {
+            "type": "boolean",
+            "default": false
+        },
+        "username": {
+            "type": "boolean",
+            "default": false
+        },
+        "terms": {
+            "type": "boolean",
+            "default": false
+        },
+        "termstext": {
+            "type": "string",
+            "default": ""
+        }
+    },
+    "bind": null,
+    "events": [
+        "onload",
+        "onsuccess",
+        "onerror",
+        "onbeforesend",
+        "onbeforecreate",
+        "onchangescreen"
+    ],
+    "api": [
+        "show"
+    ]
+}

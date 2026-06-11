@@ -1,0 +1,62 @@
+{
+    "component": "wheel",
+    "pass": true,
+    "checks": [
+        {
+            "name": "mounts with defaults",
+            "pass": true
+        },
+        {
+            "name": "prop selected",
+            "pass": true
+        },
+        {
+            "name": "prop selected (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop options",
+            "pass": true
+        },
+        {
+            "name": "prop options (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop rowheight",
+            "pass": true
+        },
+        {
+            "name": "prop rowheight (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop visible",
+            "pass": true
+        },
+        {
+            "name": "prop visible (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop disabled",
+            "pass": true
+        },
+        {
+            "name": "prop disabled (live state)",
+            "pass": true
+        },
+        {
+            "name": "event onchange",
+            "pass": true
+        },
+        {
+            "name": "bind",
+            "pass": true
+        },
+        {
+            "name": "api via ref",
+            "pass": true
+        }
+    ]
+}

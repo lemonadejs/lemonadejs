@@ -1,0 +1,394 @@
+/* <Calendar /> — default styling, lm-calendar-* convention (v5 chrome) */
+.lm-calendar {
+    position: relative;
+    box-sizing: border-box;
+    font: 13.5px/1.4 system-ui, sans-serif;
+    color: #18181b;
+    user-select: none;
+    -moz-user-select: none;
+    -webkit-user-drag: none;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -ms-user-select: none;
+}
+
+.lm-calendar button {
+    cursor: pointer;
+    font: inherit;
+    color: inherit;
+}
+
+.lm-calendar[data-disabled='true'] .lm-calendar-content,
+.lm-calendar[data-disabled='true'] .lm-calendar-footer {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+/* The input that owns the popup (v5 lm-calendar-input) */
+.lm-calendar-input {
+    box-sizing: border-box;
+    width: 100%;
+    min-height: 32px;
+    padding: 7px 28px 7px 10px;
+    border: 1px solid #d4d4d8;
+    border-radius: 6px;
+    background: #fff url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 -960 960 960" width="20"><path d="M200-80q-33 0-56.5-23.5T120-160v-560q0-33 23.5-56.5T200-800h40v-80h80v80h320v-80h80v80h40q33 0 56.5 23.5T840-720v560q0 33-23.5 56.5T760-80H200Zm0-80h560v-400H200v400Zm0-480h560v-80H200v80Zm0 0v-80 80Z" fill="gray"/></svg>') top 50% right 6px no-repeat;
+    font: inherit;
+    color: inherit;
+    outline: none;
+}
+
+.lm-calendar-input:focus-visible,
+.lm-calendar-input:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+}
+
+/* The panel is a Modal: flush, calendar-ready */
+.lm-calendar .lm-modal {
+    padding: 0;
+    min-width: 0;
+    min-height: 5px;
+    border: 1px solid #d4d4d8;
+    border-radius: 6px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.lm-calendar .lm-modal-content {
+    padding: 0;
+}
+
+.lm-calendar-container {
+    background: #fff;
+}
+
+/* Reset / Done bar — popup modes only (v5: visible inside the modal) */
+.lm-calendar-options {
+    display: flex;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--lm-border-color, #ccc);
+}
+
+.lm-calendar-options button {
+    border: 0;
+    background-color: transparent;
+    text-transform: uppercase;
+    cursor: pointer;
+    padding: 15px;
+    font-weight: bold;
+}
+
+.lm-calendar-header {
+    display: flex;
+    flex-direction: column;
+}
+
+.lm-calendar-header > div:first-child {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    flex: 1;
+    user-select: none;
+}
+
+.lm-calendar-labels {
+    display: flex;
+    flex: 1;
+    cursor: pointer;
+    padding: 5px;
+    margin: 10px 0;
+}
+
+.lm-calendar-labels > button {
+    font-size: 1.2em;
+    border: 0;
+    padding: 4px;
+    background-color: transparent;
+    font-weight: bold;
+    color: var(--lm-font-color, inherit);
+}
+
+.lm-calendar-navigation {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1px;
+}
+
+.lm-calendar-icon {
+    width: 40px;
+    height: 40px;
+    box-sizing: border-box;
+    border-radius: 20px;
+    border: 0;
+    padding: 0;
+    margin: 0;
+    background-color: transparent;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+.lm-calendar-prev {
+    background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path d="M7 14l5-5 5 5z" fill="gray"/></svg>');
+}
+
+.lm-calendar-next {
+    background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z" fill="gray"/></svg>');
+}
+
+.lm-calendar-weekdays {
+    display: none;
+    grid-template-columns: repeat(7, 1fr);
+    padding: 0 8px 0 8px;
+    font-size: 0.8em;
+    align-items: center;
+    justify-content: center;
+}
+
+.lm-calendar-container[data-view='days'] .lm-calendar-weekdays {
+    display: grid;
+    flex: 1;
+}
+
+.lm-calendar-weekdays > div {
+    display: inline-block;
+    padding: 6px;
+    box-sizing: border-box;
+    text-align: center;
+    font-weight: bold;
+    line-height: 2em;
+    justify-content: center;
+}
+
+.lm-calendar-content {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    padding: 8px;
+    font-size: 0.8em;
+    outline: none;
+}
+
+.lm-calendar-container[data-view='months'] .lm-calendar-content,
+.lm-calendar-container[data-view='years'] .lm-calendar-content {
+    grid-template-columns: repeat(4, 1fr);
+}
+
+.lm-calendar-content > div {
+    box-sizing: border-box;
+    text-align: center;
+    aspect-ratio: 1 / 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 6px;
+    cursor: pointer;
+    border-radius: 100px;
+    background-origin: padding-box;
+    min-width: 38px;
+}
+
+.lm-calendar-container[data-view='months'] .lm-calendar-content > div,
+.lm-calendar-container[data-view='years'] .lm-calendar-content > div {
+    aspect-ratio: initial;
+    min-height: 48px;
+}
+
+.lm-calendar-content > div[data-disabled='true'] {
+    pointer-events: none;
+    opacity: 0.3;
+}
+
+.lm-calendar-content > div[data-grey='true'] {
+    color: #ccc;
+}
+
+.lm-calendar-content > div[data-bold='true'] {
+    font-weight: bold;
+}
+
+.lm-calendar-content > div[data-event='true']::before {
+    content: '';
+    position: absolute;
+    margin-top: 22px;
+    width: 3px;
+    height: 3px;
+    border-radius: 3px;
+    background-color: red;
+}
+
+.lm-calendar-content > div[data-selected='true'] {
+    font-weight: bold;
+    background-color: #eee;
+    color: #000;
+}
+
+.lm-calendar-content:focus > div[data-selected='true'] {
+    outline: 2px solid black;
+    outline-offset: -2px;
+}
+
+.lm-calendar-content > div:hover {
+    background-color: #eee;
+    color: #000;
+}
+
+.lm-calendar-content > div[data-range='true'] {
+    position: relative;
+}
+
+.lm-calendar-content > div[data-start='true'],
+.lm-calendar-content > div[data-end='true'] {
+    background-color: var(--lm-main-color, #2196f3);
+    color: initial;
+}
+
+.lm-calendar-content > div[data-range='true']::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: calc(25%);
+    height: 50%;
+    background-color: var(--lm-main-color-alpha, #2196f388);
+}
+
+.lm-calendar-content > div[data-start='true']::before {
+    left: 5px;
+    border-top-left-radius: 20%;
+    border-bottom-left-radius: 20%;
+}
+
+.lm-calendar-content > div[data-end='true']::before,
+.lm-calendar-content > div[data-last='true']::before {
+    right: 5px;
+    border-top-right-radius: 20%;
+    border-bottom-right-radius: 20%;
+}
+
+.lm-calendar-footer {
+    display: flex;
+    margin: 0 10px 0 10px;
+    padding: 8px 0 8px 0;
+    line-height: 34px;
+    border-top: 1px solid var(--lm-border-color-light, #e9e9e9);
+}
+
+.lm-calendar-footer > div {
+    flex: 1;
+}
+
+.lm-calendar-footer[data-visible='false'] {
+    display: none;
+}
+
+.lm-calendar-time[data-visible='false'] {
+    display: none;
+}
+
+.lm-calendar-control {
+    border: 0;
+    background-color: transparent;
+    padding: 6px;
+    -moz-appearance: none;
+    -webkit-appearance: none;
+    margin: 2px;
+    border-radius: 32px;
+    font-size: 1.1em;
+    width: initial;
+}
+
+.lm-calendar-footer select:focus {
+    background-color: #eee;
+}
+
+.lm-calendar-update button {
+    width: 100%;
+    cursor: pointer;
+    border: 0;
+    border-radius: 6px;
+    padding: 8px;
+    background-color: var(--lm-border-color-light, #e9e9e9);
+}
+
+/* Picker: bottom sheet (v5 data-type="picker") */
+.lm-calendar[data-type='picker'] .lm-modal {
+    width: 100% !important;
+    border-radius: 12px 12px 0 0;
+    border: 0;
+    box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.18);
+}
+
+.lm-calendar[data-type='picker'] .lm-calendar-content > div {
+    aspect-ratio: initial;
+    min-height: 60px;
+    border-radius: 4px;
+}
+
+.lm-calendar[data-type='picker'] .lm-calendar-weekdays > div {
+    min-height: 60px;
+    line-height: 60px;
+}
+
+/* Calendar with grid lines */
+.lm-calendar[data-grid='true'] .lm-calendar-weekdays {
+    padding: 0;
+}
+
+.lm-calendar[data-grid='true'] .lm-calendar-content {
+    border-top: 1px solid transparent;
+    border-left: 1px solid transparent;
+    border-right: 1px solid #ccc;
+    border-bottom: 1px solid #ccc;
+    padding: 0;
+}
+
+.lm-calendar[data-grid='true'] .lm-calendar-content > div {
+    border-top: 1px solid #ccc;
+    border-left: 1px solid #ccc;
+    border-right: 1px solid transparent;
+    border-bottom: 1px solid transparent;
+    border-radius: 0;
+    justify-content: start;
+    align-items: end;
+}
+
+/* Ripple (v5 lm-ripple, namespaced) */
+.lm-calendar-ripple {
+    background-position: center;
+    transition: background 0.8s;
+}
+
+.lm-calendar-ripple:hover {
+    background-color: var(--lm-background-color-highlight, #ebebeb);
+}
+
+.lm-calendar-ripple:active {
+    background-color: var(--lm-background-color-active, #e8e8e8);
+    transition: background 0s;
+}
+
+/* Dark mode (v5) */
+.lm-dark-mode .lm-calendar-container {
+    background: #1e1e26;
+    color: #eee;
+}
+
+.lm-dark-mode .lm-calendar-weekdays {
+    color: #aaa;
+}
+
+.lm-dark-mode .lm-calendar-labels > button {
+    background-color: initial;
+}
+
+.lm-dark-mode .lm-calendar-content:focus > div[data-selected='true'] {
+    outline-color: white;
+}
+
+.lm-dark-mode .lm-calendar-content > div[data-grey='true'] {
+    color: var(--lm-font-grayout, #777);
+}
+
+.lm-dark-mode .lm-calendar-footer select:focus {
+    background-color: #3a3a45;
+}

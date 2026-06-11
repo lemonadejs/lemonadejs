@@ -1,0 +1,86 @@
+{
+    "component": "slider",
+    "pass": true,
+    "checks": [
+        {
+            "name": "mounts with defaults",
+            "pass": true
+        },
+        {
+            "name": "prop min",
+            "pass": true
+        },
+        {
+            "name": "prop min (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop max",
+            "pass": true
+        },
+        {
+            "name": "prop max (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop step",
+            "pass": true
+        },
+        {
+            "name": "prop step (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop marks",
+            "pass": true
+        },
+        {
+            "name": "prop marks (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop label",
+            "pass": true
+        },
+        {
+            "name": "prop label (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop disabled",
+            "pass": true
+        },
+        {
+            "name": "prop disabled (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop showvalue",
+            "pass": true
+        },
+        {
+            "name": "prop showvalue (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop color",
+            "pass": true
+        },
+        {
+            "name": "prop color (live state)",
+            "pass": true
+        },
+        {
+            "name": "event onchange",
+            "pass": true
+        },
+        {
+            "name": "event oninput",
+            "pass": true
+        },
+        {
+            "name": "bind",
+            "pass": true
+        }
+    ]
+}

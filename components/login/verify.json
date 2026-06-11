@@ -1,0 +1,150 @@
+{
+    "component": "login",
+    "pass": true,
+    "checks": [
+        {
+            "name": "mounts with defaults",
+            "pass": true
+        },
+        {
+            "name": "prop url",
+            "pass": true
+        },
+        {
+            "name": "prop url (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop device",
+            "pass": true
+        },
+        {
+            "name": "prop device (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop logo",
+            "pass": true
+        },
+        {
+            "name": "prop logo (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop fullscreen",
+            "pass": true
+        },
+        {
+            "name": "prop fullscreen (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop google",
+            "pass": true
+        },
+        {
+            "name": "prop google (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop facebook",
+            "pass": true
+        },
+        {
+            "name": "prop facebook (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop microsoft",
+            "pass": true
+        },
+        {
+            "name": "prop microsoft (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop remember",
+            "pass": true
+        },
+        {
+            "name": "prop remember (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop profile",
+            "pass": true
+        },
+        {
+            "name": "prop profile (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop company",
+            "pass": true
+        },
+        {
+            "name": "prop company (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop phone",
+            "pass": true
+        },
+        {
+            "name": "prop phone (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop username",
+            "pass": true
+        },
+        {
+            "name": "prop username (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop terms",
+            "pass": true
+        },
+        {
+            "name": "prop terms (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop termstext",
+            "pass": true
+        },
+        {
+            "name": "prop termstext (live state)",
+            "pass": true
+        },
+        {
+            "name": "event onload",
+            "pass": true
+        },
+        {
+            "name": "event onsuccess",
+            "pass": true
+        },
+        {
+            "name": "event onerror",
+            "pass": true
+        },
+        {
+            "name": "event onbeforesend",
+            "pass": true
+        },
+        {
+            "name": "event onbeforecreate",
+            "pass": true
+        },
+        {
+            "name": "event onchangescreen",
+            "pass": true
+        },
+        {
+            "name": "api via ref",
+            "pass": true
+        }
+    ]
+}

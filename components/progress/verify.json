@@ -1,0 +1,66 @@
+{
+    "component": "progress",
+    "pass": true,
+    "checks": [
+        {
+            "name": "mounts with defaults",
+            "pass": true
+        },
+        {
+            "name": "prop type",
+            "pass": true
+        },
+        {
+            "name": "prop type (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop indeterminate",
+            "pass": true
+        },
+        {
+            "name": "prop indeterminate (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop size",
+            "pass": true
+        },
+        {
+            "name": "prop size (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop thickness",
+            "pass": true
+        },
+        {
+            "name": "prop thickness (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop color",
+            "pass": true
+        },
+        {
+            "name": "prop color (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop label",
+            "pass": true
+        },
+        {
+            "name": "prop label (live state)",
+            "pass": true
+        },
+        {
+            "name": "event onchange",
+            "pass": true
+        },
+        {
+            "name": "bind",
+            "pass": true
+        }
+    ]
+}

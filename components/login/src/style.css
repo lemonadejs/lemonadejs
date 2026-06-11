@@ -1,0 +1,199 @@
+/* <Login /> — default styling, lm-login-* convention (ported from v5) */
+.lm-login {
+    width: 100%;
+    max-width: 480px;
+    box-sizing: border-box;
+    margin: 0 auto;
+    border-radius: 5px;
+    font-size: 1em;
+    line-height: normal;
+}
+
+.lm-login.lm-login-fullscreen {
+    position: absolute;
+    top: 0;
+    left: 0;
+    max-width: none;
+    width: 100%;
+    height: 100%;
+    background-color: #fff;
+    z-index: 9000;
+}
+
+/* v5 top progress bar while a request is in flight */
+.lm-login.lm-login-loading::before {
+    content: '';
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 200px;
+    height: 2px;
+    background-color: var(--lm-main-color, #2196f3);
+    animation: lm-login-loading 2s linear infinite;
+}
+
+@keyframes lm-login-loading {
+    from { left: 0; width: 25%; }
+    25%  { width: 25%; }
+    50%  { width: 50%; }
+    75%  { left: 75%; }
+    to   { left: 100%; }
+}
+
+.lm-login .lm-login-alert,
+.lm-login .lm-login-message {
+    padding: 10px 12px;
+    border-radius: 4px;
+    margin-bottom: 10px;
+    font-size: 0.9em;
+}
+
+.lm-login .lm-login-alert {
+    background-color: #fde8e8;
+    color: #b91c1c;
+}
+
+.lm-login .lm-login-message {
+    background-color: #e7f6ec;
+    color: #166534;
+}
+
+.lm-login .lm-login-alert:empty,
+.lm-login .lm-login-message:empty {
+    display: none;
+}
+
+.lm-login .lm-login-form {
+    margin: 30px 0;
+}
+
+.lm-login .lm-login-row {
+    margin-bottom: 10px;
+}
+
+.lm-login label {
+    display: block;
+    margin-bottom: 4px;
+}
+
+.lm-login .lm-login-instructions {
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.lm-login .lm-login-row input[type='text'],
+.lm-login .lm-login-row input[type='password'] {
+    width: 100%;
+    padding: 12px;
+    margin: 0;
+    box-sizing: border-box;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.lm-login .lm-login-row input.lm-login-error {
+    border-color: #b91c1c;
+}
+
+.lm-login input[type='checkbox'] {
+    width: 30px;
+    float: left;
+}
+
+.lm-login .lm-login-remember label,
+.lm-login .lm-login-terms label {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.lm-login .lm-login-terms {
+    font-size: 0.85em;
+}
+
+.lm-login .lm-login-action {
+    width: 100%;
+    padding: 12px;
+    box-sizing: border-box;
+    background-color: var(--lm-main-color, #2196f3);
+    border: 1px solid var(--lm-main-color, #2196f3);
+    border-radius: 4px;
+    color: #fff;
+    cursor: pointer;
+    appearance: none;
+}
+
+.lm-login .lm-login-social {
+    width: 100%;
+    padding: 12px;
+    box-sizing: border-box;
+    background-color: #fff;
+    border: 1px solid var(--lm-main-color, #2196f3);
+    border-radius: 4px;
+    color: var(--lm-main-color, #2196f3);
+    cursor: pointer;
+    appearance: none;
+}
+
+.lm-login .lm-login-cancel {
+    width: 100%;
+    padding: 10px;
+    background: none;
+    border: none;
+    color: inherit;
+    cursor: pointer;
+}
+
+.lm-login .lm-login-cancel:hover,
+.lm-login .lm-login-link:hover {
+    text-decoration: underline;
+}
+
+.lm-login .lm-login-link {
+    cursor: pointer;
+    color: var(--lm-main-color, #2196f3);
+}
+
+.lm-login .lm-login-forgot {
+    text-align: right;
+}
+
+.lm-login .lm-login-profile {
+    text-align: center;
+}
+
+.lm-login .lm-login-divisor {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #71717a;
+    font-size: 0.85em;
+    margin-bottom: 10px;
+}
+
+.lm-login .lm-login-divisor > div {
+    flex: 1;
+    border-top: 1px solid #ccc;
+}
+
+.lm-login .lm-login-logo {
+    text-align: center;
+    padding: 20px;
+}
+
+.lm-login .lm-login-logo img {
+    max-width: 100%;
+    display: inline-block;
+}
+
+.lm-login .lm-login-captcha {
+    min-width: 280px;
+}
+
+.lm-login .lm-login-captcha img {
+    width: 100%;
+    margin-top: 4px;
+    border: 1px solid #ccc;
+    display: block;
+}

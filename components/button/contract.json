@@ -1,0 +1,50 @@
+{
+    "name": "button",
+    "props": {
+        "label": {
+            "type": "string",
+            "default": ""
+        },
+        "variant": {
+            "type": "string",
+            "default": ""
+        },
+        "color": {
+            "type": "string",
+            "default": ""
+        },
+        "size": {
+            "type": "string",
+            "default": ""
+        },
+        "disabled": {
+            "type": "boolean",
+            "default": false
+        },
+        "loading": {
+            "type": "boolean",
+            "default": false
+        },
+        "fullwidth": {
+            "type": "boolean",
+            "default": false
+        },
+        "href": {
+            "type": "string",
+            "default": ""
+        },
+        "type": {
+            "type": "string",
+            "default": ""
+        },
+        "icon": {
+            "type": "string",
+            "default": ""
+        }
+    },
+    "bind": null,
+    "events": [
+        "onclick"
+    ],
+    "api": []
+}

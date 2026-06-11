@@ -1,0 +1,146 @@
+{
+    "component": "schedule",
+    "pass": true,
+    "checks": [
+        {
+            "name": "mounts with defaults",
+            "pass": true
+        },
+        {
+            "name": "prop data",
+            "pass": true
+        },
+        {
+            "name": "prop data (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop value",
+            "pass": true
+        },
+        {
+            "name": "prop value (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop type",
+            "pass": true
+        },
+        {
+            "name": "prop type (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop weekly",
+            "pass": true
+        },
+        {
+            "name": "prop weekly (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop grid",
+            "pass": true
+        },
+        {
+            "name": "prop grid (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop snap",
+            "pass": true
+        },
+        {
+            "name": "prop snap (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop overlap",
+            "pass": true
+        },
+        {
+            "name": "prop overlap (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop validrange",
+            "pass": true
+        },
+        {
+            "name": "prop validrange (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop readonlyrange",
+            "pass": true
+        },
+        {
+            "name": "prop readonlyrange (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop editor",
+            "pass": true
+        },
+        {
+            "name": "prop editor (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop weekdays",
+            "pass": true
+        },
+        {
+            "name": "prop weekdays (live state)",
+            "pass": true
+        },
+        {
+            "name": "event onchange",
+            "pass": true
+        },
+        {
+            "name": "event oncreate",
+            "pass": true
+        },
+        {
+            "name": "event onbeforecreate",
+            "pass": true
+        },
+        {
+            "name": "event onbeforeinsert",
+            "pass": true
+        },
+        {
+            "name": "event onupdate",
+            "pass": true
+        },
+        {
+            "name": "event onbeforechange",
+            "pass": true
+        },
+        {
+            "name": "event onbeforedrag",
+            "pass": true
+        },
+        {
+            "name": "event ondelete",
+            "pass": true
+        },
+        {
+            "name": "event ondblclick",
+            "pass": true
+        },
+        {
+            "name": "event onedition",
+            "pass": true
+        },
+        {
+            "name": "event onerror",
+            "pass": true
+        },
+        {
+            "name": "api via ref",
+            "pass": true
+        }
+    ]
+}

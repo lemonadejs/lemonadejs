@@ -1,0 +1,94 @@
+{
+    "component": "button",
+    "pass": true,
+    "checks": [
+        {
+            "name": "mounts with defaults",
+            "pass": true
+        },
+        {
+            "name": "prop label",
+            "pass": true
+        },
+        {
+            "name": "prop label (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop variant",
+            "pass": true
+        },
+        {
+            "name": "prop variant (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop color",
+            "pass": true
+        },
+        {
+            "name": "prop color (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop size",
+            "pass": true
+        },
+        {
+            "name": "prop size (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop disabled",
+            "pass": true
+        },
+        {
+            "name": "prop disabled (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop loading",
+            "pass": true
+        },
+        {
+            "name": "prop loading (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop fullwidth",
+            "pass": true
+        },
+        {
+            "name": "prop fullwidth (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop href",
+            "pass": true
+        },
+        {
+            "name": "prop href (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop type",
+            "pass": true
+        },
+        {
+            "name": "prop type (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop icon",
+            "pass": true
+        },
+        {
+            "name": "prop icon (live state)",
+            "pass": true
+        },
+        {
+            "name": "event onclick",
+            "pass": true
+        }
+    ]
+}

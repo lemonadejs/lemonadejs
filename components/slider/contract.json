@@ -1,0 +1,45 @@
+{
+    "name": "slider",
+    "props": {
+        "min": {
+            "type": "number",
+            "default": 0
+        },
+        "max": {
+            "type": "number",
+            "default": 100
+        },
+        "step": {
+            "type": "number",
+            "default": 1
+        },
+        "marks": {
+            "type": "boolean",
+            "default": false
+        },
+        "label": {
+            "type": "string",
+            "default": ""
+        },
+        "disabled": {
+            "type": "boolean",
+            "default": false
+        },
+        "showvalue": {
+            "type": "boolean",
+            "default": false
+        },
+        "color": {
+            "type": "string",
+            "default": ""
+        }
+    },
+    "bind": {
+        "type": "number"
+    },
+    "events": [
+        "onchange",
+        "oninput"
+    ],
+    "api": []
+}

@@ -1,0 +1,164 @@
+/* <Progress /> — default styling, lm-progress-* convention */
+.lm-progress {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+}
+
+.lm-progress[data-type='circular'] {
+    display: inline-flex;
+    width: auto;
+}
+
+/* Linear: track + bar */
+.lm-progress .lm-progress-track {
+    position: relative;
+    overflow: hidden;
+    flex: 1;
+    height: 4px;
+    border-radius: 2px;
+    background: #bfdbfe;
+}
+
+.lm-progress .lm-progress-bar {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 0;
+    border-radius: inherit;
+    background: #2563eb;
+    transition: width 0.2s ease;
+}
+
+.lm-progress[data-indeterminate='true'] .lm-progress-bar {
+    width: 40%;
+    transition: none;
+    animation: lm-progress-linear-sweep 1.5s ease-in-out infinite;
+}
+
+@keyframes lm-progress-linear-sweep {
+    0% {
+        left: -40%;
+    }
+    100% {
+        left: 100%;
+    }
+}
+
+/* Circular: SVG stroke arc */
+.lm-progress .lm-progress-circular {
+    position: relative;
+    display: inline-flex;
+    width: 40px;
+    height: 40px;
+}
+
+.lm-progress .lm-progress-svg {
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg); /* arc starts at 12 o'clock */
+}
+
+.lm-progress .lm-progress-circle-track {
+    stroke: #dbeafe;
+}
+
+.lm-progress .lm-progress-circle-bar {
+    stroke: #2563eb;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 0.2s ease;
+}
+
+.lm-progress[data-indeterminate='true'] .lm-progress-svg {
+    animation: lm-progress-circular-rotate 1.4s linear infinite;
+}
+
+@keyframes lm-progress-circular-rotate {
+    0% {
+        transform: rotate(-90deg);
+    }
+    100% {
+        transform: rotate(270deg);
+    }
+}
+
+/* Label: beside the linear track, centered inside the circular ring */
+.lm-progress .lm-progress-label {
+    font: 12px/1 system-ui, sans-serif;
+    color: #3f3f46;
+}
+
+.lm-progress .lm-progress-circular .lm-progress-label {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Colors */
+.lm-progress[data-color='green'] .lm-progress-bar {
+    background: #16a34a;
+}
+
+.lm-progress[data-color='green'] .lm-progress-track {
+    background: #bbf7d0;
+}
+
+.lm-progress[data-color='green'] .lm-progress-circle-bar {
+    stroke: #16a34a;
+}
+
+.lm-progress[data-color='green'] .lm-progress-circle-track {
+    stroke: #bbf7d0;
+}
+
+.lm-progress[data-color='orange'] .lm-progress-bar {
+    background: #ea580c;
+}
+
+.lm-progress[data-color='orange'] .lm-progress-track {
+    background: #fed7aa;
+}
+
+.lm-progress[data-color='orange'] .lm-progress-circle-bar {
+    stroke: #ea580c;
+}
+
+.lm-progress[data-color='orange'] .lm-progress-circle-track {
+    stroke: #fed7aa;
+}
+
+.lm-progress[data-color='red'] .lm-progress-bar {
+    background: #dc2626;
+}
+
+.lm-progress[data-color='red'] .lm-progress-track {
+    background: #fecaca;
+}
+
+.lm-progress[data-color='red'] .lm-progress-circle-bar {
+    stroke: #dc2626;
+}
+
+.lm-progress[data-color='red'] .lm-progress-circle-track {
+    stroke: #fecaca;
+}
+
+.lm-progress[data-color='purple'] .lm-progress-bar {
+    background: #9333ea;
+}
+
+.lm-progress[data-color='purple'] .lm-progress-track {
+    background: #e9d5ff;
+}
+
+.lm-progress[data-color='purple'] .lm-progress-circle-bar {
+    stroke: #9333ea;
+}
+
+.lm-progress[data-color='purple'] .lm-progress-circle-track {
+    stroke: #e9d5ff;
+}

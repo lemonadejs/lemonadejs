@@ -1,0 +1,181 @@
+/* <ButtonGroup /> — default styling, lm-buttongroup-* convention
+   Fused buttons: shared borders, outer radius only. Consistent with the
+   lm-button palette (#2563eb primary). */
+.lm-buttongroup {
+    --lm-buttongroup-color: #2563eb;
+    --lm-buttongroup-color-dark: #1d4ed8;
+    --lm-buttongroup-color-darker: #1e40af;
+    display: inline-flex;
+    border-radius: 6px;
+}
+
+.lm-buttongroup[data-color='green'] {
+    --lm-buttongroup-color: #16a34a;
+    --lm-buttongroup-color-dark: #15803d;
+    --lm-buttongroup-color-darker: #166534;
+}
+
+.lm-buttongroup[data-color='orange'] {
+    --lm-buttongroup-color: #ea580c;
+    --lm-buttongroup-color-dark: #c2410c;
+    --lm-buttongroup-color-darker: #9a3412;
+}
+
+.lm-buttongroup[data-color='red'] {
+    --lm-buttongroup-color: #dc2626;
+    --lm-buttongroup-color-dark: #b91c1c;
+    --lm-buttongroup-color-darker: #991b1b;
+}
+
+.lm-buttongroup[data-color='purple'] {
+    --lm-buttongroup-color: #9333ea;
+    --lm-buttongroup-color-dark: #7e22ce;
+    --lm-buttongroup-color-darker: #6b21a8;
+}
+
+.lm-buttongroup[data-orientation='vertical'] {
+    flex-direction: column;
+}
+
+.lm-buttongroup .lm-buttongroup-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 16px;
+    margin: 0;
+    border: 1px solid transparent;
+    border-radius: 0;
+    background: var(--lm-buttongroup-color);
+    color: #fff;
+    font: 14px/1.4 system-ui, sans-serif;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.15s ease;
+}
+
+.lm-buttongroup .lm-buttongroup-icon {
+    font-size: 18px;
+}
+
+/* Outer radius only */
+.lm-buttongroup .lm-buttongroup-button:first-child {
+    border-radius: 6px 0 0 6px;
+}
+
+.lm-buttongroup .lm-buttongroup-button:last-child {
+    border-radius: 0 6px 6px 0;
+}
+
+.lm-buttongroup .lm-buttongroup-button:only-child {
+    border-radius: 6px;
+}
+
+.lm-buttongroup[data-orientation='vertical'] .lm-buttongroup-button:first-child {
+    border-radius: 6px 6px 0 0;
+}
+
+.lm-buttongroup[data-orientation='vertical'] .lm-buttongroup-button:last-child {
+    border-radius: 0 0 6px 6px;
+}
+
+.lm-buttongroup[data-orientation='vertical'] .lm-buttongroup-button:only-child {
+    border-radius: 6px;
+}
+
+/* Contained (default): a shared surface, divider lines between buttons */
+.lm-buttongroup:not([data-variant]) .lm-buttongroup-button:not(:last-child) {
+    border-right-color: var(--lm-buttongroup-color-dark);
+}
+
+.lm-buttongroup[data-orientation='vertical']:not([data-variant]) .lm-buttongroup-button:not(:last-child) {
+    border-right-color: transparent;
+    border-bottom-color: var(--lm-buttongroup-color-dark);
+}
+
+.lm-buttongroup:not([data-variant]) .lm-buttongroup-button:hover:not(:disabled) {
+    background: var(--lm-buttongroup-color-dark);
+}
+
+.lm-buttongroup:not([data-variant]) .lm-buttongroup-button[data-selected='true'] {
+    background: var(--lm-buttongroup-color-darker);
+}
+
+/* Outlined: shared 1px borders (adjacent borders collapse) */
+.lm-buttongroup[data-variant='outlined'] .lm-buttongroup-button {
+    background: transparent;
+    border-color: var(--lm-buttongroup-color);
+    color: var(--lm-buttongroup-color);
+}
+
+.lm-buttongroup[data-variant='outlined'] .lm-buttongroup-button + .lm-buttongroup-button {
+    margin-left: -1px;
+}
+
+.lm-buttongroup[data-variant='outlined'][data-orientation='vertical'] .lm-buttongroup-button + .lm-buttongroup-button {
+    margin-left: 0;
+    margin-top: -1px;
+}
+
+.lm-buttongroup[data-variant='outlined'] .lm-buttongroup-button:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--lm-buttongroup-color) 8%, transparent);
+}
+
+.lm-buttongroup[data-variant='outlined'] .lm-buttongroup-button[data-selected='true'] {
+    background: color-mix(in srgb, var(--lm-buttongroup-color) 16%, transparent);
+}
+
+/* Text: borderless, a light divider between buttons */
+.lm-buttongroup[data-variant='text'] .lm-buttongroup-button {
+    background: transparent;
+    color: var(--lm-buttongroup-color);
+}
+
+.lm-buttongroup[data-variant='text'] .lm-buttongroup-button:not(:last-child) {
+    border-right-color: #e2e8f0;
+}
+
+.lm-buttongroup[data-variant='text'][data-orientation='vertical'] .lm-buttongroup-button:not(:last-child) {
+    border-right-color: transparent;
+    border-bottom-color: #e2e8f0;
+}
+
+.lm-buttongroup[data-variant='text'] .lm-buttongroup-button:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--lm-buttongroup-color) 8%, transparent);
+}
+
+.lm-buttongroup[data-variant='text'] .lm-buttongroup-button[data-selected='true'] {
+    background: color-mix(in srgb, var(--lm-buttongroup-color) 16%, transparent);
+}
+
+/* Focus */
+.lm-buttongroup .lm-buttongroup-button:focus-visible {
+    outline: 2px solid var(--lm-buttongroup-color);
+    outline-offset: 2px;
+    z-index: 1;
+}
+
+/* Sizes */
+.lm-buttongroup[data-size='small'] .lm-buttongroup-button {
+    padding: 4px 10px;
+    font-size: 13px;
+}
+
+.lm-buttongroup[data-size='small'] .lm-buttongroup-icon {
+    font-size: 16px;
+}
+
+.lm-buttongroup[data-size='large'] .lm-buttongroup-button {
+    padding: 11px 22px;
+    font-size: 15px;
+}
+
+.lm-buttongroup[data-size='large'] .lm-buttongroup-icon {
+    font-size: 22px;
+}
+
+/* Disabled: item or whole group */
+.lm-buttongroup .lm-buttongroup-button:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}

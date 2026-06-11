@@ -1,0 +1,90 @@
+{
+    "component": "cropper",
+    "pass": true,
+    "checks": [
+        {
+            "name": "mounts with defaults",
+            "pass": true
+        },
+        {
+            "name": "prop src",
+            "pass": true
+        },
+        {
+            "name": "prop src (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop width",
+            "pass": true
+        },
+        {
+            "name": "prop width (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop height",
+            "pass": true
+        },
+        {
+            "name": "prop height (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop cropwidth",
+            "pass": true
+        },
+        {
+            "name": "prop cropwidth (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop cropheight",
+            "pass": true
+        },
+        {
+            "name": "prop cropheight (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop resizable",
+            "pass": true
+        },
+        {
+            "name": "prop resizable (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop controls",
+            "pass": true
+        },
+        {
+            "name": "prop controls (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop original",
+            "pass": true
+        },
+        {
+            "name": "prop original (live state)",
+            "pass": true
+        },
+        {
+            "name": "event onchange",
+            "pass": true
+        },
+        {
+            "name": "event onload",
+            "pass": true
+        },
+        {
+            "name": "bind",
+            "pass": true
+        },
+        {
+            "name": "api via ref",
+            "pass": true
+        }
+    ]
+}

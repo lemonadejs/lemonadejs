@@ -1,0 +1,76 @@
+/* <Wheel /> — default styling, lm-wheel-* convention (v5 look preserved) */
+.lm-wheel {
+    position: relative;
+    display: inline-block;
+    overflow: hidden;
+    box-sizing: border-box;
+    min-width: 80px;
+    font-family: 'San Francisco Text', system-ui, sans-serif;
+    font-size: 24px;
+    font-weight: 400;
+    cursor: grab;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: none;
+}
+
+.lm-wheel:focus-visible {
+    outline: 2px solid #2563eb;
+    outline-offset: 2px;
+}
+
+.lm-wheel.lm-wheel-dragging {
+    cursor: grabbing;
+}
+
+.lm-wheel[data-disabled='true'] {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.lm-wheel .lm-wheel-options {
+    list-style: none;
+    margin: 0;
+    padding: 0 10px;
+    will-change: transform;
+    /* The snap animation (v5: smooth scrollTo + scroll-snap) */
+    transition: transform 0.18s ease-out;
+}
+
+.lm-wheel.lm-wheel-dragging .lm-wheel-options {
+    /* v5 removed lm-wheel-grid while dragging: the wheel follows the pointer */
+    transition: none;
+}
+
+.lm-wheel .lm-wheel-option {
+    box-sizing: border-box;
+    text-align: center;
+    white-space: nowrap;
+    color: #9ca3af;
+    transition: color 0.18s ease-out;
+}
+
+.lm-wheel .lm-wheel-option[data-selected='true'] {
+    color: inherit;
+}
+
+/* The frosted bands above and below the selection (v5 :before/:after) */
+.lm-wheel .lm-wheel-mask {
+    position: absolute;
+    left: 0;
+    right: 0;
+    pointer-events: none;
+    box-sizing: border-box;
+}
+
+.lm-wheel .lm-wheel-mask-top {
+    top: 0;
+    background: linear-gradient(white, rgba(255, 255, 255, 0.95));
+    border-bottom: 1px solid #eee;
+}
+
+.lm-wheel .lm-wheel-mask-bottom {
+    bottom: 0;
+    background: linear-gradient(rgba(255, 255, 255, 0.95), white);
+    border-top: 1px solid #eee;
+}

@@ -1,0 +1,38 @@
+{
+    "component": "formify",
+    "pass": true,
+    "checks": [
+        {
+            "name": "mounts with defaults",
+            "pass": true
+        },
+        {
+            "name": "prop url",
+            "pass": true
+        },
+        {
+            "name": "prop url (live state)",
+            "pass": true
+        },
+        {
+            "name": "event onchange",
+            "pass": true
+        },
+        {
+            "name": "event onsubmit",
+            "pass": true
+        },
+        {
+            "name": "event onload",
+            "pass": true
+        },
+        {
+            "name": "bind",
+            "pass": true
+        },
+        {
+            "name": "api via ref",
+            "pass": true
+        }
+    ]
+}

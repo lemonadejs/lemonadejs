@@ -1,0 +1,66 @@
+{
+    "component": "alert",
+    "pass": true,
+    "checks": [
+        {
+            "name": "mounts with defaults",
+            "pass": true
+        },
+        {
+            "name": "prop severity",
+            "pass": true
+        },
+        {
+            "name": "prop severity (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop variant",
+            "pass": true
+        },
+        {
+            "name": "prop variant (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop title",
+            "pass": true
+        },
+        {
+            "name": "prop title (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop message",
+            "pass": true
+        },
+        {
+            "name": "prop message (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop closable",
+            "pass": true
+        },
+        {
+            "name": "prop closable (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop icon",
+            "pass": true
+        },
+        {
+            "name": "prop icon (live state)",
+            "pass": true
+        },
+        {
+            "name": "event onclose",
+            "pass": true
+        },
+        {
+            "name": "bind",
+            "pass": true
+        }
+    ]
+}
