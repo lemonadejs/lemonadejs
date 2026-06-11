@@ -411,6 +411,9 @@ suite('Type flow: contract knowledge reaches the editor', () => {
     });
 
     it('declared props are non-optional states — no ! needed', () => {
+        // The intentional ${span} snapshot triggers the LJS-202 heuristic —
+        // expected here, silenced so the suite output stays clean
+        const spy = vi.spyOn(console, 'warn').mockImplementation(() => {});
         // The body below compiles WITHOUT non-null assertions: that is the test
         const Meter = component('meter402', { min: 0, max: 100, onlevel: Function }, (props) => {
             const span = props.max.value - props.min.value; // number, no casts
@@ -419,6 +422,7 @@ suite('Type flow: contract knowledge reaches the editor', () => {
         });
         handle = t(Meter as Component<unknown>, { min: 10, max: 30 });
         expect(handle.text()).toBe('20');
+        spy.mockRestore();
     });
 });
 

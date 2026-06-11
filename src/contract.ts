@@ -270,7 +270,9 @@ const warnUnknownProps = !DEV ? null : function (incoming: Record<string, unknow
             key === 'ref' ||
             key === 'children' ||
             key === 'expose' ||
-            (key === 'bind' && schema.bind !== null)
+            // A bind contract implies the Bindable protocol: bind AND
+            // onchange are both legitimate without separate declarations
+            ((key === 'bind' || key === 'onchange') && schema.bind !== null)
         ) {
             continue;
         }

@@ -151,11 +151,14 @@ describe('Native bind directive', () => {
     });
 
     it('throws LJS-302 for an unwrapped snapshot (state.value)', () => {
+        // The snapshot read also warns LJS-202 before the throw — expected
+        const spy = vi.spyOn(console, 'warn').mockImplementation(() => {});
         const C: Component = (p, { state }) => {
             const name = state('x');
             return html`<div><input bind="${name.value}" /></div>`;
         };
         expect(() => t(C)).toThrow(/LJS-302/);
+        spy.mockRestore();
     });
 
     it('throws LJS-303 on a non-form element', () => {

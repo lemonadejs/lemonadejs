@@ -1003,7 +1003,12 @@ const buildElement = function (vnode: VNode, ctx: BuildCtx, svg: boolean): Node[
     const el = isSvg ? document.createElementNS(SVG_NS, tag) : document.createElement(tag);
 
     if (DEV && vnode.props && vnode.props.some((p) => p.name === 'bind')) {
-        if (vnode.props.some((p) => p.name === 'value' || p.name === 'checked')) {
+        // Radios are the exception: their value attribute is the OPTION
+        // IDENTITY the bound state compares against, not the bound value
+        const isRadio = vnode.props.some(
+            (p) => p.name === 'type' && p.parts.length === 1 && p.parts[0] === 'radio'
+        );
+        if (!isRadio && vnode.props.some((p) => p.name === 'value' || p.name === 'checked')) {
             warn('LJS-304', '<' + tag + '>');
         }
     }

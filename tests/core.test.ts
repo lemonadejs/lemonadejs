@@ -1,4 +1,4 @@
-import { describe, it, expect, afterEach } from 'vitest';
+import { describe, it, expect, afterEach, vi } from 'vitest';
 import { html, type Component, type State } from '../src/index';
 import { render as t } from '../src/test';
 
@@ -40,6 +40,8 @@ describe('Core rendering and reactivity', () => {
     });
 
     it('treats plain values as one-time snapshots', () => {
+        // The snapshot read intentionally trips LJS-202 — assert it, silently
+        const spy = vi.spyOn(console, 'warn').mockImplementation(() => {});
         let countRef!: State<number>;
         const C: Component = (props, { state }) => {
             const count = state(1);
@@ -52,6 +54,8 @@ describe('Core rendering and reactivity', () => {
         countRef.value = 9;
         expect(handle.query('span')!.textContent).toBe('1'); // snapshot
         expect(handle.query('b')!.textContent).toBe('9'); // live state
+        expect(spy.mock.calls.some((c) => String(c[0]).includes('LJS-202'))).toBe(true);
+        spy.mockRestore();
     });
 
     it('escapes plain strings — never parsed as HTML', () => {

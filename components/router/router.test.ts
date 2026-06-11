@@ -11,6 +11,12 @@ import Router, { type Route } from '@lemonadejs/router';
 type Api = { setPath(p: string, ignore?: boolean): Route | null; current(): Route | null };
 
 let handle: ReturnType<typeof t> | null = null;
+
+// NOTE: link-click tests must prevent the default once their assertion is
+// made — an unprevented click makes jsdom attempt a real navigation and
+// log 'Not implemented: navigation'. That noise is kept LOUD on purpose:
+// it means a test leaked a navigation.
+
 afterEach(() => {
     handle?.unmount();
     handle = null;
@@ -97,9 +103,16 @@ describe('components/router — behaviors', () => {
         for (const a of ['<a href="http://x.com/about">x</a>', '<a href="/about" target="_blank">x</a>', '<a href="#sec">x</a>']) {
             page.insertAdjacentHTML('beforeend', a);
         }
+        // The router must IGNORE these clicks (assert below) — but jsdom
+        // would then try the real navigation and log 'Not implemented'.
+        // A document-level listener runs AFTER the router's body listener
+        // and cancels the default once the router has made its decision.
+        const stop = (e: Event) => e.preventDefault();
+        document.addEventListener('click', stop);
         for (const link of [...page.querySelectorAll('a')].slice(1)) {
             link.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
         }
+        document.removeEventListener('click', stop);
         expect(changes.filter((p) => p === '/about')).toHaveLength(0);
     });
 
@@ -225,12 +238,21 @@ describe('components/router — behaviors', () => {
         handle = null;
         expect(lifecycle).toEqual(['unmounted']);
 
-        // the click interceptor is gone: a stray internal link does nothing
+        // the click interceptor is gone: a stray internal link does nothing.
+        // The probe records whether anything upstream prevented the default
+        // (the router's body listener would have), THEN prevents it itself so
+        // jsdom does not try to actually follow the link after the test.
         document.body.insertAdjacentHTML('beforeend', '<a id="stray" href="/user/1">x</a>');
         const stray = document.getElementById('stray')!;
-        const e = new MouseEvent('click', { bubbles: true, cancelable: true });
-        stray.dispatchEvent(e);
-        expect(e.defaultPrevented).toBe(false);
+        let preventedUpstream: boolean | null = null;
+        const probe = (ev: Event) => {
+            preventedUpstream = ev.defaultPrevented;
+            ev.preventDefault();
+        };
+        document.addEventListener('click', probe, { once: true });
+        stray.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+        document.removeEventListener('click', probe);
+        expect(preventedUpstream).toBe(false);
         stray.remove();
     });
 });

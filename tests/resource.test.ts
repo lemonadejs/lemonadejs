@@ -168,7 +168,7 @@ describe('resource(): the async lifecycle tool', () => {
         expect(handle.text()).toBe('42');
     });
 
-    it('warns LJS-206 in dev when the fetcher reads its own states (on a re-run)', () => {
+    it('warns LJS-206 in dev when the fetcher reads its own states (on a re-run)', async () => {
         const spy = vi.spyOn(console, 'warn').mockImplementation(() => {});
         let id!: State<number>;
         const C: Component = (p, { state, resource }) => {
@@ -183,6 +183,11 @@ describe('resource(): the async lifecycle tool', () => {
 
         id.value = 2; // re-run: now the fetcher reads r.data — the loop seed
         expect(spy.mock.calls.some((c) => String(c[0]).includes('LJS-206'))).toBe(true);
+        // Unmount WHILE the spy is active: the async loop keeps warning on
+        // every microtask until disposal — restoring first leaked to stderr
+        handle.unmount();
+        handle = null;
+        await flush();
         spy.mockRestore();
     });
 });
