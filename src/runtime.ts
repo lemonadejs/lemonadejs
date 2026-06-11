@@ -21,7 +21,7 @@ import { isView } from './types';
 import { fail, warn } from './errors';
 import { DEV } from './env';
 import { Binding, BoundState, isDynamic, isForcing, isState, readCount, resolve, StateImpl, untracked } from './reactivity';
-import { contract as contractOf } from './contract';
+import { contract as contractOf, coerce, liveProps, type LiveProps } from './contract';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 const SVG_TAGS = new Set([
@@ -52,6 +52,11 @@ export interface Instance {
     mounted: boolean;
     /** Set by unmountInstance — dead instances are never reused or resurrected */
     dead: boolean;
+    /** The template node this instance was built from (in-template only) —
+     *  the recipe for recomputing its props when entry values change */
+    vnode?: VNode;
+    /** Patch channel into the contract wrapper's states and event cells */
+    live?: LiveProps;
 }
 
 /** A ref captured at build, fired after the nodes attach */
@@ -349,6 +354,76 @@ const injectStyles = function (template: Template): void {
     }
 };
 
+/**
+ * Try to PATCH one living instance for an entry whose values changed:
+ * recompute its props from the vnode recipe and plan writes into the
+ * contract wrapper's live states and event cells. Returns the ops, or
+ * null when anything STRUCTURAL changed — a different component in the
+ * tag, shared-state rewiring, bind/ref/expose or undeclared props — and
+ * the caller falls back to a rebuild. children never need ops: their
+ * bindings belong to the entry and re-run with it.
+ */
+const patchPlan = function (ci: Instance, holder: Holder): (() => void)[] | null {
+    const vnode = ci.vnode;
+    if (!vnode || ci.dead || !ci.live) {
+        return null;
+    }
+    const type = vnode.type as { slot: number } | { name: string };
+    if ('slot' in type && holder.values[type.slot] !== ci.component) {
+        return null; // a different component function occupies the tag now
+    }
+    const schema = contractOf(ci.component);
+    if (!schema) {
+        return null;
+    }
+    const newRaw = assembleProps(vnode, holder);
+    const oldRaw = ci.props;
+    const live = ci.live;
+    const ops: (() => void)[] = [];
+    const keys = new Set(Object.keys(oldRaw).concat(Object.keys(newRaw)));
+    for (const key of keys) {
+        if (key === 'children') {
+            continue;
+        }
+        const a = oldRaw[key];
+        const b = newRaw[key];
+        if (Object.is(a, b)) {
+            continue;
+        }
+        if (isState(a) || isState(b)) {
+            return null; // shared-state rewiring is structural
+        }
+        const p = schema.props[key];
+        if (p) {
+            const target = live.states[key];
+            if (!isState(target)) {
+                return null;
+            }
+            ops.push(function () {
+                (target as StateImpl<unknown>).value = b === undefined ? p.default : coerce(b, p);
+            });
+            continue;
+        }
+        if (schema.events.indexOf(key) >= 0) {
+            if (typeof a !== 'function' || typeof b !== 'function') {
+                return null; // a handler appeared/disappeared — no trampoline
+            }
+            ops.push(function () {
+                live.events[key] = b;
+            });
+            continue;
+        }
+        return null; // bind/ref/expose/undeclared — structural
+    }
+    ops.push(function () {
+        if (oldRaw.children !== undefined) {
+            newRaw.children = oldRaw.children; // the living child nodes
+        }
+        ci.props = newRaw;
+    });
+    return ops;
+};
+
 /** Build the DOM for a View inside a branch entry (live mode) */
 const buildViewEntry = function (view: View, inst: Instance): ViewEntry {
     injectStyles(view.template);
@@ -504,7 +579,36 @@ const applySlot = function (s: SlotState, value: unknown, inst: Instance): void 
                     next.push(o);
                     continue;
                 }
-                // Contains components (snapshot props) — rebuild for fresh props
+                // Components with CHANGED values: patch the living entry —
+                // new prop values flow into the wrapper's states, fresh
+                // closures swap into the event cells. Rebuild only when
+                // patchPlan reports a structural change.
+                if (!hasDead) {
+                    const probe: Holder = { values: view.values };
+                    let plans: (() => void)[][] | null = [];
+                    for (const ci of o.instances) {
+                        const plan = patchPlan(ci, probe);
+                        if (!plan) {
+                            plans = null;
+                            break;
+                        }
+                        plans.push(plan);
+                    }
+                    if (plans) {
+                        o.holder.values = view.values;
+                        for (const binding of o.bindings) {
+                            binding.run();
+                        }
+                        for (const plan of plans) {
+                            for (const op of plan) {
+                                op();
+                            }
+                        }
+                        claimed.add(o);
+                        next.push(o);
+                        continue;
+                    }
+                }
             }
             if (o) {
                 claimed.add(o);
@@ -797,22 +901,12 @@ const buildComponent = function (vnode: VNode, ctx: BuildCtx): Node[] {
         }
     }
 
-    const props: Record<string, unknown> = {};
-    for (const prop of vnode.props || []) {
-        if (prop.name === 'key') {
-            continue; // list identity — consumed by applySlot, never a prop
-        }
-        checkCasing(prop.name, '<' + ((fn as Function).name || 'component') + '>');
-        const parts = prop.parts;
-        if (!parts.length) {
-            props[prop.name] = true;
-        } else if (parts.length === 1 && typeof parts[0] === 'string') {
-            props[prop.name] = parts[0];
-        } else if (parts.length === 1 && typeof parts[0] === 'object') {
-            // Whole-value expression: passed by reference, untouched
-            props[prop.name] = ctx.holder.values[parts[0].slot];
-        } else {
-            props[prop.name] = resolveProp(parts, ctx.holder);
+    const props = assembleProps(vnode, ctx.holder);
+    if (DEV) {
+        for (const prop of vnode.props || []) {
+            if (prop.name !== 'key') {
+                checkCasing(prop.name, '<' + ((fn as Function).name || 'component') + '>');
+            }
         }
     }
 
@@ -821,8 +915,31 @@ const buildComponent = function (vnode: VNode, ctx: BuildCtx): Node[] {
     }
 
     const child = mountComponent(fn as Component<Record<string, unknown>>, props, ctx.inst);
+    child.vnode = vnode; // the recipe for patching when entry values change
     ctx.instances.push(child);
     return child.elements;
+};
+
+/** Resolve a component vnode's props against holder values (no children) */
+const assembleProps = function (vnode: VNode, holder: Holder): Record<string, unknown> {
+    const props: Record<string, unknown> = {};
+    for (const prop of vnode.props || []) {
+        if (prop.name === 'key') {
+            continue; // list identity — consumed by applySlot, never a prop
+        }
+        const parts = prop.parts;
+        if (!parts.length) {
+            props[prop.name] = true;
+        } else if (parts.length === 1 && typeof parts[0] === 'string') {
+            props[prop.name] = parts[0];
+        } else if (parts.length === 1 && typeof parts[0] === 'object') {
+            // Whole-value expression: passed by reference, untouched
+            props[prop.name] = holder.values[parts[0].slot];
+        } else {
+            props[prop.name] = resolveProp(parts, holder);
+        }
+    }
+    return props;
 };
 
 const buildElement = function (vnode: VNode, ctx: BuildCtx, svg: boolean): Node[] {
@@ -992,6 +1109,11 @@ export const mountComponent = function (
     });
     if (!isView(view)) {
         fail('LJS-002', inst.name);
+    }
+    // Patch channel: the contract wrapper registered its states/event cells
+    // against the exact props object it received
+    if (finalProps && typeof finalProps === 'object') {
+        inst.live = liveProps(finalProps);
     }
 
     // Dev heuristic: states were read while the template was being built and

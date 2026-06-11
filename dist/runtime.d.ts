@@ -15,8 +15,9 @@
  *   Node                  → inserted as-is
  *   array                 → flattened, each item by the same rules
  */
-import type { Component, Handle, Template } from './types';
+import type { Component, Handle, Template, VNode } from './types';
 import { Binding, StateImpl } from './reactivity';
+import { type LiveProps } from './contract';
 /** Mutable container for a view's slot values — replaced on branch updates */
 interface Holder {
     values: unknown[];
@@ -39,6 +40,11 @@ export interface Instance {
     mounted: boolean;
     /** Set by unmountInstance — dead instances are never reused or resurrected */
     dead: boolean;
+    /** The template node this instance was built from (in-template only) —
+     *  the recipe for recomputing its props when entry values change */
+    vnode?: VNode;
+    /** Patch channel into the contract wrapper's states and event cells */
+    live?: LiveProps;
 }
 /** A ref captured at build, fired after the nodes attach */
 interface RefEntry {

@@ -63,11 +63,14 @@ place items visually (CSS grid), or accept the rebuild.
 
 What happens on a key match when values CHANGED:
 - plain-element items: updated IN PLACE — bindings re-run, the node is kept
-- items containing COMPONENTS: that entry rebuilds (props are construction
-  snapshots). Fresh inline closures count as changed values, BUT nested
-  html`` views are compared STRUCTURALLY (template + values), so identical
-  fresh views do not trigger rebuilds — closures and changed primitives do.
-  For component items, reorder-without-change moves them WITH their state.
+- items containing COMPONENTS: PATCHED in place — new values flow into the
+  instance's live prop states, fresh inline closures swap into the event
+  handlers, children update through their own bindings. DOM, internal
+  state and focus survive. The instance is REBUILT only on a structural
+  change: a different component in the tag, a shared State prop swapped
+  for another, bind/ref/expose changes, or an undeclared prop changing.
+  (Patching applies to positional lists too — keys add identity across
+  reorder/insert/remove, patching handles the value changes.)
 
 Trusted HTML (plain strings are ALWAYS escaped; this is the explicit opt-out):
 

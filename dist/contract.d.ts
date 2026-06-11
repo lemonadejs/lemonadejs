@@ -96,6 +96,16 @@ export interface Schema {
     events: string[];
     api: string[];
 }
+/**
+ * The renderer-facing handle for patching a LIVING instance: the states
+ * the wrapper constructed for declared props, and the event cells behind
+ * the trampolines. Keyed by the exact props object the wrapper received.
+ */
+export interface LiveProps {
+    states: Record<string, unknown>;
+    events: Record<string, unknown>;
+}
+export declare const liveProps: (props: object) => LiveProps | undefined;
 /** Coerce a value (typically an attribute string) to its declared type */
 export declare const coerce: (v: unknown, p: PropSchema) => unknown;
 /**

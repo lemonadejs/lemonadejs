@@ -143,6 +143,22 @@ export interface Schema {
 
 const schemas = new WeakMap<Function, Schema>();
 
+/**
+ * The renderer-facing handle for patching a LIVING instance: the states
+ * the wrapper constructed for declared props, and the event cells behind
+ * the trampolines. Keyed by the exact props object the wrapper received.
+ */
+export interface LiveProps {
+    states: Record<string, unknown>;
+    events: Record<string, unknown>;
+}
+
+const liveRegistry = new WeakMap<object, LiveProps>();
+
+export const liveProps = function (props: object): LiveProps | undefined {
+    return liveRegistry.get(props);
+};
+
 /** Infer type (and default) from a contract entry */
 const kindOf = function (v: unknown): PropSchema {
     if (v === String) return { type: 'string' };
@@ -339,6 +355,23 @@ export const component = function <C extends Record<string, unknown>, P = Contra
                 }
             }
         }
+
+        // Live props: declared events become stable TRAMPOLINES over a
+        // mutable cell, and the cells + the prop states are registered so
+        // the renderer can PATCH a reused entry (new closures, new values)
+        // into a living instance instead of rebuilding it. The component
+        // closes over frozen props; the cells are the update channel.
+        const cells: Record<string, unknown> = {};
+        for (const e of schema.events) {
+            const handler = final[e];
+            if (typeof handler === 'function') {
+                cells[e] = handler;
+                final[e] = function (...args: unknown[]) {
+                    return (cells[e] as (...a: unknown[]) => unknown)(...args);
+                };
+            }
+        }
+        liveRegistry.set(incoming, { states: final, events: cells });
 
         return fn(Object.freeze(final) as Props<P>, tools);
     };

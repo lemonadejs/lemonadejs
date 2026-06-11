@@ -607,6 +607,10 @@ var isDynamic = function(raw) {
 
 // src/contract.ts
 var schemas = /* @__PURE__ */ new WeakMap();
+var liveRegistry = /* @__PURE__ */ new WeakMap();
+var liveProps = function(props) {
+  return liveRegistry.get(props);
+};
 var kindOf = function(v) {
   if (v === String) return { type: "string" };
   if (v === Number) return { type: "number" };
@@ -759,6 +763,17 @@ var component = function(name, contractDef, fn) {
         }
       }
     }
+    const cells = {};
+    for (const e of schema.events) {
+      const handler = final[e];
+      if (typeof handler === "function") {
+        cells[e] = handler;
+        final[e] = function(...args) {
+          return cells[e](...args);
+        };
+      }
+    }
+    liveRegistry.set(incoming, { states: final, events: cells });
     return fn(Object.freeze(final), tools);
   };
   Object.defineProperty(wrapped, "name", { value: fn.name || name });
@@ -968,6 +983,66 @@ var injectStyles = function(template) {
     document.head.appendChild(el);
   }
 };
+var patchPlan = function(ci, holder) {
+  const vnode = ci.vnode;
+  if (!vnode || ci.dead || !ci.live) {
+    return null;
+  }
+  const type = vnode.type;
+  if ("slot" in type && holder.values[type.slot] !== ci.component) {
+    return null;
+  }
+  const schema = contract(ci.component);
+  if (!schema) {
+    return null;
+  }
+  const newRaw = assembleProps(vnode, holder);
+  const oldRaw = ci.props;
+  const live = ci.live;
+  const ops = [];
+  const keys = new Set(Object.keys(oldRaw).concat(Object.keys(newRaw)));
+  for (const key of keys) {
+    if (key === "children") {
+      continue;
+    }
+    const a = oldRaw[key];
+    const b = newRaw[key];
+    if (Object.is(a, b)) {
+      continue;
+    }
+    if (isState(a) || isState(b)) {
+      return null;
+    }
+    const p = schema.props[key];
+    if (p) {
+      const target = live.states[key];
+      if (!isState(target)) {
+        return null;
+      }
+      ops.push(function() {
+        target.value = b === void 0 ? p.default : coerce(b, p);
+      });
+      continue;
+    }
+    if (schema.events.indexOf(key) >= 0) {
+      if (typeof a !== "function" || typeof b !== "function") {
+        return null;
+      }
+      ops.push(function() {
+        live.events[key] = b;
+      });
+      continue;
+    }
+    return null;
+  }
+  ops.push(function() {
+    if (oldRaw.children !== void 0) {
+      newRaw.children = oldRaw.children;
+    }
+    ci.props = newRaw;
+  });
+  return ops;
+};
 var buildViewEntry = function(view, inst) {
   injectStyles(view.template);
   const holder = { values: view.values };
@@ -1095,6 +1170,32 @@ var applySlot = function(s, value, inst) {
           claimed.add(o);
           next.push(o);
           continue;
+        }
+        if (!hasDead) {
+          const probe = { values: view.values };
+          let plans = [];
+          for (const ci of o.instances) {
+            const plan = patchPlan(ci, probe);
+            if (!plan) {
+              plans = null;
+              break;
+            }
+            plans.push(plan);
+          }
+          if (plans) {
+            o.holder.values = view.values;
+            for (const binding of o.bindings) {
+              binding.run();
+            }
+            for (const plan of plans) {
+              for (const op of plan) {
+                op();
+              }
+            }
+            claimed.add(o);
+            next.push(o);
+            continue;
+          }
         }
       }
       if (o) {
@@ -1329,29 +1430,40 @@ var buildComponent = function(vnode, ctx) {
       fail("LJS-104", "<" + type.name + ">");
     }
   }
-  const props = {};
-  for (const prop of vnode.props || []) {
-    if (prop.name === "key") {
-      continue;
-    }
-    checkCasing(prop.name, "<" + (fn.name || "component") + ">");
-    const parts = prop.parts;
-    if (!parts.length) {
-      props[prop.name] = true;
-    } else if (parts.length === 1 && typeof parts[0] === "string") {
-      props[prop.name] = parts[0];
-    } else if (parts.length === 1 && typeof parts[0] === "object") {
-      props[prop.name] = ctx.holder.values[parts[0].slot];
-    } else {
-      props[prop.name] = resolveProp(parts, ctx.holder);
+  const props = assembleProps(vnode, ctx.holder);
+  if (DEV) {
+    for (const prop of vnode.props || []) {
+      if (prop.name !== "key") {
+        checkCasing(prop.name, "<" + (fn.name || "component") + ">");
+      }
     }
   }
   if (vnode.children && vnode.children.length) {
     props.children = buildNodes(vnode.children, ctx, false);
   }
   const child = mountComponent(fn, props, ctx.inst);
+  child.vnode = vnode;
   ctx.instances.push(child);
   return child.elements;
+};
+var assembleProps = function(vnode, holder) {
+  const props = {};
+  for (const prop of vnode.props || []) {
+    if (prop.name === "key") {
+      continue;
+    }
+    const parts = prop.parts;
+    if (!parts.length) {
+      props[prop.name] = true;
+    } else if (parts.length === 1 && typeof parts[0] === "string") {
+      props[prop.name] = parts[0];
+    } else if (parts.length === 1 && typeof parts[0] === "object") {
+      props[prop.name] = holder.values[parts[0].slot];
+    } else {
+      props[prop.name] = resolveProp(parts, holder);
+    }
+  }
+  return props;
 };
 var buildElement = function(vnode, ctx, svg) {
   const tag = vnode.type;
@@ -1483,6 +1595,9 @@ var mountComponent = function(component2, props, parent) {
   });
   if (!isView(view)) {
     fail("LJS-002", inst.name);
+  }
+  if (finalProps && typeof finalProps === "object") {
+    inst.live = liveProps(finalProps);
   }
   if (DEV && readCount() > before && !warned.has(component2)) {
     const primitive = view.values.some(function(v) {

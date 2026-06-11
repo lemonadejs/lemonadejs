@@ -305,27 +305,21 @@ export const Contextmenu = component('contextmenu', {
                   ${item.submenu ? html`<span class="lm-contextmenu-arrow">›</span>` : ''}
               </li>`;
 
-    // ONE view per Level: pushing/popping levels must never rebuild the
-    // surviving menus — a rebuilt Modal re-runs auto-adjust and loses the
-    // cursor anchor, visibly moving the parent when a submenu opens.
-    // key="${lvl}" alone cannot replace this cache yet: itemView creates
-    // fresh per-item handler closures every run, so the level's values
-    // never compare equal and a keyed component entry would still rebuild.
-    const levelViews = new WeakMap<Level, unknown>();
-    const levelView = (lvl: Level, li: number) => {
-        let view = levelViews.get(lvl);
-        if (!view) {
-            view = html`<${Modal} header="${false}" position="absolute" bind="${true}"
-                top="${lvl.top}" left="${lvl.left}"
-                focus="${false}" responsive="${false}" autoadjust overflow>
-                <ul class="lm-contextmenu-list" role="menu" aria-orientation="vertical">${lvl.options.map(
-                    (item, ii) => itemView(li, ii, item)
-                )}</ul>
-            </${Modal}>`;
-            levelViews.set(lvl, view);
-        }
-        return view;
-    };
+    // Pushing/popping levels must never rebuild the surviving menus — a
+    // rebuilt Modal re-runs auto-adjust and loses the cursor anchor,
+    // visibly moving the parent when a submenu opens. The Level object is
+    // the key; the engine PATCHES the surviving Modal entries in place
+    // (props are unchanged states/literals; the fresh item views flow
+    // through the live children bindings). This replaced a WeakMap view
+    // cache that existed before live component-prop patching.
+    const levelView = (lvl: Level, li: number) =>
+        html`<${Modal} key="${lvl}" header="${false}" position="absolute" bind="${true}"
+            top="${lvl.top}" left="${lvl.left}"
+            focus="${false}" responsive="${false}" autoadjust overflow>
+            <ul class="lm-contextmenu-list" role="menu" aria-orientation="vertical">${lvl.options.map(
+                (item, ii) => itemView(li, ii, item)
+            )}</ul>
+        </${Modal}>`;
 
     return html`<div class="lm-contextmenu" tabindex="-1" role="menu"
         ref="${(el: HTMLElement) => (wrapper = el)}"
