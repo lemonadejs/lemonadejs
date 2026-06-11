@@ -891,6 +891,31 @@ var blurWithin = function(nodes) {
     }
   }
 };
+var portalAnchors = /* @__PURE__ */ new WeakMap();
+var owns = function(container, target) {
+  let n = target;
+  while (n) {
+    if (n === container) {
+      return true;
+    }
+    const anchor = portalAnchors.get(n);
+    n = anchor || n.parentNode;
+  }
+  return false;
+};
+var attachPortals = function(portals) {
+  for (const p of portals) {
+    if (!p.el.isConnected && p.anchor.isConnected) {
+      document.body.appendChild(p.el);
+    }
+  }
+};
+var removePortals = function(portals) {
+  for (const p of portals) {
+    blurWithin([p.el]);
+    remove(p.el);
+  }
+};
 var disposeEntry = function(entry) {
   withDisposal(function() {
     if (entry.kind === "view") {
@@ -903,6 +928,7 @@ var disposeEntry = function(entry) {
       for (const cleanup of entry.cleanups) {
         cleanup();
       }
+      removePortals(entry.portals);
     }
     blurWithin(entry.nodes);
     for (const node of entry.nodes) {
@@ -1036,7 +1062,16 @@ var patchPlan = function(ci, holder) {
 var buildViewEntry = function(view, inst) {
   injectStyles(view.template);
   const holder = { values: view.values };
-  const ctx = { inst, holder, live: true, bindings: [], instances: [], cleanups: [], refs: [] };
+  const ctx = {
+    inst,
+    holder,
+    live: true,
+    bindings: [],
+    instances: [],
+    cleanups: [],
+    refs: [],
+    portals: []
+  };
   const nodes = buildNodes(view.template.nodes, ctx, false);
   return {
     kind: "view",
@@ -1046,7 +1081,8 @@ var buildViewEntry = function(view, inst) {
     instances: ctx.instances,
     nodes,
     cleanups: ctx.cleanups,
-    refs: ctx.refs
+    refs: ctx.refs,
+    portals: ctx.portals
   };
 };
 var applySlot = function(s, value, inst) {
@@ -1056,6 +1092,9 @@ var applySlot = function(s, value, inst) {
     if (s.entries.length && !s.detached) {
       withDisposal(function() {
         for (const entry of s.entries) {
+          if (entry.kind === "view") {
+            removePortals(entry.portals);
+          }
           for (const node of entry.nodes) {
             remove(node);
           }
@@ -1226,8 +1265,13 @@ var applySlot = function(s, value, inst) {
       }
     }
     for (const entry of next) {
-      if (entry.kind === "view" && entry.refs.length) {
-        fireRefs(entry.refs, entry.cleanups);
+      if (entry.kind === "view") {
+        if (entry.portals.length) {
+          attachPortals(entry.portals);
+        }
+        if (entry.refs.length) {
+          fireRefs(entry.refs, entry.cleanups);
+        }
       }
     }
     for (const instance of fresh) {
@@ -1319,11 +1363,11 @@ var applyProp = function(el, prop, ctx, svg) {
   const name = prop.name;
   const parts = prop.parts;
   const whole = parts.length === 1 && typeof parts[0] === "object" ? parts[0].slot : -1;
-  if (!parts.length) {
-    applyAttr(el, name, name, svg);
+  if (name === "key" || name === "portal") {
     return;
   }
-  if (name === "key") {
+  if (!parts.length) {
+    applyAttr(el, name, name, svg);
     return;
   }
   if (name === "bind") {
@@ -1479,6 +1523,12 @@ var buildElement = function(vnode, ctx, svg) {
   for (const prop of vnode.props || []) {
     applyProp(el, prop, ctx, isSvg);
   }
+  if (vnode.props && vnode.props.some((p) => p.name === "portal")) {
+    const anchor = document.createTextNode("");
+    portalAnchors.set(el, anchor);
+    ctx.portals.push({ el, anchor });
+    return [anchor];
+  }
   return [el];
 };
 var buildNode = function(vnode, ctx, svg) {
@@ -1517,6 +1567,7 @@ var mountComponent = function(component2, props, parent) {
     mountCbs: [],
     unmountCbs: [],
     refs: [],
+    portals: [],
     mounted: false,
     dead: false
   };
@@ -1612,7 +1663,8 @@ var mountComponent = function(component2, props, parent) {
     // Root-level object refs are nulled when the component unmounts
     cleanups: inst.unmountCbs,
     // Root-level refs fire in runMount — after the host attached them
-    refs: inst.refs
+    refs: inst.refs,
+    portals: inst.portals
   };
   injectStyles(view.template);
   inst.elements = buildNodes(view.template.nodes, ctx, false);
@@ -1626,14 +1678,22 @@ var runMount = function(inst) {
     return;
   }
   inst.mounted = true;
+  if (inst.portals.length) {
+    attachPortals(inst.portals);
+  }
   if (inst.refs.length) {
     fireRefs(inst.refs, inst.unmountCbs);
   }
   for (const s of inst.slots) {
     if (!s.detached) {
       for (const entry of s.entries) {
-        if (entry.kind === "view" && entry.refs.length) {
-          fireRefs(entry.refs, entry.cleanups);
+        if (entry.kind === "view") {
+          if (entry.portals.length) {
+            attachPortals(entry.portals);
+          }
+          if (entry.refs.length) {
+            fireRefs(entry.refs, entry.cleanups);
+          }
         }
       }
     }
@@ -1676,6 +1736,7 @@ var unmountInstance = function(inst) {
     cb();
   }
   withDisposal(function() {
+    removePortals(inst.portals);
     blurWithin(inst.elements);
     for (const node of inst.elements) {
       remove(node);
@@ -1970,6 +2031,7 @@ export {
   inspect,
   isDisposing,
   mount,
+  owns,
   ref,
   setComponents,
   store,

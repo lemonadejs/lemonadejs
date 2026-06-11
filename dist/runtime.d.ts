@@ -37,6 +37,8 @@ export interface Instance {
     unmountCbs: (() => void)[];
     /** Refs queued during the root build, fired by runMount */
     refs: RefEntry[];
+    /** Root-level portaled elements, attached by runMount */
+    portals: PortalEntry[];
     mounted: boolean;
     /** Set by unmountInstance — dead instances are never reused or resurrected */
     dead: boolean;
@@ -51,6 +53,12 @@ interface RefEntry {
     value: unknown;
     el: Element;
 }
+/** A portaled element: lives in document.body, holds its place in the
+ *  flow through an invisible anchor text node */
+interface PortalEntry {
+    el: Element;
+    anchor: Text;
+}
 /** One unit of content produced by a slot */
 interface ViewEntry {
     kind: 'view';
@@ -62,6 +70,8 @@ interface ViewEntry {
     cleanups: (() => void)[];
     /** Pending refs — fired (once) when the entry first attaches */
     refs: RefEntry[];
+    /** Elements rendered into document.body, anchored in the flow */
+    portals: PortalEntry[];
     /** List identity from key="${...}" — matching is by key, not position */
     key?: unknown;
 }
@@ -87,6 +97,15 @@ interface SlotState {
  */
 export declare const setComponents: (map: Record<string, Component<never>>) => void;
 export declare const isDisposing: () => boolean;
+/**
+ * Ownership-aware containment: like container.contains(target), but at a
+ * portal boundary the walk TELEPORTS to the portal's anchor and continues
+ * up the logical tree. The check for dismiss-on-focusout/click-outside
+ * when part of a component (a panel, a popper) renders in document.body:
+ *
+ *   onfocusout="${(e) => { if (!owns(root, e.relatedTarget)) close(); }}"
+ */
+export declare const owns: (container: Node, target: Node | null) => boolean;
 /** Create an object ref: <div ref="${r}"> — r.current is the element
  *  (or the component api), nulled automatically on unmount. */
 export declare const ref: <T>(initial?: T) => {
