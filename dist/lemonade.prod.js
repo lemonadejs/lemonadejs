@@ -1360,11 +1360,11 @@ var applyProp = function(el, prop, ctx, svg) {
   const name = prop.name;
   const parts = prop.parts;
   const whole = parts.length === 1 && typeof parts[0] === "object" ? parts[0].slot : -1;
-  if (!parts.length) {
-    applyAttr(el, name, name, svg);
+  if (name === "key") {
     return;
   }
-  if (name === "key") {
+  if (!parts.length) {
+    applyAttr(el, name, name, svg);
     return;
   }
   if (name === "bind") {

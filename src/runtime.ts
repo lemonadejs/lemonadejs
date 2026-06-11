@@ -817,14 +817,15 @@ const applyProp = function (el: Element, prop: VProp, ctx: BuildCtx, svg: boolea
     const parts = prop.parts;
     const whole = parts.length === 1 && typeof parts[0] === 'object' ? parts[0].slot : -1;
 
-    // Boolean attribute: <input disabled />
-    if (!parts.length) {
-        applyAttr(el, name, name, svg);
+    // List identity directive (consumed by applySlot, never rendered —
+    // checked before the boolean path so a bare `key` never renders)
+    if (name === 'key') {
         return;
     }
 
-    // List identity directive (consumed by applySlot, never rendered)
-    if (name === 'key') {
+    // Boolean attribute: <input disabled />
+    if (!parts.length) {
+        applyAttr(el, name, name, svg);
         return;
     }
 
