@@ -83,6 +83,9 @@ Shared state (outside components, module scope):
     const box = ref<HTMLElement>();            object ref (useRef-style), import { ref }
     <p ref="${box}">                           box.current = the element; components: .current = the api
                                                .current is NULLED automatically when the DOM is disposed
+Refs fire AFTER the nodes attach (same synchronous update, no waiting): the
+element is connected, so focus() and getBoundingClientRect() work directly
+inside a ref — no queueMicrotask/isConnected deferral is ever needed.
 
 ONE RULE, NO EXCEPTIONS: all event and callback names are lowercase, HTML-style —
 onclick, oninput, onchange, onsave, onitemclick (like the platform's onmousedown).

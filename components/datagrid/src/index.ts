@@ -467,26 +467,21 @@ export const Datagrid = component('datagrid', {
                   // geometry and typography; focus + select-all on entry
                   html`<span class="lm-datagrid-editor" contenteditable="true"
                       ref="${(el: Element) => {
-                          // The branch builds detached; focus needs attachment
-                          queueMicrotask(() => {
-                              const span = el as HTMLElement;
-                              if (!span.isConnected) {
-                                  return;
-                              }
-                              // preventScroll: the cell is already visible
-                              // (it was just double-clicked); auto-scroll
-                              // would re-render the window and kill the edit
-                              span.focus({ preventScroll: true });
-                              try {
-                                  const range = document.createRange();
-                                  range.selectNodeContents(span);
-                                  const selection = window.getSelection();
-                                  selection?.removeAllRanges();
-                                  selection?.addRange(range);
-                              } catch {
-                                  // selection api unavailable (some test hosts)
-                              }
-                          });
+                          // Refs fire on ATTACHED elements — focus works directly.
+                          // preventScroll: the cell is already visible (it was
+                          // just double-clicked); auto-scroll would re-render
+                          // the window and kill the edit
+                          const span = el as HTMLElement;
+                          span.focus({ preventScroll: true });
+                          try {
+                              const range = document.createRange();
+                              range.selectNodeContents(span);
+                              const selection = window.getSelection();
+                              selection?.removeAllRanges();
+                              selection?.addRange(range);
+                          } catch {
+                              // selection api unavailable (some test hosts)
+                          }
                       }}"
                       onkeydown="${(e: KeyboardEvent) => {
                           if (e.key === 'Enter') {

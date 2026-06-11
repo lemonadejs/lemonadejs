@@ -375,13 +375,14 @@ export const Dropdown = component('dropdown', {
         }
         opened.value = true;
         modalApi?.open();
-        // Cursor on the last selected item, scrolled into view (v5)
+        // Cursor on the last selected item, scrolled into view (v5).
+        // Refs fire on attached elements, so the scroller exists NOW
         const last = chosen[chosen.length - 1];
         if (last) {
             const at = indexOfItem(last);
             if (at >= 0) {
                 cursor.value = at;
-                queueMicrotask(() => ensureVisible(at));
+                ensureVisible(at);
             }
         }
         (props.onopen as (() => void) | undefined)?.();
@@ -660,13 +661,7 @@ export const Dropdown = component('dropdown', {
 
     const searchField = () => html`<div class="lm-dropdown-input" contenteditable="true" tabindex="0"
         placeholder="${() => props.placeholder!.value || false}"
-        ref="${(el: Element) => {
-            queueMicrotask(() => {
-                if (el.isConnected) {
-                    (el as HTMLElement).focus();
-                }
-            });
-        }}"
+        ref="${(el: Element) => (el as HTMLElement).focus()}"
         oninput="${(e: Event) => search((e.target as HTMLElement).textContent || '')}"
         onpaste="${onPaste}"></div>`;
 

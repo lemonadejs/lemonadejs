@@ -5,7 +5,7 @@
  * remain the canonical low-level form.
  */
 import { describe, it, expect, afterEach } from 'vitest';
-import { html, ref, component, type Component, type Ref } from '../src/index';
+import { html, ref, component, type Component, type Ref, type State } from '../src/index';
 import { render as t } from '../src/test';
 
 let handle: ReturnType<typeof t> | null = null;
@@ -38,6 +38,27 @@ describe('ref(): object refs on elements and components', () => {
         const C: Component = () => html`<p ref="${(e: Element) => (el = e)}">x</p>`;
         handle = t(C);
         expect(el!.tagName).toBe('P');
+    });
+
+    it('refs fire on ATTACHED elements — focus/measure work directly', () => {
+        const attached: boolean[] = [];
+        let show!: State<boolean>;
+        const C: Component = (p, { state }) => {
+            show = state(false);
+            return html`<div>
+                <i ref="${(el: Element) => attached.push(el.isConnected)}">root</i>
+                ${() => (show.value ? html`<input ref="${(el: Element) => {
+                    attached.push(el.isConnected);
+                    (el as HTMLInputElement).focus(); // no microtask needed
+                }}" />` : '')}
+            </div>`;
+        };
+        handle = t(C);
+        expect(attached).toEqual([true]); // root build: fired post-attach
+
+        show.value = true; // branch build: fired post-insertion, same tick
+        expect(attached).toEqual([true, true]);
+        expect(document.activeElement).toBe(handle.query('input'));
     });
 
     it('component ref object: .current is the api, nulled on unmount', () => {

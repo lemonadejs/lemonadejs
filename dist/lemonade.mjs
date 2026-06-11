@@ -785,9 +785,28 @@ var disposeEntry = function(entry) {
     }
   });
 };
+var fireRefs = function(refs, cleanups) {
+  for (const entry of refs) {
+    const v = entry.value;
+    if (typeof v === "function") {
+      untracked(function() {
+        v(entry.el);
+      });
+    } else if (isRefObject(v)) {
+      v.current = entry.el;
+      const el = entry.el;
+      cleanups.push(function() {
+        if (v.current === el) {
+          v.current = null;
+        }
+      });
+    }
+  }
+  refs.length = 0;
+};
 var buildViewEntry = function(view, inst) {
   const holder = { values: view.values };
-  const ctx = { inst, holder, live: true, bindings: [], instances: [], cleanups: [] };
+  const ctx = { inst, holder, live: true, bindings: [], instances: [], cleanups: [], refs: [] };
   const nodes = buildNodes(view.template.nodes, ctx, false);
   return {
     kind: "view",
@@ -796,7 +815,8 @@ var buildViewEntry = function(view, inst) {
     bindings: ctx.bindings,
     instances: ctx.instances,
     nodes,
-    cleanups: ctx.cleanups
+    cleanups: ctx.cleanups,
+    refs: ctx.refs
   };
 };
 var applySlot = function(s, value, inst) {
@@ -887,6 +907,11 @@ var applySlot = function(s, value, inst) {
           parentNode.insertBefore(node, ref2);
         }
         ref2 = node;
+      }
+    }
+    for (const entry of next) {
+      if (entry.kind === "view" && entry.refs.length) {
+        fireRefs(entry.refs, entry.cleanups);
       }
     }
     for (const instance of fresh) {
@@ -1010,17 +1035,8 @@ var applyProp = function(el, prop, ctx, svg) {
   }
   if (name === "ref" && whole >= 0) {
     const fn = ctx.holder.values[whole];
-    if (typeof fn === "function") {
-      untracked(function() {
-        fn(el);
-      });
-    } else if (isRefObject(fn)) {
-      fn.current = el;
-      ctx.cleanups.push(function() {
-        if (fn.current === el) {
-          fn.current = null;
-        }
-      });
+    if (typeof fn === "function" || isRefObject(fn)) {
+      ctx.refs.push({ value: fn, el });
     }
     return;
   }
@@ -1167,6 +1183,7 @@ var mountComponent = function(component2, props, parent) {
     pending: [],
     mountCbs: [],
     unmountCbs: [],
+    refs: [],
     mounted: false,
     dead: false
   };
@@ -1240,7 +1257,9 @@ var mountComponent = function(component2, props, parent) {
     bindings: inst.bindings,
     instances: inst.children,
     // Root-level object refs are nulled when the component unmounts
-    cleanups: inst.unmountCbs
+    cleanups: inst.unmountCbs,
+    // Root-level refs fire in runMount — after the host attached them
+    refs: inst.refs
   };
   inst.elements = buildNodes(view.template.nodes, ctx, false);
   if (inst.elements[0]) {
@@ -1253,6 +1272,18 @@ var runMount = function(inst) {
     return;
   }
   inst.mounted = true;
+  if (inst.refs.length) {
+    fireRefs(inst.refs, inst.unmountCbs);
+  }
+  for (const s of inst.slots) {
+    if (!s.detached) {
+      for (const entry of s.entries) {
+        if (entry.kind === "view" && entry.refs.length) {
+          fireRefs(entry.refs, entry.cleanups);
+        }
+      }
+    }
+  }
   for (const child of inst.children) {
     runMount(child);
   }

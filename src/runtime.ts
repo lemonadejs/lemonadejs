@@ -47,9 +47,17 @@ export interface Instance {
     pending: Instance[];
     mountCbs: ((el: Node) => unknown)[];
     unmountCbs: (() => void)[];
+    /** Refs queued during the root build, fired by runMount */
+    refs: RefEntry[];
     mounted: boolean;
     /** Set by unmountInstance — dead instances are never reused or resurrected */
     dead: boolean;
+}
+
+/** A ref captured at build, fired after the nodes attach */
+interface RefEntry {
+    value: unknown;
+    el: Element;
 }
 
 /** Build context: who owns the bindings/instances created while building */
@@ -62,6 +70,8 @@ interface BuildCtx {
     instances: Instance[];
     /** Run when this build's DOM is disposed (e.g. object-ref nulling) */
     cleanups: (() => void)[];
+    /** Refs queued during the build, fired on insertion */
+    refs: RefEntry[];
 }
 
 /** One unit of content produced by a slot */
@@ -73,6 +83,8 @@ interface ViewEntry {
     instances: Instance[];
     nodes: Node[];
     cleanups: (() => void)[];
+    /** Pending refs — fired (once) when the entry first attaches */
+    refs: RefEntry[];
 }
 
 type Entry =
@@ -231,10 +243,37 @@ const disposeEntry = function (entry: Entry): void {
     });
 };
 
+/**
+ * Fire queued refs: the element is inserted at this point, so focus and
+ * measurement work inside callbacks (no microtask deferral needed).
+ * Object refs register their disposal nulling with the owning cleanups.
+ */
+const fireRefs = function (refs: RefEntry[], cleanups: (() => void)[]): void {
+    for (const entry of refs) {
+        const v = entry.value;
+        if (typeof v === 'function') {
+            // Imperative escape hatch: reads inside the ref must not
+            // subscribe the enclosing branch binding
+            untracked(function () {
+                (v as (el: Element) => void)(entry.el);
+            });
+        } else if (isRefObject(v)) {
+            v.current = entry.el;
+            const el = entry.el;
+            cleanups.push(function () {
+                if (v.current === el) {
+                    v.current = null;
+                }
+            });
+        }
+    }
+    refs.length = 0;
+};
+
 /** Build the DOM for a View inside a branch entry (live mode) */
 const buildViewEntry = function (view: View, inst: Instance): ViewEntry {
     const holder: Holder = { values: view.values };
-    const ctx: BuildCtx = { inst, holder, live: true, bindings: [], instances: [], cleanups: [] };
+    const ctx: BuildCtx = { inst, holder, live: true, bindings: [], instances: [], cleanups: [], refs: [] };
     const nodes = buildNodes(view.template.nodes, ctx, false);
     return {
         kind: 'view',
@@ -244,6 +283,7 @@ const buildViewEntry = function (view: View, inst: Instance): ViewEntry {
         instances: ctx.instances,
         nodes,
         cleanups: ctx.cleanups,
+        refs: ctx.refs,
     };
 };
 
@@ -355,6 +395,13 @@ const applySlot = function (s: SlotState, value: unknown, inst: Instance): void 
                     parentNode.insertBefore(node, ref);
                 }
                 ref = node;
+            }
+        }
+        // The nodes are attached NOW: fire pending refs (fresh entries,
+        // plus cached entries that were built while detached)
+        for (const entry of next) {
+            if (entry.kind === 'view' && entry.refs.length) {
+                fireRefs(entry.refs, entry.cleanups);
             }
         }
         for (const instance of fresh) {
@@ -506,25 +553,14 @@ const applyProp = function (el: Element, prop: VProp, ctx: BuildCtx, svg: boolea
         return;
     }
 
-    // Element reference: ref="${(el) => ...}" or ref="${refObject}"
+    // Element reference: ref="${(el) => ...}" or ref="${refObject}".
+    // Refs are QUEUED at build and fired right after the nodes are
+    // inserted — the same synchronous update, no waiting — so the
+    // element is attached and focus()/measurement work inside refs.
     if (name === 'ref' && whole >= 0) {
         const fn = ctx.holder.values[whole];
-        if (typeof fn === 'function') {
-            // Imperative escape hatch: reads inside the ref must not
-            // subscribe the enclosing branch binding
-            untracked(function () {
-                (fn as (el: Element) => void)(el);
-            });
-        } else if (isRefObject(fn)) {
-            fn.current = el;
-            // Destroy hygiene: a surviving ref must not pin a dead element.
-            // Owned by the BUILD (branch entry or component root), so a
-            // branch swap nulls it too — not only full unmount.
-            ctx.cleanups.push(function () {
-                if (fn.current === el) {
-                    fn.current = null;
-                }
-            });
+        if (typeof fn === 'function' || isRefObject(fn)) {
+            ctx.refs.push({ value: fn, el });
         }
         return;
     }
@@ -709,6 +745,7 @@ export const mountComponent = function (
         pending: [],
         mountCbs: [],
         unmountCbs: [],
+        refs: [],
         mounted: false,
         dead: false,
     };
@@ -798,6 +835,8 @@ export const mountComponent = function (
         instances: inst.children,
         // Root-level object refs are nulled when the component unmounts
         cleanups: inst.unmountCbs,
+        // Root-level refs fire in runMount — after the host attached them
+        refs: inst.refs,
     };
     inst.elements = buildNodes(view.template.nodes, ctx, false);
 
@@ -814,6 +853,22 @@ export const runMount = function (inst: Instance): void {
         return;
     }
     inst.mounted = true;
+    // Refs fire FIRST (the host attached the elements before calling
+    // runMount), so onMount callbacks can rely on ref-captured values:
+    // root-level refs, then pending refs of branch entries built during
+    // the initial (detached) construction
+    if (inst.refs.length) {
+        fireRefs(inst.refs, inst.unmountCbs);
+    }
+    for (const s of inst.slots) {
+        if (!s.detached) {
+            for (const entry of s.entries) {
+                if (entry.kind === 'view' && entry.refs.length) {
+                    fireRefs(entry.refs, entry.cleanups);
+                }
+            }
+        }
+    }
     for (const child of inst.children) {
         runMount(child);
     }

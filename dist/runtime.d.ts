@@ -34,9 +34,16 @@ export interface Instance {
     pending: Instance[];
     mountCbs: ((el: Node) => unknown)[];
     unmountCbs: (() => void)[];
+    /** Refs queued during the root build, fired by runMount */
+    refs: RefEntry[];
     mounted: boolean;
     /** Set by unmountInstance — dead instances are never reused or resurrected */
     dead: boolean;
+}
+/** A ref captured at build, fired after the nodes attach */
+interface RefEntry {
+    value: unknown;
+    el: Element;
 }
 /** One unit of content produced by a slot */
 interface ViewEntry {
@@ -47,6 +54,8 @@ interface ViewEntry {
     instances: Instance[];
     nodes: Node[];
     cleanups: (() => void)[];
+    /** Pending refs — fired (once) when the entry first attaches */
+    refs: RefEntry[];
 }
 type Entry = {
     kind: 'text';

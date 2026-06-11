@@ -85,25 +85,14 @@ export const Tooltip = component('tooltip', {
         pos.value = { top, left };
     };
 
-    // Deferred one microtask: on first open the branch builds detached and
-    // attaches right after — measuring the popper needs layout. Reopen
-    // reuses the cached branch (refs do NOT re-fire), so placement is also
-    // re-armed by the open state itself.
-    let pending = false;
-    const schedulePlace = () => {
-        if (pending) {
-            return;
-        }
-        pending = true;
-        queueMicrotask(() => {
-            pending = false;
-            place();
-        });
-    };
-
-    onMount(() => open.subscribe((v) => v && schedulePlace()));
+    // Placement runs SYNCHRONOUSLY from the open subscription: the popper
+    // branch binding (created at build) runs before this subscription, so
+    // by the time the callback fires the popper is attached and measurable.
+    // Reopen reuses the cached branch (refs do not re-fire) — the open
+    // state is the re-arm signal for both paths.
+    onMount(() => open.subscribe((v) => v && place()));
     // position is live while open
-    onMount(() => props.position!.subscribe(() => open.value && schedulePlace()));
+    onMount(() => props.position!.subscribe(() => open.value && place()));
 
     // ---- show/hide
     const show = () => {
@@ -146,8 +135,9 @@ export const Tooltip = component('tooltip', {
             data-position="${() => side.value}"
             style="${() => 'position:fixed;top:' + pos.value.top + 'px;left:' + pos.value.left + 'px'}"
             ref="${(el: Element) => {
+                // Refs fire attached: the popper is measurable right away
                 popper = el as HTMLElement;
-                schedulePlace();
+                place();
             }}">${props.title}</span>`}</span>`;
 });
 
