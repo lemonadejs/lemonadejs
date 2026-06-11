@@ -40,6 +40,18 @@ shipped a silent failure because of this). Deliverables:
 - [ ] Sync script for the manual copies that can drift: site `public/llms.txt`,
       site `public/lemonade.mjs` (playground + home page engine)
 
+### 1b. Review-round outcomes (June 12 — external review, triaged)
+
+Accepted and DONE: verify() centered (README rewritten around the loop,
+home page proof-loop section); `/docs/when-not` page; silent test suite
+(which exposed and fixed two REAL warning false-positives: LJS-402 on
+bind+onchange, LJS-304 on radios); measured-tone editorial pass on the
+book. REJECTED with receipts: the mojibake claim — both repos are
+byte-clean UTF-8 (reviewers reading through CP1252 consoles see mangled
+em-dashes that are not in the files); `tests/encoding.test.ts` now
+machine-checks it permanently. The review's priority list (block pages,
+probes, eval suite, MCP) confirms steps 2–3 below.
+
 ### 2. The agent eval suite — launch QA and launch story
 
 Agents receive component specs cold with llms.txt as their ONLY
