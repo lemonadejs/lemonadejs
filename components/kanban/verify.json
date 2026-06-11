@@ -1,0 +1,34 @@
+{
+    "component": "kanban",
+    "pass": true,
+    "checks": [
+        {
+            "name": "mounts with defaults",
+            "pass": true
+        },
+        {
+            "name": "prop data",
+            "pass": true
+        },
+        {
+            "name": "prop data (live state)",
+            "pass": true
+        },
+        {
+            "name": "event oncardmove",
+            "pass": true
+        },
+        {
+            "name": "event onchange",
+            "pass": true
+        },
+        {
+            "name": "event oncardclick",
+            "pass": true
+        },
+        {
+            "name": "api via ref",
+            "pass": true
+        }
+    ]
+}

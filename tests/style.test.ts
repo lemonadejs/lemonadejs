@@ -73,6 +73,12 @@ describe('css(): typed style values', () => {
         );
     });
 
+    it('grid placement and column counts are unitless (the kanban probe trap)', () => {
+        expect(css({ gridColumn: 2, gridRow: 5, gridRowStart: 1, columnCount: 3 })).toBe(
+            'grid-column:2;grid-row:5;grid-row-start:1;column-count:3'
+        );
+    });
+
     it('skips false/null/undefined/empty — conditionals compose without ternary noise', () => {
         const active = false;
         expect(css({ position: 'fixed', background: active && 'red', width: undefined, border: null })).toBe(

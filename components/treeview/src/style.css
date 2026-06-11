@@ -1,0 +1,86 @@
+/* <TreeView /> — lm-treeview-* convention, themeable via custom properties */
+
+.lm-treeview {
+    color: var(--lm-treeview-color, #18181b);
+    font-size: var(--lm-treeview-font-size, 14px);
+    user-select: none;
+}
+
+.lm-treeview ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+/* Indentation per level — nested groups simply pad left */
+.lm-treeview .lm-treeview-group {
+    padding-left: var(--lm-treeview-indent, 18px);
+}
+
+/* Collapse keeps the child DOM ALIVE — visibility only, never an unmount */
+.lm-treeview .lm-treeview-node[aria-expanded="false"] > .lm-treeview-group {
+    display: none;
+}
+
+.lm-treeview .lm-treeview-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px 3px 4px;
+    border-radius: var(--lm-treeview-radius, 6px);
+    cursor: pointer;
+    line-height: 1.5;
+}
+
+.lm-treeview .lm-treeview-row:hover {
+    background: var(--lm-treeview-hover-bg, #f4f4f5);
+}
+
+.lm-treeview .lm-treeview-row:focus-visible {
+    outline: 2px solid var(--lm-treeview-focus, #2563eb);
+    outline-offset: -2px;
+}
+
+.lm-treeview .lm-treeview-row.lm-treeview-selected {
+    background: var(--lm-treeview-selected-bg, #e0e7ff);
+    color: var(--lm-treeview-selected-color, #1e3a8a);
+}
+
+/* Chevron — rendered for parents only (they carry aria-expanded) */
+.lm-treeview .lm-treeview-toggle {
+    flex: none;
+    width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--lm-treeview-chevron, #71717a);
+}
+
+.lm-treeview .lm-treeview-node[aria-expanded] > .lm-treeview-row > .lm-treeview-toggle::before {
+    content: '\25B8';
+    font-size: 12px;
+    line-height: 1;
+    transition: transform 0.15s ease;
+}
+
+.lm-treeview .lm-treeview-node[aria-expanded="true"] > .lm-treeview-row > .lm-treeview-toggle::before {
+    transform: rotate(90deg);
+}
+
+.lm-treeview .lm-treeview-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Material icon keyword (same convention as <Tabs/> data-icon) */
+.lm-treeview .lm-treeview-label[data-icon]::before {
+    content: attr(data-icon);
+    font-family: "Material Symbols Outlined", "Material Icons", "FontAwesome";
+    font-size: var(--lm-treeview-icon-size, 16px);
+    color: var(--lm-icon-color, #71717a);
+}

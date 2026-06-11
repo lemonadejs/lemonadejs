@@ -1,0 +1,19 @@
+{
+    "name": "kanban",
+    "props": {
+        "data": {
+            "type": "array"
+        }
+    },
+    "bind": null,
+    "events": [
+        "oncardmove",
+        "onchange",
+        "oncardclick"
+    ],
+    "api": [
+        "addCard",
+        "removeCard",
+        "moveCard"
+    ]
+}

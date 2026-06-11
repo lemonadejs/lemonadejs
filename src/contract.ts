@@ -61,7 +61,13 @@ export type ContractInput<C> = {
         | Widen<C[K]>;
 } & {
     [K in keyof C as K extends `on${string}` ? K & string : never]?: (...args: never[]) => unknown;
-} & (C extends { bind: infer B } ? Bindable<Widen<B>> : object) &
+} & (C extends { bind: infer B }
+        ? C extends { onchange: unknown }
+            ? // The contract declares its OWN onchange: its signature wins —
+              // Bindable's (value, oldValue) must not confiscate the event
+              Omit<Bindable<Widen<B>>, 'onchange'>
+            : Bindable<Widen<B>>
+        : object) &
     (C extends { api: infer A }
         ? // any, not never[]: the CALLER's ref callback carries the real
           // signatures; never[] rejects every concretely-typed callback.
@@ -94,7 +100,11 @@ export type ContractProps<C> = {
     // Events are directly invocable: props.onchange?.(value)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     [K in keyof C as K extends `on${string}` ? K & string : never]?: (...args: any[]) => unknown;
-} & (C extends { bind: infer B } ? Bindable<Widen<B>> : object) &
+} & (C extends { bind: infer B }
+        ? C extends { onchange: unknown }
+            ? Omit<Bindable<Widen<B>>, 'onchange'> // declared onchange wins
+            : Bindable<Widen<B>>
+        : object) &
     (C extends { api: infer A }
         ? // INSIDE the component props.ref is always CALLABLE — the
           // runtime normalizes object refs into setters before setup

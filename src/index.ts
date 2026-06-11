@@ -33,7 +33,8 @@ export { createWebComponent } from './webcomponents';
 export { explain } from './errors';
 
 /** Properties whose numeric values are unitless (everything else gets px) */
-const UNITLESS = /^(opacity|z-index|zoom|order|flex|flex-grow|flex-shrink|font-weight|line-height|scale|aspect-ratio|--.*)$/;
+const UNITLESS =
+    /^(opacity|z-index|zoom|order|flex|flex-grow|flex-shrink|font-weight|line-height|scale|aspect-ratio|grid-(area|row|column)(-start|-end)?|column-count|columns|orphans|widows|tab-size|animation-iteration-count|--.*)$/;
 
 /**
  * Build an inline style string from an object — typed keys, automatic

@@ -35,7 +35,9 @@ export type ContractInput<C> = {
     [K in keyof C as K extends `on${string}` ? K & string : never]?: (...args: never[]) => unknown;
 } & (C extends {
     bind: infer B;
-} ? Bindable<Widen<B>> : object) & (C extends {
+} ? C extends {
+    onchange: unknown;
+} ? Omit<Bindable<Widen<B>>, 'onchange'> : Bindable<Widen<B>> : object) & (C extends {
     api: infer A;
 } ? {
     ref?: ((api: {
@@ -64,7 +66,9 @@ export type ContractProps<C> = {
     [K in keyof C as K extends `on${string}` ? K & string : never]?: (...args: any[]) => unknown;
 } & (C extends {
     bind: infer B;
-} ? Bindable<Widen<B>> : object) & (C extends {
+} ? C extends {
+    onchange: unknown;
+} ? Omit<Bindable<Widen<B>>, 'onchange'> : Bindable<Widen<B>> : object) & (C extends {
     api: infer A;
 } ? {
     ref?: (api: {

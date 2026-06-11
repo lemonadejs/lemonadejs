@@ -1,0 +1,35 @@
+{
+    "name": "carousel",
+    "props": {
+        "data": {
+            "type": "array"
+        },
+        "autoplay": {
+            "type": "number",
+            "default": 0
+        },
+        "loop": {
+            "type": "boolean",
+            "default": false
+        },
+        "arrows": {
+            "type": "boolean",
+            "default": true
+        },
+        "dots": {
+            "type": "boolean",
+            "default": true
+        }
+    },
+    "bind": {
+        "type": "number"
+    },
+    "events": [
+        "onchange"
+    ],
+    "api": [
+        "next",
+        "prev",
+        "goto"
+    ]
+}

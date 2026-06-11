@@ -364,6 +364,27 @@ suite('LJS-402: unknown props warn with a suggestion', () => {
 });
 
 suite('Type flow: contract knowledge reaches the editor', () => {
+    it('a declared onchange OWNS its signature even when bind is declared', () => {
+        // Regression (treeview probe): Bindable's (value, oldValue) onchange
+        // confiscated the event type the moment a contract declared bind
+        const Tree = component(
+            'bindevent402',
+            { bind: null, onchange: Function },
+            (props, { bind }) => {
+                const selected = bind(props, null as unknown);
+                return html`<i onclick="${() => {
+                    selected.value = 'x1';
+                    props.onchange?.('x1', { label: 'node' }); // rich signature, no casts
+                }}">t</i>`;
+            }
+        );
+        const got: unknown[] = [];
+        // The CALLER types the handler richly — this must typecheck
+        handle = t(Tree, { onchange: (id: string, node: { label: string }) => got.push(id, node.label) });
+        handle.query('i')!.click();
+        expect(got).toEqual(['x1', 'node']);
+    });
+
     it('declared props are non-optional states — no ! needed', () => {
         // The body below compiles WITHOUT non-null assertions: that is the test
         const Meter = component('meter402', { min: 0, max: 100, onlevel: Function }, (props) => {

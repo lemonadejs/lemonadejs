@@ -1,0 +1,62 @@
+{
+    "component": "carousel",
+    "pass": true,
+    "checks": [
+        {
+            "name": "mounts with defaults",
+            "pass": true
+        },
+        {
+            "name": "prop data",
+            "pass": true
+        },
+        {
+            "name": "prop data (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop autoplay",
+            "pass": true
+        },
+        {
+            "name": "prop autoplay (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop loop",
+            "pass": true
+        },
+        {
+            "name": "prop loop (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop arrows",
+            "pass": true
+        },
+        {
+            "name": "prop arrows (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop dots",
+            "pass": true
+        },
+        {
+            "name": "prop dots (live state)",
+            "pass": true
+        },
+        {
+            "name": "event onchange",
+            "pass": true
+        },
+        {
+            "name": "bind",
+            "pass": true
+        },
+        {
+            "name": "api via ref",
+            "pass": true
+        }
+    ]
+}

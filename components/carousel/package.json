@@ -1,0 +1,31 @@
+{
+    "name": "@lemonadejs/carousel",
+    "version": "6.0.0-beta.0",
+    "description": "LemonadeJS carousel block — single-file (styles ship inside the component), contract-verified, framework-agnostic.",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/lemonadejs/lemonadejs.git",
+        "directory": "components/carousel"
+    },
+    "main": "dist/index.js",
+    "module": "dist/index.mjs",
+    "types": "dist/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.mjs",
+            "require": "./dist/index.js"
+        },
+        "./contract.json": "./contract.json"
+    },
+    "sideEffects": false,
+    "files": [
+        "dist",
+        "contract.json",
+        "verify.json"
+    ],
+    "peerDependencies": {
+        "lemonadejs": "^6.0.0-beta.0"
+    }
+}

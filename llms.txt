@@ -38,6 +38,10 @@ A component is a plain function: (props, tools) => html`...`. No classes, no thi
        ${() => valid.value && html`<div>shown when valid</div>`}
    Inside the inner template, plain snapshots (${x}) are correct: the outer arrow re-runs.
 
+html`` returns a View (the type name, if you need to annotate — e.g. a
+recursive view function calling itself). A template may have MULTIPLE root
+nodes (fragments are fine): html`<button>a</button><button>b</button>`.
+
 Slot values: string|number (text), false/true/null/undefined (nothing), html`` view, Node, array of these.
 
 KEYS — when list items can REORDER, be inserted or removed, key the item's
@@ -50,10 +54,20 @@ instances inside it, with their state) MOVES instead of rebuilding:
 key is a directive like bind/ref: consumed by the engine, never rendered,
 never a component prop. Keys must be unique per list (duplicates warn
 LJS-204 and rebuild). Lists that only append or change in place do not need
-keys — the positional diff already reuses entries. Components in keyed
-lists move WITH their state when item values are unchanged; an item whose
-values changed rebuilds (pass stable references for props you do not want
-to trigger that).
+keys — the positional diff already reuses entries.
+
+KEY SCOPE — keys match within ONE list position only (like React/Vue): an
+item moving BETWEEN two lists (kanban card across columns) rebuilds on the
+other side. If cross-list identity matters, render one flat keyed list and
+place items visually (CSS grid), or accept the rebuild.
+
+What happens on a key match when values CHANGED:
+- plain-element items: updated IN PLACE — bindings re-run, the node is kept
+- items containing COMPONENTS: that entry rebuilds (props are construction
+  snapshots). Fresh inline closures count as changed values, BUT nested
+  html`` views are compared STRUCTURALLY (template + values), so identical
+  fresh views do not trigger rebuilds — closures and changed primitives do.
+  For component items, reorder-without-change moves them WITH their state.
 
 Trusted HTML (plain strings are ALWAYS escaped; this is the explicit opt-out):
 
@@ -130,6 +144,9 @@ so onChange would be a DIFFERENT prop than onchange and silently ignored.
     <input value="${name}" />                  form values set as properties (one-way)
     <input disabled />                         boolean attributes work
     checked="${boolState}"                     boolean property binding
+    disabled="${() => !loop && at.value === 0}"   live boolean expressions too
+    aria-expanded="${open}" / tabindex="${() => on.value ? '0' : false}"
+                                               false REMOVES the attribute entirely
 
 ## Styling
 
@@ -139,8 +156,11 @@ automatic px on numbers, false/null entries skipped so conditionals compose):
     import { css } from 'lemonadejs';
     <div style="${() => css({ top: y.value, left: x.value, opacity: 0.5,
         background: active.value && 'red' })}">
-    // → "top:12px;left:40px;opacity:0.5" — unitless props (opacity, z-index,
-    // flex, line-height, order, font-weight, --custom) never get px
+    // → "top:12px;left:40px;opacity:0.5" — unitless props never get px:
+    // opacity, z-index, zoom, order, flex(-grow/-shrink), font-weight,
+    // line-height, scale, aspect-ratio, grid-row/column/area(+-start/-end),
+    // column-count, columns, orphans, widows, tab-size,
+    // animation-iteration-count, --custom properties
 
 Component-owned CSS — a <style> tag inside html`` never enters the DOM tree:
 its CSS is lifted at parse time and injected into document.head ONCE per
@@ -156,6 +176,9 @@ Rules: the CSS must be static — ${...} inside <style> fails LJS-105 (styles
 are parsed once; use style="" or CSS custom properties for per-instance
 values). Styles are GLOBAL by design: prefix every selector with your
 component class (lm-chip), exactly like the lm-<name>-* convention.
+Lifecycle: the injected tag carries a data-lemonade attribute, dedupes per
+template (call-site identity), and persists for the document lifetime —
+unmounting instances never removes it, remounting never duplicates it.
 
 ## Two-way binding
 
@@ -250,6 +273,16 @@ props.label.value. Wrong types warn LJS-401 in dev; a prop the contract does NOT
 declare warns LJS-402 with a did-you-mean suggestion; contract prop names must be
 lowercase (they become HTML attributes). ApiOf<typeof Switch> names the api type a
 ref receives — never hand-roll api shapes.
+
+Contract types: String/Number/Boolean/Array/Object/Function constructors, literal
+defaults ('' , 0, false, [...]), and null = ANY (use for union-typed values like
+string|number ids: bind: null). Declaring your own onchange alongside bind keeps
+YOUR signature — onchange(id, node) is fine; bind's default (value, oldValue)
+applies only when you do not declare one.
+
+React to a live declared prop imperatively (re-arm a timer, re-measure):
+    onMount(() => props.autoplay.subscribe(restart));  // subscribe returns
+    // unsubscribe; onMount returns it as the cleanup — one line, leak-free
 
     contract(Switch)    // → { name, props: {label: {type,default}}, bind, events, api }
                         // the schema an agent reads INSTEAD of the source

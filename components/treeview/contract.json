@@ -1,0 +1,21 @@
+{
+    "name": "treeview",
+    "props": {
+        "data": {
+            "type": "array"
+        }
+    },
+    "bind": {
+        "type": "any"
+    },
+    "events": [
+        "onchange",
+        "ontoggle"
+    ],
+    "api": [
+        "open",
+        "close",
+        "select",
+        "toggle"
+    ]
+}

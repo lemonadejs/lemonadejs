@@ -395,6 +395,47 @@
         }
     },
     {
+        "name": "carousel",
+        "path": "components/carousel",
+        "verified": true,
+        "checks": 14,
+        "contract": {
+            "name": "carousel",
+            "props": {
+                "data": {
+                    "type": "array"
+                },
+                "autoplay": {
+                    "type": "number",
+                    "default": 0
+                },
+                "loop": {
+                    "type": "boolean",
+                    "default": false
+                },
+                "arrows": {
+                    "type": "boolean",
+                    "default": true
+                },
+                "dots": {
+                    "type": "boolean",
+                    "default": true
+                }
+            },
+            "bind": {
+                "type": "number"
+            },
+            "events": [
+                "onchange"
+            ],
+            "api": [
+                "next",
+                "prev",
+                "goto"
+            ]
+        }
+    },
+    {
         "name": "color",
         "path": "components/color",
         "verified": true,
@@ -889,6 +930,31 @@
                 "onitemclick"
             ],
             "api": []
+        }
+    },
+    {
+        "name": "kanban",
+        "path": "components/kanban",
+        "verified": true,
+        "checks": 7,
+        "contract": {
+            "name": "kanban",
+            "props": {
+                "data": {
+                    "type": "array"
+                }
+            },
+            "bind": null,
+            "events": [
+                "oncardmove",
+                "onchange",
+                "oncardclick"
+            ],
+            "api": [
+                "addCard",
+                "removeCard",
+                "moveCard"
+            ]
         }
     },
     {
@@ -1958,6 +2024,33 @@
                 "getChosen",
                 "moveAll",
                 "reset"
+            ]
+        }
+    },
+    {
+        "name": "treeview",
+        "path": "components/treeview",
+        "verified": true,
+        "checks": 7,
+        "contract": {
+            "name": "treeview",
+            "props": {
+                "data": {
+                    "type": "array"
+                }
+            },
+            "bind": {
+                "type": "any"
+            },
+            "events": [
+                "onchange",
+                "ontoggle"
+            ],
+            "api": [
+                "open",
+                "close",
+                "select",
+                "toggle"
             ]
         }
     },

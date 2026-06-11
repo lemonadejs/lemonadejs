@@ -1768,7 +1768,7 @@ function createWebComponent(a, b, c) {
 }
 
 // src/index.ts
-var UNITLESS = /^(opacity|z-index|zoom|order|flex|flex-grow|flex-shrink|font-weight|line-height|scale|aspect-ratio|--.*)$/;
+var UNITLESS = /^(opacity|z-index|zoom|order|flex|flex-grow|flex-shrink|font-weight|line-height|scale|aspect-ratio|grid-(area|row|column)(-start|-end)?|column-count|columns|orphans|widows|tab-size|animation-iteration-count|--.*)$/;
 var css = function(styles) {
   const parts = [];
   for (const key of Object.keys(styles)) {

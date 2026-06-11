@@ -1,0 +1,141 @@
+/* <Kanban /> — default styling, lm-kanban-* convention.
+   The board is ONE CSS grid: columns are tracks, cards are grid items
+   placed by coordinates (the flat keyed list keeps card DOM identity
+   across cross-column moves). Theme via custom properties. */
+.lm-kanban {
+    --lm-kanban-column-width: 280px;
+    --lm-kanban-header-height: 44px;
+    --lm-kanban-column-bg: #f4f4f5;
+    --lm-kanban-column-radius: 12px;
+    --lm-kanban-card-bg: #ffffff;
+    --lm-kanban-card-radius: 8px;
+    --lm-kanban-card-shadow: 0 1px 2px rgba(0, 0, 0, 0.08), 0 1px 1px rgba(0, 0, 0, 0.04);
+    --lm-kanban-card-shadow-hover: 0 4px 12px rgba(0, 0, 0, 0.14);
+    --lm-kanban-accent: #2563eb;
+    --lm-kanban-gap: 12px;
+
+    display: grid;
+    grid-template-rows: var(--lm-kanban-header-height);
+    grid-auto-rows: min-content;
+    column-gap: var(--lm-kanban-gap);
+    row-gap: 8px;
+    align-items: start;
+    font: 13.5px/1.45 system-ui, sans-serif;
+    color: #18181b;
+    overflow-x: auto;
+    padding: 4px;
+}
+
+/* ---- column shells: background + header, spanning every card row */
+.lm-kanban-column {
+    background: var(--lm-kanban-column-bg);
+    border-radius: var(--lm-kanban-column-radius);
+    align-self: stretch;
+    min-height: 120px;
+    z-index: 0;
+}
+
+.lm-kanban-column-header {
+    height: var(--lm-kanban-header-height);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 14px;
+    box-sizing: border-box;
+    user-select: none;
+}
+
+.lm-kanban-column-title {
+    font-weight: 650;
+    font-size: 13px;
+    color: #3f3f46;
+    letter-spacing: 0.01em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.lm-kanban-column-count {
+    min-width: 22px;
+    height: 20px;
+    padding: 0 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    background: rgba(0, 0, 0, 0.07);
+    color: #52525b;
+    font-size: 11.5px;
+    font-weight: 600;
+    box-sizing: border-box;
+}
+
+/* ---- cards: grid items overlaying the shells */
+.lm-kanban-card {
+    position: relative;
+    z-index: 1;
+    margin: 0 10px;
+    padding: 10px 12px;
+    background: var(--lm-kanban-card-bg);
+    border-radius: var(--lm-kanban-card-radius);
+    box-shadow: var(--lm-kanban-card-shadow);
+    border-left: 3px solid var(--lm-kanban-accent);
+    box-sizing: border-box;
+    cursor: grab;
+    user-select: none;
+    transition: box-shadow 0.15s ease;
+}
+
+.lm-kanban-card:hover {
+    box-shadow: var(--lm-kanban-card-shadow-hover);
+}
+
+.lm-kanban-card-dragging {
+    opacity: 0.92;
+    cursor: grabbing;
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
+    transition: none;
+    z-index: 3;
+    pointer-events: none;
+}
+
+.lm-kanban-card-title {
+    font-weight: 600;
+    font-size: 13px;
+    color: #18181b;
+}
+
+.lm-kanban-card-description {
+    margin-top: 4px;
+    font-size: 12.5px;
+    color: #71717a;
+}
+
+.lm-kanban-card-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 8px;
+}
+
+.lm-kanban-tag {
+    padding: 1px 8px;
+    border-radius: 999px;
+    background: rgba(37, 99, 235, 0.09);
+    color: #3730a3;
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+}
+
+/* ---- the drop indicator: a slot line in the row gap */
+.lm-kanban-indicator {
+    align-self: start;
+    height: 3px;
+    margin: -6px 10px 0;
+    border-radius: 2px;
+    background: var(--lm-kanban-accent);
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.6);
+    z-index: 2;
+    pointer-events: none;
+}
