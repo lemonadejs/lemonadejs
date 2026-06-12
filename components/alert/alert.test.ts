@@ -1,6 +1,6 @@
 /**
  * <Alert /> block tests — including the registry gate: verify() must pass.
- * MUI-inspired severity banner: severity/variant as data-attributes,
+ * Severity banner: severity/variant as data-attributes,
  * title/message/children body, closable × (fires onclose), visibility
  * bound two-way (external writes silent), icon=false.
  */

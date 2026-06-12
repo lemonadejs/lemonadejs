@@ -1,6 +1,6 @@
 /**
  * <Card /> block tests — including the registry gate: verify() must pass.
- * MUI's Card family collapsed into one block: conditional media/header/
+ * The card sections collapsed into one block: conditional media/header/
  * content/actions sections, children in the content area, right-aligned
  * action buttons (clicks never bubble to the card onclick), elevated/
  * outlined variants, clickable surface.

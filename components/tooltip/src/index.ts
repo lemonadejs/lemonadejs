@@ -1,5 +1,5 @@
 /**
- * <Tooltip /> — a MUI-inspired floating label for any element.
+ * <Tooltip /> — a floating label for any element.
  *
  * Wraps its children and shows a small dark pill on hover/focus of the
  * wrapper; hides on leave/blur/Escape. Self-contained on purpose: a

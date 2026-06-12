@@ -1,6 +1,6 @@
 /**
- * <Toast /> — transient notifications with a queue, modeled on MUI's
- * Snackbar + notistack on the v6 contract model.
+ * <Toast /> — transient, stackable notifications with a queue, on the
+ * v6 contract model.
  *
  * The component is a HOST: mount it once, grab the api through props.ref
  * and fire toasts imperatively from anywhere:
@@ -21,7 +21,7 @@
  *
  * Severities (info | success | warning | error) share the alert block's
  * palette but the CSS is self-contained; no severity = the neutral dark
- * MUI Snackbar look.
+ * snackbar look.
  */
 
 import { component, html } from 'lemonadejs';

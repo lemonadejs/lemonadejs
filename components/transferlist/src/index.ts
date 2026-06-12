@@ -1,7 +1,7 @@
 /**
  * <Transferlist /> — two side-by-side lists with a middle column of
- * controls that move checked items between them (MUI Transfer List
- * inspired, on the v6 contract model).
+ * controls that move checked items between them (on the v6 contract
+ * model).
  *
  * Left list: the items NOT chosen, in data order. Right list: the chosen
  * items, in chosen order. Each row carries a checkbox; the controls move

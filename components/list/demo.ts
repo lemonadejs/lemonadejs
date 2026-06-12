@@ -1,6 +1,6 @@
 /**
  * Local playground for <List /> — served by `npm run dev`
- * The v5 list (search + pagination + remote mode) wearing the MUI List
+ * The v5 list (search + pagination + remote mode) wearing the v6 item
  * clothes: avatar/icon slots, secondary text, dense/divider variants,
  * plus the v6 headline — 100,000 items virtualized, mutable in place.
  */
@@ -62,7 +62,7 @@ const App: Component = (props, { state }) => {
     return html`<div class="demo">
         <h1>&lt;List /&gt;</h1>
 
-        <h3>Default MUI item renderer — avatar, secondary text, divider</h3>
+        <h3>Default item renderer — avatar, secondary text, divider</h3>
         <${List} data="${makePeople(5)}" divider
             onitemclick="${(item: ListItem, i: number) => note('clicked #' + i + ': ' + item.title)}" />
 

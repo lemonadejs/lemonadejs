@@ -1,6 +1,6 @@
 /**
  * <Backdrop /> block tests — including the registry gate: verify() must
- * pass. MUI-inspired full-screen dimming overlay: visibility bound
+ * pass. Full-screen dimming overlay: visibility bound
  * two-way (external writes silent), api open/close/toggle, closable
  * click (fires onclose) vs non-closable inert, onclick always fires,
  * opacity/zindex inline overrides, children centered, blur data-attr.

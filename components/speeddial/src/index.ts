@@ -1,5 +1,5 @@
 /**
- * <Speeddial /> — a MUI-inspired floating action button that fans out a
+ * <Speeddial /> — a floating action button that fans out a
  * column/row of small action buttons. New v6 block (no v5 ancestor).
  *
  * One FAB toggles the fan on click; hovering opens it and leaving closes

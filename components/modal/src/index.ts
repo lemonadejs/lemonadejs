@@ -80,7 +80,7 @@ export const Modal = component('modal', {
     resizable: false,
     minimizable: false,
     minimized: false,
-    fullscreen: false,            // MUI
+    fullscreen: false,            // cover the whole viewport
     header: true,                 // false: headerless floating panel (menus, chips)
     autoclose: false,             // v5: auto-close
     autoadjust: false,            // v5: auto-adjust

@@ -210,7 +210,7 @@ describe('components/transferlist', () => {
         expect(labels(0)).toEqual(['a', 'e', 'f']);
     });
 
-    it('shows MUI-style counts and titles per list header', () => {
+    it('shows checked/total counts and titles per list header', () => {
         const chosen = store<unknown[]>(['c']);
         handle = t(Transferlist, { data: DATA, bind: chosen, titles: ['Source', 'Target'] });
         expect(list(0).querySelector('.lm-transferlist-title')!.textContent).toBe('Source');

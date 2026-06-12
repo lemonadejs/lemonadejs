@@ -161,7 +161,7 @@ const App: Component = (props, { state }) => {
             <p>Drag the header, resize the corner, minimize with –.</p>
         </${Modal}>
 
-        <${Modal} ref="${(a: Api) => (full = a)}" title="Fullscreen (MUI-inspired)" fullscreen closable>
+        <${Modal} ref="${(a: Api) => (full = a)}" title="Fullscreen" fullscreen closable>
             <p>Covers the viewport. Escape closes.</p>
         </${Modal}>
 

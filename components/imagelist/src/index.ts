@@ -1,6 +1,5 @@
 /**
- * <ImageList /> — MUI-inspired responsive image grid (new in v6, no v5
- * source).
+ * <ImageList /> — a responsive image grid (new in v6, no v5 source).
  *
  * Three layouts, all driven by deterministic inline styles (jsdom-testable):
  *   - standard (default): CSS grid — grid-template-columns repeat(columns,
@@ -13,7 +12,7 @@
  *     item.cols / item.rows (grid-column / grid-row: span X)
  *
  * Item bars (bar): a translucent overlay at the bottom of each image with
- * the item title + optional subtitle, the MUI ImageListItemBar idea.
+ * the item title + optional subtitle.
  *
  * Images load lazily (loading="lazy"). data is held BY REFERENCE: mutate
  * the array or its records and call data.touch() to re-render — or assign

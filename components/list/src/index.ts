@@ -24,7 +24,7 @@
  * <Datagrid />); page resets stay silent (v5 dispatched onchangepage
  * even on load); the search box is opt-in (search), as in <Datagrid />.
  *
- * Plus the MUI List affordances, where they cost nothing:
+ * Plus the richer list affordances, where they cost nothing:
  *   - a default item renderer over { title, secondary, icon, avatar }:
  *     avatar/icon slot + primary/secondary text (primitive items render
  *     as plain text rows)
@@ -43,7 +43,7 @@ import { component, css, html, type View } from 'lemonadejs';
 export interface ListItem {
     /** Primary line */
     title?: string;
-    /** Muted second line (MUI secondary text) */
+    /** Muted second line (secondary text) */
     secondary?: string;
     /** Leading icon name/text (hidden when avatar is set) */
     icon?: string;
@@ -69,12 +69,12 @@ const matches = (item: unknown, q: string): boolean => {
 
 export const List = component('list', {
     data: Array,                  // records BY REFERENCE (mutate + touch())
-    render: Function,             // (item, index) => string | html`` view; default = MUI item
+    render: Function,             // (item, index) => string | html`` view; default = built-in item
     search: false,                // built-in search box
     pagination: 0,                // items per page; 0 = no pager
     total: 0,                     // > 0 = remote mode: data is the current page, total drives the pager
     message: 'No records found',  // empty state text
-    dense: false,                 // tighter rows (MUI dense)
+    dense: false,                 // tighter rows (dense variant)
     divider: false,               // hairline between rows
     height: 0,                    // px viewport; with no pagination enables virtual scroll
     rowheight: 40,                // fixed row height (virtual mode)

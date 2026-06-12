@@ -2,7 +2,7 @@
  * <List /> block tests — including the registry gate: verify() must pass.
  * Full v5 parity (search across every field, onbeforesearch/onsearch,
  * pagination + onchangepage, remote mode via total, empty message,
- * setPage) plus the v6/MUI surface: default item renderer (avatar/icon,
+ * setPage) plus the v6 surface: default item renderer (avatar/icon,
  * secondary text), dense/divider, onitemclick, custom render views,
  * mutate + touch() by reference, and virtual scrolling.
  */
@@ -42,7 +42,7 @@ const scrollTo = (top: number) => {
     scroller().dispatchEvent(new Event('scroll'));
 };
 
-describe('components/list — the v5 list as the MUI-style List', () => {
+describe('components/list — the v5 list with the v6 item surface', () => {
     it('passes verify() — the registry gate', () => {
         expect(verify(List).pass).toBe(true);
     });

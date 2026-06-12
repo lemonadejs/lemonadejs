@@ -1,5 +1,5 @@
 /**
- * <Slider /> — LemonadeJS v6 block (MUI-inspired, new in v6: no v5 source)
+ * <Slider /> — LemonadeJS v6 block (new in v6: no v5 source)
  *
  * A horizontal slider on the Studio contract model. The bound state is the
  * CURRENT number (`bind`); the geometry is fully deterministic from
@@ -21,10 +21,10 @@
  * End → max, PageUp/PageDown ±10·step.
  *
  * marks: Boolean — auto tick marks at every step when feasible (at most
- * 100 marks; denser ranges render none). Labeled mark ARRAYS (MUI) are
+ * 100 marks; denser ranges render none). Labeled mark ARRAYS are
  * not adopted: contract prop types are scalar by convention.
  *
- * Other MUI props deliberately not adopted: orientation (horizontal
+ * Other common slider props deliberately not adopted: orientation (horizontal
  * only), range value arrays (bind is a single Number by contract),
  * valueLabelDisplay/valueLabelFormat (showvalue Boolean instead), scale,
  * track="inverted", size, slot/component customization,

@@ -2,8 +2,8 @@
  * <Switch /> — the canonical LemonadeJS v6 block
  *
  * Full property parity with the v5 plugin (label as text, checked, color, name,
- * disabled, position) plus the best of MUI's Switch (size, required,
- * value) on the v6 contract model. Built on a real
+ * disabled, position) plus additions the v5 plugin lacked (size,
+ * required, value) on the v6 contract model. Built on a real
  * <input type="checkbox">: native form participation, native disabled
  * semantics, native keyboard accessibility.
  *

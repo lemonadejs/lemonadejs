@@ -1,7 +1,7 @@
 /**
  * <ButtonGroup /> block tests — including the registry gate: verify()
- * must pass. One block covering MUI's ButtonGroup (plain onclick mode)
- * and ToggleButtonGroup (single/multiple selection on the dropdown
+ * must pass. One block covering action groups (plain onclick mode)
+ * and toggle groups (single/multiple selection on the dropdown
  * value model, divisor-free): options normalization, single select +
  * deselect, multiple toggle arrays, store() two-way bind with silent
  * external writes, disabled item/group, data-* variants, live options.

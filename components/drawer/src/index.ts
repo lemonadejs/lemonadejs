@@ -1,5 +1,5 @@
 /**
- * <Drawer /> — a side panel sliding from an edge, MUI-inspired, built ON
+ * <Drawer /> — a side panel sliding from an edge, built ON
  * the Modal primitive: position left/right are already full-viewport-height
  * side panels and bottom is the sheet mode, so the drawer is a thin
  * composition — anchor mapping, its own header chrome and the slide-in
@@ -21,7 +21,7 @@
 import { component, html } from 'lemonadejs';
 import Modal from '@lemonadejs/modal';
 
-/** anchor → Modal position ('' means left, the MUI default) */
+/** anchor → Modal position ('' means left, the default) */
 const toPosition = (anchor: unknown): string =>
     anchor === 'right' || anchor === 'bottom' ? (anchor as string) : 'left';
 

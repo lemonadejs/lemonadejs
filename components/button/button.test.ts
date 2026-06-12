@@ -1,6 +1,6 @@
 /**
  * <Button /> block tests — including the registry gate: verify() must pass.
- * MUI-inspired contract: label/variant/color/size/disabled/loading/
+ * Contract surface: label/variant/color/size/disabled/loading/
  * fullwidth/href/type/icon/onclick. No api surface by design.
  */
 import { describe, it, expect, afterEach } from 'vitest';

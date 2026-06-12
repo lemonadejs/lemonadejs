@@ -1,6 +1,5 @@
 /**
- * <Alert /> — a severity banner, modeled on MUI's Alert on the v6
- * contract model.
+ * <Alert /> — a severity banner on the v6 contract model.
  *
  * Four severities (info — the default — success, warning, error) drive
  * the icon and the palette through data-severity; three flavors

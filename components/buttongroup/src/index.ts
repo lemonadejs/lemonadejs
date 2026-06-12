@@ -1,7 +1,7 @@
 /**
  * <ButtonGroup /> — a fused row (or column) of buttons (LemonadeJS v6 block)
  *
- * One block covering both of MUI's ButtonGroup and ToggleButtonGroup:
+ * One block covering both plain action groups and toggle selection:
  *   selectable=''          plain action buttons — onclick(value, event)
  *   selectable='single'    exclusive selection — click selects, click
  *                          again deselects (value | null)

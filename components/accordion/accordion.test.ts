@@ -1,6 +1,6 @@
 /**
  * <Accordion /> block tests — including the registry gate: verify() must pass.
- * MUI-inspired expansion panels: options/render/bind/multiple/onchange,
+ * Expansion panels: options/render/bind/multiple/onchange,
  * keep-alive bodies, keyboard focus walk.
  */
 import { describe, it, expect, afterEach } from 'vitest';
