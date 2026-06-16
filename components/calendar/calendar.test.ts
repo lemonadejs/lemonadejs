@@ -464,4 +464,19 @@ describe('components/calendar — the date picker on the Modal primitive', () =>
         data.value = [{ date: '2026-06-10' }];
         expect(cell('10').getAttribute('data-event')).toBe('true');
     });
+
+    it('width drives the panel width', async () => {
+        const api = make({ width: 420 });
+        api.open();
+        await flush();
+        expect((handle!.query('.lm-modal') as HTMLElement).style.width).toBe('420px');
+    });
+
+    it('onopen fires when the panel opens', async () => {
+        const opens: number[] = [];
+        const api = make({ onopen: () => opens.push(1) });
+        api.open();
+        await flush();
+        expect(opens).toEqual([1]);
+    });
 });

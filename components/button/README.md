@@ -6,9 +6,9 @@ LemonadeJS button block — contract-verified, framework-agnostic.
 
 ## Overview
 
-<Button /> — a pressable action block (LemonadeJS v6, MUI-inspired)
+<Button /> — a pressable action block (LemonadeJS v6)
 
-Modeled on MUI's Button adapted to the v6 contract model: a real
+Built on the v6 contract model: a real
 <button> (native semantics, native disabled, native keyboard
 activation) — or a real <a> when `href` is set. Three variants
 (contained is the default), five colors, three sizes, an optional

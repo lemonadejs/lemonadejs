@@ -31,7 +31,7 @@ ten-page strip → the house prev/next + ellipsis pager (shared with
 <Datagrid />); page resets stay silent (v5 dispatched onchangepage
 even on load); the search box is opt-in (search), as in <Datagrid />.
 
-Plus the MUI List affordances, where they cost nothing:
+Plus the richer list affordances, where they cost nothing:
   - a default item renderer over { title, secondary, icon, avatar }:
     avatar/icon slot + primary/secondary text (primitive items render
     as plain text rows)
@@ -81,12 +81,12 @@ state for a two-way live wire. Attribute strings are coerced to the declared typ
 | Prop | Type | Default | Description |
 |---|---|---|---|
 | `data` | array | — | records BY REFERENCE (mutate + touch()) |
-| `render` | function | — | (item, index) => string | html`` view; default = MUI item |
+| `render` | function | — | (item, index) => string | html`` view; default = built-in item |
 | `search` | boolean | `false` | built-in search box |
 | `pagination` | number | `0` | items per page; 0 = no pager |
 | `total` | number | `0` | > 0 = remote mode: data is the current page, total drives the pager |
 | `message` | string | `"No records found"` | empty state text |
-| `dense` | boolean | `false` | tighter rows (MUI dense) |
+| `dense` | boolean | `false` | tighter rows (dense variant) |
 | `divider` | boolean | `false` | hairline between rows |
 | `height` | number | `0` | px viewport; with no pagination enables virtual scroll |
 | `rowheight` | number | `40` | fixed row height (virtual mode) |

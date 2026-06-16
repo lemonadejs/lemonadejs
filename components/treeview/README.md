@@ -6,7 +6,7 @@ LemonadeJS treeview block — contract-verified, framework-agnostic.
 
 ## Overview
 
-<TreeView /> — LemonadeJS v6 block (MUI TreeView-inspired).
+<TreeView /> — LemonadeJS v6 block.
 
 A hierarchical list rendered by ONE recursive view function: nodeView
 calls itself for node.children, every repeated <li> is keyed by the

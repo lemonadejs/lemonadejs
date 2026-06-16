@@ -117,8 +117,7 @@ export const Dropdown = component('dropdown', {
     const rows = state<RowEntry[]>([]);
     const cursor = state<number | null>(null);
     const first = state(0);           // virtualization window start
-    const anchorTop = state(0);
-    const anchorLeft = state(0);
+    const anchorHeight = state(0); // Modal flip: how much the panel must clear above its natural top
     const panelWidth = state(0);
     const loading = state(false);
 
@@ -128,7 +127,7 @@ export const Dropdown = component('dropdown', {
     let searchTimer: ReturnType<typeof setTimeout> | null = null;
     let root: HTMLElement | null = null;
     let scroller: HTMLElement | null = null;
-    let modalApi: { open(): void; close(): void } | null = null;
+    let modalApi: { open(): void; close(): void; adjust(): void } | null = null;
 
     onUnmount(() => {
         if (searchTimer) {
@@ -204,6 +203,18 @@ export const Dropdown = component('dropdown', {
                 updateLabel();
             }
             rows.touch(); // selected flags re-render
+        })
+    );
+
+    // The number of rows drives the panel height — when a search filters
+    // the list while the panel is open, the auto-adjust margins were
+    // computed for the OLD height and must be recalculated (an inverted
+    // panel at the bottom edge would otherwise float away from the input)
+    onMount(() =>
+        rows.subscribe(() => {
+            if (opened.value) {
+                modalApi?.adjust();
+            }
         })
     );
 
@@ -383,12 +394,13 @@ export const Dropdown = component('dropdown', {
         query.value = '';
         cursor.value = null;
         localSearch('');
-        // Anchor the panel under the input; width from the longest text (v5)
+        // The panel is CSS-anchored under the input (Modal position
+        // absolute) — only the flip clearance and the width (from the
+        // longest text, v5) need measuring
         const input = root?.querySelector('.lm-dropdown-header') as HTMLElement | null;
         if (input && kind() === 'default') {
             const rect = input.getBoundingClientRect();
-            anchorTop.value = rect.bottom + 1;
-            anchorLeft.value = rect.left;
+            anchorHeight.value = Math.round(rect.height) + 2; // flipped: panel bottom 1px above the input
             let width = Math.max(props.width.value || 0, rect.width);
             for (const item of items) {
                 width = Math.max(width, (item.text || '').length * 7.5);
@@ -557,6 +569,15 @@ export const Dropdown = component('dropdown', {
             return;
         }
         if (autocomplete()) {
+            // Opening swaps the label for the search field: without
+            // preventDefault the browser would complete the mousedown by
+            // focusing the (now removed) label — focus lands on body and
+            // focusout closes the panel before it ever shows. The search
+            // field focuses itself through its ref; clicks while already
+            // open keep the default (caret placement in the search text).
+            if (!opened.value) {
+                e.preventDefault();
+            }
             const field = target.closest('.lm-dropdown-input') as HTMLElement;
             const rect = field.getBoundingClientRect();
             if (rect.right - e.clientX < 20) {
@@ -730,10 +751,9 @@ export const Dropdown = component('dropdown', {
             ${() =>
                 inline()
                     ? listView()
-                    : html`<${Modal} ref="${(a: { open(): void; close(): void }) => (modalApi = a)}"
+                    : html`<${Modal} ref="${(a: { open(): void; close(): void; adjust(): void }) => (modalApi = a)}"
                           header="${false}" focus="${false}" responsive="${false}" autoadjust
-                          position="${panelPosition}"
-                          top="${anchorTop}" left="${anchorLeft}" width="${panelWidth}">
+                          flip="${anchorHeight}" position="${panelPosition}" width="${panelWidth}">
                           ${listView()}
                       </${Modal}>`}
         </div>

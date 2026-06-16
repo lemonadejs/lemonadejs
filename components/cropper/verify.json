@@ -71,6 +71,46 @@
             "pass": true
         },
         {
+            "name": "prop aspect",
+            "pass": true
+        },
+        {
+            "name": "prop aspect (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop format",
+            "pass": true
+        },
+        {
+            "name": "prop format (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop quality",
+            "pass": true
+        },
+        {
+            "name": "prop quality (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop outputwidth",
+            "pass": true
+        },
+        {
+            "name": "prop outputwidth (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop outputheight",
+            "pass": true
+        },
+        {
+            "name": "prop outputheight (live state)",
+            "pass": true
+        },
+        {
             "name": "event onchange",
             "pass": true
         },

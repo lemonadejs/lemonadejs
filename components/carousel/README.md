@@ -6,7 +6,7 @@ LemonadeJS carousel block — single-file (styles ship inside the component), co
 
 ## Overview
 
-<Carousel /> — LemonadeJS v6 block (MUI/embla-inspired, new in v6)
+<Carousel /> — LemonadeJS v6 block (new in v6)
 
 SINGLE-FILE component: the CSS ships INSIDE the template via the v6
 component-owned <style> hoisting — no style.css anywhere. The engine

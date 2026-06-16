@@ -6,17 +6,17 @@ LemonadeJS kanban block — drag-and-drop board whose card DOM identity survives
 
 ## Overview
 
-<Kanban /> — a drag-and-drop kanban board, and a deliberate stress
-test for the v6 KEYED LIST DIFF under cross-list moves.
+<Kanban /> — a drag-and-drop kanban board.
 
-THE ARCHITECTURE (and why it is unusual): keys are scoped PER LIST —
-a card rendered inside "its column's" map leaves that keyed list when
-it moves to another column, and the engine rebuilds it there. To make
-card DOM identity survive cross-column moves (state, focus, armed
-gestures, CSS transitions all ride on identity), every card on the
-board lives in ONE flat keyed list; columns are CSS GRID TRACKS, and
-each card is placed with grid-column/grid-row instead of DOM nesting.
-A move — drag or api — changes coordinates on the SAME element.
+LAYOUT: each column is its own vertical flex stack, so cards flow
+naturally and uneven card heights never create gaps. (An earlier design
+placed every card on ONE shared CSS grid to preserve a card's DOM node
+across a cross-column move; that shared rows between columns, so a tall
+card in one column left a gap in another. Cards here are plain, stateless
+elements — losing the node on a cross-column move costs nothing — so the
+simpler, gapless per-column layout wins.) Cards are keyed by id WITHIN
+their column: a reorder inside a column is a keyed move (DOM identity
+kept); a cross-column move re-parents the card.
 
   - data: [{ id, title, cards: [{ id, title, description?, color?,
     tags? }] }] BY REFERENCE — the board mutates IN PLACE and calls

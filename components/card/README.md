@@ -6,9 +6,9 @@ LemonadeJS card block — contract-verified, framework-agnostic.
 
 ## Overview
 
-<Card /> — a content surface block (LemonadeJS v6, MUI-inspired)
+<Card /> — a content surface block (LemonadeJS v6)
 
-MUI's Card family (CardHeader / CardMedia / CardContent / CardActions)
+The classic card sections (header / media / content / actions)
 collapsed into one contract-driven block. Every section is a branch:
 it only exists in the DOM when its props are set — the media image
 when `image` is set, the header when any of avatar/title/subtitle is

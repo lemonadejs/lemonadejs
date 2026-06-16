@@ -334,24 +334,49 @@ const fireRefs = function (refs: RefEntry[], cleanups: (() => void)[]): void {
 };
 
 /**
- * Inject a template's lifted <style> CSS into document.head — ONCE per
- * template (call-site identity is the dedup key, the same key that caches
- * the parse). Styles are never removed: they are global by design (use
- * component class prefixes), and instances come and go while the CSS
- * stays warm. No-DOM environments skip silently.
+ * Inject a template's lifted <style> CSS — ONCE per template (call-site
+ * identity is the dedup key, the same key that caches the parse). Styles
+ * are never removed: they are global by design (use component class
+ * prefixes), and instances come and go while the CSS stays warm. No-DOM
+ * environments skip silently.
+ *
+ * CSP: a CONSTRUCTED stylesheet adopted via document.adoptedStyleSheets is
+ * a CSSOM write, which `style-src` does not govern — so component CSS
+ * works under a strict policy with NO nonce and NO 'unsafe-inline' (the
+ * same reason bound style="" is applied through the CSSOM). A plain
+ * <style> element is the fallback for engines without constructable
+ * stylesheets; under a strict policy that fallback would need
+ * 'unsafe-inline' (or a modern browser — adoptedStyleSheets is in every
+ * evergreen engine since 2023).
  */
 const styled = new WeakSet<Template>();
+const canAdopt = (function (): boolean {
+    try {
+        return typeof document !== 'undefined' && 'adoptedStyleSheets' in Document.prototype && !!new CSSStyleSheet();
+    } catch {
+        return false;
+    }
+})();
 const injectStyles = function (template: Template): void {
     if (!template.styles || styled.has(template) || typeof document === 'undefined') {
         return;
     }
     styled.add(template);
-    for (const cssText of template.styles) {
-        const el = document.createElement('style');
-        el.setAttribute('data-lemonade', '');
-        el.textContent = cssText;
-        document.head.appendChild(el);
+    const cssText = template.styles.join('\n');
+    if (canAdopt) {
+        try {
+            const sheet = new CSSStyleSheet();
+            sheet.replaceSync(cssText);
+            document.adoptedStyleSheets = [...document.adoptedStyleSheets, sheet];
+            return;
+        } catch {
+            // malformed for the CSSOM (e.g. @import) — fall back to <style>
+        }
     }
+    const el = document.createElement('style');
+    el.setAttribute('data-lemonade', '');
+    el.textContent = cssText;
+    document.head.appendChild(el);
 };
 
 /**
@@ -743,6 +768,14 @@ const applyAttr = function (el: Element, name: string, v: unknown, svg: boolean)
         }
     } else if (typeof v === 'object' || typeof v === 'function') {
         (el as unknown as Record<string, unknown>)[name] = v;
+    } else if (name === 'style') {
+        // Apply inline styles through the CSSOM, not setAttribute('style').
+        // CSP's `style-src-attr` blocks parsing of a style ATTRIBUTE (so a
+        // strict policy without 'unsafe-inline' would drop every bound
+        // style), but CSSOM writes are trusted and ungoverned — this keeps
+        // the reactive style model working under strict CSP. Both HTML and
+        // SVG elements expose `.style`.
+        (el as HTMLElement).style.cssText = String(v);
     } else if (!svg && name !== 'class' && name !== 'style' && name in el) {
         try {
             (el as unknown as Record<string, unknown>)[name] = v;

@@ -8,8 +8,8 @@ LemonadeJS progress block — contract-verified, framework-agnostic.
 
 <Progress /> — LemonadeJS v6 block
 
-One block, both MUI progress indicators: LinearProgress (track + bar)
-and CircularProgress (SVG stroke arc), selected by `type`. Determinate
+One block, both progress shapes: linear (track + bar)
+and circular (SVG stroke arc), selected by `type`. Determinate
 when a percent is bound, indeterminate otherwise (or when forced):
 
   <${Progress} bind="${pct}" label />                 linear, determinate

@@ -465,4 +465,13 @@ describe('components/datagrid — column resize + customization', () => {
         expect(cells[0].className).not.toContain('flag');
         expect(thAt(0).className).not.toContain('money'); // headers untouched
     });
+
+    it('onrowclick reports (row, event)', () => {
+        const clicks: [Record<string, unknown>, Event][] = [];
+        open({ onrowclick: (row: Record<string, unknown>, e: Event) => clicks.push([row, e]) });
+        renderedRows()[0].dispatchEvent(new MouseEvent('click', { bubbles: true }));
+        expect(clicks).toHaveLength(1);
+        expect(clicks[0][0].id).toBe(1); // MY row object, not a copy
+        expect(clicks[0][1]).toBeInstanceOf(MouseEvent);
+    });
 });

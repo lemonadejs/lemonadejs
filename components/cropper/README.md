@@ -2,40 +2,37 @@
 
 LemonadeJS cropper block — contract-verified, framework-agnostic.
 
-**✓ verified** — 21 contract checks · framework-agnostic · zero dependencies
+**✓ verified** — 31 contract checks · framework-agnostic · zero dependencies
 
 ## Overview
 
-<Cropper /> — image crop editor, ported from the v5 plugin
+<Cropper /> — a quick image editor (crop · transform · adjust · filter · export)
 
-The v5 plugin was a thumbnail + modal + contextmenu shell around the
-@jsuites/cropper engine. v6 keeps blocks orthogonal: THIS block is the
-editor itself (compose it with @lemonadejs/modal for the v5 dialog UX);
-the engine behaviors are ported faithfully from the source:
+Evolved from the v5 @jsuites/cropper engine, which v6 vendored inline
+(zero runtime deps). The pan / wheel-zoom / crop-box geometry is the v5
+math verbatim; everything else is modernised:
 
-  - load an image: file picker (click when empty, double click, the
-    Upload button, api.upload()), drag-and-drop, the src prop (live),
-    api.setValue() — scaled to fit the area and centered
-  - drag the IMAGE to pan (mouse or touch, delta divided by the zoom)
-  - wheel zoom (×0.9 / ×1.1 clamped to [0.1, 5], anchored at the cursor
-    when it sits on a painted pixel — the v5 zoom-origin math verbatim),
-    pinch zoom on touch, plus zoom/rotate/brightness/contrast levels
-    (rotate is the v5 [-1..1] → ±180° model; the filters run the v5
-    per-pixel pipelines on an offscreen canvas)
-  - a crop BOX: drag to move (clamped to the area), resize from the
-    8 edges/corners with live cursor feedback when resizable (5px hit
-    zones, the configured crop size is the minimum — v5 rules)
-  - export: save() reads the box pixels off the canvas into a dataURL
-    and commits { file, content, extension(, original) } — the v5 value
-    shape — to the bound state, firing onchange
+  - ADJUST + FILTER run on the native CanvasRenderingContext2D.filter
+    (GPU-accelerated) instead of the v5 per-pixel getImageData loops:
+    brightness, contrast, saturation, hue, blur, grayscale, sepia,
+    invert — one filter string, baked into the canvas so the crop
+    export picks them up for free (prefer the platform over JS emulation)
+  - TRANSFORM: continuous rotate (v5 [-1..1] → ±180°) plus 90° steps and
+    horizontal/vertical flip, composed in one center transform
+  - CROP box: drag to move, resize from the 8 edges/corners when
+    resizable, with an optional ASPECT-RATIO lock (free / 1:1 / 16:9 /
+    custom) that constrains the box as it resizes
+  - LOAD: file picker (click when empty, double click, Upload button,
+    api.upload()), drag-and-drop, the src prop (live), api.setValue()
+  - EXPORT: save() reads the box pixels into a dataURL with an optional
+    output format (png/jpeg/webp), quality and output size, and commits
+    { file, content, extension(, original) } — the v5 value shape — to
+    the bound state, firing onchange
 
-v5 → v6 mapping: value → bind (commits on save/delete/setValue, exactly
-like v5's Save/Delete buttons); options.area → width/height; the v5
-wrapper width/height (the crop size) → cropwidth/cropheight;
-allowResize → resizable; the modal's range controls + Save/Upload/Delete
-buttons → the built-in controls bar (controls, default true);
-original kept. Dropped: the thumbnail/modal/contextmenu shell, remote
-URL parsing (remoteParser) and the HTML-drop path.
+v5 → v6 mapping is unchanged from the original port (value → bind,
+options.area → width/height, wrapper size → cropwidth/cropheight,
+allowResize → resizable, range controls + buttons → the controls bar).
+New props/api are purely additive; the old contract still holds.
 
 jsdom has no canvas: a null 2d context downgrades drawing to a no-op.
 
@@ -84,8 +81,13 @@ state for a two-way live wire. Attribute strings are coerced to the declared typ
 | `cropwidth` | number | `300` | crop box width = minimum size (v5: width) |
 | `cropheight` | number | `240` | crop box height = minimum size (v5: height) |
 | `resizable` | boolean | `false` | crop box edge resize (v5: allowResize) |
-| `controls` | boolean | `true` | built-in ranges + save/upload/delete bar |
+| `controls` | boolean | `true` | built-in ranges + tools + buttons bar |
 | `original` | boolean | `false` | include the source image in saved data (v5) |
+| `aspect` | number | `0` | crop aspect ratio (w/h); 0 = free |
+| `format` | string | `"png"` | export format: png | jpeg | webp |
+| `quality` | number | `0.92` | export quality for jpeg/webp (0..1) |
+| `outputwidth` | number | `0` | export width; 0 = crop box width |
+| `outputheight` | number | `0` | export height; 0 = crop box height |
 
 ## Events
 
@@ -100,7 +102,7 @@ All event names are lowercase (the platform convention — LJS-305 warns otherwi
 import { ref } from 'lemonadejs';
 const cropper = ref();
 html`<${Cropper} ref="${cropper}" />`;
-// cropper.current.getValue(...)  ·  cropper.current.setValue(...)  ·  cropper.current.getImage(...)  ·  cropper.current.zoom(...)  ·  cropper.current.rotate(...)  ·  cropper.current.brightness(...)  ·  cropper.current.contrast(...)  ·  cropper.current.save(...)  ·  cropper.current.reset(...)  ·  cropper.current.upload(...)
+// cropper.current.getValue(...)  ·  cropper.current.setValue(...)  ·  cropper.current.getImage(...)  ·  cropper.current.zoom(...)  ·  cropper.current.rotate(...)  ·  cropper.current.brightness(...)  ·  cropper.current.contrast(...)  ·  cropper.current.saturate(...)  ·  cropper.current.grayscale(...)  ·  cropper.current.sepia(...)  ·  cropper.current.hue(...)  ·  cropper.current.blur(...)  ·  cropper.current.invert(...)  ·  cropper.current.rotateLeft(...)  ·  cropper.current.rotateRight(...)  ·  cropper.current.flipHorizontal(...)  ·  cropper.current.flipVertical(...)  ·  cropper.current.setAspect(...)  ·  cropper.current.save(...)  ·  cropper.current.reset(...)  ·  cropper.current.upload(...)
 ```
 
 - `getValue()`
@@ -110,6 +112,17 @@ html`<${Cropper} ref="${cropper}" />`;
 - `rotate()`
 - `brightness()`
 - `contrast()`
+- `saturate()`
+- `grayscale()`
+- `sepia()`
+- `hue()`
+- `blur()`
+- `invert()`
+- `rotateLeft()`
+- `rotateRight()`
+- `flipHorizontal()`
+- `flipVertical()`
+- `setAspect()`
 - `save()`
 - `reset()`
 - `upload()`

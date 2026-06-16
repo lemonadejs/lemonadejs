@@ -32,6 +32,26 @@
         "original": {
             "type": "boolean",
             "default": false
+        },
+        "aspect": {
+            "type": "number",
+            "default": 0
+        },
+        "format": {
+            "type": "string",
+            "default": "png"
+        },
+        "quality": {
+            "type": "number",
+            "default": 0.92
+        },
+        "outputwidth": {
+            "type": "number",
+            "default": 0
+        },
+        "outputheight": {
+            "type": "number",
+            "default": 0
         }
     },
     "bind": {
@@ -49,6 +69,17 @@
         "rotate",
         "brightness",
         "contrast",
+        "saturate",
+        "grayscale",
+        "sepia",
+        "hue",
+        "blur",
+        "invert",
+        "rotateLeft",
+        "rotateRight",
+        "flipHorizontal",
+        "flipVertical",
+        "setAspect",
         "save",
         "reset",
         "upload"

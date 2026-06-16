@@ -16,6 +16,11 @@ afterEach(() => {
 
 const headStyles = () => [...document.head.querySelectorAll('style[data-lemonade]')];
 
+// styles apply via the CSSOM (CSP-safe), so getAttribute('style') is the
+// browser-normalized form ("a: b; "); collapse to canonical "a:b;c:d"
+const styleN = (el: Element) =>
+    (el.getAttribute('style') || '').replace(/:\s+/g, ':').replace(/;\s+/g, ';').replace(/;$/, '');
+
 describe('<style> hoisting: component-owned CSS', () => {
     it('lifts <style> to document.head and keeps it OUT of the component DOM', () => {
         const C: Component = () => html`<div class="lm-styletest">
@@ -96,6 +101,6 @@ describe('css(): typed style values', () => {
             return html`<div style="${() => css({ position: 'fixed', top: y.value })}"></div>`;
         };
         handle = t(C);
-        expect(handle.query('div')!.getAttribute('style')).toBe('position:fixed;top:12px');
+        expect(styleN(handle.query('div')!)).toBe('position:fixed;top:12px');
     });
 });

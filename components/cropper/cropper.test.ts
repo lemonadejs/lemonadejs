@@ -23,21 +23,43 @@ type Api = {
     rotate: (v: number) => unknown;
     brightness: (v: number) => unknown;
     contrast: (v: number) => unknown;
+    saturate: (v: number) => unknown;
+    grayscale: (v: number) => unknown;
+    sepia: (v: number) => unknown;
+    hue: (v: number) => unknown;
+    blur: (v: number) => unknown;
+    invert: (v: number) => unknown;
+    rotateLeft: () => unknown;
+    rotateRight: () => unknown;
+    flipHorizontal: () => unknown;
+    flipVertical: () => unknown;
+    setAspect: (r: number) => unknown;
     save: () => CropData | null;
     reset: () => unknown;
     upload: () => unknown;
 };
 
-const makeCtx = () => ({
-    setTransform: vi.fn(),
-    clearRect: vi.fn(),
-    translate: vi.fn(),
-    scale: vi.fn(),
-    rotate: vi.fn(),
-    drawImage: vi.fn(),
-    getImageData: vi.fn(() => ({ data: new Uint8ClampedArray(4) })),
-    putImageData: vi.fn(),
-});
+const makeCtx = () => {
+    // Record every native ctx.filter assignment (the modern adjust/filter path)
+    const filters: string[] = [];
+    return {
+        setTransform: vi.fn(),
+        clearRect: vi.fn(),
+        translate: vi.fn(),
+        scale: vi.fn(),
+        rotate: vi.fn(),
+        drawImage: vi.fn(),
+        getImageData: vi.fn(() => ({ data: new Uint8ClampedArray(4) })),
+        putImageData: vi.fn(),
+        filters,
+        set filter(v: string) {
+            filters.push(v);
+        },
+        get filter() {
+            return filters[filters.length - 1] ?? 'none';
+        },
+    };
+};
 
 type Ctx = ReturnType<typeof makeCtx>;
 
@@ -62,9 +84,9 @@ afterEach(() => {
     vi.unstubAllGlobals();
 });
 
-// Context creation order: main canvas first (template ref), filter second
+// Context creation order: main canvas first (template ref), export canvas
+// (created on demand inside save()) second — no offscreen filter canvas
 const main = () => ctxs[0];
-const filter = () => ctxs[1];
 
 const root = () => handle!.query('.lm-cropper')!;
 const editor = () => handle!.query('.lm-cropper-editor')!;
@@ -89,6 +111,11 @@ const mount = (props: Record<string, unknown> = {}) => {
     return api!;
 };
 
+// styles apply via the CSSOM (CSP-safe), so getAttribute('style') is the
+// browser-normalized form ("a: b; "); collapse to canonical "a:b;c:d"
+const styleN = (el: Element) =>
+    (el.getAttribute('style') || '').replace(/:\s+/g, ':').replace(/;\s+/g, ';').replace(/;$/, '');
+
 describe('components/cropper', () => {
     it('passes verify() — the registry gate', () => {
         const report = verify(Cropper);
@@ -97,7 +124,7 @@ describe('components/cropper', () => {
 
     it('renders the area, canvas and centered crop box from the size props', () => {
         mount();
-        expect(editor().getAttribute('style')).toContain('width:800px;height:360px');
+        expect(styleN(editor())).toContain('width:800px;height:360px');
         expect(canvasEl().getAttribute('width')).toBe('800');
         expect(canvasEl().getAttribute('height')).toBe('360');
         // v5 resetCropSelection: centered, the configured crop size
@@ -107,7 +134,8 @@ describe('components/cropper', () => {
         expect(boxEl().style.height).toBe('240px');
         // No image yet: not in edition mode, controls disabled
         expect(root().className).not.toContain('lm-cropper-edition');
-        expect(ranges().length).toBe(4);
+        // zoom, rotate, brightness, contrast, saturation, hue, blur
+        expect(ranges().length).toBe(7);
         expect(ranges().every((r) => r.disabled)).toBe(true);
     });
 
@@ -278,28 +306,77 @@ describe('components/cropper', () => {
         expect(main().translate).toHaveBeenLastCalledWith(-200, -180);
     });
 
-    it('brightness runs the v5 pixel pipeline on the filter canvas', () => {
+    it('adjustments map to a native ctx.filter and compose (no pixel pass)', () => {
         const api = mount();
         loadImage(api, 1600, 1440);
+        // Each adjustment is level → CSS filter function, level 0 = identity
         api.brightness(0.5);
-        expect(filter().drawImage).toHaveBeenCalledWith(api.getImage(), 0, 0, 400, 360);
-        const puts = filter().putImageData.mock.calls;
-        const written = puts[puts.length - 1][0] as ImageData;
-        expect(written.data[0]).toBe(128); // 0 + 0.5×255, clamped-rounded
-        // The repaint now draws the FILTERED image, not the source
+        expect(main().filters.some((f) => f.includes('brightness(1.5)'))).toBe(true);
+        api.contrast(0.5);
+        expect(main().filters.some((f) => f.includes('contrast(1.5)'))).toBe(true);
+        api.saturate(0.5);
+        // All three live at once in the last painted filter string
+        expect(
+            main().filters.some(
+                (f) => f.includes('brightness(1.5)') && f.includes('contrast(1.5)') && f.includes('saturate(1.5)')
+            )
+        ).toBe(true);
+        // The repaint draws the SOURCE image directly — the filter is the engine
         const draws = main().drawImage.mock.calls;
-        expect(draws[draws.length - 1][0]).not.toBe(api.getImage());
+        expect(draws[draws.length - 1][0]).toBe(api.getImage());
     });
 
-    it('contrast runs the v5 factor curve on the filter canvas', () => {
+    it('filters (grayscale/sepia/invert/hue/blur) map to ctx.filter functions', () => {
         const api = mount();
         loadImage(api, 1600, 1440);
-        api.contrast(0.5);
-        const puts = filter().putImageData.mock.calls;
-        const written = puts[puts.length - 1][0] as ImageData;
-        expect(written.data[0]).toBe(0); // 3×(0−128)+128 = −256, clamped
-        const draws = main().drawImage.mock.calls;
-        expect(draws[draws.length - 1][0]).not.toBe(api.getImage());
+        api.grayscale(1);
+        expect(main().filters.some((f) => f.includes('grayscale(1)'))).toBe(true);
+        api.sepia(1);
+        expect(main().filters.some((f) => f.includes('sepia(1)'))).toBe(true);
+        api.invert(1);
+        expect(main().filters.some((f) => f.includes('invert(1)'))).toBe(true);
+        api.hue(0.5); // [-1..1] → ±180°
+        expect(main().filters.some((f) => f.includes('hue-rotate(90deg)'))).toBe(true);
+        api.blur(4);
+        expect(main().filters.some((f) => f.includes('blur(4px)'))).toBe(true);
+    });
+
+    it('rotateRight/rotateLeft rotate in 90° steps around the image center', () => {
+        const api = mount();
+        loadImage(api, 1600, 1440); // fitted 400×360
+        api.rotateRight();
+        expect(main().translate).toHaveBeenCalledWith(200, 180);
+        let angles = main().rotate.mock.calls;
+        expect(angles[angles.length - 1][0]).toBeCloseTo(Math.PI / 2, 5);
+        api.rotateRight(); // quarter 2 → 180°
+        angles = main().rotate.mock.calls;
+        expect(angles[angles.length - 1][0]).toBeCloseTo(Math.PI, 5);
+        api.rotateLeft(); // back to quarter 1 → 90°
+        angles = main().rotate.mock.calls;
+        expect(angles[angles.length - 1][0]).toBeCloseTo(Math.PI / 2, 5);
+        expect(main().translate).toHaveBeenLastCalledWith(-200, -180);
+    });
+
+    it('flip applies a negative scale around the image center', () => {
+        const api = mount();
+        loadImage(api, 1600, 1440);
+        api.flipHorizontal();
+        expect(main().scale).toHaveBeenCalledWith(-1, 1);
+        api.flipVertical();
+        expect(main().scale).toHaveBeenCalledWith(-1, -1);
+    });
+
+    it('aspect lock reshapes the crop box to the ratio (api.setAspect)', () => {
+        const api = mount({ resizable: true });
+        loadImage(api, 1600, 1440);
+        api.setAspect(1); // 1:1
+        expect(boxEl().style.width).toBe(boxEl().style.height);
+        api.setAspect(2); // 2:1, fits inside 800×360
+        const w = parseFloat(boxEl().style.width);
+        const h = parseFloat(boxEl().style.height);
+        expect(w / h).toBeCloseTo(2, 1);
+        api.setAspect(0); // free again — box keeps its current size
+        expect(parseFloat(boxEl().style.width)).toBe(w);
     });
 
     it('save() exports the box pixels and commits the v5 value shape', () => {
@@ -316,14 +393,25 @@ describe('components/cropper', () => {
         const data = api.save()!;
         // Pixels read from the canvas at the crop box coordinates
         expect(main().getImageData).toHaveBeenCalledWith(250, 60, 300, 240);
-        expect(ctxs[2].putImageData).toHaveBeenCalled(); // export canvas
+        expect(ctxs[1].putImageData).toHaveBeenCalled(); // export canvas
         expect(data).toEqual({
             file: 'data:image/png;base64,TEST',
             content: 'data:image/png;base64,TEST',
-            extension: 'png', // parsed from the source data URL (v5)
+            extension: 'png', // the export format
         });
         expect(photo.value).toBe(data); // committed to the bound state
         expect(changes).toEqual([data]); // onchange fired once
+    });
+
+    it('exports the chosen format and reports it as the extension', () => {
+        vi.spyOn(HTMLCanvasElement.prototype, 'toDataURL').mockImplementation(
+            ((type?: string) => 'data:' + (type || 'image/png') + ';base64,X') as HTMLCanvasElement['toDataURL']
+        );
+        const api = mount({ format: 'jpeg', quality: 0.8 });
+        loadImage(api, 1600, 1440);
+        const data = api.save()!;
+        expect(data.extension).toBe('jpeg');
+        expect(data.content.startsWith('data:image/jpeg')).toBe(true);
     });
 
     it('original includes the source image in the saved data (v5)', () => {
@@ -335,7 +423,7 @@ describe('components/cropper', () => {
         handle = null;
         const api2 = mount({ src: 'photo.png' });
         loadImage(api2, 1600, 1440);
-        expect(api2.save()!.extension).toBeNull(); // not a data URL
+        expect(api2.save()!.extension).toBe('png'); // the export format
         expect(api2.save()!.original).toBeUndefined();
     });
 
@@ -497,7 +585,7 @@ describe('components/cropper', () => {
             html`<main><${Cropper} width="500" height="300" cropwidth="100"
                 cropheight="80" controls="false" resizable="true" /></main>`;
         handle = t(App);
-        expect(editor().getAttribute('style')).toContain('width:500px;height:300px');
+        expect(styleN(editor())).toContain('width:500px;height:300px');
         expect(handle.query('.lm-cropper-controls')).toBeNull();
         expect(boxEl().style.left).toBe('200px'); // (500-100)/2
         expect(boxEl().style.width).toBe('100px');

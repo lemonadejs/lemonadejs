@@ -305,7 +305,7 @@ export const Color = component('color', {
         ${() =>
             inline()
                 ? panelView()
-                : html`<${Modal} bind="${opened}" header="${false}" position="absolute"
+                : html`<${Modal} bind="${opened}" header="${false}" position="fixed"
                       top="${anchorTop}" left="${anchorLeft}"
                       focus="${false}" responsive="${false}" autoadjust>
                       ${panelView()}

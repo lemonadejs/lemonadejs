@@ -2,7 +2,7 @@
 
 LemonadeJS modal block — contract-verified, framework-agnostic.
 
-**✓ verified** — 49 contract checks · framework-agnostic · zero dependencies
+**✓ verified** — 51 contract checks · framework-agnostic · zero dependencies
 
 ## Overview
 
@@ -18,12 +18,18 @@ behaviors, ported faithfully from v5:
   - minimize DOCKS to a taskbar row at the bottom of the screen
     (205px slots, wrapping), restore returns to the remembered spot
   - explicit coordinates on open (centered unless positioned), margin
-    based auto-adjust, responsive fullscreen on small screens
+    based auto-adjust, responsive fullscreen on small screens; flip
+    mode for anchored panels (dropdowns) inverts above the anchor at
+    the bottom edge instead of covering it, api.adjust() re-anchors
+    after content changes the panel size while open
   - Escape/focus handling scoped to the ELEMENT (multiple modals never
     fight over a document listener), v5 close origins preserved
 
 v5 → v6 mapping: closed → bind (inverted: bind is the OPEN state);
 auto-close → autoclose; auto-adjust → autoadjust; content → children.
+position: 'absolute' is CSS-anchored exactly like v5 (the host's
+positioned ancestor places it — dropdown panels); 'fixed' takes
+explicit viewport coordinates (context menus at the cursor).
 onclose(origin): 'button' | 'backdrop' | 'escape' | 'focusout' | 'api'.
 onmove(top, left) and onresize(width, height) fire on release.
 
@@ -82,6 +88,7 @@ state for a two-way live wire. Attribute strings are coerced to the declared typ
 | `header` | boolean | `true` |  |
 | `autoclose` | boolean | `false` |  |
 | `autoadjust` | boolean | `false` |  |
+| `flip` | number | `0` |  |
 | `focus` | boolean | `true` |  |
 | `overflow` | boolean | `false` |  |
 | `responsive` | boolean | `true` |  |
@@ -103,7 +110,7 @@ All event names are lowercase (the platform convention — LJS-305 warns otherwi
 import { ref } from 'lemonadejs';
 const modal = ref();
 html`<${Modal} ref="${modal}" />`;
-// modal.current.open(...)  ·  modal.current.close(...)  ·  modal.current.toggle(...)  ·  modal.current.front(...)  ·  modal.current.back(...)
+// modal.current.open(...)  ·  modal.current.close(...)  ·  modal.current.toggle(...)  ·  modal.current.front(...)  ·  modal.current.back(...)  ·  modal.current.adjust(...)
 ```
 
 - `open()`
@@ -111,6 +118,7 @@ html`<${Modal} ref="${modal}" />`;
 - `toggle()`
 - `front()`
 - `back()`
+- `adjust()`
 
 ## Styling
 

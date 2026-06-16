@@ -1,15 +1,15 @@
 /**
- * <Kanban /> — a drag-and-drop kanban board, and a deliberate stress
- * test for the v6 KEYED LIST DIFF under cross-list moves.
+ * <Kanban /> — a drag-and-drop kanban board.
  *
- * THE ARCHITECTURE (and why it is unusual): keys are scoped PER LIST —
- * a card rendered inside "its column's" map leaves that keyed list when
- * it moves to another column, and the engine rebuilds it there. To make
- * card DOM identity survive cross-column moves (state, focus, armed
- * gestures, CSS transitions all ride on identity), every card on the
- * board lives in ONE flat keyed list; columns are CSS GRID TRACKS, and
- * each card is placed with grid-column/grid-row instead of DOM nesting.
- * A move — drag or api — changes coordinates on the SAME element.
+ * LAYOUT: each column is its own vertical flex stack, so cards flow
+ * naturally and uneven card heights never create gaps. (An earlier design
+ * placed every card on ONE shared CSS grid to preserve a card's DOM node
+ * across a cross-column move; that shared rows between columns, so a tall
+ * card in one column left a gap in another. Cards here are plain, stateless
+ * elements — losing the node on a cross-column move costs nothing — so the
+ * simpler, gapless per-column layout wins.) Cards are keyed by id WITHIN
+ * their column: a reorder inside a column is a keyed move (DOM identity
+ * kept); a cross-column move re-parents the card.
  *
  *   - data: [{ id, title, cards: [{ id, title, description?, color?,
  *     tags? }] }] BY REFERENCE — the board mutates IN PLACE and calls
@@ -45,8 +45,6 @@ export interface KanbanColumn {
     [key: string]: unknown;
 }
 
-/** Cards start below the header track; +2 converts a card index to its grid row */
-const ROW0 = 2;
 /** px of movement before a mousedown becomes a drag (clicks stay clicks) */
 const DRAG_THRESHOLD = 3;
 
@@ -130,7 +128,7 @@ export const Kanban = component('kanban', {
         moveCard: performMove,
     });
 
-    // ---- drop target: column by x over the shells, slot by y over the
+    // ---- drop target: column by x over the card stacks, slot by y over the
     // card midpoints (the dragged card is invisible to the math)
     const computeDrop = (x: number, y: number, dragId: string | number) => {
         for (const col of peekColumns()) {
@@ -223,93 +221,61 @@ export const Kanban = component('kanban', {
         props.oncardclick?.(card);
     };
 
-    // ---- geometry: grid rows are shared across columns (one grid), so
-    // every shell spans header + tallest column + one empty drop row
-    const shellSpan = () => {
-        let max = 0;
-        for (const col of columns()) {
-            max = Math.max(max, cardsOf(col).length);
-        }
-        return max + 2;
-    };
-
-    /** Indicator row: the slot BEFORE others[index] in unfiltered terms */
-    const indicatorRow = (col: KanbanColumn, index: number): number => {
-        const dragId = drag.peek()?.id;
-        const others = cardsOf(col).filter((c) => c.id !== dragId);
-        if (index < others.length) {
-            return cardsOf(col).indexOf(others[index]) + ROW0;
-        }
-        return cardsOf(col).length + ROW0;
-    };
-
-    const cardStyle = (card: KanbanCard, ci: number, row: number) => {
+    // ---- per-card style: order in the stack (data position, stable across
+    // a drag) plus the live drag transform (only the dragged card moves)
+    const cardStyle = (card: KanbanCard, ri: number) => {
         const d = drag.value;
         const dragging = d && d.id === card.id;
         return css({
-            gridColumn: String(ci + 1),
-            gridRow: String(row),
+            order: ri * 2,
             '--lm-kanban-accent': card.color || false,
             transform: dragging ? 'translate(' + d!.dx + 'px,' + d!.dy + 'px)' : false,
         });
     };
 
-    return html`<div class="lm-kanban"
-        style="${() => css({ gridTemplateColumns: 'repeat(' + Math.max(1, columns().length) + ', var(--lm-kanban-column-width, 280px))' })}">
+    const cardView = (card: KanbanCard, ri: number) =>
+        html`<article class="lm-kanban-card ${() =>
+            drag.value?.id === card.id ? 'lm-kanban-card-dragging' : ''}"
+            key="${card.id}" data-card="${card.id}"
+            ref="${(el: HTMLElement) => cardEls.set(card.id, el)}"
+            style="${() => cardStyle(card, ri)}"
+            onmousedown="${(e: MouseEvent) => armDrag(e, card)}"
+            onclick="${() => clickCard(card)}">
+            <div class="lm-kanban-card-title">${card.title}</div>
+            ${card.description ? html`<div class="lm-kanban-card-description">${card.description}</div>` : ''}
+            ${card.tags && card.tags.length
+                ? html`<div class="lm-kanban-card-tags">${card.tags.map(
+                      (tag) => html`<span class="lm-kanban-tag">${tag}</span>`
+                  )}</div>`
+                : ''}
+        </article>`;
+
+    return html`<div class="lm-kanban">
         ${() =>
             columns().map(
-                (col, ci) => html`<div class="lm-kanban-column" key="${col.id}" data-column="${col.id}"
-                    ref="${(el: HTMLElement) => shellEls.set(col.id, el)}"
-                    style="${css({ gridColumn: String(ci + 1), gridRow: '1 / span ' + shellSpan() })}">
+                (col) => html`<div class="lm-kanban-column" key="${col.id}" data-column="${col.id}">
                     <div class="lm-kanban-column-header">
                         <span class="lm-kanban-column-title">${col.title}</span>
                         <span class="lm-kanban-column-count">${cardsOf(col).length}</span>
                     </div>
+                    <div class="lm-kanban-column-cards"
+                        ref="${(el: HTMLElement) => shellEls.set(col.id, el)}">
+                        ${() => cardsOf(col).map((card, ri) => cardView(card, ri))}
+                        ${() => {
+                            // The drop indicator: rendered ONLY in the active
+                            // column, slotted between cards via flex order
+                            // (drop.index among the non-dragged cards). Its own
+                            // binding (reads drop) — a drag never rebuilds the
+                            // keyed card list (which reads columns()).
+                            const t = drop.value;
+                            return t && t.col === col.id
+                                ? html`<div class="lm-kanban-indicator"
+                                      style="${css({ order: t.index * 2 - 1 })}"></div>`
+                                : '';
+                        }}
+                    </div>
                 </div>`
             )}
-        ${() => {
-            // THE flat keyed list: every card on the board, one list, so
-            // a cross-column move is a coordinate change on the SAME node.
-            // Cards stay PLAIN elements deliberately: live prop patching
-            // would let a <Card> component ride the keyed move too, but a
-            // card here has no internal state to preserve and no public
-            // customization contract — a component would only add a
-            // register-element callback prop to rebuild the hit-testing
-            // registry the board already owns via refs.
-            const out: ReturnType<typeof html>[] = [];
-            columns().forEach((col, ci) => {
-                cardsOf(col).forEach((card, ri) => {
-                    out.push(html`<article class="lm-kanban-card ${() =>
-                        drag.value?.id === card.id ? 'lm-kanban-card-dragging' : ''}"
-                        key="${card.id}" data-card="${card.id}"
-                        ref="${(el: HTMLElement) => cardEls.set(card.id, el)}"
-                        style="${() => cardStyle(card, ci, ri + ROW0)}"
-                        onmousedown="${(e: MouseEvent) => armDrag(e, card)}"
-                        onclick="${() => clickCard(card)}">
-                        <div class="lm-kanban-card-title">${card.title}</div>
-                        ${card.description ? html`<div class="lm-kanban-card-description">${card.description}</div>` : ''}
-                        ${card.tags && card.tags.length
-                            ? html`<div class="lm-kanban-card-tags">${card.tags.map(
-                                  (tag) => html`<span class="lm-kanban-tag">${tag}</span>`
-                              )}</div>`
-                            : ''}
-                    </article>`);
-                });
-            });
-            return out;
-        }}
-        ${() => {
-            const t = drop.value;
-            if (!t) {
-                return false;
-            }
-            const ci = columns().findIndex((c) => c.id === t.col);
-            if (ci < 0) {
-                return false;
-            }
-            return html`<div class="lm-kanban-indicator"
-                style="${css({ gridColumn: String(ci + 1), gridRow: String(indicatorRow(columns()[ci], t.index)) })}"></div>`;
-        }}
     </div>`;
 });
 

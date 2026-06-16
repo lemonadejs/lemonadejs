@@ -353,4 +353,37 @@ describe('components/dropdown — the select on the Modal primitive', () => {
         await flush();
         expect(itemByText('Pic').querySelector('img')!.getAttribute('src')).toBe('/x.png');
     });
+
+    it('placeholder lands on the input', async () => {
+        await open({ placeholder: 'Pick a fruit' });
+        expect(input().getAttribute('placeholder')).toBe('Pick a fruit');
+    });
+
+    it('width drives the panel width', async () => {
+        const api = await open({ width: 300 });
+        api.open();
+        await flush();
+        // jsdom measures the input at 0 and the longest text below 300:
+        // the width prop wins and lands as the panel inline width
+        expect((handle!.query('.lm-modal') as HTMLElement).style.width).toBe('300px');
+    });
+
+    it('onopen fires on open; onclose reports the origin', async () => {
+        const opens: number[] = [];
+        const origins: string[] = [];
+        const api = await open({ onopen: () => opens.push(1), onclose: (o: string) => origins.push(o) });
+
+        api.open();
+        await flush();
+        expect(opens).toEqual([1]);
+
+        api.close(); // api default origin
+        expect(origins).toEqual(['button']);
+
+        api.open();
+        await flush();
+        key('Escape'); // cancel path reports its own origin
+        expect(origins).toEqual(['button', 'escape']);
+        expect(opens).toEqual([1, 1]);
+    });
 });

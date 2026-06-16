@@ -30,6 +30,14 @@
     align-items: flex-end;
 }
 
+/* absolute: CSS-anchored panel — the HOST's positioned ancestor places it
+   (a dropdown panel under its input) and scrolling follows natively */
+.lm-modal-root[data-position='absolute'] {
+    position: absolute;
+    inset: auto;
+    display: block;
+}
+
 .lm-modal-backdrop {
     position: absolute;
     inset: 0;

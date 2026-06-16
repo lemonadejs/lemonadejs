@@ -17,7 +17,7 @@ three deployment forms (by value, by name, custom element).
 | [Carousel](./carousel/README.md) | `@lemonadejs/carousel` | 14 | LemonadeJS carousel block — single-file (styles ship inside the component), contract-verified, framework-agnostic. |
 | [Color](./color/README.md) | `@lemonadejs/color` | 14 | LemonadeJS color block — contract-verified, framework-agnostic. |
 | [Contextmenu](./contextmenu/README.md) | `@lemonadejs/contextmenu` | 6 | LemonadeJS contextmenu block — contract-verified, framework-agnostic. |
-| [Cropper](./cropper/README.md) | `@lemonadejs/cropper` | 21 | LemonadeJS cropper block — contract-verified, framework-agnostic. |
+| [Cropper](./cropper/README.md) | `@lemonadejs/cropper` | 31 | LemonadeJS cropper block — contract-verified, framework-agnostic. |
 | [Datagrid](./datagrid/README.md) | `@lemonadejs/datagrid` | 23 | LemonadeJS datagrid block — virtualized big-data grid, contract-verified, framework-agnostic. |
 | [Dialog](./dialog/README.md) | `@lemonadejs/dialog` | 19 | LemonadeJS dialog block — contract-verified, framework-agnostic. |
 | [Drawer](./drawer/README.md) | `@lemonadejs/drawer` | 15 | LemonadeJS drawer block — anchored side panels and the bottom sheet on the Modal primitive; contract-verified, framework-agnostic. |
@@ -28,7 +28,7 @@ three deployment forms (by value, by name, custom element).
 | [Kanban](./kanban/README.md) | `@lemonadejs/kanban` | 7 | LemonadeJS kanban block — drag-and-drop board whose card DOM identity survives cross-column moves (one flat keyed list, CSS grid placement); contract-verified, framework-agnostic. |
 | [List](./list/README.md) | `@lemonadejs/list` | 26 | LemonadeJS list block — search, pagination, remote mode and MUI-style items, contract-verified, framework-agnostic. |
 | [Login](./login/README.md) | `@lemonadejs/login` | 36 | LemonadeJS login block — multi-screen authentication (login, register, forgot password, code confirmation, password reset), contract-verified. |
-| [Modal](./modal/README.md) | `@lemonadejs/modal` | 49 | LemonadeJS modal block — contract-verified, framework-agnostic. |
+| [Modal](./modal/README.md) | `@lemonadejs/modal` | 51 | LemonadeJS modal block — contract-verified, framework-agnostic. |
 | [Navbar](./navbar/README.md) | `@lemonadejs/navbar` | 13 | LemonadeJS navbar block — contract-verified, framework-agnostic. |
 | [Progress](./progress/README.md) | `@lemonadejs/progress` | 15 | LemonadeJS progress block — contract-verified, framework-agnostic. |
 | [Quickmenu](./quickmenu/README.md) | `@lemonadejs/quickmenu` | 12 | LemonadeJS quickmenu block — contract-verified, framework-agnostic. |

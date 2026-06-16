@@ -191,6 +191,22 @@ describe('components/contextmenu — on the Modal primitive', () => {
         await flush();
         expect(menus()[0].textContent).toContain('Custom');
     });
+
+    it('onopen fires when the menu opens', async () => {
+        const opens: number[] = [];
+        await open([], { onopen: () => opens.push(1) });
+        expect(opens).toEqual([1]);
+    });
+
+    it('scroll outside closes (OS behavior); scroll INSIDE a menu does not', async () => {
+        await open();
+        // wheel inside a long menu list: stays open
+        menus()[0].dispatchEvent(new Event('scroll', { bubbles: false }));
+        expect(menus()).toHaveLength(1);
+        // the page (or any outside container) scrolls: closes
+        document.body.dispatchEvent(new Event('scroll', { bubbles: false }));
+        expect(menus()).toHaveLength(0);
+    });
 });
 
 /** fake-timers variant: flush via timer advance instead of real timeout */

@@ -16,6 +16,10 @@ afterEach(() => {
     handle = null;
 });
 
+// styles apply via the CSSOM (CSP-safe), so getAttribute('style') is the
+// browser-normalized form ("a: b; "); collapse to canonical "a:b;c:d"
+const styleN = (el: Element) =>
+    (el.getAttribute('style') || '').replace(/:\s+/g, ':').replace(/;\s+/g, ';').replace(/;$/, '');
 const root = () => handle!.query('.lm-progress')!;
 const bar = () => handle!.query('.lm-progress-bar')!;
 const circle = () => handle!.query('.lm-progress-circle-bar')!;
@@ -34,7 +38,7 @@ describe('components/progress', () => {
     it('linear: renders the bound percent as an inline width', () => {
         handle = t(Progress, { bind: store(50) });
         expect(root().getAttribute('role')).toBe('progressbar');
-        expect(bar().getAttribute('style')).toBe('width: 50%');
+        expect(styleN(bar())).toContain('width:50%');
         expect(root().getAttribute('aria-valuenow')).toBe('50');
         expect(root().hasAttribute('data-indeterminate')).toBe(false);
         expect(root().hasAttribute('data-type')).toBe(false); // '' = linear
@@ -43,21 +47,21 @@ describe('components/progress', () => {
     it('linear: live updates flow in through the bound store', () => {
         const pct = store(10);
         handle = t(Progress, { bind: pct });
-        expect(bar().getAttribute('style')).toBe('width: 10%');
+        expect(styleN(bar())).toContain('width:10%');
 
         pct.value = 80;
-        expect(bar().getAttribute('style')).toBe('width: 80%');
+        expect(styleN(bar())).toContain('width:80%');
         expect(root().getAttribute('aria-valuenow')).toBe('80');
     });
 
     it('clamps the percent to [0, 100]', () => {
         const pct = store(150);
         handle = t(Progress, { bind: pct });
-        expect(bar().getAttribute('style')).toBe('width: 100%');
+        expect(styleN(bar())).toContain('width:100%');
         expect(root().getAttribute('aria-valuenow')).toBe('100');
 
         pct.value = -20;
-        expect(bar().getAttribute('style')).toBe('width: 0%');
+        expect(styleN(bar())).toContain('width:0%');
         expect(root().getAttribute('aria-valuenow')).toBe('0');
     });
 
@@ -123,7 +127,7 @@ describe('components/progress', () => {
     it('size and thickness reshape the svg geometry', () => {
         handle = t(Progress, { type: 'circular', bind: store(50), size: 60, thickness: 6 });
         expect(svg().getAttribute('viewBox')).toBe('0 0 60 60');
-        expect(handle.query('.lm-progress-circular')!.getAttribute('style')).toBe('width:60px;height:60px'); // css() format
+        expect(styleN(handle.query('.lm-progress-circular')!)).toBe('width:60px;height:60px'); // css() format
 
         // r = (60 - 6) / 2 = 27
         const c = circumference(60, 6);
@@ -136,7 +140,7 @@ describe('components/progress', () => {
 
     it('thickness sets the linear track height', () => {
         handle = t(Progress, { bind: store(50), thickness: 8 });
-        expect(handle.query('.lm-progress-track')!.getAttribute('style')).toBe('height: 8px');
+        expect(styleN(handle.query('.lm-progress-track')!)).toBe('height:8px');
         handle.unmount();
 
         handle = t(Progress, { bind: store(50) });
@@ -162,5 +166,17 @@ describe('components/progress', () => {
         expect(handle.query('.lm-progress-track')).toBeNull();
         expect(handle.query('svg')).not.toBeNull();
         expect(root().getAttribute('data-type')).toBe('circular');
+    });
+
+    it('display-only: external bind writes re-render SILENTLY (onchange never fires)', () => {
+        // Progress never originates a change (no .set() inside), so the
+        // bind-contract onchange stays quiet by design: assignment is
+        // silent in v6 and only the component itself could .set()
+        const changes: unknown[] = [];
+        const pct = store(10);
+        handle = t(Progress, { bind: pct, onchange: (v: unknown) => changes.push(v) });
+        pct.value = 80;
+        expect(styleN(bar())).toContain('width:80%');
+        expect(changes).toEqual([]);
     });
 });

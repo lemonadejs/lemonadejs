@@ -255,4 +255,23 @@ describe('components/router — behaviors', () => {
         expect(preventedUpstream).toBe(false);
         stray.remove();
     });
+
+    it('onbeforecreatepage: false vetoes the page CREATION (the route stays put)', () => {
+        const asked: string[] = [];
+        const api = open({
+            onbeforecreatepage: (r: Route) => {
+                asked.push(r.path);
+                return r.path !== '/about';
+            },
+        });
+        expect(asked).toEqual(['/']); // the initial page asked too
+
+        api.setPath('/about'); // vetoed: no page element is ever created
+        expect(asked).toEqual(['/', '/about']);
+        expect(visible()[0].querySelector('h1')!.textContent).toBe('Home');
+        expect(handle!.root.querySelectorAll('.lm-router-page')).toHaveLength(1);
+
+        api.setPath('/user/7'); // allowed: navigation proceeds normally
+        expect(visible()[0].querySelector('h1')!.textContent).toBe('User');
+    });
 });

@@ -89,6 +89,11 @@ const sample = (over: Partial<ScheduleEvent> = {}): ScheduleEvent => ({
     ...over,
 });
 
+// styles apply via the CSSOM (CSP-safe), so getAttribute('style') is the
+// browser-normalized form ("a: b; "); collapse to canonical "a:b;c:d"
+const styleN = (el: Element) =>
+    (el.getAttribute('style') || '').replace(/:\s+/g, ':').replace(/;\s+/g, ';').replace(/;$/, '');
+
 describe('components/schedule', () => {
     it('passes verify() — the registry gate', () => {
         expect(verify(Schedule).pass).toBe(true);
@@ -147,7 +152,7 @@ describe('components/schedule', () => {
         mount(); // grid 15
         expect(handle!.queryAll('tbody tr').length).toBe(96);
         expect(handle!.queryAll('tbody tr.lm-schedule-hour').length).toBe(24);
-        expect(handle!.queryAll('tbody tr')[0].getAttribute('style')).toContain('height:15px');
+        expect(styleN(handle!.queryAll('tbody tr')[0])).toContain('height:15px');
         expect(handle!.queryAll('.lm-schedule-index')[9].textContent).toBe('09:00');
         expect(root().className).toContain('lm-schedule-large'); // v5: grid > 9
         handle!.unmount();
@@ -203,14 +208,14 @@ describe('components/schedule', () => {
         expect(el.getAttribute('data-start')).toBe('09:00');
         expect(el.getAttribute('data-end')).toBe('10:30');
         expect(el.getAttribute('data-height')).toBe('6'); // 6 rows of 15min
-        expect(el.getAttribute('style')).toContain('height:90px');
-        expect(el.getAttribute('style')).toContain('--lm-schedule-background:#3f51b5');
-        expect(el.getAttribute('style')).toContain('--lm-schedule-color:white'); // dark color
+        expect(styleN(el)).toContain('height:90px');
+        expect(styleN(el)).toContain('--lm-schedule-background:#3f51b5');
+        expect(styleN(el)).toContain('--lm-schedule-color:white'); // dark color
     });
 
     it('light event colors flip the text to black (HSP lightness)', () => {
         mount({ data: [sample({ color: '#ffeb3b' })] });
-        expect(item().getAttribute('style')).toContain('--lm-schedule-color:black');
+        expect(styleN(item())).toContain('--lm-schedule-color:black');
     });
 
     it('normalizes raw events: end = start+1h, title, color, guid (v5 normalizeEvents)', () => {
@@ -242,7 +247,7 @@ describe('components/schedule', () => {
         const list = items();
         expect(list.length).toBe(2);
         expect(list[0].getAttribute('style')).not.toContain('margin-left');
-        expect(list[1].getAttribute('style')).toContain('margin-left:10px');
+        expect(styleN(list[1])).toContain('margin-left:10px');
     });
 
     it('shows the now-pointer only when today is visible', () => {

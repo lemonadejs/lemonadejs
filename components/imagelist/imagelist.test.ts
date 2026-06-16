@@ -19,7 +19,10 @@ afterEach(() => {
 const root = () => handle!.query('.lm-imagelist')!;
 const items = () => handle!.queryAll('.lm-imagelist-item');
 const imgs = () => handle!.queryAll('.lm-imagelist-img') as HTMLImageElement[];
-const rootStyle = () => root().getAttribute('style') || '';
+// styles apply via the CSSOM (CSP-safe), so getAttribute('style') is the
+// browser-normalized form ("a: b; "); collapse it to the compact "a:b"
+const styleOf = (el: Element) => (el.getAttribute('style') || '').replace(/:\s+/g, ':').replace(/;\s+/g, ';');
+const rootStyle = () => styleOf(root());
 
 const make = (n: number): ImageListItem[] =>
     Array.from({ length: n }, (_, i) => ({
@@ -93,11 +96,11 @@ describe('components/imagelist', () => {
         expect(root().getAttribute('data-variant')).toBe('quilted');
         expect(rootStyle()).toContain('grid-template-columns:repeat(4, 1fr)'); // still a grid
 
-        const style0 = items()[0].getAttribute('style') || '';
+        const style0 = styleOf(items()[0]);
         expect(style0).toContain('grid-column:span 2');
         expect(style0).toContain('grid-row:span 2');
         expect(items()[1].getAttribute('style')).toBeNull(); // 1x1 = no spans
-        const style2 = items()[2].getAttribute('style') || '';
+        const style2 = styleOf(items()[2]);
         expect(style2).toContain('grid-row:span 3');
         expect(style2).not.toContain('grid-column');
     });
@@ -109,7 +112,7 @@ describe('components/imagelist', () => {
         expect(rootStyle()).toContain('column-gap:10px');
         expect(rootStyle()).not.toContain('display:grid');
 
-        const style = items()[0].getAttribute('style') || '';
+        const style = styleOf(items()[0]);
         expect(style).toContain('break-inside:avoid');
         expect(style).toContain('margin-bottom:10px');
     });

@@ -196,7 +196,12 @@ export function createWebComponent(
                     return this._ensure()[key].peek();
                 },
                 set(this: LemonadeElement, v: unknown) {
-                    this._ensure()[key].value = v;
+                    // Coerce like the attribute path: a framework binding the
+                    // declared property with a string ("150") must land as the
+                    // contract type (number), or downstream css()/math sees a
+                    // raw string. coerce() passes rich (non-string) values
+                    // through untouched.
+                    this._ensure()[key].value = coerce(v, schema!.props[key]);
                 },
             });
         }
@@ -208,7 +213,7 @@ export function createWebComponent(
                 },
                 set(this: LemonadeElement, v: unknown) {
                     this._ensure();
-                    this._bind!.value = v;
+                    this._bind!.value = coerce(v, schema!.bind!);
                 },
             });
         }

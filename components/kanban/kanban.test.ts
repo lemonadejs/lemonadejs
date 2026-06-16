@@ -1,13 +1,12 @@
 /**
- * <Kanban /> — the cross-list keyed-diff probe. The headline assertion:
- * a card's DOM element is THE SAME NODE OBJECT after moving to another
- * column (api or drag). The board renders all cards in one flat keyed
- * list (columns are CSS grid tracks), because the engine's keyed diff
- * is scoped per list — nested per-column lists would rebuild on a
- * cross-column move.
+ * <Kanban /> — per-column flex stacks. A card's column is its DOM parent;
+ * its position in the stack is the flex `order` (data index × 2). Identity:
+ * a reorder WITHIN a column is a keyed move (same node); a CROSS-column move
+ * re-parents the card (new node) — cards are plain, stateless elements, so
+ * that costs nothing and buys gapless natural columns.
  *
- * Geometry: jsdom has no layout, so drop hit-testing (column by x,
- * slot by card midpoints in y) runs on setRect() stubs.
+ * Geometry: jsdom has no layout, so drop hit-testing (column by x, slot by
+ * card midpoints in y) runs on setRect() stubs.
  */
 import { describe, it, expect, afterEach, vi } from 'vitest';
 import { store } from 'lemonadejs';
@@ -52,28 +51,29 @@ const open = (props: Record<string, unknown> = {}) => {
 
 const card = (id: string) => handle!.query(`[data-card=${id}]`)!;
 const cards = () => handle!.queryAll('.lm-kanban-card');
-const column = (id: string) => handle!.query(`[data-column=${id}]`)!;
-const styleOf = (el: Element) => el.getAttribute('style') || '';
-/** Which column a card sits in = its grid-column track ↔ the shell's */
-const columnOf = (el: Element) => {
-    const track = (styleOf(el).match(/grid-column:(\d+)/) || [])[1];
-    const shell = handle!
-        .queryAll('.lm-kanban-column')
-        .find((s) => (styleOf(s).match(/grid-column:(\d+)/) || [])[1] === track);
-    return shell?.getAttribute('data-column');
-};
-const rowOf = (el: Element) => Number((styleOf(el).match(/grid-row:(\d+)/) || [])[1]);
+const column = (id: string) => handle!.query(`.lm-kanban-column[data-column=${id}]`)!;
+const shell = (id: string) => column(id).querySelector('.lm-kanban-column-cards')!;
+// styles apply via the CSSOM (CSP-safe), so getAttribute('style') is the
+// browser-normalized form ("a: b; "); collapse it to the compact "a:b"
+const styleOf = (el: Element) => (el.getAttribute('style') || '').replace(/:\s+/g, ':').replace(/;\s+/g, ';');
+/** A card's column = its DOM ancestor column */
+const colOf = (el: Element) => el.closest('.lm-kanban-column')?.getAttribute('data-column');
+const orderOf = (el: Element) => Number((styleOf(el).match(/order:\s*(-?\d+)/) || [])[1]);
+/** A card's slot index in its stack (card order = idx × 2) */
+const idxOf = (el: Element) => orderOf(el) / 2;
+const indicator = () => handle!.query('.lm-kanban-indicator');
+const indicatorCol = () => indicator()!.closest('.lm-kanban-column')!.getAttribute('data-column');
 
+const COLS = ['todo', 'doing', 'done'];
 /** Stub board geometry: columns 200px wide at x = ci*210, cards 80px tall */
 const layout = () => {
-    const data = ['todo', 'doing', 'done'];
-    data.forEach((id, ci) => {
-        setRect(column(id), { left: ci * 210, top: 0, width: 200, height: 600 });
+    COLS.forEach((id, ci) => {
+        setRect(shell(id), { left: ci * 210, top: 0, width: 200, height: 600 });
     });
     for (const el of cards()) {
-        const track = Number((styleOf(el).match(/grid-column:(\d+)/) || [])[1]) - 1;
-        const row = rowOf(el) - 2;
-        setRect(el, { left: track * 210 + 10, top: 44 + row * 90, width: 180, height: 80 });
+        const ci = COLS.indexOf(colOf(el)!);
+        const idx = idxOf(el);
+        setRect(el, { left: ci * 210 + 10, top: 44 + idx * 90, width: 180, height: 80 });
     }
 };
 const mouse = (type: string, x: number, y: number, target: Element | Document = document) =>
@@ -91,12 +91,12 @@ describe('components/kanban — render', () => {
         const counts = handle!.queryAll('.lm-kanban-column-count').map((el) => el.textContent);
         expect(counts).toEqual(['3', '1', '0']);
         expect(cards()).toHaveLength(4);
-        // todo's cards stack on rows 2,3,4 of track 1
-        expect(columnOf(card('c1'))).toBe('todo');
-        expect(rowOf(card('c1'))).toBe(2);
-        expect(rowOf(card('c2'))).toBe(3);
-        expect(rowOf(card('c3'))).toBe(4);
-        expect(columnOf(card('c4'))).toBe('doing');
+        // todo's cards stack at slots 0,1,2
+        expect(colOf(card('c1'))).toBe('todo');
+        expect(idxOf(card('c1'))).toBe(0);
+        expect(idxOf(card('c2'))).toBe(1);
+        expect(idxOf(card('c3'))).toBe(2);
+        expect(colOf(card('c4'))).toBe('doing');
     });
 
     it('renders description, tags and the accent color', () => {
@@ -108,12 +108,11 @@ describe('components/kanban — render', () => {
         expect(card('c2').querySelector('.lm-kanban-card-tags')).toBeNull();
     });
 
-    it('empty columns render an empty shell (count 0, no cards in the track)', () => {
+    it('empty columns render an empty stack (count 0, no cards)', () => {
         open();
         expect(column('done')).not.toBeNull();
-        const doneTrack = (styleOf(column('done')).match(/grid-column:(\d+)/) || [])[1];
-        const inDone = cards().filter((el) => (styleOf(el).match(/grid-column:(\d+)/) || [])[1] === doneTrack);
-        expect(inDone).toHaveLength(0);
+        expect(shell('done').querySelectorAll('.lm-kanban-card')).toHaveLength(0);
+        expect(cards().filter((el) => colOf(el) === 'done')).toHaveLength(0);
     });
 
     it('mutate the data in place + touch() re-renders (the documented idiom)', () => {
@@ -122,35 +121,35 @@ describe('components/kanban — render', () => {
         data.value[2].cards.push({ id: 'c9', title: 'Landed' });
         data.touch();
         expect(card('c9')).not.toBeNull();
-        expect(columnOf(card('c9'))).toBe('done');
+        expect(colOf(card('c9'))).toBe('done');
         expect(handle!.queryAll('.lm-kanban-column-count').map((el) => el.textContent)).toEqual(['3', '1', '1']);
     });
 });
 
-describe('components/kanban — KEYED IDENTITY (the headline)', () => {
-    it('a card element SURVIVES a cross-column move: same node object, new column', () => {
+describe('components/kanban — identity', () => {
+    it('a cross-column move re-parents the card (new node, correct column)', () => {
         const api = open();
         const el = card('c2'); // capture the element
         api.moveCard('c2', 'done', 0);
         const after = card('c2');
-        expect(columnOf(after)).toBe('done'); // now under the other column
-        expect(after).toBe(el); // THE assertion: identity preserved, DOM moved not rebuilt
-        expect(el.isConnected).toBe(true);
+        expect(colOf(after)).toBe('done'); // now under the other column
+        expect(after).not.toBe(el); // re-parented: a fresh node in the new column
+        expect(el.isConnected).toBe(false); // the old node is gone
     });
 
-    it('within-column reorder keeps every card node', () => {
+    it('within-column reorder keeps every card node (keyed move)', () => {
         const api = open();
         const before = { c1: card('c1'), c2: card('c2'), c3: card('c3') };
         api.moveCard('c3', 'todo', 0); // c3 to the top
-        expect(rowOf(card('c3'))).toBe(2);
-        expect(rowOf(card('c1'))).toBe(3);
-        expect(rowOf(card('c2'))).toBe(4);
+        expect(idxOf(card('c3'))).toBe(0);
+        expect(idxOf(card('c1'))).toBe(1);
+        expect(idxOf(card('c2'))).toBe(2);
         expect(card('c1')).toBe(before.c1);
         expect(card('c2')).toBe(before.c2);
-        expect(card('c3')).toBe(before.c3);
+        expect(card('c3')).toBe(before.c3); // SAME node, reordered
     });
 
-    it('column reorder MOVES the column shells (columns are keyed too)', () => {
+    it('column reorder MOVES the column shells (columns are keyed)', () => {
         const data = store(makeData());
         handle = t(Kanban, { data });
         const todo = column('todo');
@@ -162,13 +161,12 @@ describe('components/kanban — KEYED IDENTITY (the headline)', () => {
             'In progress',
             'To do',
         ]);
-        expect(column('todo')).toBe(todo); // same shells, new tracks
+        expect(column('todo')).toBe(todo); // same shells, moved
         expect(column('done')).toBe(done);
-        expect(styleOf(column('done'))).toContain('grid-column:1');
-        expect(columnOf(card('c1'))).toBe('todo'); // cards follow their column's track
+        expect(colOf(card('c1'))).toBe('todo'); // cards stay under their column
     });
 
-    it('removing a card leaves every other node untouched', () => {
+    it('removing a card leaves every other node in its column untouched', () => {
         const api = open();
         const keep = { c1: card('c1'), c3: card('c3'), c4: card('c4') };
         const gone = card('c2');
@@ -178,7 +176,7 @@ describe('components/kanban — KEYED IDENTITY (the headline)', () => {
         expect(card('c1')).toBe(keep.c1);
         expect(card('c3')).toBe(keep.c3);
         expect(card('c4')).toBe(keep.c4);
-        expect(rowOf(card('c3'))).toBe(3); // c3 moved up a slot
+        expect(idxOf(card('c3'))).toBe(1); // c3 moved up a slot
     });
 });
 
@@ -188,8 +186,8 @@ describe('components/kanban — api + events', () => {
         const data = makeData();
         const api = open({ data, onchange: (d: unknown) => changes.push(d) });
         api.addCard('doing', { id: 'c7', title: 'New work' });
-        expect(columnOf(card('c7'))).toBe('doing');
-        expect(rowOf(card('c7'))).toBe(3);
+        expect(colOf(card('c7'))).toBe('doing');
+        expect(idxOf(card('c7'))).toBe(1);
         expect(data[1].cards.map((c) => c.id)).toEqual(['c4', 'c7']); // MY array mutated
         expect(changes).toEqual([data]);
     });
@@ -231,7 +229,7 @@ describe('components/kanban — api + events', () => {
 });
 
 describe('components/kanban — drag and drop', () => {
-    it('drag commits a cross-column move: indicator, data, events, and the SAME node', () => {
+    it('drag commits a cross-column move: indicator, data, events', () => {
         const moves: unknown[][] = [];
         const changes: unknown[] = [];
         const data = makeData();
@@ -240,12 +238,11 @@ describe('components/kanban — drag and drop', () => {
         const el = card('c1');
 
         mouse('mousedown', 100, 80, el);
-        mouse('mousemove', 320, 60); // over 'doing', above c4's midpoint (y=178)
+        mouse('mousemove', 320, 60); // over 'doing', above c4's midpoint
         expect(moves).toHaveLength(0); // preview only
-        const indicator = handle!.query('.lm-kanban-indicator')!;
-        expect(indicator).not.toBeNull();
-        expect(styleOf(indicator)).toContain('grid-column:2');
-        expect(styleOf(indicator)).toContain('grid-row:2'); // slot 0 of doing
+        expect(indicator()).not.toBeNull();
+        expect(indicatorCol()).toBe('doing');
+        expect(orderOf(indicator()!)).toBe(-1); // slot 0 of doing
         expect(el.className).toContain('lm-kanban-card-dragging');
         expect(styleOf(el)).toContain('transform:translate(220px,-20px)'); // follows the mouse
 
@@ -254,21 +251,19 @@ describe('components/kanban — drag and drop', () => {
         expect(data[0].cards.map((c) => c.id)).toEqual(['c2', 'c3']);
         expect(moves).toEqual([['c1', 'todo', 'doing', 0]]);
         expect(changes).toHaveLength(1);
-        expect(handle!.query('.lm-kanban-indicator')).toBeNull(); // gone after the drop
-        expect(card('c1')).toBe(el); // identity survives the DRAG path too
-        expect(columnOf(el)).toBe('doing');
-        expect(el.className).not.toContain('lm-kanban-card-dragging');
+        expect(indicator()).toBeNull(); // gone after the drop
+        expect(colOf(card('c1'))).toBe('doing'); // re-parented into the new column
+        expect(el.isConnected).toBe(false);
     });
 
     it('drag reorders within a column by card midpoints', () => {
         const data = makeData();
         open({ data });
         layout();
-        // c1 sits at rows 44..124; drag below c3's midpoint (y > 44+2*90+40)
         mouse('mousedown', 100, 80, card('c1'));
-        mouse('mousemove', 100, 320);
-        const indicator = handle!.query('.lm-kanban-indicator')!;
-        expect(styleOf(indicator)).toContain('grid-row:5'); // the end slot
+        mouse('mousemove', 100, 320); // below c3's midpoint
+        expect(indicatorCol()).toBe('todo');
+        expect(orderOf(indicator()!)).toBe(3); // the end slot (index 2 → 2*2-1)
         mouse('mouseup', 100, 320);
         expect(data[0].cards.map((c) => c.id)).toEqual(['c2', 'c3', 'c1']);
     });
@@ -281,13 +276,12 @@ describe('components/kanban — drag and drop', () => {
         const el = card('c4');
         mouse('mousedown', 320, 80, el);
         mouse('mousemove', 500, 300); // over 'done' (x 420..620)
-        expect(styleOf(handle!.query('.lm-kanban-indicator')!)).toContain('grid-column:3');
+        expect(indicatorCol()).toBe('done');
         mouse('mouseup', 500, 300);
         expect(data[2].cards.map((c) => c.id)).toEqual(['c4']);
         expect(data[1].cards).toEqual([]);
         expect(moves).toEqual([['c4', 'doing', 'done', 0]]);
-        expect(card('c4')).toBe(el);
-        expect(columnOf(el)).toBe('done');
+        expect(colOf(card('c4'))).toBe('done');
     });
 
     it('Escape cancels mid-drag: no mutation, no events, indicator gone', () => {
@@ -299,9 +293,9 @@ describe('components/kanban — drag and drop', () => {
         const el = card('c1');
         mouse('mousedown', 100, 80, el);
         mouse('mousemove', 320, 60);
-        expect(handle!.query('.lm-kanban-indicator')).not.toBeNull();
+        expect(indicator()).not.toBeNull();
         document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
-        expect(handle!.query('.lm-kanban-indicator')).toBeNull();
+        expect(indicator()).toBeNull();
         expect(styleOf(el)).not.toContain('transform'); // snapped back
         expect(data[0].cards.map((c) => c.id)).toEqual(['c1', 'c2', 'c3']);
         expect(moves).toEqual([]);
@@ -318,7 +312,7 @@ describe('components/kanban — drag and drop', () => {
         layout();
         mouse('mousedown', 100, 80, card('c1'));
         mouse('mousemove', 2000, 80); // off the board
-        expect(handle!.query('.lm-kanban-indicator')).toBeNull();
+        expect(indicator()).toBeNull();
         mouse('mouseup', 2000, 80);
         expect(moves).toEqual([]);
         expect(data[0].cards).toHaveLength(3);
@@ -334,7 +328,7 @@ describe('components/kanban — drag and drop', () => {
         mouse('mouseup', 320, 60);
         el.click(); // the click a browser synthesizes after mouseup
         expect(clicks).toEqual([]);
-        el.click(); // a genuine later click
+        card('c2').click(); // a genuine later click (c2 may be a fresh node)
         expect(clicks).toEqual(['c2']);
     });
 
@@ -355,7 +349,7 @@ describe('components/kanban — drag and drop', () => {
         const adds = vi.spyOn(document, 'addEventListener');
         const removes = vi.spyOn(document, 'removeEventListener');
         const armed = (spy: { mock: { calls: unknown[][] } }) =>
-            spy.mock.calls.filter(([t]) => t === 'mousemove' || t === 'mouseup' || t === 'keydown').length;
+            spy.mock.calls.filter(([type]) => type === 'mousemove' || type === 'mouseup' || type === 'keydown').length;
         try {
             open();
             layout();
@@ -366,7 +360,7 @@ describe('components/kanban — drag and drop', () => {
             expect(armed(adds)).toBe(3);
             expect(armed(removes)).toBe(3);
             // mid-drag unmount: armed 3 more, the unmount hook releases them
-            mouse('mousedown', 320, 60, card('c1'));
+            mouse('mousedown', 320, 60, card('c4'));
             mouse('mousemove', 100, 80);
             expect(armed(adds)).toBe(6);
             expect(armed(removes)).toBe(3);

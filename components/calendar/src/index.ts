@@ -453,7 +453,7 @@ export const Calendar = component('calendar', {
     const display = state('');          // the input text
     const opened = state(false);
     const resolvedType = state('');     // 'auto' resolves at open (v5)
-    const panelPosition = state('absolute');
+    const panelPosition = state('fixed');
     const anchorTop = state(0);
     const anchorLeft = state(0);
     const panelWidth = state(0);
@@ -798,7 +798,7 @@ export const Calendar = component('calendar', {
         if ((props.type.peek() as string) === 'auto') {
             resolvedType.value = window.innerWidth > 640 ? 'default' : 'picker';
         }
-        panelPosition.value = kind() === 'picker' ? 'bottom' : 'absolute';
+        panelPosition.value = kind() === 'picker' ? 'bottom' : 'fixed';
         if (kind() === 'picker') {
             panelWidth.value = 0; // CSS pins the sheet to 100%
         } else {

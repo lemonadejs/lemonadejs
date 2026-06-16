@@ -13,7 +13,7 @@ clicking star N sets the value to N, clicking the current value again
 resets it to 0, hovering previews the would-be selection, `number`
 controls the star count (shrinking it clamps the value, v5 behavior),
 `tooltip` provides per-star titles (comma-separated), `name` and `size`
-pass through as in v5. Plus MUI-inspired additions the v5 plugin lacked:
+pass through as in v5. Plus additions the v5 plugin lacked:
 disabled, readonly and color variants.
 
 bind vs value (the Switch convention):

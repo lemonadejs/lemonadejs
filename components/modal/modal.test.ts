@@ -4,17 +4,18 @@
  * the minimize dock with exact-size restore, close origins, element-scoped
  * Escape, headerless panels.
  */
-import { describe, it, expect, afterEach } from 'vitest';
+import { describe, it, expect, afterEach, vi } from 'vitest';
 import { store } from 'lemonadejs';
 import { render as t, verify } from 'lemonadejs/test';
 import Modal from '@lemonadejs/modal';
 
-type Api = { open(): void; close(): void; toggle(): void; front(): void; back(): void };
+type Api = { open(): void; close(): void; toggle(): void; front(): void; back(): void; adjust(): void };
 
 let handle: ReturnType<typeof t> | null = null;
 afterEach(() => {
     handle?.unmount();
     handle = null;
+    vi.unstubAllGlobals();
 });
 
 const flush = () => new Promise((r) => setTimeout(r, 0));
@@ -316,5 +317,76 @@ describe('components/modal — behaviors', () => {
         a.el.dispatchEvent(mouse('mousedown', 300, 250)); // below bar: just front()
         document.dispatchEvent(mouse('mouseup', 0, 0));
         expect(parseInt(a.el.style.zIndex)).toBeGreaterThanOrEqual(za);
+    });
+
+    it('title renders in the header', async () => {
+        await openModal({ title: 'Settings' });
+        expect(handle!.query('.lm-modal-title')!.textContent).toBe('Settings');
+    });
+
+    it('onopen fires when the modal opens', async () => {
+        let opens = 0;
+        const { api } = await openModal({ onopen: () => opens++ });
+        expect(opens).toBe(1);
+        api.close();
+        api.open();
+        await flush();
+        expect(opens).toBe(2);
+    });
+
+    it('fullscreen covers the viewport: class on, coordinates off', async () => {
+        const { el } = await openModal({ fullscreen: true });
+        expect(el.classList.contains('lm-modal-fullscreen')).toBe(true);
+        expect(el.style.top).toBe(''); // styles() yields nothing in fullscreen
+    });
+
+    it('responsive promotes tall modals to fullscreen on small screens (v5)', async () => {
+        // jsdom reports documentElement.clientWidth 0 — always "small"
+        const a = await openModal({ height: 400 });
+        expect(a.el.classList.contains('lm-modal-fullscreen')).toBe(true);
+        handle!.unmount();
+        handle = null;
+
+        const b = await openModal({ height: 400, responsive: false });
+        expect(b.el.classList.contains('lm-modal-fullscreen')).toBe(false);
+    });
+
+    it('url loads remote content ONCE, lazily at the first open', async () => {
+        const fetcher = vi.fn(async () => ({ text: async () => '<b>remote</b>' }));
+        vi.stubGlobal('fetch', fetcher);
+
+        const { api } = await openModal({ url: '/fragment.html' });
+        await flush();
+        await flush(); // response → text → render
+        expect(handle!.query('.lm-modal-content')!.innerHTML).toContain('<b>remote</b>');
+        expect(fetcher).toHaveBeenCalledTimes(1);
+
+        api.close();
+        api.open();
+        await flush(); // v5 parity: reopen never refetches
+        expect(fetcher).toHaveBeenCalledTimes(1);
+    });
+
+    it('flip + adjust(): an anchored panel overflowing the bottom flips above its anchor', async () => {
+        const { api, el } = await openModal({ position: 'absolute', autoadjust: true, flip: 37 });
+        // Panel bottom crosses the viewport edge: flip above, clearing the
+        // anchor — marginTop = -(height) - flip
+        setRect(el, { top: 700, left: 100, width: 200, height: 300 });
+        api.adjust();
+        await flush(); // adjust defers one microtask so content can render
+        expect(el.style.marginTop).toBe('-337px');
+
+        // The content shrank (a search filtered the list): adjust() must
+        // recalculate the compensation for the NEW height
+        setRect(el, { top: 700, left: 100, width: 200, height: 100 });
+        api.adjust();
+        await flush();
+        expect(el.style.marginTop).toBe('-137px');
+
+        // Fits again (anchor scrolled up): the margin clears entirely
+        setRect(el, { top: 300, left: 100, width: 200, height: 100 });
+        api.adjust();
+        await flush();
+        expect(el.style.marginTop).toBe('');
     });
 });

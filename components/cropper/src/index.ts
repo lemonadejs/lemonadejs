@@ -1,34 +1,31 @@
 /**
- * <Cropper /> — image crop editor, ported from the v5 plugin
+ * <Cropper /> — a quick image editor (crop · transform · adjust · filter · export)
  *
- * The v5 plugin was a thumbnail + modal + contextmenu shell around the
- * @jsuites/cropper engine. v6 keeps blocks orthogonal: THIS block is the
- * editor itself (compose it with @lemonadejs/modal for the v5 dialog UX);
- * the engine behaviors are ported faithfully from the source:
+ * Evolved from the v5 @jsuites/cropper engine, which v6 vendored inline
+ * (zero runtime deps). The pan / wheel-zoom / crop-box geometry is the v5
+ * math verbatim; everything else is modernised:
  *
- *   - load an image: file picker (click when empty, double click, the
- *     Upload button, api.upload()), drag-and-drop, the src prop (live),
- *     api.setValue() — scaled to fit the area and centered
- *   - drag the IMAGE to pan (mouse or touch, delta divided by the zoom)
- *   - wheel zoom (×0.9 / ×1.1 clamped to [0.1, 5], anchored at the cursor
- *     when it sits on a painted pixel — the v5 zoom-origin math verbatim),
- *     pinch zoom on touch, plus zoom/rotate/brightness/contrast levels
- *     (rotate is the v5 [-1..1] → ±180° model; the filters run the v5
- *     per-pixel pipelines on an offscreen canvas)
- *   - a crop BOX: drag to move (clamped to the area), resize from the
- *     8 edges/corners with live cursor feedback when resizable (5px hit
- *     zones, the configured crop size is the minimum — v5 rules)
- *   - export: save() reads the box pixels off the canvas into a dataURL
- *     and commits { file, content, extension(, original) } — the v5 value
- *     shape — to the bound state, firing onchange
+ *   - ADJUST + FILTER run on the native CanvasRenderingContext2D.filter
+ *     (GPU-accelerated) instead of the v5 per-pixel getImageData loops:
+ *     brightness, contrast, saturation, hue, blur, grayscale, sepia,
+ *     invert — one filter string, baked into the canvas so the crop
+ *     export picks them up for free (prefer the platform over JS emulation)
+ *   - TRANSFORM: continuous rotate (v5 [-1..1] → ±180°) plus 90° steps and
+ *     horizontal/vertical flip, composed in one center transform
+ *   - CROP box: drag to move, resize from the 8 edges/corners when
+ *     resizable, with an optional ASPECT-RATIO lock (free / 1:1 / 16:9 /
+ *     custom) that constrains the box as it resizes
+ *   - LOAD: file picker (click when empty, double click, Upload button,
+ *     api.upload()), drag-and-drop, the src prop (live), api.setValue()
+ *   - EXPORT: save() reads the box pixels into a dataURL with an optional
+ *     output format (png/jpeg/webp), quality and output size, and commits
+ *     { file, content, extension(, original) } — the v5 value shape — to
+ *     the bound state, firing onchange
  *
- * v5 → v6 mapping: value → bind (commits on save/delete/setValue, exactly
- * like v5's Save/Delete buttons); options.area → width/height; the v5
- * wrapper width/height (the crop size) → cropwidth/cropheight;
- * allowResize → resizable; the modal's range controls + Save/Upload/Delete
- * buttons → the built-in controls bar (controls, default true);
- * original kept. Dropped: the thumbnail/modal/contextmenu shell, remote
- * URL parsing (remoteParser) and the HTML-drop path.
+ * v5 → v6 mapping is unchanged from the original port (value → bind,
+ * options.area → width/height, wrapper size → cropwidth/cropheight,
+ * allowResize → resizable, range controls + buttons → the controls bar).
+ * New props/api are purely additive; the old contract still holds.
  *
  * jsdom has no canvas: a null 2d context downgrades drawing to a no-op.
  */
@@ -44,6 +41,21 @@ export type CropData = {
 
 type Box = { left: number; top: number; w: number; h: number };
 
+/** Filter levels that map 1:1 onto a view field and a redraw */
+type NumKey =
+    | 'scale' | 'rotate' | 'brightness' | 'contrast' | 'saturation'
+    | 'hue' | 'blur' | 'grayscale' | 'sepia' | 'invert';
+
+type View = {
+    scale: number; rotate: number;
+    brightness: number; contrast: number; saturation: number;
+    hue: number; blur: number; grayscale: number; sepia: number; invert: number;
+    quarter: number; flipH: boolean; flipV: boolean;
+    left: number; top: number; w: number; h: number;
+    originX: number; originY: number; offsetX: number; offsetY: number;
+    lastX: number | null; lastY: number | null; lastScale: number;
+};
+
 export const Cropper = component('cropper', {
     bind: Object,                 // committed crop data (v5: value)
     src: '',                      // image source — initial and live
@@ -52,13 +64,22 @@ export const Cropper = component('cropper', {
     cropwidth: 300,               // crop box width = minimum size (v5: width)
     cropheight: 240,              // crop box height = minimum size (v5: height)
     resizable: false,             // crop box edge resize (v5: allowResize)
-    controls: true,               // built-in ranges + save/upload/delete bar
+    controls: true,               // built-in ranges + tools + buttons bar
     original: false,              // include the source image in saved data (v5)
+    aspect: 0,                    // crop aspect ratio (w/h); 0 = free
+    format: 'png',                // export format: png | jpeg | webp
+    quality: 0.92,                // export quality for jpeg/webp (0..1)
+    outputwidth: 0,               // export width; 0 = crop box width
+    outputheight: 0,              // export height; 0 = crop box height
     onchange: Function,           // fires when crop data commits (save/delete/setValue)
     onload: Function,             // fires when an image lands in the editor
     api: {
         getValue: Function, setValue: Function, getImage: Function,
         zoom: Function, rotate: Function, brightness: Function, contrast: Function,
+        saturate: Function, grayscale: Function, sepia: Function,
+        hue: Function, blur: Function, invert: Function,
+        rotateLeft: Function, rotateRight: Function,
+        flipHorizontal: Function, flipVertical: Function, setAspect: Function,
         save: Function, reset: Function, upload: Function,
     },
 }, (props, { bind, state, listen, onMount }) => {
@@ -75,55 +96,59 @@ export const Cropper = component('cropper', {
         w: num('cropwidth'),
         h: num('cropheight'),
     });
+    const aspect = state<number>(props.aspect.value || 0);
 
-    // Range-control levels — the single write path into the engine
+    // Control levels — the single write path into the engine
     const zoomLevel = state(1);
     const rotateLevel = state(0);
     const brightLevel = state(0);
     const contrastLevel = state(0);
+    const satLevel = state(0);
+    const hueLevel = state(0);
+    const blurLevel = state(0);
+    const grayLevel = state(0);
+    const sepiaLevel = state(0);
+    const invertLevel = state(0);
 
-    // ---- engine state (v5 properties + image metrics, non-reactive)
-    const view = {
-        scale: 1,
-        rotate: 0,
-        brightness: 0,
-        contrast: 0,
-        // image placement and fitted size
-        left: 0,
-        top: 0,
-        w: 0,
-        h: 0,
-        // v5 zoom-origin bookkeeping
-        originX: 0,
-        originY: 0,
-        offsetX: 0,
-        offsetY: 0,
-        lastX: null as number | null,
-        lastY: null as number | null,
-        lastScale: 1,
+    // ---- engine state (v5 placement + filter/transform view, non-reactive)
+    const view: View = {
+        scale: 1, rotate: 0,
+        brightness: 0, contrast: 0, saturation: 0,
+        hue: 0, blur: 0, grayscale: 0, sepia: 0, invert: 0,
+        quarter: 0, flipH: false, flipV: false,
+        left: 0, top: 0, w: 0, h: 0,
+        originX: 0, originY: 0, offsetX: 0, offsetY: 0,
+        lastX: null, lastY: null, lastScale: 1,
     };
 
     let editor: HTMLElement | null = null;
     let canvas: HTMLCanvasElement | null = null;
     let ctx: CanvasRenderingContext2D | null = null;
-    let filterCanvas: HTMLCanvasElement | null = null;
-    let filterCtx: CanvasRenderingContext2D | null = null;
     let fileInput: HTMLInputElement | null = null;
 
     const image = document.createElement('img');
-    const filtered = document.createElement('img');
-    listen(filtered, 'load', () => {
-        if (view.brightness || view.contrast) {
-            redraw();
-        }
-    });
 
-    /** v5 refreshResizers + runMove/runZoom/runRotate: one full repaint */
+    /** The native CSS-filter string baked into the canvas on draw */
+    const filterString = (): string => {
+        const p: string[] = [];
+        if (view.brightness) { p.push('brightness(' + (1 + view.brightness) + ')'); }
+        if (view.contrast) { p.push('contrast(' + (1 + view.contrast) + ')'); }
+        if (view.saturation) { p.push('saturate(' + (1 + view.saturation) + ')'); }
+        if (view.grayscale) { p.push('grayscale(' + view.grayscale + ')'); }
+        if (view.sepia) { p.push('sepia(' + view.sepia + ')'); }
+        if (view.invert) { p.push('invert(' + view.invert + ')'); }
+        if (view.hue) { p.push('hue-rotate(' + Math.round(view.hue * 180) + 'deg)'); }
+        if (view.blur) { p.push('blur(' + view.blur + 'px)'); }
+        return p.length ? p.join(' ') : 'none';
+    };
+
+    /** v5 runMove/runZoom/runRotate + native-filter paint: one full repaint */
     const redraw = () => {
         if (!ctx || !canvas) {
             return;
         }
         ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.filter = 'none';
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         // v5 runMove: keep the zoom anchored at the wheel origin
         if (view.lastX && view.lastX !== view.originX) {
@@ -147,59 +172,20 @@ export const Cropper = component('cropper', {
         if (view.scale !== 1) {
             ctx.scale(view.scale, view.scale);
         }
-        if (view.rotate) {
-            // v5: [-1..1] → ±180°, around the image center
+        // Transform around the image center: continuous + 90° steps + flips
+        if (view.rotate || view.quarter || view.flipH || view.flipV) {
             ctx.translate(view.w / 2, view.h / 2);
-            ctx.rotate(view.rotate * 180 * (Math.PI / 180));
+            if (view.rotate || view.quarter) {
+                ctx.rotate(view.rotate * Math.PI + view.quarter * (Math.PI / 2));
+            }
+            if (view.flipH || view.flipV) {
+                ctx.scale(view.flipH ? -1 : 1, view.flipV ? -1 : 1);
+            }
             ctx.translate(-view.w / 2, -view.h / 2);
         }
-        const source = view.brightness || view.contrast ? filtered : image;
-        ctx.drawImage(source, 0, 0, view.w, view.h);
-    };
-
-    /** v5 runBrightness: shift every channel by level × 255 */
-    const runBrightness = () => {
-        const data = filterCtx!.getImageData(0, 0, view.w, view.h);
-        const level = view.brightness * 255;
-        for (let i = 0; i < data.data.length; i += 4) {
-            data.data[i] += level;
-            data.data[i + 1] += level;
-            data.data[i + 2] += level;
-        }
-        filterCtx!.putImageData(data, 0, 0);
-    };
-
-    /** v5 runContrast: factor curve around the 128 midpoint */
-    const runContrast = () => {
-        const data = filterCtx!.getImageData(0, 0, view.w, view.h);
-        const level = view.contrast * 255;
-        const factor = (level + 255) / (255.01 - level);
-        for (let i = 0; i < data.data.length; i += 4) {
-            data.data[i] = factor * (data.data[i] - 128) + 128;
-            data.data[i + 1] = factor * (data.data[i + 1] - 128) + 128;
-            data.data[i + 2] = factor * (data.data[i + 2] - 128) + 128;
-        }
-        filterCtx!.putImageData(data, 0, 0);
-    };
-
-    /** v5 refreshFilters: rebuild the filtered copy on an offscreen canvas */
-    const refreshFilters = () => {
-        if (!filterCtx || !filterCanvas || !ctx) {
-            return;
-        }
-        filterCanvas.width = view.w;
-        filterCanvas.height = view.h;
-        filterCtx.clearRect(0, 0, filterCanvas.width, filterCanvas.height);
-        filterCtx.drawImage(image, 0, 0, view.w, view.h);
-        if (view.contrast) {
-            runContrast();
-        }
-        if (view.brightness) {
-            runBrightness();
-        }
-        filtered.width = view.w;
-        filtered.height = view.h;
-        filtered.src = filterCanvas.toDataURL();
+        ctx.filter = filterString();
+        ctx.drawImage(image, 0, 0, view.w, view.h);
+        ctx.filter = 'none';
     };
 
     const resetView = () => {
@@ -207,6 +193,15 @@ export const Cropper = component('cropper', {
         view.rotate = 0;
         view.brightness = 0;
         view.contrast = 0;
+        view.saturation = 0;
+        view.hue = 0;
+        view.blur = 0;
+        view.grayscale = 0;
+        view.sepia = 0;
+        view.invert = 0;
+        view.quarter = 0;
+        view.flipH = false;
+        view.flipV = false;
         view.originX = 0;
         view.originY = 0;
         view.offsetX = 0;
@@ -218,9 +213,15 @@ export const Cropper = component('cropper', {
         rotateLevel.value = 0;
         brightLevel.value = 0;
         contrastLevel.value = 0;
+        satLevel.value = 0;
+        hueLevel.value = 0;
+        blurLevel.value = 0;
+        grayLevel.value = 0;
+        sepiaLevel.value = 0;
+        invertLevel.value = 0;
     };
 
-    /** v5 resetCropSelection: the configured crop size, centered */
+    /** v5 resetCropSelection: the configured crop size, centered (ratio-aware) */
     const resetBox = () => {
         box.value = {
             left: (num('width') - num('cropwidth')) / 2,
@@ -228,6 +229,30 @@ export const Cropper = component('cropper', {
             w: num('cropwidth'),
             h: num('cropheight'),
         };
+        if (aspect.value) {
+            reshapeBox();
+        }
+    };
+
+    /** Reshape the current box to the locked aspect, centered and in-bounds */
+    const reshapeBox = () => {
+        if (!aspect.value) {
+            return;
+        }
+        const aw = num('width');
+        const ah = num('height');
+        let w = box.value.w;
+        let h = w / aspect.value;
+        if (h > ah) { h = ah; w = h * aspect.value; }
+        if (w > aw) { w = aw; h = w / aspect.value; }
+        const left = Math.min(Math.max(0, box.value.left), aw - w);
+        const top = Math.min(Math.max(0, box.value.top), ah - h);
+        box.value = { left, top, w, h };
+    };
+
+    const setAspect = (r: number) => {
+        aspect.value = r || 0;
+        reshapeBox();
     };
 
     /** v5 image.onload: fit to the area, center, enter edition mode */
@@ -250,44 +275,42 @@ export const Cropper = component('cropper', {
         view.top = ah > view.h ? (ah - view.h) / 2 : 0;
         hasImage.value = true;
         resetBox();
-        refreshFilters();
         redraw();
         props.onload?.(image);
     };
     listen(image, 'load', onImageLoad);
 
-    // ---- level subscriptions: ranges, api and gestures all land here
-    onMount(() => zoomLevel.subscribe((v) => {
-        if (typeof v === 'number' && v !== view.scale) {
-            view.scale = v;
-            redraw();
-        }
-    }));
-    onMount(() => rotateLevel.subscribe((v) => {
-        if (typeof v === 'number' && v !== view.rotate) {
-            view.rotate = v;
-            redraw();
-        }
-    }));
-    onMount(() => brightLevel.subscribe((v) => {
-        if (typeof v === 'number' && v !== view.brightness) {
-            view.brightness = v;
-            refreshFilters();
-            redraw();
-        }
-    }));
-    onMount(() => contrastLevel.subscribe((v) => {
-        if (typeof v === 'number' && v !== view.contrast) {
-            view.contrast = v;
-            refreshFilters();
-            redraw();
-        }
-    }));
+    // ---- level subscriptions: ranges, api and gestures all land here.
+    // One uniform wire: write the view field, repaint (native filter — no
+    // per-pixel pass). Zoom and rotate ride the same path as the filters.
+    const wire = (s: { subscribe: (cb: (v: unknown) => void) => () => void }, key: NumKey) =>
+        onMount(() => s.subscribe((v) => {
+            if (typeof v === 'number' && v !== view[key]) {
+                view[key] = v;
+                redraw();
+            }
+        }));
+    wire(zoomLevel, 'scale');
+    wire(rotateLevel, 'rotate');
+    wire(brightLevel, 'brightness');
+    wire(contrastLevel, 'contrast');
+    wire(satLevel, 'saturation');
+    wire(hueLevel, 'hue');
+    wire(blurLevel, 'blur');
+    wire(grayLevel, 'grayscale');
+    wire(sepiaLevel, 'sepia');
+    wire(invertLevel, 'invert');
 
     // src is live: any write loads a new image (initial value in init)
     onMount(() => props.src.subscribe((v) => {
         if (v) {
             image.src = v;
+        }
+    }));
+    // aspect is live: a written ratio reshapes the box
+    onMount(() => props.aspect.subscribe((v) => {
+        if (typeof v === 'number') {
+            setAspect(v);
         }
     }));
 
@@ -340,6 +363,27 @@ export const Cropper = component('cropper', {
         }
     };
 
+    /** Constrain a resized box to the locked aspect, anchored opposite the drag */
+    const enforceAspect = (b: Box, start: Box, d: string, ratio: number, aw: number, ah: number, minW: number, minH: number) => {
+        if (d === 'n' || d === 's') {
+            b.w = b.h * ratio;
+        } else {
+            b.h = b.w / ratio;
+        }
+        if (d.indexOf('w') >= 0) {
+            b.left = (start.left + start.w) - b.w;
+        }
+        if (d.indexOf('n') >= 0) {
+            b.top = (start.top + start.h) - b.h;
+        }
+        if (b.left < 0) { b.left = 0; }
+        if (b.top < 0) { b.top = 0; }
+        if (b.left + b.w > aw) { b.w = aw - b.left; b.h = b.w / ratio; }
+        if (b.top + b.h > ah) { b.h = ah - b.top; b.w = b.h * ratio; }
+        if (b.w < minW) { b.w = minW; b.h = minW / ratio; }
+        if (b.h < minH) { b.h = minH; b.w = minH * ratio; }
+    };
+
     /** v5 editorMouseMove: move or resize the box, clamped to the area */
     const moveBox = (e: MouseEvent, start: Box & { x: number; y: number }, d: string) => {
         const aw = num('width');
@@ -386,6 +430,9 @@ export const Cropper = component('cropper', {
                 }
                 b.top = top;
                 b.h = h;
+            }
+            if (aspect.value) {
+                enforceAspect(b, start, d, aspect.value, aw, ah, minW, minH);
             }
         }
         box.value = b;
@@ -568,12 +615,7 @@ export const Cropper = component('cropper', {
 
     const upload = () => fileInput?.click();
 
-    // ---- export (v5 getImageType / getCroppedContent / updatePhoto)
-    const imageType = (): string | null => {
-        const t = (image.src || '').substring(0, 20);
-        return t.indexOf('data') >= 0 ? t.split('/')[1].split(';')[0] : null;
-    };
-
+    // ---- export: read the box pixels into a dataURL of the chosen format
     const croppedContent = (): string => {
         if (!ctx) {
             return '';
@@ -584,10 +626,25 @@ export const Cropper = component('cropper', {
         if (!octx) {
             return '';
         }
-        out.width = b.w;
-        out.height = b.h;
-        octx.putImageData(ctx.getImageData(b.left, b.top, b.w, b.h), 0, 0);
-        return out.toDataURL();
+        const ow = props.outputwidth.value || b.w;
+        const oh = props.outputheight.value || b.h;
+        out.width = ow;
+        out.height = oh;
+        if (ow === b.w && oh === b.h) {
+            octx.putImageData(ctx.getImageData(b.left, b.top, b.w, b.h), 0, 0);
+        } else {
+            // scale the box to the requested output size via an intermediate canvas
+            const tmp = document.createElement('canvas');
+            tmp.width = b.w;
+            tmp.height = b.h;
+            const tctx = tmp.getContext('2d', { willReadFrequently: true });
+            if (!tctx) {
+                return '';
+            }
+            tctx.putImageData(ctx.getImageData(b.left, b.top, b.w, b.h), 0, 0);
+            octx.drawImage(tmp, 0, 0, b.w, b.h, 0, 0, ow, oh);
+        }
+        return out.toDataURL('image/' + props.format.value, props.quality.value);
     };
 
     const save = (): CropData | null => {
@@ -595,7 +652,7 @@ export const Cropper = component('cropper', {
             return null;
         }
         const content = croppedContent();
-        const data: CropData = { file: content, content, extension: imageType() };
+        const data: CropData = { file: content, content, extension: props.format.value };
         if (props.original.value) {
             data.original = image.src;
         }
@@ -608,6 +665,7 @@ export const Cropper = component('cropper', {
         resetView();
         if (ctx && canvas) {
             ctx.setTransform(1, 0, 0, 1, 0, 0);
+            ctx.filter = 'none';
             ctx.clearRect(0, 0, canvas.width, canvas.height);
         }
         resetBox();
@@ -643,6 +701,17 @@ export const Cropper = component('cropper', {
         rotate: (v: number) => (rotateLevel.value = v),
         brightness: (v: number) => (brightLevel.value = v),
         contrast: (v: number) => (contrastLevel.value = v),
+        saturate: (v: number) => (satLevel.value = v),
+        grayscale: (v: number) => (grayLevel.value = v),
+        sepia: (v: number) => (sepiaLevel.value = v),
+        hue: (v: number) => (hueLevel.value = v),
+        blur: (v: number) => (blurLevel.value = v),
+        invert: (v: number) => (invertLevel.value = v),
+        rotateLeft: () => { view.quarter = (view.quarter + 3) % 4; redraw(); },
+        rotateRight: () => { view.quarter = (view.quarter + 1) % 4; redraw(); },
+        flipHorizontal: () => { view.flipH = !view.flipH; redraw(); },
+        flipVertical: () => { view.flipV = !view.flipV; redraw(); },
+        setAspect,
         save,
         reset,
         upload,
@@ -651,8 +720,6 @@ export const Cropper = component('cropper', {
     const init = (el: HTMLCanvasElement) => {
         canvas = el;
         ctx = canvas.getContext('2d', { willReadFrequently: true });
-        filterCanvas = document.createElement('canvas');
-        filterCtx = filterCanvas.getContext('2d', { willReadFrequently: true });
         if (props.src.value) {
             image.src = props.src.value;
         }
@@ -662,6 +729,8 @@ export const Cropper = component('cropper', {
         const b = box.value;
         return css({ left: b.left, top: b.top, width: b.w, height: b.h });
     };
+
+    const toggle = (s: { value: number }) => (s.value = s.value ? 0 : 1);
 
     return html`<div class="lm-cropper ${() => (hasImage.value ? 'lm-cropper-edition' : '')} ${() =>
         dragging.value ? 'lm-cropper-dragging' : ''}">
@@ -702,6 +771,48 @@ export const Cropper = component('cropper', {
                     <label class="lm-cropper-range">Contrast<input type="range"
                         min="-1" max="1" step="0.05" bind="${contrastLevel}"
                         disabled="${() => !hasImage.value}" /></label>
+                    <label class="lm-cropper-range">Saturation<input type="range"
+                        min="-1" max="1" step="0.05" bind="${satLevel}"
+                        disabled="${() => !hasImage.value}" /></label>
+                    <label class="lm-cropper-range">Hue<input type="range"
+                        min="-1" max="1" step="0.05" bind="${hueLevel}"
+                        disabled="${() => !hasImage.value}" /></label>
+                    <label class="lm-cropper-range">Blur<input type="range"
+                        min="0" max="12" step="0.5" bind="${blurLevel}"
+                        disabled="${() => !hasImage.value}" /></label>
+                </div>
+                <div class="lm-cropper-tools">
+                    <button type="button" class="lm-cropper-transform" title="Rotate left"
+                        disabled="${() => !hasImage.value}"
+                        onclick="${() => { view.quarter = (view.quarter + 3) % 4; redraw(); }}">⟲</button>
+                    <button type="button" class="lm-cropper-transform" title="Rotate right"
+                        disabled="${() => !hasImage.value}"
+                        onclick="${() => { view.quarter = (view.quarter + 1) % 4; redraw(); }}">⟳</button>
+                    <button type="button" class="lm-cropper-transform" title="Flip horizontal"
+                        disabled="${() => !hasImage.value}"
+                        onclick="${() => { view.flipH = !view.flipH; redraw(); }}">⇆</button>
+                    <button type="button" class="lm-cropper-transform" title="Flip vertical"
+                        disabled="${() => !hasImage.value}"
+                        onclick="${() => { view.flipV = !view.flipV; redraw(); }}">⇅</button>
+                    <button type="button" class="lm-cropper-filter ${() => (grayLevel.value ? 'lm-active' : '')}"
+                        disabled="${() => !hasImage.value}"
+                        onclick="${() => toggle(grayLevel)}">B&W</button>
+                    <button type="button" class="lm-cropper-filter ${() => (sepiaLevel.value ? 'lm-active' : '')}"
+                        disabled="${() => !hasImage.value}"
+                        onclick="${() => toggle(sepiaLevel)}">Sepia</button>
+                    <button type="button" class="lm-cropper-filter ${() => (invertLevel.value ? 'lm-active' : '')}"
+                        disabled="${() => !hasImage.value}"
+                        onclick="${() => toggle(invertLevel)}">Invert</button>
+                    ${() =>
+                        props.resizable.value &&
+                        html`<select class="lm-cropper-aspect"
+                            disabled="${() => !hasImage.value}"
+                            onchange="${(e: Event) => setAspect(parseFloat((e.target as HTMLSelectElement).value))}">
+                            <option value="0">Free</option>
+                            <option value="1">1:1</option>
+                            <option value="1.7778">16:9</option>
+                            <option value="1.3333">4:3</option>
+                        </select>`}
                 </div>
                 <div class="lm-cropper-buttons">
                     <button type="button" class="lm-cropper-save"

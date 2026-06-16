@@ -505,7 +505,7 @@
         "name": "cropper",
         "path": "components/cropper",
         "verified": true,
-        "checks": 21,
+        "checks": 31,
         "contract": {
             "name": "cropper",
             "props": {
@@ -540,6 +540,26 @@
                 "original": {
                     "type": "boolean",
                     "default": false
+                },
+                "aspect": {
+                    "type": "number",
+                    "default": 0
+                },
+                "format": {
+                    "type": "string",
+                    "default": "png"
+                },
+                "quality": {
+                    "type": "number",
+                    "default": 0.92
+                },
+                "outputwidth": {
+                    "type": "number",
+                    "default": 0
+                },
+                "outputheight": {
+                    "type": "number",
+                    "default": 0
                 }
             },
             "bind": {
@@ -557,6 +577,17 @@
                 "rotate",
                 "brightness",
                 "contrast",
+                "saturate",
+                "grayscale",
+                "sepia",
+                "hue",
+                "blur",
+                "invert",
+                "rotateLeft",
+                "rotateRight",
+                "flipHorizontal",
+                "flipVertical",
+                "setAspect",
                 "save",
                 "reset",
                 "upload"
@@ -1102,7 +1133,7 @@
         "name": "modal",
         "path": "components/modal",
         "verified": true,
-        "checks": 49,
+        "checks": 51,
         "contract": {
             "name": "modal",
             "props": {
@@ -1170,6 +1201,10 @@
                     "type": "boolean",
                     "default": false
                 },
+                "flip": {
+                    "type": "number",
+                    "default": 0
+                },
                 "focus": {
                     "type": "boolean",
                     "default": true
@@ -1205,7 +1240,8 @@
                 "close",
                 "toggle",
                 "front",
-                "back"
+                "back",
+                "adjust"
             ]
         }
     },

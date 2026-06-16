@@ -109,6 +109,13 @@
     padding-right: 46px;
 }
 
+/* The panel is a CSS-anchored Modal (position absolute): placed under
+   the input by the browser itself, so it follows any scrolling natively */
+.lm-dropdown .lm-modal-root[data-position='absolute'] {
+    top: calc(100% + 1px);
+    left: 0;
+}
+
 /* The panel is a Modal: flush, list-ready. The WIDTH comes from the
    width prop (>= the input width, computed at open) — min-width:100%
    would resolve against the viewport on a fixed-position panel. */

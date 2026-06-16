@@ -6,7 +6,7 @@ LemonadeJS drawer block — anchored side panels and the bottom sheet on the Mod
 
 ## Overview
 
-<Drawer /> — a side panel sliding from an edge, MUI-inspired, built ON
+<Drawer /> — a side panel sliding from an edge, built ON
 the Modal primitive: position left/right are already full-viewport-height
 side panels and bottom is the sheet mode, so the drawer is a thin
 composition — anchor mapping, its own header chrome and the slide-in

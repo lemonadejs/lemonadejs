@@ -38,7 +38,10 @@ const open = (props: Record<string, unknown> = {}) => {
 };
 
 const bars = () => handle!.queryAll('.lm-gantt-bar');
-const styleOf = (el: Element) => el.getAttribute('style') || '';
+// styles apply via the CSSOM (CSP-safe), so getAttribute('style') is the
+// browser-normalized form ("a: b; "); collapse it to the compact "a:b" the
+// assertions are written against
+const styleOf = (el: Element) => (el.getAttribute('style') || '').replace(/:\s+/g, ':').replace(/;\s+/g, ';');
 
 // 2026-06-01..20 = 20 days inclusive → each day = 5% of the range
 describe('components/gantt — %-positioned, table-embeddable', () => {
@@ -65,7 +68,7 @@ describe('components/gantt — %-positioned, table-embeddable', () => {
             end: '2026-06-20',
             header: false,
         });
-        const secondStyles = [...second.root.querySelectorAll('.lm-gantt-bar')].map((el) => el.getAttribute('style'));
+        const secondStyles = [...second.root.querySelectorAll('.lm-gantt-bar')].map((el) => styleOf(el));
         expect(secondStyles[0]).toContain('left:0%');
         expect(firstStyles[0]!.includes('left:0%')).toBe(true);
         expect(secondStyles[1]).toContain('left:15%');
@@ -241,5 +244,39 @@ describe('components/gantt — %-positioned, table-embeddable', () => {
         data.value[0].end = '2026-06-10';
         data.touch();
         expect(lane().getAttribute('style')).toContain('width: 50%');
+    });
+
+    it('rowheight sets the lane height', () => {
+        open({ rowheight: 48 });
+        const row = handle!.query('.lm-gantt-row') as HTMLElement;
+        expect(styleOf(row)).toContain('height:48px');
+    });
+
+    it('snap quantizes drag moves to N-day steps', () => {
+        const changes: unknown[][] = [];
+        const data = tasks();
+        open({ data, editable: true, snap: 7, onchange: (...a: unknown[]) => changes.push(a) });
+
+        const area = handle!.query('.lm-gantt-rows') as HTMLElement;
+        area.getBoundingClientRect = () =>
+            ({ left: 0, top: 0, width: 1000, height: 100, right: 1000, bottom: 100, x: 0, y: 0, toJSON: () => '' }) as DOMRect;
+        const bar = bars()[0];
+        bar.getBoundingClientRect = () =>
+            ({ left: 0, top: 0, width: 250, height: 20, right: 250, bottom: 20, x: 0, y: 0, toJSON: () => '' }) as DOMRect;
+
+        // 1000px / 20 days = 50px/day; +100px = +2 days → snaps DOWN to 0
+        bar.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, clientX: 100, clientY: 10 }));
+        document.dispatchEvent(new MouseEvent('mousemove', { bubbles: true, clientX: 200, clientY: 10 }));
+        document.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, clientX: 200, clientY: 10 }));
+        expect(data[0].start).toBe('2026-06-01'); // unmoved — below the snap step
+        expect(changes).toHaveLength(0);
+
+        // +200px = +4 days → snaps to ONE 7-day step
+        bar.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, clientX: 100, clientY: 10 }));
+        document.dispatchEvent(new MouseEvent('mousemove', { bubbles: true, clientX: 300, clientY: 10 }));
+        document.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, clientX: 300, clientY: 10 }));
+        expect(data[0].start).toBe('2026-06-08');
+        expect(data[0].end).toBe('2026-06-12');
+        expect(changes).toEqual([[data[0], '2026-06-08', '2026-06-12']]);
     });
 });

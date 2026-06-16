@@ -790,7 +790,9 @@ var lemonade = (() => {
       return best;
     };
     for (const key of Object.keys(incoming)) {
-      if (key in schema.props || schema.events.indexOf(key) >= 0 || key === "ref" || key === "children" || key === "expose" || key === "bind" && schema.bind !== null) {
+      if (key in schema.props || schema.events.indexOf(key) >= 0 || key === "ref" || key === "children" || key === "expose" || // A bind contract implies the Bindable protocol: bind AND
+      // onchange are both legitimate without separate declarations
+      (key === "bind" || key === "onchange") && schema.bind !== null) {
         continue;
       }
       const hint = closest(key, Object.keys(schema.props).concat(schema.events));
@@ -1061,17 +1063,32 @@ var lemonade = (() => {
     refs.length = 0;
   };
   var styled = /* @__PURE__ */ new WeakSet();
+  var canAdopt = function() {
+    try {
+      return typeof document !== "undefined" && "adoptedStyleSheets" in Document.prototype && !!new CSSStyleSheet();
+    } catch {
+      return false;
+    }
+  }();
   var injectStyles = function(template) {
     if (!template.styles || styled.has(template) || typeof document === "undefined") {
       return;
     }
     styled.add(template);
-    for (const cssText of template.styles) {
-      const el = document.createElement("style");
-      el.setAttribute("data-lemonade", "");
-      el.textContent = cssText;
-      document.head.appendChild(el);
+    const cssText = template.styles.join("\n");
+    if (canAdopt) {
+      try {
+        const sheet = new CSSStyleSheet();
+        sheet.replaceSync(cssText);
+        document.adoptedStyleSheets = [...document.adoptedStyleSheets, sheet];
+        return;
+      } catch {
+      }
     }
+    const el = document.createElement("style");
+    el.setAttribute("data-lemonade", "");
+    el.textContent = cssText;
+    document.head.appendChild(el);
   };
   var propagateTouch = function(ci) {
     if (ci.dead || !ci.live) {
@@ -1390,6 +1407,8 @@ var lemonade = (() => {
       }
     } else if (typeof v === "object" || typeof v === "function") {
       el[name] = v;
+    } else if (name === "style") {
+      el.style.cssText = String(v);
     } else if (!svg && name !== "class" && name !== "style" && name in el) {
       try {
         el[name] = v;
@@ -1599,7 +1618,10 @@ var lemonade = (() => {
     const isSvg = svg || SVG_TAGS.has(tag);
     const el = isSvg ? document.createElementNS(SVG_NS, tag) : document.createElement(tag);
     if (DEV && vnode.props && vnode.props.some((p) => p.name === "bind")) {
-      if (vnode.props.some((p) => p.name === "value" || p.name === "checked")) {
+      const isRadio = vnode.props.some(
+        (p) => p.name === "type" && p.parts.length === 1 && p.parts[0] === "radio"
+      );
+      if (!isRadio && vnode.props.some((p) => p.name === "value" || p.name === "checked")) {
         warn("LJS-304", "<" + tag + ">");
       }
     }
@@ -2119,7 +2141,7 @@ var lemonade = (() => {
             return this._ensure()[key].peek();
           },
           set(v) {
-            this._ensure()[key].value = v;
+            this._ensure()[key].value = coerce(v, schema.props[key]);
           }
         });
       }
@@ -2131,7 +2153,7 @@ var lemonade = (() => {
           },
           set(v) {
             this._ensure();
-            this._bind.value = v;
+            this._bind.value = coerce(v, schema.bind);
           }
         });
       }

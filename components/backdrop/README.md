@@ -6,8 +6,8 @@ LemonadeJS backdrop block — contract-verified, framework-agnostic.
 
 ## Overview
 
-<Backdrop /> — a full-screen dimming overlay, modeled on MUI's
-Backdrop on the v6 contract model.
+<Backdrop /> — a full-screen dimming overlay on the v6 contract
+model.
 
 A fixed inset-0 layer that dims (and optionally blurs) everything
 behind it, flex-centering whatever children the call site provides —

@@ -47,20 +47,83 @@
 
 .lm-cropper .lm-cropper-ranges {
     display: flex;
+    flex-wrap: wrap;
     justify-content: center;
-    gap: 10px;
-    text-align: center;
+    gap: 6px 14px;
+    padding: 12px 14px;
 }
 
 .lm-cropper .lm-cropper-range {
-    padding: 14px;
-    font-size: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-size: 11px;
     color: #475569;
 }
 
 .lm-cropper .lm-cropper-range input {
     display: block;
-    margin-top: 6px;
+    margin-top: 4px;
+    width: 92px;
+    accent-color: #2563eb;
+}
+
+/* ---- transform / filter / aspect tools row */
+.lm-cropper .lm-cropper-tools {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    padding: 0 14px 12px;
+}
+
+.lm-cropper .lm-cropper-transform,
+.lm-cropper .lm-cropper-filter {
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    background: #fff;
+    color: #0f172a;
+    font: inherit;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.lm-cropper .lm-cropper-transform {
+    width: 30px;
+    height: 30px;
+    font-size: 15px;
+    line-height: 1;
+}
+
+.lm-cropper .lm-cropper-filter {
+    padding: 0 10px;
+    height: 30px;
+}
+
+.lm-cropper .lm-cropper-filter.lm-active {
+    background: #2563eb;
+    border-color: #2563eb;
+    color: #fff;
+}
+
+.lm-cropper .lm-cropper-transform:disabled,
+.lm-cropper .lm-cropper-filter:disabled,
+.lm-cropper .lm-cropper-aspect:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.lm-cropper .lm-cropper-aspect {
+    margin-left: auto;
+    height: 30px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    background: #fff;
+    color: #0f172a;
+    font: inherit;
+    font-size: 12px;
+    padding: 0 6px;
+    cursor: pointer;
 }
 
 .lm-cropper .lm-cropper-buttons {

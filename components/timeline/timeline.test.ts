@@ -34,6 +34,11 @@ const feed = () => handle!.query('.lm-timeline-data')!;
 const header = () => handle!.query('.lm-timeline-header')!;
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
 
+// styles apply via the CSSOM (CSP-safe), so getAttribute('style') is the
+// browser-normalized form ("a: b; "); collapse to canonical "a:b;c:d"
+const styleN = (el: Element) =>
+    (el.getAttribute('style') || '').replace(/:\s+/g, ':').replace(/;\s+/g, ';').replace(/;$/, '');
+
 describe('components/timeline', () => {
     it('passes verify() — the registry gate', () => {
         const report = verify(Timeline);
@@ -161,7 +166,7 @@ describe('components/timeline', () => {
                 { title: 'B', date: '2026-06-11T12:00:00' },
             ],
         });
-        const style = items()[0].getAttribute('style')!;
+        const style = styleN(items()[0]);
         expect(style).toContain('--lm-timeline-border-color:red');
         expect(style).toContain('--lm-timeline-border-style:dashed');
         expect(items()[1].hasAttribute('style')).toBe(false);
@@ -263,8 +268,8 @@ describe('components/timeline', () => {
         handle = t(App);
         expect(titles()).toEqual(['Attr title', 'From HTML']); // sorted by date
         expect(bullets()).toEqual(['Tuesday, 09', 'Wednesday, 10']);
-        expect(items()[1].getAttribute('style')).toContain('--lm-timeline-border-color:red');
-        expect(items()[1].getAttribute('style')).toContain('--lm-timeline-border-style:dotted');
+        expect(styleN(items()[1])).toContain('--lm-timeline-border-color:red');
+        expect(styleN(items()[1])).toContain('--lm-timeline-border-style:dotted');
     });
 
     it('url: fetches the data (plain array or { result }) and renders it', async () => {

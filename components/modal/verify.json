@@ -135,6 +135,14 @@
             "pass": true
         },
         {
+            "name": "prop flip",
+            "pass": true
+        },
+        {
+            "name": "prop flip (live state)",
+            "pass": true
+        },
+        {
             "name": "prop focus",
             "pass": true
         },

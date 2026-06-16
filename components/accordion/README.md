@@ -6,7 +6,7 @@ LemonadeJS accordion block — contract-verified, framework-agnostic.
 
 ## Overview
 
-<Accordion /> — MUI-inspired expansion panels on the v6 contract model.
+<Accordion /> — expansion panels on the v6 contract model.
 
 Panels come from a data array ({ title, content?, disabled? }):
   - content is trusted TEXT (v6 strings are always text, never HTML);
@@ -15,10 +15,10 @@ Panels come from a data array ({ title, content?, disabled? }):
     the collapse is a max-height transition driven by data-open (CSS),
     never an unmount, so content state (inputs, nested components)
     survives open/close cycles
-  - exclusive by default (MUI's controlled accordion group): bind is the
+  - exclusive by default (a controlled accordion group): bind is the
     expanded INDEX, -1/null = all closed, opening one closes the other
-  - multiple: bind becomes an ARRAY of open indices (MUI's default
-    uncontrolled behavior, made explicit)
+  - multiple: bind becomes an ARRAY of open indices — each panel
+    toggles independently
 
 Headers are real <button>s: native Enter/Space toggling, native disabled
 semantics; ArrowUp/ArrowDown walk focus between enabled headers. Each

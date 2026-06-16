@@ -115,7 +115,9 @@ export const Contextmenu = component('contextmenu', {
             cursors.value = {};
         });
         wrapper?.classList.add('lm-menu-focus');
-        wrapper?.focus();
+        // preventScroll: the wrapper is an in-flow element — default focus
+        // would scroll it into view, jumping the page under the menu
+        wrapper?.focus({ preventScroll: true });
         props.onopen?.();
         if (adjustToCursor) {
             // v5: when Modal's auto-adjust flipped the menu, anchor the
@@ -280,6 +282,21 @@ export const Contextmenu = component('contextmenu', {
         }
     });
 
+    // Any scroll outside the menu closes it (matches the OS context menu:
+    // the menu refers to the spot that was right-clicked, and scrolling
+    // moves that content away). Capture phase: scroll does not bubble.
+    // Scrolling INSIDE a long menu list keeps it open
+    listen(
+        window,
+        'scroll',
+        (e: Event) => {
+            if (levels.value.length && !(e.target instanceof Node && wrapper?.contains(e.target))) {
+                closeFrom(0);
+            }
+        },
+        true
+    );
+
     const itemView = (level: number, index: number, item: ContextItem) =>
         item.type === 'line'
             ? html`<li class="lm-contextmenu-line" role="separator"></li>`
@@ -318,7 +335,7 @@ export const Contextmenu = component('contextmenu', {
     // through the live children bindings). This replaced a WeakMap view
     // cache that existed before live component-prop patching.
     const levelView = (lvl: Level, li: number) =>
-        html`<${Modal} key="${lvl}" header="${false}" position="absolute" bind="${true}"
+        html`<${Modal} key="${lvl}" header="${false}" position="fixed" bind="${true}"
             top="${lvl.top}" left="${lvl.left}"
             focus="${false}" responsive="${false}" autoadjust overflow>
             <ul class="lm-contextmenu-list" role="menu" aria-orientation="vertical">${lvl.options.map(
