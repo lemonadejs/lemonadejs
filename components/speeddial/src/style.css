@@ -18,7 +18,7 @@
     height: 56px;
     border: none;
     border-radius: 50%;
-    background: #2563eb;
+    background: var(--lm-main-color, #2563eb);
     color: #fff;
     cursor: pointer;
     display: inline-flex;
@@ -31,11 +31,11 @@
 }
 
 .lm-speeddial .lm-speeddial-fab:hover {
-    background: #1d4ed8;
+    background: var(--lm-main-color-highlight, #1d4ed8);
 }
 
 .lm-speeddial .lm-speeddial-fab:focus-visible {
-    outline: 2px solid #2563eb;
+    outline: 2px solid var(--lm-border-outline, #2563eb);
     outline-offset: 2px;
 }
 
@@ -105,8 +105,8 @@
     height: 40px;
     border: none;
     border-radius: 50%;
-    background: #fff;
-    color: #3f3f46;
+    background: var(--lm-background-color, #fff);
+    color: var(--lm-font-color, #3f3f46);
     cursor: pointer;
     display: inline-flex;
     align-items: center;
@@ -122,7 +122,7 @@
 }
 
 .lm-speeddial .lm-speeddial-action:hover {
-    background: #f4f4f5;
+    background: var(--lm-background-color-highlight, #f4f4f5);
 }
 
 .lm-speeddial.lm-speeddial-open .lm-speeddial-action {
@@ -141,11 +141,11 @@
     right: calc(100% + 10px);
     top: 50%;
     transform: translateY(-50%);
-    background: #3f3f46;
-    color: #fff;
+    background: var(--lm-text-color, #3f3f46);
+    color: var(--lm-background-color, #fff);
     font: 12px/1 system-ui, sans-serif;
     padding: 5px 8px;
-    border-radius: 4px;
+    border-radius: var(--lm-radius, 6px);
     white-space: nowrap;
     opacity: 0;
     pointer-events: none;

@@ -1,10 +1,10 @@
 /* <List /> — default styling, lm-list-* convention */
 .lm-list {
     font: 14px/1.45 system-ui, sans-serif;
-    color: #18181b;
-    border: 1px solid #e4e4e7;
+    color: var(--lm-font-color, #18181b);
+    border: 1px solid var(--lm-border-color, #e4e4e7);
     border-radius: 10px;
-    background: #fff;
+    background: var(--lm-background-color, #fff);
     overflow: hidden;
 }
 
@@ -13,15 +13,15 @@
     align-items: center;
     gap: 12px;
     padding: 10px 12px;
-    border-bottom: 1px solid #e4e4e7;
+    border-bottom: 1px solid var(--lm-border-color, #e4e4e7);
 }
 
 .lm-list-search {
     flex: 1;
     min-width: 0;
     padding: 6px 10px;
-    border: 1px solid #d4d4d8;
-    border-radius: 6px;
+    border: 1px solid var(--lm-border-color, #e4e4e7);
+    border-radius: var(--lm-radius, 6px);
     font: inherit;
 }
 
@@ -53,11 +53,11 @@
 }
 
 .lm-list-item[data-clickable='true']:hover {
-    background: #fafafa;
+    background: var(--lm-background-color-header, #fafafa);
 }
 
 .lm-list-divider .lm-list-item {
-    border-bottom: 1px solid #f4f4f5;
+    border-bottom: 1px solid var(--lm-background-color-highlight, #f4f4f5);
 }
 
 .lm-list-divider .lm-list-item:last-child {
@@ -70,7 +70,7 @@
     height: 36px;
     border-radius: 50%;
     object-fit: cover;
-    background: #e4e4e7;
+    background: var(--lm-border-color, #e4e4e7);
 }
 
 .lm-list-icon {
@@ -79,7 +79,7 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    color: #71717a;
+    color: var(--lm-font-grayout, #71717a);
 }
 
 .lm-list-text {
@@ -95,7 +95,7 @@
 
 .lm-list-secondary {
     font-size: 12.5px;
-    color: #71717a;
+    color: var(--lm-font-grayout, #71717a);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -120,7 +120,7 @@
 .lm-list-message {
     padding: 28px;
     text-align: center;
-    color: #a1a1aa;
+    color: var(--lm-font-grayout, #a1a1aa);
 }
 
 /* Three zones: info | CENTERED pager | (balance) — the pager sits on
@@ -131,10 +131,10 @@
     align-items: center;
     gap: 16px;
     padding: 8px 14px;
-    border-top: 1px solid #e4e4e7;
-    background: #fafafa;
+    border-top: 1px solid var(--lm-border-color, #e4e4e7);
+    background: var(--lm-background-color-header, #fafafa);
     font-size: 12.5px;
-    color: #52525b;
+    color: var(--lm-font-grayout, #52525b);
 }
 
 .lm-list-footer::after {
@@ -159,20 +159,20 @@
     padding: 0 6px;
     border: 1px solid transparent;
     background: transparent;
-    border-radius: 6px;
+    border-radius: var(--lm-radius, 6px);
     font: inherit;
-    color: #3f3f46;
+    color: var(--lm-font-color, #3f3f46);
     cursor: pointer;
     font-variant-numeric: tabular-nums;
 }
 
 .lm-list-pages button:hover:not(:disabled):not([data-current]) {
-    background: #e4e4e7;
+    background: var(--lm-border-color, #e4e4e7);
 }
 
 .lm-list-pages button[data-current] {
-    background: #2563eb;
-    border-color: #2563eb;
+    background: var(--lm-main-color, #2563eb);
+    border-color: var(--lm-main-color, #2563eb);
     color: #fff;
     font-weight: 600;
 }
@@ -183,7 +183,7 @@
 }
 
 .lm-list-gap {
-    color: #a1a1aa;
+    color: var(--lm-font-grayout, #a1a1aa);
     padding: 0 2px;
     user-select: none;
 }

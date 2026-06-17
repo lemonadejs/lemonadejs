@@ -9,8 +9,15 @@ createWebComponent(Tabs);
 
 const App: Component = (props, { state }) => {
     const index = store(0);
+    const variant = store('modern');
     const log = state<string[]>([]);
     const note = (entry: string) => (log.value = [...log.value, entry]);
+
+    // A long tab set to demonstrate the header overflow scroll
+    const many: TabItem[] = Array.from({ length: 14 }, (_, i) => ({
+        title: 'Section ' + (i + 1),
+        content: '<h4>Section ' + (i + 1) + '</h4><p>The header row scrolls horizontally when the tabs overflow.</p>',
+    }));
 
     let api: { open: (i: number) => void; create: (item: TabItem, position?: number | null, select?: boolean) => void };
 
@@ -30,6 +37,23 @@ const App: Component = (props, { state }) => {
             onchangeposition="${(from: number, to: number) => note('onchangeposition → ' + from + ' → ' + to)}" />
         <p>Bound index: <b>${() => String(index.value)}</b></p>
         <button onclick="${() => (index.value = (index.value + 1) % 3)}">write from outside (no onchange echo)</button>
+
+        <h3>Style variant (basic vs modern) + animated indicator</h3>
+        <button onclick="${() => (variant.value = 'basic')}">basic</button>
+        <button onclick="${() => (variant.value = 'modern')}">modern</button>
+        <span> current: <b>${() => variant.value || 'basic'}</b></span>
+        <${Tabs}
+            variant="${variant}"
+            data="${[
+                { title: 'Overview', icon: 'dashboard', content: '<h4>Overview</h4><p>Switch the variant above — the panel fades and the modern indicator slides in.</p>' },
+                { title: 'Activity', icon: 'bolt', content: '<h4>Activity</h4><p>Same block, two looks.</p>' },
+                { title: 'Reports', icon: 'bar_chart', content: '<h4>Reports</h4><p>Animations respect prefers-reduced-motion.</p>' },
+            ]}" />
+
+        <h3>Overflow scroll — many tabs (modern), header scrolls horizontally</h3>
+        <div style="max-width: 420px; border: 1px solid #e4e4e7; border-radius: 8px; padding: 8px;">
+            <${Tabs} variant="modern" data="${many}" />
+        </div>
 
         <h3>Element children as tabs, selected attribute, center position, round</h3>
         <${Tabs} position="center" round>

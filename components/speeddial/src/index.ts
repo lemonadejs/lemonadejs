@@ -30,7 +30,7 @@ export type SpeeddialAction = {
 export const Speeddial = component('speeddial', {
     bind: Boolean,                // two-way open state (`fanned`)
     options: Array,               // SpeeddialAction[] — live
-    icon: '',                     // FAB icon (default '+' glyph; rotates 45° open)
+    icon: '',                     // FAB icon (default 'add' icon; rotates 45° to × when open)
     direction: '',                // '' = up | down | left | right
     position: '',                 // '' = static in flow | 'fixed' (bottom-right)
     label: '',                    // aria-label for the FAB
@@ -108,7 +108,7 @@ export const Speeddial = component('speeddial', {
             aria-expanded="${() => (fanned.value ? 'true' : 'false')}"
             disabled="${props.disabled}"
             onclick="${toggle}">
-            <span class="lm-speeddial-icon material-icons">${() => props.icon.value || '+'}</span>
+            <span class="lm-speeddial-icon material-icons">${() => props.icon.value || 'add'}</span>
         </button>
         <div class="lm-speeddial-actions" role="menu" aria-hidden="${() => (fanned.value ? 'false' : 'true')}">
             <!-- deliberately UNKEYED: the buttons are stateless and the

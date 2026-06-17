@@ -15,7 +15,7 @@
 
 .lm-formify .lm-formify-group > label {
     font: 13px/1.4 system-ui, sans-serif;
-    color: #374151;
+    color: var(--lm-font-color, #374151);
 }
 
 /* Horizontal row of groups: <div class="lm-formify-row"> */

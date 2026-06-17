@@ -31,15 +31,15 @@
 }
 
 .lm-rating[data-color='orange'] .lm-rating-star[data-selected='1'] {
-    color: #ea580c;
+    color: var(--lm-color-warning, #ea580c);
 }
 
 .lm-rating[data-color='green'] .lm-rating-star[data-selected='1'] {
-    color: #16a34a;
+    color: var(--lm-color-success, #16a34a);
 }
 
 .lm-rating[data-color='purple'] .lm-rating-star[data-selected='1'] {
-    color: #9333ea;
+    color: var(--lm-color-purple, #9333ea);
 }
 
 /* Sizes (v5 had small) */

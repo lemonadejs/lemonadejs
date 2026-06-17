@@ -11,7 +11,7 @@
     margin: 0;
     padding: 8px 16px;
     border: 1px solid transparent;
-    border-radius: 6px;
+    border-radius: var(--lm-radius, 6px);
     background: var(--lm-button-main);
     color: #fff;
     font: 500 14px/1.45 system-ui, sans-serif;

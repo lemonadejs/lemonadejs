@@ -1,0 +1,610 @@
+/* =====================================================================
+   LemonadeJS components — template / theming contract
+   ---------------------------------------------------------------------
+   Every component styles itself from the --lm-* tokens below. Nothing in
+   a component's own style.css should hardcode a color, radius, shadow or
+   focus ring — it reads a token, so the whole catalog re-themes from one
+   place.
+
+   To customize globally: override any token on :root (or on a scope).
+       :root { --lm-main-color: #7c3aed; --lm-radius: 8px; }
+
+   To create a theme: declare a class that overrides tokens, then add the
+   class to a container (see .lm-green below for the pattern).
+       <div class="lm-purple"> ... </div>
+
+   Dark mode: follows the OS automatically (prefers-color-scheme) and can
+   be forced either way with the .lm-dark-mode / .lm-light-mode classes.
+   ===================================================================== */
+:root {
+    --lm-font-color: inherit;
+    --lm-main-color: #2563eb;
+    --lm-main-color-alpha: #2563eb88;
+    --lm-main-color-highlight: #1d4ed8;
+    --lm-secondary-color: #737373;
+
+    --lm-border-color: #e4e4e7;
+    --lm-border-color-light: #f0f0f1;
+    --lm-border-color-highlight: #aaa;
+    --lm-border-outline: #000;
+    --lm-background-color: #fff;
+    --lm-background-color-header: #f8f8f8;
+    --lm-background-color-highlight: #ececec;
+    --lm-background-color-active: #dcdcdc;
+    --lm-background-color-input: initial;
+    --lm-icon-color: #777;
+
+    --lm-font-grayout: #777;
+    --lm-input-padding: 6px;
+
+    /* Radius scale — controls use --lm-radius, surfaces use --lm-radius-lg */
+    --lm-radius: 6px;
+    --lm-radius-lg: 10px;
+    --lm-border-radius: var(--lm-radius); /* legacy alias, kept for back-compat */
+
+    /* Elevation — popovers, menus, dialogs */
+    --lm-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+    --lm-shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.06);
+
+    /* Soft halo painted behind the focus outline on focus-visible */
+    --lm-focus-ring: rgba(0, 0, 0, 0.12);
+
+    /* Semantic status colors — shared by progress, rating, switch, card,
+       toast, badges... so "success / danger" looks identical everywhere. */
+    --lm-color-info: var(--lm-main-color);
+    --lm-color-success: #16a34a;
+    --lm-color-warning: #ea580c;
+    --lm-color-danger: #dc2626;
+    --lm-color-purple: #9333ea;
+
+    /* Shared categorical palette — the single source of series colors for
+       every data component (chart, gantt, kanban, schedule, progress...).
+       Override these on a theme class and every chart + board recolors. */
+    --lm-series-1: #2563eb;
+    --lm-series-2: #39a33b;
+    --lm-series-3: #f59e0b;
+    --lm-series-4: #a23131;
+    --lm-series-5: #7c3aed;
+    --lm-series-6: #0ea5e9;
+    --lm-series-7: #db2777;
+    --lm-series-8: #64748b;
+
+    --lm-safe-area-top: 0;
+    --lm-safe-area-bottom: 0;
+    --lm-text-color: #000;
+}
+
+/* =====================================================================
+   Themes — token-override classes. Apply ONE to a container (usually the
+   <body>):  <body class="lm-application lm-theme-modern">
+   A theme sets the accent, colour palette, radius, padding and outline.
+   You can still override any single token at the component level (inline
+   style or a scoped class), and a chart's palette can be set per-chart via
+   its `palette` / `colors` props. Dark mode (defined AFTER the themes) is
+   layered on top and wins the SURFACE colours, so any theme composes with
+   .lm-dark-mode while keeping its own accent / radius / padding.
+   ===================================================================== */
+
+/* Modern — clean SaaS default: blue accent, 6px radius, soft borders */
+.lm-theme-modern {
+    --lm-main-color: #2563eb;
+    --lm-main-color-alpha: #2563eb88;
+    --lm-main-color-highlight: #1d4ed8;
+    --lm-border-color: #e4e4e7;
+    --lm-border-color-light: #f0f0f1;
+    --lm-radius: 6px;
+    --lm-radius-lg: 10px;
+    --lm-input-padding: 6px;
+    --lm-border-outline: #000;
+    --lm-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+    --lm-shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.06);
+    --lm-series-1: #2563eb;
+    --lm-series-2: #16a34a;
+    --lm-series-3: #f59e0b;
+    --lm-series-4: #dc2626;
+    --lm-series-5: #7c3aed;
+    --lm-series-6: #0ea5e9;
+    --lm-series-7: #db2777;
+    --lm-series-8: #64748b;
+}
+
+/* Minimal — dense + crisp: near-mono slate accent, 3px radius, tight pad */
+.lm-theme-minimal {
+    --lm-main-color: #1f2937;
+    --lm-main-color-alpha: #1f293788;
+    --lm-main-color-highlight: #111827;
+    --lm-border-color: #d1d5db;
+    --lm-border-color-light: #e5e7eb;
+    --lm-radius: 3px;
+    --lm-radius-lg: 4px;
+    --lm-input-padding: 4px;
+    --lm-border-outline: #000;
+    --lm-shadow: 0 1px 1px rgba(0, 0, 0, 0.08);
+    --lm-shadow-lg: 0 4px 14px rgba(0, 0, 0, 0.12);
+    --lm-series-1: #334155;
+    --lm-series-2: #0d9488;
+    --lm-series-3: #b45309;
+    --lm-series-4: #be123c;
+    --lm-series-5: #4f46e5;
+    --lm-series-6: #0369a1;
+    --lm-series-7: #a21caf;
+    --lm-series-8: #64748b;
+}
+
+/* Soft — friendly + rounded: indigo accent, 12px radius, roomy pad, pastel */
+.lm-theme-soft {
+    --lm-main-color: #6366f1;
+    --lm-main-color-alpha: #6366f188;
+    --lm-main-color-highlight: #4f46e5;
+    --lm-border-color: #e5e7eb;
+    --lm-border-color-light: #f3f4f6;
+    --lm-radius: 12px;
+    --lm-radius-lg: 16px;
+    --lm-input-padding: 9px;
+    --lm-border-outline: #6366f1;
+    --lm-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+    --lm-shadow-lg: 0 12px 34px rgba(99, 102, 241, 0.16), 0 4px 12px rgba(0, 0, 0, 0.06);
+    --lm-focus-ring: rgba(99, 102, 241, 0.18);
+    --lm-series-1: #818cf8;
+    --lm-series-2: #34d399;
+    --lm-series-3: #fbbf24;
+    --lm-series-4: #fb7185;
+    --lm-series-5: #a78bfa;
+    --lm-series-6: #38bdf8;
+    --lm-series-7: #f472b6;
+    --lm-series-8: #94a3b8;
+}
+
+/* Accent-only example themes (override just the main colour) */
+.lm-green {
+    --lm-main-color: #39a33b;
+    --lm-main-color-alpha: #39a33b88;
+    --lm-main-color-highlight: #2f8431;
+}
+
+.lm-purple {
+    --lm-main-color: #7c3aed;
+    --lm-main-color-alpha: #7c3aed88;
+    --lm-main-color-highlight: #6d28d9;
+}
+
+/* Dark mode — layered AFTER the themes so it wins the surface colours
+   (bg / text / borders / shadow) while a theme keeps its accent + shape.
+   Token values are shared by the OS-driven and the forced (class) paths;
+   CSS can't share a block, so the same overrides live in both rules. */
+.lm-dark-mode {
+    --lm-font-color: #ddd;
+    --lm-font-grayout: #777;
+    --lm-border-color: #444;
+    --lm-border-color-light: #222;
+    --lm-border-color-highlight: #777;
+    --lm-border-outline: #fff;
+    --lm-background-color: #000;
+    --lm-background-color-header: #181818;
+    --lm-background-color-highlight: #282828;
+    --lm-background-color-active: #858585;
+    --lm-background-color-input: #181818;
+    --lm-icon-color: #ccc;
+
+    --lm-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+    --lm-shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.6), 0 2px 8px rgba(0, 0, 0, 0.4);
+    --lm-focus-ring: rgba(255, 255, 255, 0.16);
+    --lm-text-color: #fff;
+
+    --lm-color-success: #22c55e;
+    --lm-color-warning: #fb923c;
+    --lm-color-danger: #f87171;
+    --lm-color-purple: #c084fc;
+
+    --lm-series-1: #4dabf5;
+    --lm-series-2: #51cf66;
+    --lm-series-3: #ffc34d;
+    --lm-series-4: #ff8787;
+    --lm-series-5: #b197fc;
+    --lm-series-6: #3bc9db;
+    --lm-series-7: #f783ac;
+    --lm-series-8: #adb5bd;
+}
+
+/* Follow the OS unless the app forced light with .lm-light-mode */
+@media (prefers-color-scheme: dark) {
+    :root:not(.lm-light-mode) {
+        --lm-font-color: #ddd;
+        --lm-font-grayout: #777;
+        --lm-border-color: #444;
+        --lm-border-color-light: #222;
+        --lm-border-color-highlight: #777;
+        --lm-border-outline: #fff;
+        --lm-background-color: #000;
+        --lm-background-color-header: #181818;
+        --lm-background-color-highlight: #282828;
+        --lm-background-color-active: #858585;
+        --lm-background-color-input: #181818;
+        --lm-icon-color: #ccc;
+
+        --lm-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+        --lm-shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.6), 0 2px 8px rgba(0, 0, 0, 0.4);
+        --lm-focus-ring: rgba(255, 255, 255, 0.16);
+        --lm-text-color: #fff;
+
+        --lm-color-success: #22c55e;
+        --lm-color-warning: #fb923c;
+        --lm-color-danger: #f87171;
+        --lm-color-purple: #c084fc;
+
+        --lm-series-1: #4dabf5;
+        --lm-series-2: #51cf66;
+        --lm-series-3: #ffc34d;
+        --lm-series-4: #ff8787;
+        --lm-series-5: #b197fc;
+        --lm-series-6: #3bc9db;
+        --lm-series-7: #f783ac;
+        --lm-series-8: #adb5bd;
+    }
+}
+
+/* fallback */
+@font-face {
+    font-family: 'Material Symbols Outlined';
+    font-style: normal;
+    font-weight: 300;
+    src: url(https://fonts.gstatic.com/s/materialsymbolsoutlined/v351/kJF4BvYX7BgnkSrUwT8OhrdQw4oELdPIeeII9v6oDMzByHX9rA6RzaxHMPdY40KH8nGzv3fzfVJU22ZZLsYEpzC_1qmr5Y0.woff2) format('woff2');
+}
+
+.material-symbols-outlined {
+    font-family: 'Material Symbols Outlined';
+    font-weight: normal;
+    font-style: normal;
+    font-size: 24px;
+    line-height: 1;
+    letter-spacing: normal;
+    text-transform: none;
+    display: inline-block;
+    white-space: nowrap;
+    word-wrap: normal;
+    direction: ltr;
+    -webkit-font-feature-settings: 'liga';
+    -webkit-font-smoothing: antialiased;
+}
+
+/* Central focus ring — every lm-* control gets the same outline, themeable
+   through --lm-border-outline (black in light, white in dark). Components
+   must NOT define their own focus colors; they inherit this. */
+.lm-application :focus-visible,
+[class^="lm-"]:focus-visible,
+[class*=" lm-"]:focus-visible {
+    outline: 2px solid var(--lm-border-outline);
+    outline-offset: -1px;
+    box-shadow: 0 0 0 3px var(--lm-focus-ring);
+}
+
+
+body.lm-application {
+    margin: 0;
+    padding: 0;
+    font-family: Montserrat, sans-serif;
+    background: var(--lm-background-color);
+    color: var(--lm-font-color);
+}
+
+.lm-application input[type='text'],
+.lm-application input[type='number'],
+.lm-application input[type='password'],
+.lm-application select,
+.lm-application textarea,
+.lm-application button,
+.lm-input {
+    padding: var(--lm-input-padding) var(--lm-input-padding) var(--lm-input-padding) 8px;
+    box-sizing: border-box;
+    border: 1px solid var(--lm-border-color, #e4e4e7);
+    background-color: var(--lm-background-color-input);
+    line-height: initial;
+    border-radius: var(--lm-radius, 6px);
+    color: var(--lm-font-color);
+    font-family: inherit;
+    font-size: inherit;
+}
+
+.lm-application *:disabled {
+    color: #888;
+}
+
+[visible='false'] {
+    display: none;
+}
+
+[visible='true'] {
+    display: block;
+}
+
+.lm-container {
+    width: 100%;
+    margin: 0 auto;
+    box-sizing: border-box;
+}
+
+.lm-row {
+    display: flex;
+    flex-wrap: nowrap;
+    flex-direction: row;
+    justify-content: space-between;
+    box-sizing: border-box;
+}
+
+.lm-row.lm-container {
+    flex-wrap: nowrap;
+}
+
+.lm-row.lm-middle {
+    align-items: center;
+}
+
+.lm-row.lm-start {
+    justify-content: start;
+}
+
+.lm-column {
+    box-sizing: border-box;
+}
+
+.lm-column.lm-top {
+    align-self: flex-start;
+}
+
+.lm-column.lm-bottom {
+    align-self: flex-end;
+}
+
+.lm-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.lm-form .lm-row {
+    gap: 12px;
+}
+
+.lm-form-group {
+    width: 100%;
+    padding-right: 8px;
+    padding-bottom: 8px;
+    box-sizing: border-box;
+}
+
+.lm-form .lm-form-group {
+    padding: initial;
+}
+
+.lm-form-group input[type='text'],
+.lm-form-group input[type='email'],
+.lm-form-group input[type='tel'],
+.lm-form-group input[type='time'],
+.lm-form-group input[type='date'],
+.lm-form-group input[type='password'],
+.lm-form-group input[type='number'],
+.lm-form-group select,
+.lm-form-group textarea,
+.lm-form-group {
+    width: 100%;
+}
+
+.lm-form-group label {
+    display: block;
+    margin-bottom: 4px;
+}
+
+.lm-form-group label.lm-switch {
+    display: inline-flex;
+    margin: initial;
+}
+
+.lm-f1 {
+    flex: 1;
+}
+
+.lm-f2 {
+    flex: 2;
+}
+
+.lm-f3 {
+    flex: 3;
+}
+
+.lm-f4 {
+    flex: 4;
+}
+
+.lm-f5 {
+    flex: 5;
+}
+
+.lm-f6 {
+    flex: 6;
+}
+
+.lm-f7 {
+    flex: 7;
+}
+
+.lm-f8 {
+    flex: 8;
+}
+
+.lm-p0 {
+    padding: 0;
+}
+
+.lm-p2 {
+    padding: 2px;
+}
+
+.lm-p4 {
+    padding: 4px;
+}
+
+.lm-p6 {
+    padding: 6px;
+}
+
+.lm-p8 {
+    padding: 8px;
+}
+
+.lm-p10 {
+    padding: 10px;
+}
+
+.lm-p15 {
+    padding: 15px;
+}
+
+.lm-p20 {
+    padding: 20px;
+}
+
+.lm-p25 {
+    padding: 25px;
+}
+
+.lm-p30 {
+    padding: 30px;
+}
+
+.lm-application .lm-button,
+.lm-button {
+    padding: var(--lm-input-padding) 20px;
+    border-radius: var(--lm-radius, 6px);
+    cursor: pointer;
+    outline: none;
+
+    background-color: var(--lm-secondary-color, #737373);
+    border: 1px solid transparent;
+    color: #fff;
+}
+
+.lm-application .lm-button.red,
+.lm-button.red {
+    background-color: #a23131;
+    border: 1px solid transparent;
+    color: #fff;
+}
+
+.lm-application .lm-button.blue,
+.lm-button.blue {
+    border: 1px solid transparent;
+    color: #fff;
+    background-color: #1a73e8;
+}
+
+.lm-ripple {
+    background-position: center;
+    transition: background 0.8s;
+}
+
+.lm-ripple:hover {
+    background: var(--lm-background-color-highlight, #ebebeb) radial-gradient(circle, transparent 1%, var(--lm-background-color-highlight, #ebebeb) 1%) center/15000%;
+}
+
+.lm-ripple:active {
+    background-color: var(--lm-background-color-active, #e8e8e8);
+    background-size: 100%;
+    transition: background 0s;
+}
+
+.lm-cursor {
+    cursor: pointer;
+}
+
+.lm-center {
+    text-align: center;
+}
+
+.lm-loading::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    z-index: 9999;
+    animation: lm-loading 2s linear infinite;
+    background: #e0e0e0 repeating-linear-gradient(to right, var(--lm-main-color-highlight, #66b244), var(--lm-main-color-highlight, #66b244) 50%, #e0e0e0 50%, #e0e0e0);
+    background-size: 200% 100%;
+}
+
+.lm-icon {
+    font-family: "Material Symbols Outlined", "Material Icons", "FontAwesome";
+    font-size: 24px;
+    width: 24px;
+    height: 24px;
+    line-height: 24px;
+    font-style: normal;
+}
+
+@keyframes lm-loading {
+    from {
+        background-position: 100% 0;
+    }
+    to {
+        background-position: 0 0;
+    }
+}
+
+/** Dark mode */
+
+body.lm-dark-mode {
+    background-color: var(--lm-background-color);
+}
+
+.lm-dark-mode a {
+    color: white;
+}
+
+.lm-dark-mode .lm-button {
+    background-color: #555;
+    border: 1px solid transparent;
+    color: white;
+}
+
+@media (min-width: 320px) {
+    .lm-container {
+        padding: 0 2% 0 2%;
+    }
+}
+
+@media (min-width: 1200px) {
+    .lm-container {
+        padding: 0 5% 0 5%;
+    }
+}
+
+@media (max-width: 720px) {
+    .lm-row {
+        flex-wrap: wrap;
+    }
+
+    .lm-column {
+        min-width: 100%;
+    }
+
+    .lm-column .lm-form-group {
+        padding: 0;
+    }
+
+    ::placeholder {
+        text-transform: uppercase;
+    }
+
+    ::-webkit-input-placeholder {
+        text-transform: uppercase;
+    }
+
+    :-moz-placeholder {
+        text-transform: uppercase;
+    }
+
+    :-ms-input-placeholder {
+        text-transform: uppercase;
+    }
+}

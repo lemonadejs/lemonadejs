@@ -19,7 +19,7 @@
     width: 40px;
     height: 22px;
     border-radius: 11px;
-    background: #cbd5e1;
+    background: var(--lm-border-color, #e4e4e7);
     position: relative;
     transition: background 0.15s ease;
 }
@@ -31,30 +31,30 @@
     width: 18px;
     height: 18px;
     border-radius: 50%;
-    background: #fff;
+    background: var(--lm-background-color, #fff);
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
     transition: left 0.15s ease;
 }
 
 .lm-switch .lm-switch-input:focus-visible ~ .lm-switch-track {
-    outline: 2px solid #2563eb;
+    outline: 2px solid var(--lm-border-outline, #2563eb);
     outline-offset: 2px;
 }
 
 .lm-switch.lm-switch-on .lm-switch-track {
-    background: #16a34a;
+    background: var(--lm-color-success, #16a34a);
 }
 
 .lm-switch.lm-switch-on[data-color='orange'] .lm-switch-track {
-    background: #ea580c;
+    background: var(--lm-color-warning, #ea580c);
 }
 
 .lm-switch.lm-switch-on[data-color='red'] .lm-switch-track {
-    background: #dc2626;
+    background: var(--lm-color-danger, #dc2626);
 }
 
 .lm-switch.lm-switch-on[data-color='purple'] .lm-switch-track {
-    background: #9333ea;
+    background: var(--lm-color-purple, #9333ea);
 }
 
 .lm-switch.lm-switch-on .lm-switch-thumb {
@@ -78,7 +78,7 @@
 .lm-switch.lm-switch-small .lm-switch-track {
     width: 30px;
     height: 16px;
-    border-radius: 8px;
+    border-radius: var(--lm-radius, 6px);
 }
 
 .lm-switch.lm-switch-small .lm-switch-thumb {

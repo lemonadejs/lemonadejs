@@ -31,7 +31,7 @@
 
 /* One flex row: [prompt] | OK | Cancel — exactly the v5 footer */
 .lm-dialog-footer {
-    border-top: 1px solid var(--lm-border-color, #ccc);
+    border-top: 1px solid var(--lm-border-color, #e4e4e7);
     display: flex;
     flex-wrap: wrap;
     align-content: stretch;
@@ -41,7 +41,7 @@
 
 .lm-dialog-footer > div {
     padding: 4px;
-    border-left: 1px solid var(--lm-border-color, #ccc);
+    border-left: 1px solid var(--lm-border-color, #e4e4e7);
     text-align: center;
     flex: 1;
 }

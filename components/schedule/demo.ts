@@ -33,6 +33,15 @@ const data = store<ScheduleEvent[]>([
     { date: day(5), start: '16:00', end: '17:00', title: 'Retro', color: '#00bcd4' },
 ]);
 
+// A second dataset where events deliberately overlap in time
+const overlapData = store<ScheduleEvent[]>([
+    { date: day(2), start: '09:00', end: '11:00', title: 'Workshop', color: '#3f51b5' },
+    { date: day(2), start: '09:30', end: '10:30', title: 'Quick sync', color: '#e91e63' },
+    { date: day(2), start: '10:00', end: '12:00', title: 'Pairing', color: '#009688' },
+    { date: day(3), start: '13:00', end: '15:00', title: 'Review', color: '#ff9800' },
+    { date: day(3), start: '14:00', end: '16:00', title: 'Planning', color: '#9c27b0' },
+]);
+
 type Api = {
     next(): void;
     prev(): void;
@@ -78,6 +87,16 @@ const App: Component = (props, { state }) => {
                 ondelete="${(r: ScheduleEvent) => note('ondelete: ' + r.title)}"
                 onerror="${(m: string) => note('onerror: ' + m)}"
                 onchange="${(d: ScheduleEvent[]) => note('onchange: ' + d.length + ' events')}" />
+        </div>
+
+        <h3>Overlapping events (overlap enabled — staggered side by side)</h3>
+        <div class="board">
+            <${Schedule}
+                data="${overlapData}"
+                type="week"
+                grid="${15}"
+                overlap
+                validrange="${['08:00', '18:00']}" />
         </div>
 
         <h3>event log</h3>

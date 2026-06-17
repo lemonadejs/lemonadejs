@@ -91,7 +91,7 @@
 
 .lm-schedule thead td:after {
     content: '';
-    border-bottom: 1px solid var(--lm-border-color, #ddd);
+    border-bottom: 1px solid var(--lm-border-color, #e4e4e7);
     width: 100%;
     bottom: 0;
     left: 0;
@@ -103,7 +103,7 @@
 }
 
 .lm-schedule table tbody td:first-child {
-    border-right: 1px solid var(--lm-border-color, #ddd);
+    border-right: 1px solid var(--lm-border-color, #e4e4e7);
 }
 
 .lm-schedule-item {
@@ -115,7 +115,7 @@
     z-index: 1;
     border: 1px solid var(--lm-background-color, #fff);
     box-sizing: border-box;
-    border-radius: 4px;
+    border-radius: var(--lm-radius, 6px);
     padding: 6px;
     display: flex;
     justify-content: space-between;
@@ -218,7 +218,7 @@
     content: '';
     position: absolute;
     background-color: var(--lm-main-color-deep, #66b244);
-    border-radius: 6px;
+    border-radius: var(--lm-radius, 6px);
     border: 1px solid #fff;
     width: 10px;
     height: 10px;
@@ -240,8 +240,12 @@
 }
 
 .lm-schedule-selected {
-    opacity: 0.9;
-    z-index: 2;
+    opacity: 1;
+    z-index: 3;
+    outline: 2px solid var(--lm-border-outline, #000);
+    outline-offset: -2px;
+    box-shadow: 0 0 0 2px var(--lm-background-color, #fff), 0 3px 10px rgba(0, 0, 0, 0.3);
+    filter: brightness(1.06);
 }
 
 .lm-schedule::-webkit-scrollbar {
@@ -270,8 +274,8 @@
 .lm-schedule-form input[type="date"],
 .lm-schedule-form select {
     padding: 8px;
-    border: 1px solid var(--lm-border-color, #ddd);
-    border-radius: 4px;
+    border: 1px solid var(--lm-border-color, #e4e4e7);
+    border-radius: var(--lm-radius, 6px);
     font: inherit;
     box-sizing: border-box;
     width: 100%;
@@ -295,7 +299,7 @@
 
 .lm-schedule-editor-palette button {
     border: 1px solid transparent;
-    border-radius: 4px;
+    border-radius: var(--lm-radius, 6px);
     height: 24px;
     cursor: pointer;
 }
@@ -308,7 +312,7 @@
 .lm-schedule-editor-save {
     padding: 10px;
     border: 0;
-    border-radius: 4px;
+    border-radius: var(--lm-radius, 6px);
     background-color: var(--lm-main-color, #2196f3);
     color: #fff;
     font: inherit;

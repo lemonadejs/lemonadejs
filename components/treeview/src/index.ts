@@ -21,10 +21,20 @@
  * Contract:
  *   data        TreeNode[]: { id, label, icon?, open?, children? }
  *   bind        two-way selected node id (bind="${state}")
+ *   draggable   opt-in drag-and-drop reordering (default false)
  *   onchange    (id, node) — fires on user/api selection (parent writes
  *               to the bound state never echo back)
  *   ontoggle    (id, open) — fires on expand/collapse (user or api)
+ *   onmove      (id, parentId, index) — after a drag drops a node into a
+ *               new position (parentId is null at the root)
  *   api         { open(id), close(id), select(id), toggle(id) }
+ *
+ * Drag-and-drop (draggable only): native HTML5 DnD — no JS emulation.
+ * Hovering a row splits it in thirds: top → drop BEFORE (sibling), bottom
+ * → drop AFTER (sibling), middle → drop INSIDE (becomes a child, opening
+ * the target). The tree array is mutated in place + data.touch(), so the
+ * keyed diff MOVES existing DOM instead of rebuilding it. A node can never
+ * drop onto itself or into its own subtree.
  *
  * Keyboard (APG tree pattern, single select):
  *   ArrowRight  opens a closed parent; on an open parent moves to the
@@ -61,8 +71,10 @@ type TreeApi = {
 export const TreeView = component('treeview', {
     bind: null,                   // two-way selected node id — 'any': ids are string | number
     data: Array,                  // TreeNode[] — the tree
+    draggable: false,             // opt-in drag-and-drop reordering
     onchange: Function,           // (id, node) on selection
     ontoggle: Function,           // (id, open) on expand/collapse
+    onmove: Function,             // (id, parentId, index) after a drag drop
     api: { open: Function, close: Function, select: Function, toggle: Function },
 }, (props, { state, bind }) => {
     const selected = bind(props, '');
@@ -237,6 +249,142 @@ export const TreeView = component('treeview', {
         }
     };
 
+    // ---- drag-and-drop (draggable only): native HTML5 DnD, reorder the
+    // data array in place + touch() so the keyed diff MOVES existing DOM.
+    type DropPos = 'before' | 'after' | 'inside';
+    const dragId = state<TreeNodeId | null>(null);     // node being dragged
+    const dropAt = state<{ id: TreeNodeId; pos: DropPos } | null>(null); // live indicator
+
+    /** Is `id` the node `ancestor` itself or anywhere in its subtree? */
+    const contains = (ancestor: TreeNode, id: TreeNodeId): boolean =>
+        Object.is(ancestor.id, id) || !!ancestor.children?.some((c) => contains(c, id));
+
+    /** The array holding `id` and its index within it (root list or a children[]) */
+    const locate = (id: TreeNodeId, list: TreeNode[] = nodes()): { list: TreeNode[]; index: number } | null => {
+        const index = list.findIndex((n) => Object.is(n.id, id));
+        if (index >= 0) {
+            return { list, index };
+        }
+        for (const n of list) {
+            if (n.children?.length) {
+                const hit = locate(id, n.children);
+                if (hit) {
+                    return hit;
+                }
+            }
+        }
+        return null;
+    };
+
+    /** `src` may drop on `targetId` unless target is src itself or in its subtree */
+    const canDropFrom = (src: TreeNodeId, targetId: TreeNodeId): boolean => {
+        if (Object.is(src, targetId)) {
+            return false;
+        }
+        const node = find(src);
+        return !!node && !contains(node, targetId);
+    };
+
+    /** Same check for the live drag (reads the dragId state) */
+    const canDrop = (targetId: TreeNodeId): boolean =>
+        dragId.value !== null && canDropFrom(dragId.value, targetId);
+
+    const moveNode = (srcId: TreeNodeId, targetId: TreeNodeId, pos: DropPos) => {
+        const src = find(srcId);
+        const from = locate(srcId);
+        if (!src || !from) {
+            return;
+        }
+        from.list.splice(from.index, 1); // detach first; indices below are post-removal
+        let parentId: TreeNodeId | null = null;
+        let index: number;
+        if (pos === 'inside') {
+            const target = find(targetId)!;
+            (target.children ||= []).push(src);
+            parentId = target.id;
+            index = target.children.length - 1;
+            if (!open.value.has(target.id)) {
+                open.value.add(target.id);
+                open.touch();
+            }
+        } else {
+            const to = locate(targetId);
+            if (!to) {
+                from.list.splice(from.index, 0, src); // target vanished — undo
+                return;
+            }
+            index = pos === 'after' ? to.index + 1 : to.index;
+            to.list.splice(index, 0, src);
+            const p = parentOf(targetId);
+            parentId = p ? p.id : null;
+        }
+        props.data.touch();
+        props.onmove?.(srcId, parentId, index);
+    };
+
+    const onDragStart = (e: DragEvent, node: TreeNode) => {
+        if (!props.draggable.value) {
+            return;
+        }
+        dragId.value = node.id;
+        if (e.dataTransfer) {
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', String(node.id)); // Firefox needs payload to start
+        }
+    };
+
+    const onDragOver = (e: DragEvent, node: TreeNode) => {
+        if (!props.draggable.value || !canDrop(node.id)) {
+            return;
+        }
+        e.preventDefault(); // required to make this row a drop target
+        if (e.dataTransfer) {
+            e.dataTransfer.dropEffect = 'move';
+        }
+        const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
+        const y = e.clientY - r.top;
+        const pos: DropPos = y < r.height * 0.3 ? 'before' : y > r.height * 0.7 ? 'after' : 'inside';
+        const cur = dropAt.value;
+        if (!cur || !Object.is(cur.id, node.id) || cur.pos !== pos) {
+            dropAt.value = { id: node.id, pos };
+        }
+    };
+
+    const onDrop = (e: DragEvent, node: TreeNode) => {
+        if (!props.draggable.value) {
+            return;
+        }
+        e.preventDefault();
+        const target = dropAt.value;
+        const src = dragId.value;
+        dragId.value = null;
+        dropAt.value = null;
+        if (src !== null && target && Object.is(target.id, node.id) && canDropFrom(src, node.id)) {
+            moveNode(src, target.id, target.pos);
+        }
+    };
+
+    const onDragEnd = () => {
+        dragId.value = null;
+        dropAt.value = null;
+    };
+
+    /** Reactive row classes: selection + live drag/drop affordances */
+    const rowClass = (node: TreeNode): string => {
+        const out: string[] = [];
+        if (Object.is(selected.value, node.id)) {
+            out.push('lm-treeview-selected');
+        }
+        if (Object.is(dragId.value, node.id)) {
+            out.push('lm-treeview-dragging');
+        }
+        const d = dropAt.value;
+        if (d && Object.is(d.id, node.id)) {
+            out.push('lm-treeview-drop-' + d.pos);
+        }
+        return out.join(' ');
+    };
+
     /**
      * THE RECURSION: one view function calling itself for children.
      * Repeated <li>s are keyed by node id; nested child lists are plain
@@ -250,9 +398,14 @@ export const TreeView = component('treeview', {
             data-id="${String(node.id)}"
             aria-expanded="${kids ? () => (isOpen(node.id) ? 'true' : 'false') : false}"
             aria-selected="${() => (Object.is(selected.value, node.id) ? 'true' : 'false')}">
-            <div class="lm-treeview-row ${() => (Object.is(selected.value, node.id) ? 'lm-treeview-selected' : '')}"
+            <div class="lm-treeview-row ${() => rowClass(node)}"
                 tabindex="0"
-                onclick="${() => doSelect(node.id)}">
+                draggable="${() => (props.draggable.value ? 'true' : false)}"
+                onclick="${() => doSelect(node.id)}"
+                ondragstart="${(e: DragEvent) => onDragStart(e, node)}"
+                ondragover="${(e: DragEvent) => onDragOver(e, node)}"
+                ondrop="${(e: DragEvent) => onDrop(e, node)}"
+                ondragend="${onDragEnd}">
                 <span class="lm-treeview-toggle"
                     onclick="${(e: MouseEvent) => {
                         if (kids) {

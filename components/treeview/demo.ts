@@ -41,13 +41,15 @@ const App: Component = (props, { state }) => {
     return html`<div class="demo">
         <h1>&lt;TreeView /&gt;</h1>
 
-        <h3>Bound (two-way), icons, recursion to any depth</h3>
+        <h3>Bound (two-way), icons, recursion to any depth, drag to reorder</h3>
         <${TreeView}
             bind="${selected}"
             data="${tree}"
+            draggable="${true}"
             ref="${(a: typeof api) => (api = a)}"
             onchange="${(id: TreeNodeId, node: TreeNode) => note('onchange → ' + id + ' (' + node.label + ')')}"
-            ontoggle="${(id: TreeNodeId, open: boolean) => note('ontoggle → ' + id + ' ' + (open ? 'open' : 'closed'))}" />
+            ontoggle="${(id: TreeNodeId, open: boolean) => note('ontoggle → ' + id + ' ' + (open ? 'open' : 'closed'))}"
+            onmove="${(id: TreeNodeId, parentId: TreeNodeId | null, index: number) => note('onmove → ' + id + ' to ' + (parentId ?? 'root') + '[' + index + ']')}" />
         <p>Bound id: <b>${() => String(selected.value)}</b></p>
         <button onclick="${() => (selected.value = 'readme')}">write from outside (no onchange echo)</button>
         <button onclick="${() => api.toggle('src')}">api.toggle('src')</button>

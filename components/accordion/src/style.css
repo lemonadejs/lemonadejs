@@ -1,15 +1,15 @@
 /* <Accordion /> — default styling, lm-accordion-* convention */
 .lm-accordion {
     display: block;
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
+    border: 1px solid var(--lm-border-color, #e4e4e7);
+    border-radius: var(--lm-radius, 6px);
     overflow: hidden;
     font: 14px/1.5 system-ui, sans-serif;
 }
 
 .lm-accordion .lm-accordion-panel {
-    border-top: 1px solid #e2e8f0;
-    background: #fff;
+    border-top: 1px solid var(--lm-border-color, #e4e4e7);
+    background: var(--lm-background-color, #fff);
 }
 
 .lm-accordion .lm-accordion-panel:first-child {
@@ -33,11 +33,11 @@
 }
 
 .lm-accordion .lm-accordion-header:hover {
-    background: #f8fafc;
+    background: var(--lm-background-color-header, #f8fafc);
 }
 
 .lm-accordion .lm-accordion-header:focus-visible {
-    outline: 2px solid #2563eb;
+    outline: 2px solid var(--lm-border-outline, #2563eb);
     outline-offset: -2px;
 }
 
@@ -55,8 +55,8 @@
     flex: 0 0 auto;
     width: 8px;
     height: 8px;
-    border-right: 2px solid #64748b;
-    border-bottom: 2px solid #64748b;
+    border-right: 2px solid var(--lm-font-grayout, #64748b);
+    border-bottom: 2px solid var(--lm-font-grayout, #64748b);
     transform: rotate(45deg);
     transition: transform 0.2s ease;
     margin-top: -4px;
@@ -68,20 +68,37 @@
 }
 
 /*
- * The body element NEVER leaves the DOM: collapse is max-height + CSS
- * transition, so panel content keeps its state across toggles.
+ * The body element NEVER leaves the DOM, so panel content keeps its state
+ * across toggles. Collapse animates grid-template-rows 0fr -> 1fr, which
+ * transitions to the content's EXACT height — no max-height guess, no dead
+ * time, no height cap — so it opens/closes smoothly with any amount of
+ * content. The CLIP child (overflow:hidden + min-height:0) is the element
+ * sized by the row track — it must be padding-free so the panel collapses
+ * fully to 0 (padding on the clip would leave a stuck sliver); the padding
+ * lives on the inner content instead.
  */
 .lm-accordion .lm-accordion-body {
-    max-height: 0;
-    overflow: hidden;
-    transition: max-height 0.25s ease;
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 0.28s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .lm-accordion .lm-accordion-body[data-open='true'] {
-    max-height: 640px;
+    grid-template-rows: 1fr;
+}
+
+.lm-accordion .lm-accordion-clip {
+    overflow: hidden;
+    min-height: 0;
 }
 
 .lm-accordion .lm-accordion-content {
     padding: 4px 16px 16px;
-    color: #334155;
+    color: var(--lm-font-color, #334155);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .lm-accordion .lm-accordion-body {
+        transition: none;
+    }
 }

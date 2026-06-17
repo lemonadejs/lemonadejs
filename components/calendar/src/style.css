@@ -31,7 +31,7 @@
     min-height: 32px;
     padding: 7px 28px 7px 10px;
     border: 1px solid #d4d4d8;
-    border-radius: 6px;
+    border-radius: var(--lm-radius, 6px);
     background: #fff url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 -960 960 960" width="20"><path d="M200-80q-33 0-56.5-23.5T120-160v-560q0-33 23.5-56.5T200-800h40v-80h80v80h320v-80h80v80h40q33 0 56.5 23.5T840-720v560q0 33-23.5 56.5T760-80H200Zm0-80h560v-400H200v400Zm0-480h560v-80H200v80Zm0 0v-80 80Z" fill="gray"/></svg>') top 50% right 6px no-repeat;
     font: inherit;
     color: inherit;
@@ -50,7 +50,7 @@
     min-width: 0;
     min-height: 5px;
     border: 1px solid #d4d4d8;
-    border-radius: 6px;
+    border-radius: var(--lm-radius, 6px);
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
 }
 
@@ -66,7 +66,7 @@
 .lm-calendar-options {
     display: flex;
     justify-content: space-between;
-    border-bottom: 1px solid var(--lm-border-color, #ccc);
+    border-bottom: 1px solid var(--lm-border-color, #e4e4e7);
 }
 
 .lm-calendar-options button {
@@ -212,7 +212,7 @@
     margin-top: 22px;
     width: 3px;
     height: 3px;
-    border-radius: 3px;
+    border-radius: var(--lm-radius, 6px);
     background-color: red;
 }
 
@@ -305,7 +305,7 @@
     width: 100%;
     cursor: pointer;
     border: 0;
-    border-radius: 6px;
+    border-radius: var(--lm-radius, 6px);
     padding: 8px;
     background-color: var(--lm-border-color-light, #e9e9e9);
 }
@@ -321,7 +321,7 @@
 .lm-calendar[data-type='picker'] .lm-calendar-content > div {
     aspect-ratio: initial;
     min-height: 60px;
-    border-radius: 4px;
+    border-radius: var(--lm-radius, 6px);
 }
 
 .lm-calendar[data-type='picker'] .lm-calendar-weekdays > div {

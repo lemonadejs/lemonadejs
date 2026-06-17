@@ -9,8 +9,8 @@
 .lm-imagelist .lm-imagelist-item {
     position: relative;
     overflow: hidden;
-    border-radius: 4px;
-    background: #f1f5f9;
+    border-radius: var(--lm-radius, 6px);
+    background: var(--lm-background-color-highlight, #f1f5f9);
 }
 
 .lm-imagelist .lm-imagelist-item[data-clickable='true'] {

@@ -10,6 +10,13 @@
  *     v5, where panels were real elements toggling a selected class
  *   - selected index, position (center | bottom), round borders,
  *     allowcreate ("add" button creating an Untitled tab)
+ *
+ * v6 additions (purely presentational — no behavior change):
+ *   - variant: '' / 'basic' keeps the v5 boxed look; 'modern' is a
+ *     borderless underline style with a sliding-in indicator
+ *   - the header row scrolls horizontally when the tabs overflow (the
+ *     scrollbar only appears when needed; tabs never shrink or wrap)
+ *   - the active panel fades in on switch, CSS-only (no redraw loop)
  *   - drag-and-drop header sorting (reorders the data, selects the moved
  *     tab, fires onchangeposition) — simplified to reorder-on-drop, v5
  *     live-previewed during dragover by mutating DOM the engine now owns
@@ -48,6 +55,7 @@ export const Tabs = component('tabs', {
     bind: Number,                 // two-way selected index (v5: selected)
     selected: 0,                  // initial index when unbound
     position: '',                 // center | bottom (v5 data-position)
+    variant: '',                  // '' | basic (v5 look) | modern (underline style)
     round: false,                 // round borders on the first/last header
     allowcreate: false,           // v5: allowCreate — shows the "add" button
     onchange: Function,           // (index, oldIndex) on user-initiated changes
@@ -244,14 +252,62 @@ export const Tabs = component('tabs', {
         }
     };
 
+    // ---- overflow scroll: the header row hides its scrollbar and exposes
+    // left/right arrows that show ONLY when the strip overflows. Arrows are
+    // rendered together (both gutters reserved while scrolling, so their
+    // width never shifts mid-scroll) and the unusable side is disabled.
+    const canScroll = state<{ left: boolean; right: boolean }>({ left: false, right: false });
+
+    const measure = () => {
+        if (!ul) {
+            return;
+        }
+        const max = ul.scrollWidth - ul.clientWidth;
+        const left = ul.scrollLeft > 1;
+        const right = ul.scrollLeft < max - 1;
+        const cur = canScroll.value;
+        if (cur.left !== left || cur.right !== right) {
+            canScroll.value = { left, right };
+        }
+    };
+
+    const nudge = (dir: -1 | 1) => {
+        if (ul) {
+            // one viewport-ish step, smooth; the onscroll handler re-measures
+            ul.scrollBy({ left: dir * Math.max(ul.clientWidth * 0.75, 120), behavior: 'smooth' });
+        }
+    };
+
+    onMount(() => {
+        measure();
+        const onResize = () => measure();
+        window.addEventListener('resize', onResize);
+        // tabs created/removed/reordered can change overflow — remeasure once
+        // the new DOM is in place
+        const unsub = items.subscribe(() => queueMicrotask(measure));
+        return () => {
+            window.removeEventListener('resize', onResize);
+            unsub();
+        };
+    });
+
     return html`<div class="lm-tabs"
         data-position="${() => props.position.value || false}"
+        data-variant="${() => props.variant.value || false}"
         data-round="${() => (props.round.value ? 'true' : false)}">
-        <div class="lm-tabs-headers" role="tablist">
+        <div class="lm-tabs-headers" role="tablist"
+            data-scroll="${() => (canScroll.value.left || canScroll.value.right ? 'true' : false)}">
+            ${() =>
+                (canScroll.value.left || canScroll.value.right) &&
+                html`<button type="button" class="lm-tabs-scroll lm-tabs-scroll-prev"
+                    aria-label="Scroll tabs left"
+                    disabled="${() => !canScroll.value.left}"
+                    onclick="${() => nudge(-1)}">chevron_left</button>`}
             <ul ref="${(el: HTMLElement) => (ul = el)}"
                 onclick="${onOpenEvent}"
                 onfocusin="${onOpenEvent}"
                 onkeydown="${onKeydown}"
+                onscroll="${measure}"
                 ondragstart="${onDragstart}"
                 ondragover="${(e: DragEvent) => e.preventDefault()}"
                 ondrop="${onDrop}"
@@ -267,6 +323,12 @@ export const Tabs = component('tabs', {
                             aria-selected="${() => (selected.value === i ? 'true' : 'false')}"
                             data-icon="${item.icon || false}">${item.title || ''}</li>`
                 )}</ul>
+            ${() =>
+                (canScroll.value.left || canScroll.value.right) &&
+                html`<button type="button" class="lm-tabs-scroll lm-tabs-scroll-next"
+                    aria-label="Scroll tabs right"
+                    disabled="${() => !canScroll.value.right}"
+                    onclick="${() => nudge(1)}">chevron_right</button>`}
             ${() =>
                 props.allowcreate.value &&
                 html`<div class="lm-tabs-insert-button" role="button" aria-label="Add tab"

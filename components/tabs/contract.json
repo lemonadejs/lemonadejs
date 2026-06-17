@@ -12,6 +12,10 @@
             "type": "string",
             "default": ""
         },
+        "variant": {
+            "type": "string",
+            "default": ""
+        },
         "round": {
             "type": "boolean",
             "default": false

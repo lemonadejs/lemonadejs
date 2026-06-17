@@ -1,7 +1,7 @@
 /* <TreeView /> — lm-treeview-* convention, themeable via custom properties */
 
 .lm-treeview {
-    color: var(--lm-treeview-color, #18181b);
+    color: var(--lm-treeview-color, var(--lm-font-color, #18181b));
     font-size: var(--lm-treeview-font-size, 14px);
     user-select: none;
 }
@@ -33,17 +33,40 @@
 }
 
 .lm-treeview .lm-treeview-row:hover {
-    background: var(--lm-treeview-hover-bg, #f4f4f5);
+    background: var(--lm-treeview-hover-bg, var(--lm-background-color-highlight, #f4f4f5));
 }
 
 .lm-treeview .lm-treeview-row:focus-visible {
-    outline: 2px solid var(--lm-treeview-focus, #2563eb);
+    outline: 2px solid var(--lm-treeview-focus, var(--lm-border-outline, #2563eb));
     outline-offset: -2px;
 }
 
 .lm-treeview .lm-treeview-row.lm-treeview-selected {
     background: var(--lm-treeview-selected-bg, #e0e7ff);
     color: var(--lm-treeview-selected-color, #1e3a8a);
+}
+
+/* Drag-and-drop live drop indicator (draggable). The JS adds
+   .lm-treeview-drop-<pos>, pos = before | after | inside:
+     before/after → an accent insertion line at the row's top/bottom edge
+     inside       → tint + dashed ring on the row it will nest under */
+.lm-treeview .lm-treeview-row.lm-treeview-drop-before {
+    box-shadow: inset 0 2px 0 0 var(--lm-treeview-drop, var(--lm-main-color, #2563eb));
+}
+
+.lm-treeview .lm-treeview-row.lm-treeview-drop-after {
+    box-shadow: inset 0 -2px 0 0 var(--lm-treeview-drop, var(--lm-main-color, #2563eb));
+}
+
+.lm-treeview .lm-treeview-row.lm-treeview-drop-inside {
+    background: var(--lm-treeview-drop-inside-bg, #dbeafe);
+    outline: 1px dashed var(--lm-treeview-drop, var(--lm-main-color, #2563eb));
+    outline-offset: -1px;
+}
+
+/* the row being dragged is dimmed while it's in flight */
+.lm-treeview .lm-treeview-row.lm-treeview-dragging {
+    opacity: 0.4;
 }
 
 /* Chevron — rendered for parents only (they carry aria-expanded) */
@@ -54,7 +77,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--lm-treeview-chevron, #71717a);
+    color: var(--lm-treeview-chevron, var(--lm-font-grayout, #71717a));
 }
 
 .lm-treeview .lm-treeview-node[aria-expanded] > .lm-treeview-row > .lm-treeview-toggle::before {
@@ -82,5 +105,5 @@
     content: attr(data-icon);
     font-family: "Material Symbols Outlined", "Material Icons", "FontAwesome";
     font-size: var(--lm-treeview-icon-size, 16px);
-    color: var(--lm-icon-color, #71717a);
+    color: var(--lm-icon-color, var(--lm-font-grayout, #71717a));
 }

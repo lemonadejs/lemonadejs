@@ -4,11 +4,11 @@
 .lm-card {
     display: flex;
     flex-direction: column;
-    background: #fff;
-    border-radius: 8px;
+    background: var(--lm-background-color, #fff);
+    border-radius: var(--lm-radius, 6px);
     overflow: hidden;
     font: 14px/1.45 system-ui, sans-serif;
-    color: #1f2937;
+    color: var(--lm-font-color, #1f2937);
     box-sizing: border-box;
     box-shadow:
         0 1px 2px rgba(0, 0, 0, 0.12),
@@ -20,7 +20,7 @@
 
 .lm-card[data-variant='outlined'] {
     box-shadow: none;
-    border: 1px solid #e5e7eb;
+    border: 1px solid var(--lm-border-color, #e4e4e7);
 }
 
 /* Clickable surface: hover lift + pointer + keyboard focus ring */
@@ -40,7 +40,7 @@
 }
 
 .lm-card.lm-card-clickable:focus-visible {
-    outline: 2px solid #2563eb;
+    outline: 2px solid var(--lm-border-outline, #2563eb);
     outline-offset: 2px;
 }
 
@@ -79,13 +79,13 @@
 
 .lm-card .lm-card-subtitle {
     font-size: 13px;
-    color: #6b7280;
+    color: var(--lm-font-grayout, #6b7280);
 }
 
 /* Content: body text, then children */
 .lm-card .lm-card-content {
     padding: 16px;
-    color: #374151;
+    color: var(--lm-font-color, #374151);
 }
 
 .lm-card .lm-card-text {
@@ -109,11 +109,11 @@
     appearance: none;
     background: transparent;
     border: 0;
-    border-radius: 6px;
+    border-radius: var(--lm-radius, 6px);
     padding: 6px 10px;
     font: 600 13px/1 system-ui, sans-serif;
     letter-spacing: 0.02em;
-    color: #2563eb; /* primary — the default */
+    color: var(--lm-main-color, #2563eb); /* primary — the default */
     cursor: pointer;
     transition: background 0.15s ease;
 }
@@ -128,7 +128,7 @@
 }
 
 .lm-card .lm-card-action[data-color='secondary'] {
-    color: #6b7280;
+    color: var(--lm-font-grayout, #6b7280);
 }
 
 .lm-card .lm-card-action[data-color='secondary']:hover {
@@ -136,7 +136,7 @@
 }
 
 .lm-card .lm-card-action[data-color='success'] {
-    color: #16a34a;
+    color: var(--lm-color-success, #16a34a);
 }
 
 .lm-card .lm-card-action[data-color='success']:hover {
@@ -144,7 +144,7 @@
 }
 
 .lm-card .lm-card-action[data-color='error'] {
-    color: #dc2626;
+    color: var(--lm-color-danger, #dc2626);
 }
 
 .lm-card .lm-card-action[data-color='error']:hover {
@@ -152,7 +152,7 @@
 }
 
 .lm-card .lm-card-action[data-color='warning'] {
-    color: #d97706;
+    color: var(--lm-color-warning, #d97706);
 }
 
 .lm-card .lm-card-action[data-color='warning']:hover {

@@ -3,6 +3,10 @@
     "props": {
         "data": {
             "type": "array"
+        },
+        "draggable": {
+            "type": "boolean",
+            "default": false
         }
     },
     "bind": {
@@ -10,7 +14,8 @@
     },
     "events": [
         "onchange",
-        "ontoggle"
+        "ontoggle",
+        "onmove"
     ],
     "api": [
         "open",

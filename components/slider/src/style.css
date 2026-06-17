@@ -44,7 +44,7 @@
     transform: translateY(-50%);
     width: 100%;
     height: 4px;
-    border-radius: 2px;
+    border-radius: var(--lm-radius, 6px);
     background: #cbd5e1;
 }
 
@@ -53,7 +53,7 @@
     top: 50%;
     transform: translateY(-50%);
     height: 4px;
-    border-radius: 2px;
+    border-radius: var(--lm-radius, 6px);
     background: var(--lm-slider-color);
 }
 
@@ -99,7 +99,7 @@
     left: 50%;
     transform: translateX(-50%);
     padding: 2px 8px;
-    border-radius: 4px;
+    border-radius: var(--lm-radius, 6px);
     background: #1e293b;
     color: #fff;
     font-size: 12px;

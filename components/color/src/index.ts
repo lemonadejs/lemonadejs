@@ -263,7 +263,7 @@ export const Color = component('color', {
 
     const spectrumView = () =>
         html`<div class="lm-color-spectrum">
-            <canvas class="lm-color-canvas" width="240" height="140"
+            <canvas class="lm-color-canvas" width="240" height="150"
                 ref="${initCanvas}"
                 onmousedown="${pick}"
                 onmousemove="${pick}"

@@ -7,8 +7,8 @@
 .lm-cropper .lm-cropper-editor {
     position: relative;
     overflow: hidden;
-    border: 1px solid #eee;
-    background: #f8fafc;
+    border: 1px solid var(--lm-border-color, #e4e4e7);
+    background: var(--lm-background-color-header, #f8fafc);
     cursor: pointer;
     user-select: none;
     touch-action: none; /* the editor owns touch gestures (pan + pinch) */
@@ -16,11 +16,11 @@
 
 .lm-cropper.lm-cropper-edition .lm-cropper-editor {
     cursor: grab;
-    background: #fff;
+    background: var(--lm-background-color, #fff);
 }
 
 .lm-cropper.lm-cropper-dragging .lm-cropper-editor {
-    border: 1px dashed #000; /* v5 drop feedback */
+    border: 1px dashed var(--lm-font-color, #000); /* v5 drop feedback */
 }
 
 .lm-cropper .lm-cropper-canvas {
@@ -31,8 +31,8 @@
     display: none;
     position: absolute;
     z-index: 1;
-    border: 1px dashed #fff;
-    outline: 1px dashed #475569;
+    border: 1px dashed var(--lm-background-color, #fff);
+    outline: 1px dashed var(--lm-border-outline, #475569);
     box-shadow: 0 0 0 9999px rgba(15, 23, 42, 0.4);
 }
 
@@ -41,7 +41,7 @@
 }
 
 .lm-cropper .lm-cropper-controls {
-    border: 1px solid #eee;
+    border: 1px solid var(--lm-border-color, #e4e4e7);
     border-top: none;
 }
 
@@ -58,14 +58,14 @@
     flex-direction: column;
     align-items: center;
     font-size: 11px;
-    color: #475569;
+    color: var(--lm-font-grayout, #475569);
 }
 
 .lm-cropper .lm-cropper-range input {
     display: block;
     margin-top: 4px;
     width: 92px;
-    accent-color: #2563eb;
+    accent-color: var(--lm-main-color, #2563eb);
 }
 
 /* ---- transform / filter / aspect tools row */
@@ -79,10 +79,10 @@
 
 .lm-cropper .lm-cropper-transform,
 .lm-cropper .lm-cropper-filter {
-    border: 1px solid #cbd5e1;
-    border-radius: 6px;
-    background: #fff;
-    color: #0f172a;
+    border: 1px solid var(--lm-border-color, #e4e4e7);
+    border-radius: var(--lm-radius, 6px);
+    background: var(--lm-background-color, #fff);
+    color: var(--lm-font-color, #0f172a);
     font: inherit;
     font-size: 12px;
     cursor: pointer;
@@ -101,8 +101,8 @@
 }
 
 .lm-cropper .lm-cropper-filter.lm-active {
-    background: #2563eb;
-    border-color: #2563eb;
+    background: var(--lm-main-color, #2563eb);
+    border-color: var(--lm-main-color, #2563eb);
     color: #fff;
 }
 
@@ -116,10 +116,10 @@
 .lm-cropper .lm-cropper-aspect {
     margin-left: auto;
     height: 30px;
-    border: 1px solid #cbd5e1;
-    border-radius: 6px;
-    background: #fff;
-    color: #0f172a;
+    border: 1px solid var(--lm-border-color, #e4e4e7);
+    border-radius: var(--lm-radius, 6px);
+    background: var(--lm-background-color, #fff);
+    color: var(--lm-font-color, #0f172a);
     font: inherit;
     font-size: 12px;
     padding: 0 6px;
@@ -130,15 +130,15 @@
     display: flex;
     gap: 8px;
     padding: 12px 14px;
-    border-top: 1px solid #eee;
+    border-top: 1px solid var(--lm-border-color, #e4e4e7);
 }
 
 .lm-cropper .lm-cropper-buttons button {
     padding: 8px 14px;
-    border: 1px solid #cbd5e1;
-    border-radius: 6px;
-    background: #fff;
-    color: #0f172a;
+    border: 1px solid var(--lm-border-color, #e4e4e7);
+    border-radius: var(--lm-radius, 6px);
+    background: var(--lm-background-color, #fff);
+    color: var(--lm-font-color, #0f172a);
     font: inherit;
     font-size: 13px;
     cursor: pointer;
@@ -151,15 +151,15 @@
 
 .lm-cropper .lm-cropper-buttons .lm-cropper-save {
     flex: 1;
-    background: #2563eb;
-    border-color: #2563eb;
+    background: var(--lm-main-color, #2563eb);
+    border-color: var(--lm-main-color, #2563eb);
     color: #fff;
 }
 
 .lm-cropper .lm-cropper-buttons .lm-cropper-delete {
     margin-left: auto;
     border-color: #fca5a5;
-    color: #b91c1c;
+    color: var(--lm-color-danger, #b91c1c);
 }
 
 .lm-cropper .lm-cropper-file {

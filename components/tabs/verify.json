@@ -31,6 +31,14 @@
             "pass": true
         },
         {
+            "name": "prop variant",
+            "pass": true
+        },
+        {
+            "name": "prop variant (live state)",
+            "pass": true
+        },
+        {
             "name": "prop round",
             "pass": true
         },

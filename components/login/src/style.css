@@ -4,7 +4,7 @@
     max-width: 480px;
     box-sizing: border-box;
     margin: 0 auto;
-    border-radius: 5px;
+    border-radius: var(--lm-radius, 6px);
     font-size: 1em;
     line-height: normal;
 }
@@ -44,7 +44,7 @@
 .lm-login .lm-login-alert,
 .lm-login .lm-login-message {
     padding: 10px 12px;
-    border-radius: 4px;
+    border-radius: var(--lm-radius, 6px);
     margin-bottom: 10px;
     font-size: 0.9em;
 }
@@ -89,7 +89,7 @@
     margin: 0;
     box-sizing: border-box;
     border: 1px solid #ccc;
-    border-radius: 4px;
+    border-radius: var(--lm-radius, 6px);
 }
 
 .lm-login .lm-login-row input.lm-login-error {
@@ -118,7 +118,7 @@
     box-sizing: border-box;
     background-color: var(--lm-main-color, #2196f3);
     border: 1px solid var(--lm-main-color, #2196f3);
-    border-radius: 4px;
+    border-radius: var(--lm-radius, 6px);
     color: #fff;
     cursor: pointer;
     appearance: none;
@@ -130,7 +130,7 @@
     box-sizing: border-box;
     background-color: #fff;
     border: 1px solid var(--lm-main-color, #2196f3);
-    border-radius: 4px;
+    border-radius: var(--lm-radius, 6px);
     color: var(--lm-main-color, #2196f3);
     cursor: pointer;
     appearance: none;

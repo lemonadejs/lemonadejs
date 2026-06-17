@@ -15,11 +15,23 @@
             "pass": true
         },
         {
+            "name": "prop draggable",
+            "pass": true
+        },
+        {
+            "name": "prop draggable (live state)",
+            "pass": true
+        },
+        {
             "name": "event onchange",
             "pass": true
         },
         {
             "name": "event ontoggle",
+            "pass": true
+        },
+        {
+            "name": "event onmove",
             "pass": true
         },
         {

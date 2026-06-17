@@ -26,13 +26,13 @@
     align-items: center;
     gap: 10px;
     padding: 7px 10px;
-    border-radius: 6px;
+    border-radius: var(--lm-radius, 6px);
     cursor: pointer;
 }
 
 .lm-contextmenu-item:hover,
 .lm-contextmenu-cursor {
-    background: #f4f4f5;
+    background: var(--lm-background-color-highlight, #f4f4f5);
 }
 
 .lm-contextmenu-disabled {
@@ -41,7 +41,7 @@
 }
 
 .lm-contextmenu-line {
-    border-top: 1px solid #e4e4e7;
+    border-top: 1px solid var(--lm-border-color, #e4e4e7);
     margin: 6px 4px;
 }
 
@@ -61,10 +61,15 @@
 }
 
 .lm-contextmenu-shortcut {
-    color: #a1a1aa;
+    color: var(--lm-font-grayout, #a1a1aa);
     font-size: 0.9em;
 }
 
+/* submenu indicator: the Material 'arrow_right' icon (matches the v5
+   plugin) — a real glyph that's clearly visible, not a tiny › character */
 .lm-contextmenu-arrow {
-    color: #a1a1aa;
+    font-size: 18px;
+    line-height: 1;
+    color: var(--lm-icon-color, #777);
+    margin-left: 8px;
 }

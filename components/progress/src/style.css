@@ -17,7 +17,7 @@
     overflow: hidden;
     flex: 1;
     height: 4px;
-    border-radius: 2px;
+    border-radius: var(--lm-radius, 6px);
     background: #bfdbfe;
 }
 
@@ -28,7 +28,7 @@
     bottom: 0;
     width: 0;
     border-radius: inherit;
-    background: #2563eb;
+    background: var(--lm-main-color, #2563eb);
     transition: width 0.2s ease;
 }
 
@@ -62,11 +62,11 @@
 }
 
 .lm-progress .lm-progress-circle-track {
-    stroke: #dbeafe;
+    stroke: var(--lm-background-color-highlight, #dbeafe);
 }
 
 .lm-progress .lm-progress-circle-bar {
-    stroke: #2563eb;
+    stroke: var(--lm-main-color, #2563eb);
     stroke-linecap: round;
     transition: stroke-dashoffset 0.2s ease;
 }
@@ -87,7 +87,7 @@
 /* Label: beside the linear track, centered inside the circular ring */
 .lm-progress .lm-progress-label {
     font: 12px/1 system-ui, sans-serif;
-    color: #3f3f46;
+    color: var(--lm-font-color, #3f3f46);
 }
 
 .lm-progress .lm-progress-circular .lm-progress-label {
@@ -100,7 +100,7 @@
 
 /* Colors */
 .lm-progress[data-color='green'] .lm-progress-bar {
-    background: #16a34a;
+    background: var(--lm-color-success, #16a34a);
 }
 
 .lm-progress[data-color='green'] .lm-progress-track {
@@ -108,7 +108,7 @@
 }
 
 .lm-progress[data-color='green'] .lm-progress-circle-bar {
-    stroke: #16a34a;
+    stroke: var(--lm-color-success, #16a34a);
 }
 
 .lm-progress[data-color='green'] .lm-progress-circle-track {
@@ -116,7 +116,7 @@
 }
 
 .lm-progress[data-color='orange'] .lm-progress-bar {
-    background: #ea580c;
+    background: var(--lm-color-warning, #ea580c);
 }
 
 .lm-progress[data-color='orange'] .lm-progress-track {
@@ -124,7 +124,7 @@
 }
 
 .lm-progress[data-color='orange'] .lm-progress-circle-bar {
-    stroke: #ea580c;
+    stroke: var(--lm-color-warning, #ea580c);
 }
 
 .lm-progress[data-color='orange'] .lm-progress-circle-track {
@@ -132,7 +132,7 @@
 }
 
 .lm-progress[data-color='red'] .lm-progress-bar {
-    background: #dc2626;
+    background: var(--lm-color-danger, #dc2626);
 }
 
 .lm-progress[data-color='red'] .lm-progress-track {
@@ -140,7 +140,7 @@
 }
 
 .lm-progress[data-color='red'] .lm-progress-circle-bar {
-    stroke: #dc2626;
+    stroke: var(--lm-color-danger, #dc2626);
 }
 
 .lm-progress[data-color='red'] .lm-progress-circle-track {
@@ -148,7 +148,7 @@
 }
 
 .lm-progress[data-color='purple'] .lm-progress-bar {
-    background: #9333ea;
+    background: var(--lm-color-purple, #9333ea);
 }
 
 .lm-progress[data-color='purple'] .lm-progress-track {
@@ -156,7 +156,7 @@
 }
 
 .lm-progress[data-color='purple'] .lm-progress-circle-bar {
-    stroke: #9333ea;
+    stroke: var(--lm-color-purple, #9333ea);
 }
 
 .lm-progress[data-color='purple'] .lm-progress-circle-track {

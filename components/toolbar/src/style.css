@@ -70,7 +70,7 @@
 .lm-toolbar-picker-header {
     cursor: pointer;
     padding: 5px 10px;
-    border-radius: 4px;
+    border-radius: var(--lm-radius, 6px);
     font-size: 0.9em;
     white-space: nowrap;
     color: var(--lm-secondary-color, #303030);
@@ -93,7 +93,7 @@
 
 .lm-toolbar[data-position="static"] .lm-toolbar-item[data-selected="true"] {
     background-color: var(--lm-background-color-highlight, #ebebeb);
-    border-radius: 4px;
+    border-radius: var(--lm-radius, 6px);
 }
 
 .lm-toolbar[data-position="static"] .lm-toolbar-item i {

@@ -40,6 +40,8 @@ export interface GanttTask {
     progress?: number;        // 0-100 fill
     type?: 'task' | 'milestone';
     readonly?: boolean;
+    /** ids of predecessor tasks; draws a finish→start link arrow from each */
+    dependencies?: (string | number)[];
     [key: string]: unknown;
 }
 
@@ -73,6 +75,8 @@ export const Gantt = component('gantt', {
     table: '',                    // CSS selector: inject lanes into that table's rows
     onchange: Function,           // (task, start, end) on drag commit
     onclick: Function,            // (task, event)
+    onlink: Function,             // (fromTask, toTask) a dependency was drawn
+    onunlink: Function,           // (fromTask, toTask) a dependency was removed
     api: { getRange: Function, setRange: Function },
 }, (props, { state, onMount, onUnmount, listen }) => {
     const tasks = () => (props.data.peek() as GanttTask[]) || [];
@@ -81,6 +85,8 @@ export const Gantt = component('gantt', {
     const range = state<{ from: number; to: number }>({ from: 0, to: 1 });
     // Drag preview: task index -> { from, to } in ms, shown live
     const preview = state<{ index: number; from: number; to: number } | null>(null);
+    // Live dependency-link drag: source row + anchor (%/px) + cursor (%/px)
+    const linking = state<{ index: number; ax: number; ay: number; cx: number; cy: number } | null>(null);
 
     const computeRange = () => {
         const list = tasks();
@@ -131,6 +137,59 @@ export const Gantt = component('gantt', {
         ((toMs_ - fromMs + DAY) / (range.value.to - range.value.from + DAY)) * 100;
 
     const round2 = (n: number) => Math.round(n * 1000) / 1000;
+
+    /**
+     * Dependency links — finish→start connectors. For each task carrying
+     * `dependencies: [id,...]`, draw an elbow from the predecessor's RIGHT
+     * edge to this task's LEFT edge. x is in % (the bar coordinate space),
+     * y in px (row centres); the SVG stretches on x with a non-scaling
+     * stroke so the lines stay crisp at any width — no resize listener.
+     *
+     * Reads `preview` so the connectors track the live drag (mousemove),
+     * not just the committed start/end on drop: the dragged task uses its
+     * preview span, everything else its stored dates.
+     */
+    const links = (): { d: string; ax: number; ay: number; ti: number; sid: string | number }[] => {
+        const tasks = (props.data.value as GanttTask[]) || [];
+        const rh = props.rowheight.value;
+        const p = preview.value; // tracked read → re-runs on each drag move
+        const span = (t: GanttTask, i: number): { from: number; to: number } =>
+            p && p.index === i
+                ? { from: p.from, to: p.to }
+                : { from: toMs(t.start), to: toMs(t.end || t.start) };
+        const byId = new Map<string | number, number>();
+        tasks.forEach((t, i) => {
+            if (t.id != null) byId.set(t.id, i);
+        });
+        const out: { d: string; ax: number; ay: number; ti: number; sid: string | number }[] = [];
+        tasks.forEach((b, ib) => {
+            const deps = b.dependencies;
+            if (!Array.isArray(deps) || !deps.length) {
+                return;
+            }
+            const bx = pct(span(b, ib).from);
+            const by = ib * rh + rh / 2;
+            deps.forEach((depId) => {
+                const ia = byId.get(depId);
+                if (ia == null || ia === ib) {
+                    return;
+                }
+                const as = span(tasks[ia], ia);
+                const aEndX = pct(as.from) + widthPct(as.from, as.to);
+                const ay = ia * rh + rh / 2;
+                const stub = 1.5; // % horizontal run out of the predecessor
+                const turn = Math.max(aEndX + stub, bx - stub);
+                // out of A → vertical to B's row → into B's start
+                const d =
+                    'M ' + round2(aEndX) + ' ' + ay +
+                    ' H ' + round2(turn) +
+                    ' V ' + by +
+                    ' H ' + round2(bx);
+                out.push({ d, ax: round2(bx), ay: by, ti: ib, sid: depId });
+            });
+        });
+        return out;
+    };
 
     // ---- drag: ONE in-flight gesture, listeners armed per drag via
     // listen() (off() is idempotent and self-pruning). The unmount hook
@@ -213,6 +272,105 @@ export const Gantt = component('gantt', {
                 );
             }
         );
+    };
+
+    /**
+     * Draw a dependency by dragging from a predecessor's link handle to the
+     * task that should depend on it. Uses the same `track()` gesture; the
+     * target is whatever bar the mouse is over on release.
+     */
+    const startLink = (e: MouseEvent, index: number, el: HTMLElement) => {
+        if (!props.editable.value) {
+            return;
+        }
+        const src = tasks()[index];
+        if (!src || src.id == null) {
+            return; // a predecessor must have an id to be referenced
+        }
+        e.preventDefault();
+        e.stopPropagation(); // don't also start a move/resize drag on the bar
+        const area = el.closest('.lm-gantt-rows') as HTMLElement;
+        const areaRect = area.getBoundingClientRect();
+        const rh = props.rowheight.value;
+        const aFrom = toMs(src.start);
+        const ax = pct(aFrom) + widthPct(aFrom, toMs(src.end || src.start));
+        const ay = index * rh + rh / 2;
+        let lastX = e.clientX;
+        let lastY = e.clientY;
+        track(
+            (ev) => {
+                lastX = ev.clientX;
+                lastY = ev.clientY;
+                linking.value = {
+                    index,
+                    ax,
+                    ay,
+                    cx: ((ev.clientX - areaRect.left) / (areaRect.width || 1)) * 100,
+                    cy: ev.clientY - areaRect.top,
+                };
+            },
+            (commit) => {
+                linking.value = null;
+                if (!commit) {
+                    return;
+                }
+                const hit = (document.elementFromPoint(lastX, lastY) as Element | null)?.closest(
+                    '.lm-gantt-bar, .lm-gantt-milestone'
+                ) as HTMLElement | null;
+                const ti = hit && hit.dataset.index != null ? Number(hit.dataset.index) : -1;
+                if (ti < 0 || ti === index) {
+                    return;
+                }
+                const target = tasks()[ti];
+                const deps = Array.isArray(target.dependencies) ? target.dependencies.slice() : [];
+                const srcDeps = Array.isArray(src.dependencies) ? src.dependencies : [];
+                // skip duplicates and a direct A→B / B→A reverse loop
+                if (deps.includes(src.id!) || srcDeps.includes(target.id as string | number)) {
+                    return;
+                }
+                target.dependencies = [...deps, src.id!];
+                props.data.touch();
+                props.onlink?.(src, target);
+            }
+        );
+    };
+
+    /**
+     * Pan the viewport by dragging the timeline header left/right — shifts
+     * the whole range by the cursor delta (great for large schedules). The
+     * range drives every % binding, so the bars/grid/today all follow.
+     */
+    const panStart = (e: MouseEvent) => {
+        const header = e.currentTarget as HTMLElement;
+        const width = header.getBoundingClientRect().width || 1;
+        const msPerPx = (range.value.to - range.value.from + DAY) / width;
+        const origin = e.clientX;
+        const from0 = range.value.from;
+        const to0 = range.value.to;
+        e.preventDefault();
+        header.classList.add('lm-gantt-panning');
+        track(
+            (ev) => {
+                const deltaMs = Math.round((ev.clientX - origin) * msPerPx);
+                range.value = { from: from0 - deltaMs, to: to0 - deltaMs };
+            },
+            () => header.classList.remove('lm-gantt-panning')
+        );
+    };
+
+    /** Remove dependency `sourceId` from the task at `targetIndex`. */
+    const removeLink = (targetIndex: number, sourceId: string | number) => {
+        if (!props.editable.value) {
+            return;
+        }
+        const target = tasks()[targetIndex];
+        if (!target || !Array.isArray(target.dependencies)) {
+            return;
+        }
+        const src = tasks().find((t) => t.id === sourceId);
+        target.dependencies = target.dependencies.filter((d) => d !== sourceId);
+        props.data.touch();
+        props.onunlink?.(src, target);
     };
 
     props.ref?.({
@@ -389,6 +547,7 @@ export const Gantt = component('gantt', {
 
         if (milestone) {
             return html`<div class="lm-gantt-milestone ${dragging ? 'lm-gantt-dragging' : ''}"
+                data-index="${index}"
                 style="left:${round2(pct(from) + widthPct(from, from) / 2)}%;${task.color ? 'background:' + task.color : ''}"
                 title="${(task.label || '') + ' · ' + toIso(from)}"
                 onmousedown="${(e: MouseEvent) => startDrag(e, index, task, (e.currentTarget || e.target) as HTMLElement)}"
@@ -396,9 +555,11 @@ export const Gantt = component('gantt', {
                     props.onclick?.(task, e)}"></div>`;
         }
 
+        const linkable = props.editable.value && !task.readonly && task.id != null;
         return html`<div class="lm-gantt-bar ${dragging ? 'lm-gantt-dragging' : ''} ${
             props.editable.value && !task.readonly ? 'lm-gantt-editable' : ''
         }"
+            data-index="${index}"
             style="left:${round2(pct(from))}%;width:${round2(widthPct(from, to))}%;${
                 task.color ? 'background:' + task.color : ''
             }"
@@ -411,13 +572,19 @@ export const Gantt = component('gantt', {
                     ? html`<div class="lm-gantt-progress" style="width:${Math.min(100, Math.max(0, task.progress))}%"></div>`
                     : ''}
             <span class="lm-gantt-label">${task.label || ''}</span>
+            ${linkable
+                ? html`<div class="lm-gantt-link-handle" title="Drag to a task to link"
+                      onmousedown="${(e: MouseEvent) =>
+                          startLink(e, index, (e.currentTarget as HTMLElement).closest('.lm-gantt-rows') as HTMLElement)}"></div>`
+                : ''}
         </div>`;
     };
 
     return html`<div class="lm-gantt" data-editable="${() => (props.editable.value ? 'true' : false)}">
         ${() =>
             props.header.value &&
-            html`<div class="lm-gantt-header">
+            html`<div class="lm-gantt-header" title="Drag to pan the timeline"
+                onmousedown="${(e: MouseEvent) => panStart(e)}">
                 <div class="lm-gantt-months">${() =>
                     monthSegments().map(
                         (m) => html`<div class="lm-gantt-month" style="left:${m.left}%;width:${m.width}%">${m.label}</div>`
@@ -455,6 +622,38 @@ export const Gantt = component('gantt', {
                                   ${() => barView(task, index)}
                               </div>`
                           )}
+                      ${() => {
+                          const ls = links();
+                          const lk = linking.value; // tracked → temp line follows the cursor
+                          if (!ls.length && !lk) {
+                              return '';
+                          }
+                          const editable = props.editable.value;
+                          const h = (((props.data.value as GanttTask[]) || []).length) * props.rowheight.value;
+                          // ONE wrapper root so the whole overlay is replaced as
+                          // a unit each re-run — loose arrowhead siblings would
+                          // otherwise orphan when a link is removed.
+                          return html`<div class="lm-gantt-link-layer">
+                              <svg class="lm-gantt-links" viewBox="0 0 100 ${h}"
+                                  preserveAspectRatio="none" style="height:${h}px">${ls.map(
+                                  (l) => html`<path class="lm-gantt-link" d="${l.d}"></path>`
+                              )}${
+                                  editable
+                                      ? ls.map(
+                                            (l) => html`<path class="lm-gantt-link-hit" d="${l.d}"
+                                                title="Click to remove this dependency"
+                                                onclick="${() => removeLink(l.ti, l.sid)}"></path>`
+                                        )
+                                      : ''
+                              }${
+                                  lk
+                                      ? html`<path class="lm-gantt-link-temp"
+                                            d="M ${round2(lk.ax)} ${lk.ay} L ${round2(lk.cx)} ${lk.cy}"></path>`
+                                      : ''
+                              }</svg>${ls.map(
+                                  (l) => html`<div class="lm-gantt-link-arrow" style="left:${l.ax}%;top:${l.ay}px"></div>`
+                              )}</div>`;
+                      }}
                   </div>`}
     </div>`;
 });

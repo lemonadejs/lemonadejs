@@ -3,7 +3,7 @@
    align across any containers (the table-row embedding story). */
 .lm-gantt {
     font: 12.5px/1.4 system-ui, sans-serif;
-    color: #18181b;
+    color: var(--lm-font-color, #18181b);
     position: relative;
     width: 100%;
 }
@@ -12,7 +12,12 @@
 .lm-gantt-header {
     position: relative;
     user-select: none;
-    border-bottom: 1px solid #e4e4e7;
+    border-bottom: 1px solid var(--lm-border-color, #e4e4e7);
+    cursor: grab; /* drag to pan the viewport */
+}
+
+.lm-gantt-header.lm-gantt-panning {
+    cursor: grabbing;
 }
 
 .lm-gantt-months {
@@ -30,8 +35,8 @@
     box-sizing: border-box;
     font-weight: 600;
     font-size: 11.5px;
-    color: #3f3f46;
-    border-left: 1px solid #e4e4e7;
+    color: var(--lm-font-color, #3f3f46);
+    border-left: 1px solid var(--lm-border-color, #e4e4e7);
     white-space: nowrap;
     overflow: hidden;
 }
@@ -49,12 +54,12 @@
     align-items: center;
     justify-content: center;
     font-size: 10px;
-    color: #a1a1aa;
+    color: var(--lm-font-grayout, #a1a1aa);
     overflow: hidden;
 }
 
 .lm-gantt-day[data-weekend='true'] {
-    color: #d4d4d8;
+    color: var(--lm-border-color, #e4e4e7);
 }
 
 /* ---- chart area */
@@ -98,9 +103,9 @@
     transform: translateY(-50%);
     height: 62%;
     min-width: 6px;
-    background: #2563eb;
+    background: var(--lm-main-color, #2563eb);
     background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0) 55%);
-    border-radius: 999px;
+    border-radius: var(--lm-radius, 6px);
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
     display: flex;
     align-items: center;
@@ -128,7 +133,7 @@
     top: 20%;
     height: 60%;
     width: 3px;
-    border-radius: 2px;
+    border-radius: var(--lm-radius, 6px);
     background: rgba(255, 255, 255, 0.75);
     cursor: ew-resize;
 }
@@ -178,9 +183,9 @@
     top: 50%;
     width: 12px;
     height: 12px;
-    background: #7c3aed;
+    background: var(--lm-color-purple, #7c3aed);
     transform: translate(-50%, -50%) rotate(45deg);
-    border-radius: 2px;
+    border-radius: 3px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
     transition: box-shadow 0.15s ease;
     z-index: 1;
@@ -188,6 +193,97 @@
 
 .lm-gantt-milestone:hover {
     box-shadow: 0 3px 8px rgba(0, 0, 0, 0.35);
+}
+
+/* ---- dependency links: finish→start connectors between task bars.
+   The SVG fills the rows on x (in %) and stretches with the timeline; the
+   non-scaling stroke keeps the lines a constant 1.5px at any width. The
+   arrowheads are CSS triangles so they never skew under that x-stretch. */
+.lm-gantt-link-layer {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 2;
+}
+
+.lm-gantt-links {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    overflow: visible;
+    pointer-events: none;
+}
+
+.lm-gantt-link {
+    fill: none;
+    stroke: var(--lm-gantt-link, var(--lm-icon-color, #777));
+    stroke-width: 1.5;
+    vector-effect: non-scaling-stroke;
+}
+
+.lm-gantt-link-arrow {
+    position: absolute;
+    width: 0;
+    height: 0;
+    transform: translate(-100%, -50%);
+    border: 4px solid transparent;
+    border-left-color: var(--lm-gantt-link, var(--lm-icon-color, #777));
+    pointer-events: none;
+    z-index: 2;
+}
+
+/* editable: a wide invisible hit-line over each connector — click to delete
+   the dependency (reddens on hover so it's clear what will go) */
+.lm-gantt-link-hit {
+    fill: none;
+    stroke: transparent;
+    stroke-width: 9;
+    vector-effect: non-scaling-stroke;
+    pointer-events: stroke;
+    cursor: pointer;
+}
+
+.lm-gantt-link-hit:hover {
+    stroke: var(--lm-color-danger, #dc2626);
+    stroke-width: 2.5;
+    opacity: 0.7;
+}
+
+/* the line drawn while dragging a new dependency from a link handle */
+.lm-gantt-link-temp {
+    fill: none;
+    stroke: var(--lm-main-color, #2563eb);
+    stroke-width: 1.6;
+    stroke-dasharray: 4 3;
+    vector-effect: non-scaling-stroke;
+}
+
+/* the connector handle: a dot near a bar's right edge, shown on hover;
+   drag it onto another task to create a finish→start dependency */
+/* sits LEFT of the right-edge resize zone (EDGE=8px) so the two controls
+   don't overlap — the link line still originates from the bar's right edge */
+.lm-gantt-link-handle {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    background: var(--lm-main-color, #2563eb);
+    border: 2px solid var(--lm-background-color, #fff);
+    box-sizing: border-box;
+    cursor: crosshair;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.12s ease;
+    z-index: 5;
+}
+
+.lm-gantt-bar:hover .lm-gantt-link-handle {
+    opacity: 1;
+    pointer-events: auto;
 }
 
 /* During any drag: keep the grabbing cursor everywhere */

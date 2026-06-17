@@ -137,7 +137,7 @@
 .lm-kanban-indicator {
     height: 3px;
     margin: -5px 0;
-    border-radius: 2px;
+    border-radius: var(--lm-radius, 6px);
     background: var(--lm-kanban-accent);
     box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.6);
     pointer-events: none;

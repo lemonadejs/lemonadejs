@@ -6,7 +6,7 @@
     --lm-buttongroup-color-dark: #1d4ed8;
     --lm-buttongroup-color-darker: #1e40af;
     display: inline-flex;
-    border-radius: 6px;
+    border-radius: var(--lm-radius, 6px);
 }
 
 .lm-buttongroup[data-color='green'] {
@@ -68,7 +68,7 @@
 }
 
 .lm-buttongroup .lm-buttongroup-button:only-child {
-    border-radius: 6px;
+    border-radius: var(--lm-radius, 6px);
 }
 
 .lm-buttongroup[data-orientation='vertical'] .lm-buttongroup-button:first-child {
@@ -80,7 +80,7 @@
 }
 
 .lm-buttongroup[data-orientation='vertical'] .lm-buttongroup-button:only-child {
-    border-radius: 6px;
+    border-radius: var(--lm-radius, 6px);
 }
 
 /* Contained (default): a shared surface, divider lines between buttons */

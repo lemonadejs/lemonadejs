@@ -34,8 +34,8 @@
 .lm-actionsheet-group {
     box-sizing: border-box;
     margin: 10px;
-    background-color: #fff;
-    border-radius: 5px;
+    background-color: var(--lm-background-color, #fff);
+    border-radius: var(--lm-radius, 6px);
     overflow: hidden;
 }
 
@@ -50,7 +50,7 @@
 .lm-actionsheet-message {
     padding: 4px 8px 8px;
     text-align: center;
-    color: #52525b;
+    color: var(--lm-font-grayout, #52525b);
 }
 
 /* Action rows (v5: 1.4em bold rows, hairline separators, blue text) */
@@ -60,14 +60,14 @@
     width: 100%;
     margin: 0;
     border: 0;
-    border-top: 1px solid #ccc;
+    border-top: 1px solid var(--lm-border-color, #e4e4e7);
     background-color: transparent;
     padding: 8px 4px;
     font-size: 1.4em;
     font-weight: bold;
     font-family: inherit;
     text-align: center;
-    color: var(--active-color, #2563eb);
+    color: var(--active-color, var(--lm-main-color, #2563eb));
     cursor: pointer;
     outline: none;
 }
@@ -77,7 +77,7 @@
 }
 
 .lm-actionsheet-option:focus-visible {
-    background-color: #f4f4f5;
+    background-color: var(--lm-background-color-highlight, #f4f4f5);
 }
 
 .lm-actionsheet-option[data-action='cancel'] {

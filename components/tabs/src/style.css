@@ -23,6 +23,50 @@
     margin: 0;
     padding: 0;
     align-items: center;
+    /* flex:0 1 auto + min-width:0 keeps the strip its natural width (so
+       left/center layouts are unchanged) while still allowing it to shrink
+       below content width — which is what turns on the horizontal scroll
+       when the tabs overflow. */
+    flex: 0 1 auto;
+    min-width: 0;
+    overflow-x: auto;
+    scroll-behavior: smooth;
+    scrollbar-width: none;       /* Firefox: hide the scrollbar, use arrows */
+    -ms-overflow-style: none;    /* legacy Edge */
+}
+
+.lm-tabs .lm-tabs-headers > ul::-webkit-scrollbar {
+    display: none;               /* Chrome / Safari */
+}
+
+/* Overflow arrows: the JS renders .lm-tabs-scroll-prev/-next (chevron_left/
+   _right ligatures) only while the strip overflows, and disables the side
+   that can't scroll. Both gutters are reserved together so widths don't
+   shift mid-scroll. */
+.lm-tabs .lm-tabs-scroll {
+    flex: 0 0 auto;
+    align-self: stretch;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    padding: 0;
+    border: 0;
+    background: var(--lm-background-color, #fff);
+    color: var(--lm-icon-color, #777);
+    cursor: pointer;
+    font-family: "Material Symbols Outlined", "Material Icons", "FontAwesome";
+    font-size: 22px;
+    line-height: 1;
+}
+
+.lm-tabs .lm-tabs-scroll:hover {
+    background: var(--lm-background-color-highlight, #ececec);
+}
+
+.lm-tabs .lm-tabs-scroll:disabled {
+    opacity: 0.35;
+    cursor: default;
 }
 
 .lm-tabs .lm-tabs-tab {

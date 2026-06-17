@@ -324,7 +324,7 @@ export const Contextmenu = component('contextmenu', {
                   <span class="lm-contextmenu-icon material-icons">${item.icon || ''}</span>
                   <span class="lm-contextmenu-title">${item.title || ''}</span>
                   <span class="lm-contextmenu-shortcut">${item.shortcut || ''}</span>
-                  ${item.submenu ? html`<span class="lm-contextmenu-arrow">›</span>` : ''}
+                  ${item.submenu ? html`<span class="lm-contextmenu-arrow material-icons">arrow_right</span>` : ''}
               </li>`;
 
     // Pushing/popping levels must never rebuild the surviving menus — a

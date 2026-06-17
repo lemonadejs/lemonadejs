@@ -33,6 +33,8 @@
 
 import { batch, component, css, html, type View } from 'lemonadejs';
 import Modal from '@lemonadejs/modal';
+import Calendar from '@lemonadejs/calendar';
+import Dropdown from '@lemonadejs/dropdown';
 
 export interface ScheduleEvent {
     guid?: string;
@@ -89,11 +91,15 @@ const ACCEPTED: (keyof ScheduleEvent)[] = [
 const DEFAULT_WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 /** The v5 Event editor palette (event.js) */
+// Editor swatches. The FIRST 8 are the shared catalog palette (kept in
+// sync with --lm-series-* in components/style.css and the chart `lemonade`
+// palette) so a default event colour matches charts/gantt/etc even with no
+// global stylesheet; the remaining 8 are extra choices.
 export const PALETTE: string[] = [
-    '#f44336', '#e91e63', '#9c27b0', '#3f51b5',
-    '#2196f3', '#00bcd4', '#009688', '#4caf50',
-    '#8bc34a', '#cddc39', '#ffeb3b', '#ffc107',
-    '#ff9800', '#ff5722', '#795548', '#9e9e9e',
+    '#2563eb', '#39a33b', '#f59e0b', '#a23131',
+    '#7c3aed', '#0ea5e9', '#db2777', '#64748b',
+    '#14b8a6', '#eab308', '#ef4444', '#ec4899',
+    '#8b5cf6', '#06b6d4', '#84cc16', '#f97316',
 ];
 
 const TIME = /^(2[0-4]|[01]?\d):([0-5]\d)$/;
@@ -275,7 +281,15 @@ export const Schedule = component('schedule', {
     const selection = state<string[]>([]);
     const drag = state<Drag | null>(null);
     const editorOpen = state(false);
-    const draft = state<ScheduleEvent | null>(null);
+    // Editor fields as individual states so the Calendar / Dropdown elements
+    // (which take a `bind`) two-way bind cleanly; saveEditor reads them.
+    const fTitle = state('');
+    const fDate = state('');
+    const fWeekday = state(0);
+    const fStart = state('');
+    const fEnd = state('');
+    const fLocation = state('');
+    const fColor = state('');
 
     let clipboard: ScheduleEvent[] = [];
     let history: HistoryEntry[] = [];
@@ -394,7 +408,7 @@ export const Schedule = component('schedule', {
                 continue;
             }
             if (e.title === undefined) e.title = 'No title';
-            if (e.color === undefined) e.color = '#3f51b5';
+            if (e.color === undefined) e.color = '#2563eb';
             if (e.readonly === undefined) e.readonly = false;
             if (e.description === undefined) e.description = '';
             if (e.location === undefined) e.location = '';
@@ -699,26 +713,31 @@ export const Schedule = component('schedule', {
     };
     const openEditor = (record: ScheduleEvent): void => {
         editorGuid = record.guid || null;
-        draft.value = { ...record };
+        fTitle.value = record.title || '';
+        fDate.value = String(record.date || '').substring(0, 10);
+        fWeekday.value = typeof record.weekday === 'number' ? record.weekday : 0;
+        fStart.value = record.start || '';
+        fEnd.value = record.end || '';
+        fLocation.value = record.location || '';
+        fColor.value = record.color || '';
         editorOpen.value = true;
     };
     const saveEditor = (): void => {
-        const d = draft.peek();
-        if (!d || !editorGuid) {
+        if (!editorGuid) {
             editorOpen.value = false;
             return;
         }
         const nv: Partial<ScheduleEvent> = {
-            title: d.title,
-            start: d.start,
-            end: d.end,
-            location: d.location,
-            color: d.color,
+            title: fTitle.value,
+            start: fStart.value,
+            end: fEnd.value,
+            location: fLocation.value,
+            color: fColor.value,
         };
         if (weekly()) {
-            nv.weekday = d.weekday;
+            nv.weekday = fWeekday.value;
         } else {
-            nv.date = d.date;
+            nv.date = fDate.value;
         }
         if (updateEvent(editorGuid, nv) !== false) {
             editorOpen.value = false;
@@ -910,6 +929,9 @@ export const Schedule = component('schedule', {
                 return;
             }
             select(g, true);
+            // own the keyboard so Ctrl+C/V/Z/Y + Delete work after a click
+            // (the handler lives on the root; clicking a child won't focus it)
+            rootEl?.focus({ preventScroll: true });
             if (rec.readonly) {
                 return;
             }
@@ -1126,7 +1148,7 @@ export const Schedule = component('schedule', {
         const lo = Math.min(d.y1, d.y2);
         const hi = Math.max(d.y1, d.y2);
         const heightRows = hi - lo + 1;
-        const color = d.record.color || '#3f51b5';
+        const color = d.record.color || '#2563eb';
         return html`<div class="lm-schedule-item lm-schedule-selected lm-schedule-dragging"
             data-title="${d.record.title || 'No title'}"
             data-start="${intToHour(lo)}"
@@ -1215,46 +1237,35 @@ export const Schedule = component('schedule', {
 
     // ---- the built-in editor (v5 event.js fields, on the Modal primitive)
     const editorView = (): View | string => {
-        const d = draft.value;
-        if (!d) {
-            return '';
-        }
         const dict = props.weekdays.value as string[] | undefined;
         const names = Array.isArray(dict) && dict.length === 7 ? dict : DEFAULT_WEEKDAYS;
-        const times = timeOptions();
-        const timeSelect = (cls: string, current: string | undefined, set: (v: string) => void) =>
-            html`<select class="${cls}"
-                onchange="${(e: Event) => set((e.target as HTMLSelectElement).value)}">${times.map(
-                (t) => html`<option value="${t}" selected="${t === current || false}">${t}</option>`
-            )}</select>`;
+        // time options as Dropdown data; the date uses the Calendar element
+        const timeData = timeOptions().map((t) => ({ value: t, text: t }));
         return html`<div class="lm-schedule-form">
-            <input type="text" class="lm-schedule-editor-title" placeholder="Title"
-                value="${d.title || ''}"
-                oninput="${(e: Event) => (d.title = (e.target as HTMLInputElement).value)}" />
+            <input type="text" class="lm-schedule-editor-title" placeholder="Title" bind="${fTitle}" />
             <div class="lm-schedule-editor-when">
                 ${weekly()
                     ? html`<select class="lm-schedule-editor-weekday"
                           onchange="${(e: Event) =>
-                              (d.weekday = parseInt((e.target as HTMLSelectElement).value, 10))}">${names.map(
+                              (fWeekday.value = parseInt((e.target as HTMLSelectElement).value, 10))}">${names.map(
                           (n, i) =>
-                              html`<option value="${i}" selected="${i === (d.weekday || 0) || false}">${n}</option>`
+                              html`<option value="${i}" selected="${i === fWeekday.value || false}">${n}</option>`
                       )}</select>`
-                    : html`<input type="date" class="lm-schedule-editor-date"
-                          value="${String(d.date || '').substring(0, 10)}"
-                          oninput="${(e: Event) => (d.date = (e.target as HTMLInputElement).value)}" />`}
-                ${timeSelect('lm-schedule-editor-start', d.start, (v) => (d.start = v))}
-                ${timeSelect('lm-schedule-editor-end', d.end, (v) => (d.end = v))}
+                    : html`<div class="lm-schedule-editor-date">
+                          <${Calendar} bind="${fDate}" placeholder="Date" />
+                      </div>`}
+                <div class="lm-schedule-editor-start">
+                    <${Dropdown} data="${timeData}" bind="${fStart}" placeholder="Start" />
+                </div>
+                <div class="lm-schedule-editor-end">
+                    <${Dropdown} data="${timeData}" bind="${fEnd}" placeholder="End" />
+                </div>
             </div>
-            <input type="text" class="lm-schedule-editor-location" placeholder="Location"
-                value="${d.location || ''}"
-                oninput="${(e: Event) => (d.location = (e.target as HTMLInputElement).value)}" />
+            <input type="text" class="lm-schedule-editor-location" placeholder="Location" bind="${fLocation}" />
             <div class="lm-schedule-editor-palette">${PALETTE.map(
                 (c) => html`<button type="button" style="background-color:${c}"
-                    data-color="${c}" data-selected="${c === d.color ? 'true' : false}"
-                    onclick="${() => {
-                        d.color = c;
-                        draft.touch();
-                    }}"></button>`
+                    data-color="${c}" data-selected="${() => (c === fColor.value ? 'true' : false)}"
+                    onclick="${() => (fColor.value = c)}"></button>`
             )}</div>
             <button type="button" class="lm-schedule-editor-save" onclick="${saveEditor}">Save</button>
         </div>`;

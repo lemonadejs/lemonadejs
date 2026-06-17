@@ -43,10 +43,10 @@ describe('components/speeddial', () => {
         expect(verify(Speeddial).pass).toBe(true);
     });
 
-    it('renders closed: FAB with the default + glyph, collapsed fan', () => {
+    it('renders closed: FAB with the default add icon, collapsed fan', () => {
         handle = t(Speeddial, { options: THREE });
         expect(isOpen()).toBe(false);
-        expect(fab().querySelector('.lm-speeddial-icon')!.textContent).toBe('+');
+        expect(fab().querySelector('.lm-speeddial-icon')!.textContent).toBe('add');
         expect(fab().getAttribute('aria-expanded')).toBe('false');
         expect(handle.query('.lm-speeddial-actions')!.getAttribute('aria-hidden')).toBe('true');
         expect(actions().length).toBe(3);

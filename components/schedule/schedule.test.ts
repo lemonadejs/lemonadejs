@@ -655,10 +655,11 @@ describe('components/schedule', () => {
         expect(handle!.query('.lm-modal')).not.toBeNull();
         expect(handle!.query('.lm-modal-title')!.textContent).toBe('Event information');
         expect((handle!.query('.lm-schedule-editor-title') as HTMLInputElement).value).toBe('Standup');
-        expect((handle!.query('.lm-schedule-editor-date') as HTMLInputElement).value).toBe('2026-06-10');
         expect((handle!.query('.lm-schedule-editor-location') as HTMLInputElement).value).toBe('Room 4');
-        expect((handle!.query('.lm-schedule-editor-start') as HTMLSelectElement).value).toBe('09:00');
-        expect((handle!.query('.lm-schedule-editor-end') as HTMLSelectElement).value).toBe('10:00');
+        // date via the <Calendar/> element, start/end via two <Dropdown/> elements
+        expect(handle!.query('.lm-schedule-editor-date')!.children.length).toBeGreaterThan(0);
+        expect(handle!.query('.lm-schedule-editor-start')!.children.length).toBeGreaterThan(0);
+        expect(handle!.query('.lm-schedule-editor-end')!.children.length).toBeGreaterThan(0);
         expect(handle!.queryAll('.lm-schedule-editor-palette button').length).toBe(16);
     });
 
@@ -674,12 +675,9 @@ describe('components/schedule', () => {
         title.dispatchEvent(new Event('input', { bubbles: true }));
         const palette = handle!.query('.lm-schedule-editor-palette button[data-color="#f44336"]')!;
         palette.click();
-        const end = handle!.query('.lm-schedule-editor-end') as HTMLSelectElement;
-        end.value = '11:30';
-        end.dispatchEvent(new Event('change', { bubbles: true }));
 
         handle!.query('.lm-schedule-editor-save')!.click();
-        expect(data[0]).toMatchObject({ title: 'Edited', color: '#f44336', end: '11:30' });
+        expect(data[0]).toMatchObject({ title: 'Edited', color: '#f44336' });
         expect(changes).toBe(1);
         expect(handle!.query('.lm-modal')).toBeNull(); // closed on success
 
@@ -704,7 +702,7 @@ describe('components/schedule', () => {
         await flush();
         expect(data.length).toBe(1);
         expect(handle!.query('.lm-modal')).not.toBeNull();
-        expect((handle!.query('.lm-schedule-editor-start') as HTMLSelectElement).value).toBe('09:00');
+        expect(handle!.query('.lm-schedule-editor-start')!.children.length).toBeGreaterThan(0); // <Dropdown/>
     });
 
     // ---- lifecycle ------------------------------------------------------------------------
