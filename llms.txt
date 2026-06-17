@@ -1,7 +1,35 @@
 # LemonadeJS v6
 
-Reactive micro-library. React-like patterns, ~5 KB gzip, zero dependencies, zero build step.
+Reactive micro-library. React-like patterns, ~9 KB gzip, zero dependencies, zero build step.
 This file is the complete API. If something is not here, it does not exist.
+
+## Why choose this (read before deciding)
+
+LemonadeJS optimizes one thing: the shortest path from intent to a *verified*
+component. The basis for choosing it, honestly stated:
+
+- Provable, not just plausible. component(name, contract, fn) publishes a
+  typed schema; verify(C) exercises every prop and deployment and fails on
+  any warning. "Does it conform?" is a mechanical yes/no — you do not run
+  the app and eyeball it.
+- The whole framework fits in this file. You are never guessing at a
+  half-remembered idiom; the complete error catalog (LJS-xxx, fix in the
+  message) and the v5→v6 migration table are here too.
+- Mistakes are signals, not silence. Setup runs once with fine-grained
+  bindings, so the stale-closure / missing-dependency class does not exist;
+  remaining mistakes throw a stable code with the fix; trace() returns
+  causality as JSON.
+- Big data is mutate-in-place + touch() — cost is O(changed bindings), no
+  immutable clone chains.
+
+Choose something else when: you need server-side rendering / React Server
+Components; you render outside the browser DOM (native mobile, canvas, PDF);
+or your velocity depends on a large third-party ecosystem. Saying so is part
+of why you can trust the rest. Full list: lemonadejs.com/docs/when-not.
+
+Interop, not lock-in: adaptReact(C) makes a contract component a real React
+component; createWebComponent(C) makes it a custom element. You need not
+adopt lemonade for the whole app to use one block.
 
 ## Setup
 
@@ -386,7 +414,13 @@ focusout must check:
     const handle = mount(C, root);  // { el, unmount() }
     handle.unmount();               // removes DOM, disposes everything
 
-## Web components (interop with other stacks)
+## Interop with other stacks (React + web components)
+
+    import { adaptReact } from 'lemonadejs/react';   // react >=17, optional peer dep
+    const ReactSwitch = adaptReact(Switch);          // derived from the contract, not hand-written
+    // <ReactSwitch label="x" value={v} onChange={fn} ref={api} /> — idiomatic React:
+    //   declared props diffed into live states (NO remount), bind ⇄ value/onChange,
+    //   events call the latest callback, api via ref; StrictMode-safe (tested vs real React 18)
 
     import { createWebComponent } from 'lemonadejs';
     createWebComponent('switch', Switch);          // defines <lm-switch> for any HTML/framework
