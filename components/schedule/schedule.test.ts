@@ -223,7 +223,7 @@ describe('components/schedule', () => {
         mount({ data });
         expect(data[0].end).toBe('10:00');
         expect(data[0].title).toBe('No title');
-        expect(data[0].color).toBe('#3f51b5');
+        expect(data[0].color).toBe('#2563eb');
         expect(typeof data[0].guid).toBe('string');
         expect(item().getAttribute('data-end')).toBe('10:00');
     });
@@ -673,11 +673,11 @@ describe('components/schedule', () => {
         const title = handle!.query('.lm-schedule-editor-title') as HTMLInputElement;
         title.value = 'Edited';
         title.dispatchEvent(new Event('input', { bubbles: true }));
-        const palette = handle!.query('.lm-schedule-editor-palette button[data-color="#f44336"]')!;
+        const palette = handle!.query('.lm-schedule-editor-palette button[data-color="#7c3aed"]')!;
         palette.click();
 
         handle!.query('.lm-schedule-editor-save')!.click();
-        expect(data[0]).toMatchObject({ title: 'Edited', color: '#f44336' });
+        expect(data[0]).toMatchObject({ title: 'Edited', color: '#7c3aed' });
         expect(changes).toBe(1);
         expect(handle!.query('.lm-modal')).toBeNull(); // closed on success
 

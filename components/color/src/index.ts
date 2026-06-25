@@ -42,6 +42,7 @@ const rgbToHex = (r: number, g: number, b: number): string => '#' + decToHex(r) 
 
 export const Color = component('color', {
     bind: String,                 // the picked color (v5: value)
+    name: '',                     // form field name — root reflects el.value (form-associated)
     palette: Array,               // string[][] matrix — a flat string[] becomes one row
     type: '',                     // '' (popup via api) | 'input' | 'inline'
     placeholder: '',              // input placeholder (v5)
@@ -57,8 +58,10 @@ export const Color = component('color', {
         setValue: Function,
         getValue: Function,
     },
-}, (props, { state, bind }) => {
+}, (props, { state, bind, onMount }) => {
     const picked = bind(props, '');
+    // form-associated: a genuine user value change notifies the enclosing <form>
+    const emitInput = () => wrapper?.dispatchEvent(new Event('input', { bubbles: true }));
     // v5 pending-selection model: the grid marks this; Done commits it
     const pending = state(picked.value || '');
     const tab = state<'grid' | 'spectrum'>('grid');
@@ -111,6 +114,7 @@ export const Color = component('color', {
     const commit = (v: string, origin: string) => {
         if (picked.value !== v) {
             picked.set(v); // fires onchange
+            emitInput();
         }
         doClose(origin);
     };
@@ -123,6 +127,7 @@ export const Color = component('color', {
             // inline selections commit immediately
             if (picked.value !== color) {
                 picked.set(color);
+                emitInput();
             }
         } else if (props.closeonchange.value) {
             commit(color, 'select');
@@ -145,9 +150,23 @@ export const Color = component('color', {
             pending.value = v || '';
             if (picked.value !== (v || '')) {
                 picked.set(v || ''); // v5 setValue fired onchange
+                emitInput();
             }
         },
         getValue: () => picked.value,
+    });
+
+    // form-associated: the root reflects a native `value` wired to the bound
+    // color. Setter is silent (assignment, not .set) so a form write doesn't
+    // echo as an input event; only genuine user picks emit input (see above).
+    onMount((el: HTMLElement) => {
+        Object.defineProperty(el, 'value', {
+            configurable: true,
+            get: () => picked.value,
+            set: (v: unknown) => {
+                picked.value = (v == null ? '' : String(v)) as never;
+            },
+        });
     });
 
     // ---- the v5 input keyboard system
@@ -290,6 +309,7 @@ export const Color = component('color', {
 
     return html`<div class="lm-color"
         data-type="${() => props.type.value || false}"
+        name="${() => (props.name.value as string) || false}"
         ref="${(el: HTMLElement) => (wrapper = el)}"
         onfocusout="${onFocusOut}">
         ${() =>

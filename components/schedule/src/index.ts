@@ -177,6 +177,11 @@ const ALL_TIMES: string[] = (() => {
     return out;
 })();
 
+/** The schedule the user last interacted with — owns the global keyboard
+ *  shortcuts (copy/paste/delete/undo) so they work without the grid being
+ *  focused, and so multiple schedules on a page don't all react at once. */
+let activeSchedule: unknown = null;
+
 export const Schedule = component('schedule', {
     data: Array,                  // ScheduleEvent[] BY REFERENCE (mutate + touch())
     value: '',                    // anchor date 'YYYY-MM-DD' (default: today)
@@ -281,6 +286,7 @@ export const Schedule = component('schedule', {
     const selection = state<string[]>([]);
     const drag = state<Drag | null>(null);
     const editorOpen = state(false);
+    const token = {}; // identity for the active-schedule keyboard owner
     // Editor fields as individual states so the Calendar / Dropdown elements
     // (which take a `bind`) two-way bind cleanly; saveEditor reads them.
     const fTitle = state('');
@@ -796,18 +802,24 @@ export const Schedule = component('schedule', {
         return Math.max(0, Math.min(totalRows() - 1, snapped));
     };
 
-    /** The grid cell under the pointer (v5 elementsFromPoint, target first) */
+    /** The grid cell under the pointer. elementsFromPoint FIRST: dragging
+     *  over another (overlapping) event makes e.target that event, whose
+     *  closest('td') is its ORIGIN cell, not the cell under the cursor — so
+     *  point lookup is the accurate one. closest() is the fallback (and the
+     *  path jsdom/tests take, where elementsFromPoint has no layout). */
     const cellFrom = (e: MouseEvent): HTMLElement | null => {
-        const target = e.target as Element | null;
-        let cell =
-            target && target.closest ? (target.closest('td[data-y]') as HTMLElement | null) : null;
-        if (!cell && typeof document.elementsFromPoint === 'function') {
+        let cell: HTMLElement | null = null;
+        if (typeof document.elementsFromPoint === 'function') {
             for (const c of document.elementsFromPoint(e.clientX, e.clientY)) {
                 if (c.tagName === 'TD' && c.getAttribute('data-y') !== null) {
                     cell = c as HTMLElement;
                     break;
                 }
             }
+        }
+        if (!cell) {
+            const target = e.target as Element | null;
+            cell = target && target.closest ? (target.closest('td[data-y]') as HTMLElement | null) : null;
         }
         if (!cell || !rootEl || !rootEl.contains(cell) || cell.classList.contains('lm-schedule-disabled')) {
             return null;
@@ -917,6 +929,7 @@ export const Schedule = component('schedule', {
         if (e.button !== 0) {
             return;
         }
+        activeSchedule = token; // this grid now owns the keyboard shortcuts
         const target = e.target as Element;
         const item = target.closest ? (target.closest('.lm-schedule-item') as HTMLElement | null) : null;
         if (!e.ctrlKey && !e.metaKey) {
@@ -1039,6 +1052,24 @@ export const Schedule = component('schedule', {
             e.preventDefault();
         }
     };
+
+    // The keydown handler also lives on the root (onkeydown, for when the
+    // grid is focused), but copy/paste/delete must work right after a click
+    // even though the root isn't reliably focused — so listen on the
+    // document too, scoped to the active instance and never while an input
+    // is focused (so it can't hijack typing in the editor or elsewhere).
+    onMount(() =>
+        listen<KeyboardEvent>(document, 'keydown', (e) => {
+            if (e.target === rootEl || activeSchedule !== token) {
+                return; // root's own handler did it, or another grid is active
+            }
+            const ae = document.activeElement as HTMLElement | null;
+            if (ae && (/^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName) || ae.isContentEditable)) {
+                return;
+            }
+            onKey(e);
+        })
+    );
 
     // ---- api
     props.ref?.({

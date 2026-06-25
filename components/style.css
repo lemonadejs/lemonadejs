@@ -17,34 +17,79 @@
    be forced either way with the .lm-dark-mode / .lm-light-mode classes.
    ===================================================================== */
 :root {
-    --lm-font-color: inherit;
+    --lm-font-color: var(--lm-neutral-12);
     --lm-main-color: #2563eb;
     --lm-main-color-alpha: #2563eb88;
     --lm-main-color-highlight: #1d4ed8;
-    --lm-secondary-color: #737373;
+    /* Accent-derived tint — hover/selected wash for text & outline controls.
+       Derives from the accent via color-mix, so a theme that changes
+       --lm-main-color re-tints every hover state in the catalog for free. */
+    --lm-main-color-tint: color-mix(in srgb, var(--lm-main-color) 10%, transparent);
+    --lm-main-color-tint-strong: color-mix(in srgb, var(--lm-main-color) 16%, transparent);
+    --lm-secondary-color: var(--lm-neutral-11);
 
-    --lm-border-color: #e4e4e7;
-    --lm-border-color-light: #f0f0f1;
-    --lm-border-color-highlight: #aaa;
+    /* ---- Neutral ramp (Radix-slate-derived) — the single grey scale the
+       whole catalog is built from. Surface/border/text tokens below are
+       VIEWS onto this ramp, so the palette stays internally consistent and
+       a theme can shift the entire neutral feel by moving these 12 values. */
+    --lm-neutral-1: #fcfcfc;   /* app background, subtle */
+    --lm-neutral-2: #f7f7f7;   /* subtle surface (headers) */
+    --lm-neutral-3: #f0f0f0;   /* ui element background */
+    --lm-neutral-4: #e8e8e8;   /* hovered ui background */
+    --lm-neutral-5: #e0e0e0;   /* active / selected ui background */
+    --lm-neutral-6: #d8d8d8;   /* subtle borders, separators */
+    --lm-neutral-7: #cccccc;   /* ui element border */
+    --lm-neutral-8: #bbbbbb;   /* hovered / strong border */
+    --lm-neutral-9: #8d8d8d;   /* solid neutral fill */
+    --lm-neutral-10: #838383;  /* hovered solid neutral */
+    --lm-neutral-11: #646464;  /* low-contrast text, icons */
+    --lm-neutral-12: #202020;  /* high-contrast text */
+
+    /* Surface / border / text — views onto the ramp (names unchanged so all
+       existing components re-theme automatically). */
+    --lm-border-color: var(--lm-neutral-6);
+    --lm-border-color-light: var(--lm-neutral-4);
+    --lm-border-color-highlight: var(--lm-neutral-8);
     --lm-border-outline: #000;
     --lm-background-color: #fff;
-    --lm-background-color-header: #f8f8f8;
-    --lm-background-color-highlight: #ececec;
-    --lm-background-color-active: #dcdcdc;
+    --lm-background-color-header: var(--lm-neutral-2);
+    --lm-background-color-highlight: var(--lm-neutral-4);
+    --lm-background-color-active: var(--lm-neutral-5);
     --lm-background-color-input: initial;
-    --lm-icon-color: #777;
+    --lm-icon-color: var(--lm-neutral-11);
 
-    --lm-font-grayout: #777;
+    --lm-font-grayout: var(--lm-neutral-11);
+
+    /* ---- Spacing scale (4px base) — controls and surfaces pad from these
+       instead of ad-hoc px, which is what keeps rhythm consistent. */
+    --lm-space-1: 4px;
+    --lm-space-2: 8px;
+    --lm-space-3: 12px;
+    --lm-space-4: 16px;
+    --lm-space-5: 24px;
+    --lm-space-6: 32px;
     --lm-input-padding: 6px;
 
-    /* Radius scale — controls use --lm-radius, surfaces use --lm-radius-lg */
+    /* Radius scale — controls use --lm-radius, surfaces use --lm-radius-lg,
+       text inputs use the tighter --lm-radius-input (Paul: input radius was
+       too large). */
     --lm-radius: 6px;
     --lm-radius-lg: 10px;
+    --lm-radius-input: 4px;
     --lm-border-radius: var(--lm-radius); /* legacy alias, kept for back-compat */
+
+    /* Input border — its own token so fields read crisper than surface
+       separators (Paul: #ccc in light mode). Dark value set in the dark blocks. */
+    --lm-border-input: #ccc;
 
     /* Elevation — popovers, menus, dialogs */
     --lm-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
     --lm-shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.06);
+
+    /* Motion — one duration + one easing token for the whole catalog. Wrapped
+       by the prefers-reduced-motion block at the foot of this file. */
+    --lm-duration: 0.15s;
+    --lm-ease: cubic-bezier(0.4, 0, 0.2, 1);
 
     /* Soft halo painted behind the focus outline on focus-visible */
     --lm-focus-ring: rgba(0, 0, 0, 0.12);
@@ -173,18 +218,33 @@
    Token values are shared by the OS-driven and the forced (class) paths;
    CSS can't share a block, so the same overrides live in both rules. */
 .lm-dark-mode {
-    --lm-font-color: #ddd;
-    --lm-font-grayout: #777;
-    --lm-border-color: #444;
-    --lm-border-color-light: #222;
-    --lm-border-color-highlight: #777;
+    /* Dark neutral ramp (Radix-slate-dark) — same view model as light */
+    --lm-neutral-1: #111111;
+    --lm-neutral-2: #191919;
+    --lm-neutral-3: #222222;
+    --lm-neutral-4: #2a2a2a;
+    --lm-neutral-5: #313131;
+    --lm-neutral-6: #3a3a3a;
+    --lm-neutral-7: #484848;
+    --lm-neutral-8: #606060;
+    --lm-neutral-9: #6e6e6e;
+    --lm-neutral-10: #7b7b7b;
+    --lm-neutral-11: #b4b4b4;
+    --lm-neutral-12: #eeeeee;
+
+    --lm-font-color: var(--lm-neutral-12);
+    --lm-font-grayout: var(--lm-neutral-11);
+    --lm-border-color: var(--lm-neutral-6);
+    --lm-border-color-light: var(--lm-neutral-3);
+    --lm-border-color-highlight: var(--lm-neutral-8);
+    --lm-border-input: var(--lm-neutral-7);
     --lm-border-outline: #fff;
-    --lm-background-color: #000;
-    --lm-background-color-header: #181818;
-    --lm-background-color-highlight: #282828;
-    --lm-background-color-active: #858585;
-    --lm-background-color-input: #181818;
-    --lm-icon-color: #ccc;
+    --lm-background-color: var(--lm-neutral-1);
+    --lm-background-color-header: var(--lm-neutral-2);
+    --lm-background-color-highlight: var(--lm-neutral-4);
+    --lm-background-color-active: var(--lm-neutral-5);
+    --lm-background-color-input: var(--lm-neutral-2);
+    --lm-icon-color: var(--lm-neutral-11);
 
     --lm-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
     --lm-shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.6), 0 2px 8px rgba(0, 0, 0, 0.4);
@@ -209,18 +269,32 @@
 /* Follow the OS unless the app forced light with .lm-light-mode */
 @media (prefers-color-scheme: dark) {
     :root:not(.lm-light-mode) {
-        --lm-font-color: #ddd;
-        --lm-font-grayout: #777;
-        --lm-border-color: #444;
-        --lm-border-color-light: #222;
-        --lm-border-color-highlight: #777;
+        --lm-neutral-1: #111111;
+        --lm-neutral-2: #191919;
+        --lm-neutral-3: #222222;
+        --lm-neutral-4: #2a2a2a;
+        --lm-neutral-5: #313131;
+        --lm-neutral-6: #3a3a3a;
+        --lm-neutral-7: #484848;
+        --lm-neutral-8: #606060;
+        --lm-neutral-9: #6e6e6e;
+        --lm-neutral-10: #7b7b7b;
+        --lm-neutral-11: #b4b4b4;
+        --lm-neutral-12: #eeeeee;
+
+        --lm-font-color: var(--lm-neutral-12);
+        --lm-font-grayout: var(--lm-neutral-11);
+        --lm-border-color: var(--lm-neutral-6);
+        --lm-border-color-light: var(--lm-neutral-3);
+        --lm-border-color-highlight: var(--lm-neutral-8);
+        --lm-border-input: var(--lm-neutral-7);
         --lm-border-outline: #fff;
-        --lm-background-color: #000;
-        --lm-background-color-header: #181818;
-        --lm-background-color-highlight: #282828;
-        --lm-background-color-active: #858585;
-        --lm-background-color-input: #181818;
-        --lm-icon-color: #ccc;
+        --lm-background-color: var(--lm-neutral-1);
+        --lm-background-color-header: var(--lm-neutral-2);
+        --lm-background-color-highlight: var(--lm-neutral-4);
+        --lm-background-color-active: var(--lm-neutral-5);
+        --lm-background-color-input: var(--lm-neutral-2);
+        --lm-icon-color: var(--lm-neutral-11);
 
         --lm-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
         --lm-shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.6), 0 2px 8px rgba(0, 0, 0, 0.4);
@@ -278,6 +352,22 @@
     box-shadow: 0 0 0 3px var(--lm-focus-ring);
 }
 
+/* Reduced motion — honor the OS preference catalog-wide. Components author
+   their transitions/animations normally; this neutralizes them in one place
+   for users who ask for less motion (WCAG 2.3.3 / 2.2.2). */
+@media (prefers-reduced-motion: reduce) {
+    [class^="lm-"],
+    [class*=" lm-"],
+    .lm-application *,
+    [class^="lm-"]::before,
+    [class*=" lm-"]::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
 
 body.lm-application {
     margin: 0;
@@ -296,10 +386,10 @@ body.lm-application {
 .lm-input {
     padding: var(--lm-input-padding) var(--lm-input-padding) var(--lm-input-padding) 8px;
     box-sizing: border-box;
-    border: 1px solid var(--lm-border-color, #e4e4e7);
+    border: 1px solid var(--lm-border-input, #ccc);
     background-color: var(--lm-background-color-input);
     line-height: initial;
-    border-radius: var(--lm-radius, 6px);
+    border-radius: var(--lm-radius-input, 4px);
     color: var(--lm-font-color);
     font-family: inherit;
     font-size: inherit;

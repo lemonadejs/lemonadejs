@@ -1,15 +1,22 @@
-/* <Button /> — default styling, lm-button-* convention */
+/* <Button /> — lm-button-* convention.
+   Consumes the global token spine only: no hardcoded color, radius, spacing
+   or motion. The accent comes from --lm-main-color, so a theme (or .lm-purple,
+   .lm-green...) recolors every button. Per-color variants map onto the shared
+   semantic tokens; hover/tint are color-mix derivations of that one color. */
 .lm-button {
-    --lm-button-main: #2563eb;
-    --lm-button-deep: #1d4ed8;
-    --lm-button-tint: rgba(37, 99, 235, 0.1);
+    /* Accent from the spine; original #2563eb is the standalone fallback so
+       the component renders identically with NO global stylesheet loaded.
+       deep/tint are color-mix derivations of that one resolved color. */
+    --lm-button-main: var(--lm-main-color, #2563eb);
+    --lm-button-deep: color-mix(in srgb, var(--lm-button-main) 86%, #000);
+    --lm-button-tint: color-mix(in srgb, var(--lm-button-main) 10%, transparent);
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
+    gap: var(--lm-space-2, 8px);
     box-sizing: border-box;
     margin: 0;
-    padding: 8px 16px;
+    padding: var(--lm-space-2, 8px) var(--lm-space-4, 16px);
     border: 1px solid transparent;
     border-radius: var(--lm-radius, 6px);
     background: var(--lm-button-main);
@@ -22,34 +29,26 @@
     user-select: none;
     -webkit-tap-highlight-color: transparent;
     transition:
-        background 0.15s ease,
-        border-color 0.15s ease,
-        box-shadow 0.15s ease;
+        background var(--lm-duration, 0.15s) var(--lm-ease, ease),
+        border-color var(--lm-duration, 0.15s) var(--lm-ease, ease),
+        box-shadow var(--lm-duration, 0.15s) var(--lm-ease, ease);
 }
 
-/* Color palette (primary is the default) */
+/* Color palette (primary is the default) — mapped onto the shared semantics */
 .lm-button[data-color='secondary'] {
-    --lm-button-main: #9333ea;
-    --lm-button-deep: #7e22ce;
-    --lm-button-tint: rgba(147, 51, 234, 0.1);
+    --lm-button-main: var(--lm-neutral-9, #8b8d98);
 }
 
 .lm-button[data-color='success'] {
-    --lm-button-main: #16a34a;
-    --lm-button-deep: #15803d;
-    --lm-button-tint: rgba(22, 163, 74, 0.1);
+    --lm-button-main: var(--lm-color-success, #16a34a);
 }
 
 .lm-button[data-color='error'] {
-    --lm-button-main: #dc2626;
-    --lm-button-deep: #b91c1c;
-    --lm-button-tint: rgba(220, 38, 38, 0.1);
+    --lm-button-main: var(--lm-color-danger, #dc2626);
 }
 
 .lm-button[data-color='warning'] {
-    --lm-button-main: #d97706;
-    --lm-button-deep: #b45309;
-    --lm-button-tint: rgba(217, 119, 6, 0.1);
+    --lm-button-main: var(--lm-color-warning, #d97706);
 }
 
 /* Contained (default variant) interaction states */
@@ -60,11 +59,6 @@
 .lm-button:active:not(:disabled):not(.lm-button-disabled) {
     background: var(--lm-button-deep);
     box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.18);
-}
-
-.lm-button:focus-visible {
-    outline: 2px solid var(--lm-button-main);
-    outline-offset: 2px;
 }
 
 /* Outlined */
@@ -103,12 +97,12 @@
 
 /* Sizes */
 .lm-button[data-size='small'] {
-    padding: 5px 12px;
+    padding: 5px var(--lm-space-3, 12px);
     font-size: 13px;
 }
 
 .lm-button[data-size='large'] {
-    padding: 11px 22px;
+    padding: 11px var(--lm-space-5, 24px);
     font-size: 15px;
 }
 

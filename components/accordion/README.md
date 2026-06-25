@@ -12,9 +12,9 @@ Panels come from a data array ({ title, content?, disabled? }):
   - content is trusted TEXT (v6 strings are always text, never HTML);
     rich panel bodies come from the render prop: (item, index) => html view
   - every panel body is created once and KEPT ALIVE across toggles —
-    the collapse is a max-height transition driven by data-open (CSS),
-    never an unmount, so content state (inputs, nested components)
-    survives open/close cycles
+    the collapse is a grid-template-rows (0fr->1fr) transition driven by
+    data-open (CSS), never an unmount, so content state (inputs, nested
+    components) survives open/close cycles
   - exclusive by default (a controlled accordion group): bind is the
     expanded INDEX, -1/null = all closed, opening one closes the other
   - multiple: bind becomes an ARRAY of open indices — each panel

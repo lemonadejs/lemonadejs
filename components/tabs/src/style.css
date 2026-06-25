@@ -1,4 +1,6 @@
-/* <Tabs /> — ported from the v5 plugin stylesheet (classes: lm-tabs-*) */
+/* <Tabs /> — lm-tabs-* convention. Radix-style underline strip. Consumes the
+   global token spine, but every reference carries an original-value fallback,
+   so the strip renders standalone with NO global stylesheet (catalog rule). */
 
 .lm-tabs[data-position="bottom"] {
     display: flex;
@@ -8,8 +10,9 @@
 
 .lm-tabs .lm-tabs-headers {
     display: flex;
-    align-items: center;
+    align-items: stretch;
     width: 100%;
+    border-bottom: 1px solid var(--lm-border-color, #e4e4e7);
 }
 
 .lm-tabs[data-position="center"] .lm-tabs-headers {
@@ -22,11 +25,10 @@
     display: flex;
     margin: 0;
     padding: 0;
-    align-items: center;
-    /* flex:0 1 auto + min-width:0 keeps the strip its natural width (so
-       left/center layouts are unchanged) while still allowing it to shrink
-       below content width — which is what turns on the horizontal scroll
-       when the tabs overflow. */
+    align-items: stretch;
+    /* flex:0 1 auto + min-width:0 keeps the strip its natural width while
+       still allowing it to shrink below content width — which turns on the
+       horizontal scroll when the tabs overflow. */
     flex: 0 1 auto;
     min-width: 0;
     overflow-x: auto;
@@ -39,10 +41,7 @@
     display: none;               /* Chrome / Safari */
 }
 
-/* Overflow arrows: the JS renders .lm-tabs-scroll-prev/-next (chevron_left/
-   _right ligatures) only while the strip overflows, and disables the side
-   that can't scroll. Both gutters are reserved together so widths don't
-   shift mid-scroll. */
+/* Overflow arrows: rendered only while the strip overflows */
 .lm-tabs .lm-tabs-scroll {
     flex: 0 0 auto;
     align-self: stretch;
@@ -72,59 +71,50 @@
 .lm-tabs .lm-tabs-tab {
     cursor: pointer;
     user-select: none;
-    padding: 4px 24px;
-    border: 1px solid #ccc;
-    background-position: center;
-    transition: background 0.8s;
+    padding: var(--lm-space-2, 8px) var(--lm-space-4, 16px);
+    border: 0;
+    /* transparent underline reserves the space so selection doesn't shift */
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px; /* overlap the strip's 1px border */
+    background: transparent;
+    color: var(--lm-font-grayout, #6b7280);
+    font: 500 14px/1.45 system-ui, sans-serif;
+    white-space: nowrap;
     display: flex;
     flex-direction: column;
     align-items: center;
+    transition:
+        color var(--lm-duration, 0.15s) var(--lm-ease, ease),
+        border-color var(--lm-duration, 0.15s) var(--lm-ease, ease),
+        background var(--lm-duration, 0.15s) var(--lm-ease, ease);
+}
+
+.lm-tabs .lm-tabs-tab:hover {
+    color: var(--lm-font-color, #1f2937);
+    background: color-mix(in srgb, var(--lm-main-color, #2563eb) 8%, transparent);
 }
 
 .lm-tabs .lm-tabs-tab.lm-tabs-selected {
-    background-color: #eee;
-    color: #000;
+    color: var(--lm-main-color, #2563eb);
+    border-bottom-color: var(--lm-main-color, #2563eb);
+    background: transparent;
 }
 
 .lm-tabs .lm-tabs-tab[data-icon]:before {
     content: attr(data-icon);
     font-family: "Material Symbols Outlined", "Material Icons", "FontAwesome";
-    font-size: 24px;
+    font-size: 22px;
     width: 24px;
     height: 24px;
     text-align: center;
-    color: var(--lm-icon-color, #777);
-    margin-bottom: 5px;
-}
-
-.lm-tabs[data-round="true"] .lm-tabs-tab:first-of-type {
-    border-top-left-radius: 3px;
-    border-bottom-left-radius: 3px;
-}
-
-.lm-tabs[data-round="true"] .lm-tabs-tab:last-of-type {
-    border-top-right-radius: 3px;
-    border-bottom-right-radius: 3px;
-}
-
-.lm-tabs .lm-tabs-tab:not(:first-child) {
-    border-left: 1px solid transparent;
-}
-
-.lm-tabs .lm-tabs-tab:hover {
-    background: #eee radial-gradient(circle, transparent 1%, #eee 1%) center/15000%;
-}
-
-.lm-tabs .lm-tabs-tab:active {
-    background-color: #ddd;
-    background-size: 100%;
-    transition: background 0s;
+    color: inherit;
+    margin-bottom: var(--lm-space-1, 4px);
 }
 
 /* Panels live in the DOM permanently — selection is just visibility */
 .lm-tabs .lm-tabs-content > * {
     display: none;
-    padding: 15px 5px;
+    padding: var(--lm-space-4, 16px) var(--lm-space-1, 4px);
 }
 
 .lm-tabs .lm-tabs-content > .lm-tabs-selected {
@@ -132,8 +122,8 @@
 }
 
 .lm-tabs .lm-tabs-insert-button {
-    margin-left: 5px;
-    color: #555;
+    margin-left: var(--lm-space-1, 4px);
+    color: var(--lm-icon-color, #777);
     cursor: pointer;
     font-family: "Material Symbols Outlined", "Material Icons", "FontAwesome";
     font-size: 24px;
@@ -141,4 +131,5 @@
     height: 24px;
     text-align: center;
     line-height: 24px;
+    align-self: center;
 }

@@ -28,9 +28,10 @@ export const Rating = component('rating', {
     readonly: false,               // display-only, full color (new)
     onchange: Function,            // fires on component-initiated changes
     api: { getValue: Function, setValue: Function }, // v5 instance methods
-}, (props, { state, bind, onUnmount }) => {
+}, (props, { state, bind, onUnmount, onMount }) => {
     const rating = bind(props, props.value.value);
     const hover = state(0); // 1-based index being previewed, 0 = none
+    let root: HTMLElement | null = null;
 
     const interactive = () => !props.disabled.value && !props.readonly.value;
 
@@ -38,6 +39,8 @@ export const Rating = component('rating', {
     const select = (index: number) => {
         if (interactive()) {
             rating.set(index === rating.value ? 0 : index);
+            // form-associated: notify the enclosing <form> like a native input
+            root?.dispatchEvent(new Event('input', { bubbles: true }));
         }
     };
 
@@ -62,6 +65,20 @@ export const Rating = component('rating', {
         }
         return false;
     };
+
+    // form-associated: the root reflects a native `value` (wired to the bound
+    // rating) so Formify / FormData read it with no hidden input. Setter is
+    // silent (assignment, not .set) so a form write doesn't echo as input.
+    onMount((el: HTMLElement) => {
+        root = el;
+        Object.defineProperty(el, 'value', {
+            configurable: true,
+            get: () => Number(rating.value),
+            set: (v: unknown) => {
+                rating.value = Number(v) as never;
+            },
+        });
+    });
 
     props.ref?.({
         getValue: () => Number(rating.value),

@@ -409,6 +409,9 @@ const parseEntry = (v: unknown, format: string): Parts | null => {
 
 export const Calendar = component('calendar', {
     bind: String,                 // selected value (v5: value) — see formats above
+    name: '',                     // form field name — when set, the root reflects
+                                  // its value as a native el.value (form-associated;
+                                  // Formify & FormData read it with no hidden input)
     range: false,                 // two-click range selection
     time: false,                  // hour/minute picker, value carries time
     numeric: false,               // value as Excel serial number(s)
@@ -666,6 +669,9 @@ export const Calendar = component('calendar', {
     const commitValue = (v: unknown) => {
         if (JSON.stringify(v) !== JSON.stringify(picked.peek())) {
             picked.set(v as never); // fires onchange (v6 .set semantics)
+            // form-associated: a user value change notifies the enclosing <form>
+            // exactly like a native input would (Formify listens for bubbling input)
+            root?.dispatchEvent(new Event('input', { bubbles: true }));
         }
     };
 
@@ -737,6 +743,13 @@ export const Calendar = component('calendar', {
         const pg = page.peek();
         if (pg.y !== c.y || pg.m !== c.m) {
             page.value = { y: c.y, m: c.m };
+        }
+        // Keyboard range preview: drive the same `hovered` end the mouse does,
+        // so the connecting highlight follows arrow-key movement while picking
+        // the second date (v5 bug: only mouseover updated the preview).
+        if (props.range.peek() && view.peek() === 'days' && rangeStart !== null && rangeEnd === null) {
+            hovered = toSerial(c.y, c.m, c.d);
+            refresh();
         }
         fireUpdate();
     };
@@ -976,6 +989,22 @@ export const Calendar = component('calendar', {
         syncFromValue(picked.peek());
     });
 
+    // ---- form-associated: the root reflects a native `value` property wired
+    // to the bound state, so any [name] reader (Formify's `'value' in el`
+    // path, or hand-written FormData logic) treats the calendar exactly like a
+    // native field — no hidden mirror input. The SETTER is silent (assignment,
+    // not commit) so an external form write does NOT echo back as an input
+    // event; only genuine user commits dispatch input (see commitValue).
+    onMount((el: HTMLElement) => {
+        Object.defineProperty(el, 'value', {
+            configurable: true,
+            get: () => picked.peek(),
+            set: (v: unknown) => {
+                picked.value = canonical(v) as never;
+            },
+        });
+    });
+
     // ---- rendering
     const cellView = (c: CalendarCell) => html`<div
         data-grey="${c.grey ? 'true' : false}"
@@ -1049,6 +1078,7 @@ export const Calendar = component('calendar', {
         data-type="${() => kind()}"
         data-grid="${() => (props.grid.value ? 'true' : false)}"
         data-disabled="${() => (props.disabled.value ? 'true' : false)}"
+        name="${() => (props.name.value as string) || false}"
         ref="${(el: HTMLElement) => (root = el)}"
         onkeydown="${onKey}"
         onfocusout="${onFocusOut}">

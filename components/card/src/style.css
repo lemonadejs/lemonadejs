@@ -1,21 +1,21 @@
-/* <Card /> — default styling, lm-card-* convention.
-   '' = elevated (subtle shadow); outlined = 1px border, no shadow. */
+/* <Card /> — lm-card-* convention. Consumes the global token spine, but every
+   reference carries its ORIGINAL value as the fallback, so the card renders
+   identically with NO global stylesheet loaded (the catalog's hard rule).
+   '' = elevated; outlined = 1px border, no shadow. */
 
 .lm-card {
     display: flex;
     flex-direction: column;
     background: var(--lm-background-color, #fff);
-    border-radius: var(--lm-radius, 6px);
+    border-radius: var(--lm-radius-lg, 10px);
     overflow: hidden;
     font: 14px/1.45 system-ui, sans-serif;
     color: var(--lm-font-color, #1f2937);
     box-sizing: border-box;
-    box-shadow:
-        0 1px 2px rgba(0, 0, 0, 0.12),
-        0 1px 4px rgba(0, 0, 0, 0.08);
+    box-shadow: var(--lm-shadow, 0 1px 2px rgba(0, 0, 0, 0.12), 0 1px 4px rgba(0, 0, 0, 0.08));
     transition:
-        box-shadow 0.15s ease,
-        transform 0.15s ease;
+        box-shadow var(--lm-duration, 0.15s) var(--lm-ease, ease),
+        transform var(--lm-duration, 0.15s) var(--lm-ease, ease);
 }
 
 .lm-card[data-variant='outlined'] {
@@ -23,25 +23,18 @@
     border: 1px solid var(--lm-border-color, #e4e4e7);
 }
 
-/* Clickable surface: hover lift + pointer + keyboard focus ring */
+/* Clickable surface: hover lift + pointer (focus ring is the central one) */
 .lm-card.lm-card-clickable {
     cursor: pointer;
 }
 
 .lm-card.lm-card-clickable:hover {
     transform: translateY(-2px);
-    box-shadow:
-        0 4px 8px rgba(0, 0, 0, 0.14),
-        0 2px 12px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--lm-shadow-lg, 0 4px 8px rgba(0, 0, 0, 0.14), 0 2px 12px rgba(0, 0, 0, 0.1));
 }
 
 .lm-card.lm-card-clickable[data-variant='outlined']:hover {
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.lm-card.lm-card-clickable:focus-visible {
-    outline: 2px solid var(--lm-border-outline, #2563eb);
-    outline-offset: 2px;
+    box-shadow: var(--lm-shadow, 0 2px 8px rgba(0, 0, 0, 0.1));
 }
 
 /* Media: top image, full width, cover (height comes from imageheight) */
@@ -55,8 +48,8 @@
 .lm-card .lm-card-header {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 16px 16px 0;
+    gap: var(--lm-space-3, 12px);
+    padding: var(--lm-space-4, 16px) var(--lm-space-4, 16px) 0;
 }
 
 .lm-card .lm-card-avatar {
@@ -84,7 +77,7 @@
 
 /* Content: body text, then children */
 .lm-card .lm-card-content {
-    padding: 16px;
+    padding: var(--lm-space-4, 16px);
     color: var(--lm-font-color, #374151);
 }
 
@@ -93,15 +86,15 @@
 }
 
 .lm-card .lm-card-text + * {
-    margin-top: 8px;
+    margin-top: var(--lm-space-2, 8px);
 }
 
 /* Actions: footer row, right-aligned text buttons */
 .lm-card .lm-card-actions {
     display: flex;
     justify-content: flex-end;
-    gap: 4px;
-    padding: 8px;
+    gap: var(--lm-space-1, 4px);
+    padding: var(--lm-space-2, 8px);
     margin-top: auto;
 }
 
@@ -110,51 +103,31 @@
     background: transparent;
     border: 0;
     border-radius: var(--lm-radius, 6px);
-    padding: 6px 10px;
+    padding: var(--lm-space-1, 4px) 10px;
     font: 600 13px/1 system-ui, sans-serif;
     letter-spacing: 0.02em;
     color: var(--lm-main-color, #2563eb); /* primary — the default */
     cursor: pointer;
-    transition: background 0.15s ease;
+    transition: background var(--lm-duration, 0.15s) var(--lm-ease, ease);
 }
 
+/* One hover rule for every color: tint derives from the action's own color */
 .lm-card .lm-card-action:hover {
-    background: rgba(37, 99, 235, 0.08);
-}
-
-.lm-card .lm-card-action:focus-visible {
-    outline: 2px solid currentColor;
-    outline-offset: 1px;
+    background: color-mix(in srgb, currentColor 10%, transparent);
 }
 
 .lm-card .lm-card-action[data-color='secondary'] {
     color: var(--lm-font-grayout, #6b7280);
 }
 
-.lm-card .lm-card-action[data-color='secondary']:hover {
-    background: rgba(107, 114, 128, 0.1);
-}
-
 .lm-card .lm-card-action[data-color='success'] {
     color: var(--lm-color-success, #16a34a);
-}
-
-.lm-card .lm-card-action[data-color='success']:hover {
-    background: rgba(22, 163, 74, 0.08);
 }
 
 .lm-card .lm-card-action[data-color='error'] {
     color: var(--lm-color-danger, #dc2626);
 }
 
-.lm-card .lm-card-action[data-color='error']:hover {
-    background: rgba(220, 38, 38, 0.08);
-}
-
 .lm-card .lm-card-action[data-color='warning'] {
     color: var(--lm-color-warning, #d97706);
-}
-
-.lm-card .lm-card-action[data-color='warning']:hover {
-    background: rgba(217, 119, 6, 0.08);
 }

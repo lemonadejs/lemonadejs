@@ -3,6 +3,18 @@
  */
 import { html, mount, type Component } from 'lemonadejs';
 import Formify, { type FormifyApi, type FormifyData } from '@lemonadejs/formify';
+import Calendar from '@lemonadejs/calendar';
+import Color from '@lemonadejs/color';
+import Dropdown, { type DropdownItem } from '@lemonadejs/dropdown';
+import Rating from '@lemonadejs/rating';
+
+const countries: DropdownItem[] = [
+    { value: 'br', text: 'Brazil', group: 'America' },
+    { value: 'us', text: 'United States', group: 'America' },
+    { value: 'pt', text: 'Portugal', group: 'Europe' },
+    { value: 'de', text: 'Germany', group: 'Europe' },
+    { value: 'jp', text: 'Japan', group: 'Asia' },
+];
 
 const SAMPLE: FormifyData = {
     first: 'Paul',
@@ -23,6 +35,12 @@ const REMOTE =
 const App: Component = (props, { state }) => {
     const profile = state<FormifyData>({});
     const log = state<string[]>([]);
+    // form-associated lemonadejs components: each carries a `name`, so Formify
+    // collects el.value directly — NO hidden mirror input (calendar/color/rating).
+    const birthday = state('');
+    const favColor = state('#2563eb');
+    const stars = state(0);
+    const country = state(''); // Dropdown not yet form-associated → still mirrored
     let api!: FormifyApi;
 
     const note = (m: string) => {
@@ -69,6 +87,25 @@ const App: Component = (props, { state }) => {
                     <option value="admin">Admin</option>
                     <option value="user">User</option>
                 </select>
+            </div>
+            <div class="lm-formify-row">
+                <div class="lm-formify-group">
+                    <label>Birthday — &lt;Calendar/&gt; (form-associated, no hidden input)</label>
+                    <${Calendar} name="birthday" bind="${birthday}" placeholder="Pick a date" />
+                </div>
+                <div class="lm-formify-group">
+                    <label>Favourite colour — &lt;Color/&gt; (form-associated)</label>
+                    <${Color} type="input" name="favColor" bind="${favColor}" placeholder="Pick a colour" />
+                </div>
+            </div>
+            <div class="lm-formify-group">
+                <label>Rating — &lt;Rating/&gt; (form-associated)</label>
+                <${Rating} name="stars" bind="${stars}" />
+            </div>
+            <div class="lm-formify-group">
+                <label>Country — lemonadejs &lt;Dropdown/&gt;</label>
+                <${Dropdown} data="${countries}" bind="${country}" placeholder="Pick a country" />
+                <input type="hidden" name="country" bind="${country}" />
             </div>
             <label class="lm-formify-choice"><input type="checkbox" name="newsletter" /> Newsletter</label>
             <label class="lm-formify-choice"><input type="radio" name="gender" value="male" /> Male</label>

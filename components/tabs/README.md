@@ -2,7 +2,7 @@
 
 LemonadeJS tabs block — contract-verified, framework-agnostic.
 
-**✓ verified** — 18 contract checks · framework-agnostic · zero dependencies
+**✓ verified** — 20 contract checks · framework-agnostic · zero dependencies
 
 ## Overview
 
@@ -17,6 +17,13 @@ The v5 model, ported faithfully:
     v5, where panels were real elements toggling a selected class
   - selected index, position (center | bottom), round borders,
     allowcreate ("add" button creating an Untitled tab)
+
+v6 additions (purely presentational — no behavior change):
+  - variant: '' / 'basic' keeps the v5 boxed look; 'modern' is a
+    borderless underline style with a sliding-in indicator
+  - the header row scrolls horizontally when the tabs overflow (the
+    scrollbar only appears when needed; tabs never shrink or wrap)
+  - the active panel fades in on switch, CSS-only (no redraw loop)
   - drag-and-drop header sorting (reorders the data, selects the moved
     tab, fires onchangeposition) — simplified to reorder-on-drop, v5
     live-previewed during dragover by mutating DOM the engine now owns
@@ -73,6 +80,7 @@ state for a two-way live wire. Attribute strings are coerced to the declared typ
 | `data` | array | — | TabItem[] — programmatic tabs |
 | `selected` | number | `0` | initial index when unbound |
 | `position` | string | `''` | center | bottom (v5 data-position) |
+| `variant` | string | `''` | '' | basic (v5 look) | modern (underline style) |
 | `round` | boolean | `false` | round borders on the first/last header |
 | `allowcreate` | boolean | `false` | v5: allowCreate — shows the "add" button |
 

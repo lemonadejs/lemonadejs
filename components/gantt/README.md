@@ -2,7 +2,7 @@
 
 LemonadeJS gantt block — %-positioned bars that align across embedded instances; contract-verified, framework-agnostic.
 
-**✓ verified** — 24 contract checks · framework-agnostic · zero dependencies
+**✓ verified** — 26 contract checks · framework-agnostic · zero dependencies
 
 ## Overview
 
@@ -90,6 +90,8 @@ All event names are lowercase (the platform convention — LJS-305 warns otherwi
 
 - `onchange` — (task, start, end) on drag commit
 - `onclick` — (task, event)
+- `onlink` — (fromTask, toTask) a dependency was drawn
+- `onunlink` — (fromTask, toTask) a dependency was removed
 
 ## API (via `ref`)
 

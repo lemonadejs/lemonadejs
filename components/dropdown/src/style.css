@@ -30,30 +30,28 @@
     width: 100%;
     min-height: 34px;
     background: var(--lm-background-color, #fff);
-    border: 1px solid var(--lm-border-color, #e4e4e7);
-    border-radius: var(--lm-radius, 6px);
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+    border: 1px solid var(--lm-border-input, #ccc);
+    border-radius: var(--lm-radius-input, 4px);
     position: relative;
     display: flex;
     align-items: center;
     font: inherit;
-    outline: none;
     transition: border-color 0.15s, box-shadow 0.15s;
 }
 
 .lm-dropdown-input:hover {
-    border-color: var(--lm-border-color-highlight, #c8c8cf);
+    border-color: var(--lm-border-color-highlight, #bbb);
 }
 
 .lm-dropdown-input[contenteditable='true'] {
     cursor: text;
 }
 
-.lm-dropdown-input:focus-visible,
-.lm-dropdown-input[contenteditable='true']:focus,
+/* Open state — neutral border bump (the panel below is the real "open" cue).
+   FOCUS is intentionally left to the central :focus-visible ring so the
+   dropdown focuses identically to every other input — no custom blue. */
 .lm-dropdown[data-state='true'] .lm-dropdown-input {
-    border-color: var(--lm-main-color, #2563eb);
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+    border-color: var(--lm-border-color-highlight, #bbb);
 }
 
 .lm-dropdown-input > br {

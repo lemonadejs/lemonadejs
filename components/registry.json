@@ -1474,6 +1474,111 @@
         }
     },
     {
+        "name": "organogram",
+        "path": "components/organogram",
+        "verified": true,
+        "checks": 43,
+        "contract": {
+            "name": "organogram",
+            "props": {
+                "data": {
+                    "type": "array"
+                },
+                "orientation": {
+                    "type": "string",
+                    "default": ""
+                },
+                "nodewidth": {
+                    "type": "number",
+                    "default": 180
+                },
+                "nodeheight": {
+                    "type": "number",
+                    "default": 70
+                },
+                "hspacing": {
+                    "type": "number",
+                    "default": 24
+                },
+                "vspacing": {
+                    "type": "number",
+                    "default": 50
+                },
+                "compact": {
+                    "type": "boolean",
+                    "default": false
+                },
+                "height": {
+                    "type": "number",
+                    "default": 480
+                },
+                "controls": {
+                    "type": "boolean",
+                    "default": true
+                },
+                "search": {
+                    "type": "boolean",
+                    "default": true
+                },
+                "collapsible": {
+                    "type": "boolean",
+                    "default": true
+                },
+                "avatars": {
+                    "type": "boolean",
+                    "default": true
+                },
+                "legend": {
+                    "type": "boolean",
+                    "default": false
+                },
+                "statuslabels": {
+                    "type": "object"
+                },
+                "minzoom": {
+                    "type": "number",
+                    "default": 0.2
+                },
+                "maxzoom": {
+                    "type": "number",
+                    "default": 2.5
+                },
+                "zoom": {
+                    "type": "number",
+                    "default": 0
+                },
+                "fit": {
+                    "type": "boolean",
+                    "default": true
+                }
+            },
+            "bind": {
+                "type": "any"
+            },
+            "events": [
+                "onchange",
+                "onnodeclick",
+                "oncollapse",
+                "onzoom"
+            ],
+            "api": [
+                "select",
+                "center",
+                "fit",
+                "reset",
+                "zoomIn",
+                "zoomOut",
+                "setZoom",
+                "getZoom",
+                "expand",
+                "collapse",
+                "toggle",
+                "expandAll",
+                "collapseAll"
+            ]
+        }
+    },
+    {
         "name": "progress",
         "path": "components/progress",
         "verified": true,

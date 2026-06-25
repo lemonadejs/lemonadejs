@@ -2,7 +2,7 @@
 
 LemonadeJS treeview block — contract-verified, framework-agnostic.
 
-**✓ verified** — 7 contract checks · framework-agnostic · zero dependencies
+**✓ verified** — 10 contract checks · framework-agnostic · zero dependencies
 
 ## Overview
 
@@ -28,10 +28,20 @@ keep-alive is the idiomatic v6 answer.
 Contract:
   data        TreeNode[]: { id, label, icon?, open?, children? }
   bind        two-way selected node id (bind="${state}")
+  draggable   opt-in drag-and-drop reordering (default false)
   onchange    (id, node) — fires on user/api selection (parent writes
               to the bound state never echo back)
   ontoggle    (id, open) — fires on expand/collapse (user or api)
+  onmove      (id, parentId, index) — after a drag drops a node into a
+              new position (parentId is null at the root)
   api         { open(id), close(id), select(id), toggle(id) }
+
+Drag-and-drop (draggable only): native HTML5 DnD — no JS emulation.
+Hovering a row splits it in thirds: top → drop BEFORE (sibling), bottom
+→ drop AFTER (sibling), middle → drop INSIDE (becomes a child, opening
+the target). The tree array is mutated in place + data.touch(), so the
+keyed diff MOVES existing DOM instead of rebuilding it. A node can never
+drop onto itself or into its own subtree.
 
 Keyboard (APG tree pattern, single select):
   ArrowRight  opens a closed parent; on an open parent moves to the
@@ -80,6 +90,7 @@ state for a two-way live wire. Attribute strings are coerced to the declared typ
 |---|---|---|---|
 | `bind` | any | — | Two-way bound value. `.set()` fires `onchange`; plain assignment is silent. two-way selected node id — 'any': ids are string | number |
 | `data` | array | — | TreeNode[] — the tree |
+| `draggable` | boolean | `false` | opt-in drag-and-drop reordering |
 
 ## Events
 
@@ -87,6 +98,7 @@ All event names are lowercase (the platform convention — LJS-305 warns otherwi
 
 - `onchange` — (id, node) on selection
 - `ontoggle` — (id, open) on expand/collapse
+- `onmove` — (id, parentId, index) after a drag drop
 
 ## API (via `ref`)
 

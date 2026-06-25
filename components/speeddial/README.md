@@ -62,7 +62,7 @@ state for a two-way live wire. Attribute strings are coerced to the declared typ
 |---|---|---|---|
 | `bind` | boolean | — | Two-way bound value. `.set()` fires `onchange`; plain assignment is silent. two-way open state (`fanned`) |
 | `options` | array | — | SpeeddialAction[] — live |
-| `icon` | string | `''` | FAB icon (default '+' glyph; rotates 45° open) |
+| `icon` | string | `''` | FAB icon (default 'add' icon; rotates 45° to × when open) |
 | `direction` | string | `''` | '' = up | down | left | right |
 | `position` | string | `''` | '' = static in flow | 'fixed' (bottom-right) |
 | `label` | string | `''` | aria-label for the FAB |
