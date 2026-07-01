@@ -1,0 +1,402 @@
+{
+    "component": "chart",
+    "pass": true,
+    "checks": [
+        {
+            "name": "mounts with defaults",
+            "pass": true
+        },
+        {
+            "name": "prop type",
+            "pass": true
+        },
+        {
+            "name": "prop type (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop series",
+            "pass": true
+        },
+        {
+            "name": "prop series (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop categories",
+            "pass": true
+        },
+        {
+            "name": "prop categories (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop title",
+            "pass": true
+        },
+        {
+            "name": "prop title (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop subtitle",
+            "pass": true
+        },
+        {
+            "name": "prop subtitle (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop xtype",
+            "pass": true
+        },
+        {
+            "name": "prop xtype (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop xformat",
+            "pass": true
+        },
+        {
+            "name": "prop xformat (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop xtitle",
+            "pass": true
+        },
+        {
+            "name": "prop xtitle (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop ytitle",
+            "pass": true
+        },
+        {
+            "name": "prop ytitle (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop y2title",
+            "pass": true
+        },
+        {
+            "name": "prop y2title (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop markers",
+            "pass": true
+        },
+        {
+            "name": "prop markers (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop smooth",
+            "pass": true
+        },
+        {
+            "name": "prop smooth (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop step",
+            "pass": true
+        },
+        {
+            "name": "prop step (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop area",
+            "pass": true
+        },
+        {
+            "name": "prop area (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop toolbar",
+            "pass": true
+        },
+        {
+            "name": "prop toolbar (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop zoom",
+            "pass": true
+        },
+        {
+            "name": "prop zoom (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop navigator",
+            "pass": true
+        },
+        {
+            "name": "prop navigator (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop sparkline",
+            "pass": true
+        },
+        {
+            "name": "prop sparkline (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop gridlines",
+            "pass": true
+        },
+        {
+            "name": "prop gridlines (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop valueprefix",
+            "pass": true
+        },
+        {
+            "name": "prop valueprefix (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop valuesuffix",
+            "pass": true
+        },
+        {
+            "name": "prop valuesuffix (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop labelrotation",
+            "pass": true
+        },
+        {
+            "name": "prop labelrotation (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop legend",
+            "pass": true
+        },
+        {
+            "name": "prop legend (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop legendposition",
+            "pass": true
+        },
+        {
+            "name": "prop legendposition (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop labels",
+            "pass": true
+        },
+        {
+            "name": "prop labels (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop horizontal",
+            "pass": true
+        },
+        {
+            "name": "prop horizontal (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop tooltip",
+            "pass": true
+        },
+        {
+            "name": "prop tooltip (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop sharedtooltip",
+            "pass": true
+        },
+        {
+            "name": "prop sharedtooltip (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop animate",
+            "pass": true
+        },
+        {
+            "name": "prop animate (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop stackmode",
+            "pass": true
+        },
+        {
+            "name": "prop stackmode (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop innerradius",
+            "pass": true
+        },
+        {
+            "name": "prop innerradius (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop ymin",
+            "pass": true
+        },
+        {
+            "name": "prop ymin (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop ymax",
+            "pass": true
+        },
+        {
+            "name": "prop ymax (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop ylog",
+            "pass": true
+        },
+        {
+            "name": "prop ylog (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop bins",
+            "pass": true
+        },
+        {
+            "name": "prop bins (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop plotlines",
+            "pass": true
+        },
+        {
+            "name": "prop plotlines (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop plotbands",
+            "pass": true
+        },
+        {
+            "name": "prop plotbands (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop annotations",
+            "pass": true
+        },
+        {
+            "name": "prop annotations (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop palette",
+            "pass": true
+        },
+        {
+            "name": "prop palette (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop colors",
+            "pass": true
+        },
+        {
+            "name": "prop colors (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop height",
+            "pass": true
+        },
+        {
+            "name": "prop height (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop valueformat",
+            "pass": true
+        },
+        {
+            "name": "prop valueformat (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop compact",
+            "pass": true
+        },
+        {
+            "name": "prop compact (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop thousands",
+            "pass": true
+        },
+        {
+            "name": "prop thousands (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop decimals",
+            "pass": true
+        },
+        {
+            "name": "prop decimals (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop tooltipformat",
+            "pass": true
+        },
+        {
+            "name": "prop tooltipformat (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop drilldown",
+            "pass": true
+        },
+        {
+            "name": "prop drilldown (live state)",
+            "pass": true
+        },
+        {
+            "name": "event onpointclick",
+            "pass": true
+        },
+        {
+            "name": "event onlegendclick",
+            "pass": true
+        },
+        {
+            "name": "event ondrilldown",
+            "pass": true
+        },
+        {
+            "name": "event ondrillup",
+            "pass": true
+        }
+    ]
+}

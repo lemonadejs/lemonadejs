@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>LemonadeJS — Chart playground</title>
+    <link rel="stylesheet" href="../style.css" />
+    <link rel="stylesheet" href="./src/style.css" />
+    <style>
+        body { font-family: system-ui, sans-serif; margin: 24px; max-width: 1560px;
+            background: var(--lm-background-color); color: var(--lm-text-color); }
+        a.back { display:inline-block; margin:0 0 16px; font-size:13px; color:#71717a; text-decoration:none; }
+        .play { display: grid; grid-template-columns: 280px 1fr; gap: 20px; align-items: start; }
+        .panel {
+            position: sticky; top: 16px;
+            border: 1px solid var(--lm-border-color); border-radius: var(--lm-radius-lg);
+            padding: 16px; background: var(--lm-background-color); box-shadow: var(--lm-shadow);
+        }
+        .panel h4 { margin: 16px 0 6px; font-size: 11px; text-transform: uppercase;
+            letter-spacing: .06em; color: var(--lm-font-grayout); }
+        .panel select { width: 100%; padding: 6px 8px; box-sizing: border-box;
+            border: 1px solid var(--lm-border-color); border-radius: var(--lm-radius);
+            background: var(--lm-background-color); color: inherit; font: inherit; }
+        .panel label { display: flex; align-items: center; gap: 8px; padding: 4px 0;
+            font-size: 13px; cursor: pointer; }
+        .panel .flags { display: grid; grid-template-columns: 1fr 1fr; column-gap: 8px; }
+        .panel input[type=range] { width: 100%; }
+        .panel .rangeval { font-size: 11px; color: var(--lm-font-grayout); }
+        .props { background: var(--lm-background-color-highlight); border-radius: var(--lm-radius);
+            padding: 8px 10px; font-size: 11px; line-height: 1.45; overflow: auto; margin: 0; }
+        .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+        .chart-card {
+            border: 1px solid var(--lm-border-color); border-radius: var(--lm-radius-lg);
+            padding: 12px; background: var(--lm-background-color); cursor: pointer;
+            transition: box-shadow .12s ease, outline-color .12s ease;
+            outline: 2px solid transparent; outline-offset: -1px; 
+        }
+        .chart-card:hover { box-shadow: var(--lm-shadow-lg); }
+        .chart-card[data-selected="true"] { outline-color: var(--lm-main-color); }
+        @media (max-width: 760px) { .play { grid-template-columns: 1fr; } .grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body class="lm-theme-modern">
+    <a class="back" href="/">&larr; All components</a>
+    <div id="app"></div>
+    <script src="/.dev/components/chart/demo.js"></script>
+</body>
+</html>

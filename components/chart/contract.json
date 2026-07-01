@@ -1,0 +1,186 @@
+{
+    "name": "chart",
+    "props": {
+        "type": {
+            "type": "string",
+            "default": "bar"
+        },
+        "series": {
+            "type": "array"
+        },
+        "categories": {
+            "type": "array"
+        },
+        "title": {
+            "type": "string",
+            "default": ""
+        },
+        "subtitle": {
+            "type": "string",
+            "default": ""
+        },
+        "xtype": {
+            "type": "string",
+            "default": ""
+        },
+        "xformat": {
+            "type": "function"
+        },
+        "xtitle": {
+            "type": "string",
+            "default": ""
+        },
+        "ytitle": {
+            "type": "string",
+            "default": ""
+        },
+        "y2title": {
+            "type": "string",
+            "default": ""
+        },
+        "markers": {
+            "type": "boolean",
+            "default": true
+        },
+        "smooth": {
+            "type": "boolean",
+            "default": false
+        },
+        "step": {
+            "type": "boolean",
+            "default": false
+        },
+        "area": {
+            "type": "boolean",
+            "default": false
+        },
+        "toolbar": {
+            "type": "boolean",
+            "default": false
+        },
+        "zoom": {
+            "type": "boolean",
+            "default": false
+        },
+        "navigator": {
+            "type": "boolean",
+            "default": false
+        },
+        "sparkline": {
+            "type": "boolean",
+            "default": false
+        },
+        "gridlines": {
+            "type": "boolean",
+            "default": true
+        },
+        "valueprefix": {
+            "type": "string",
+            "default": ""
+        },
+        "valuesuffix": {
+            "type": "string",
+            "default": ""
+        },
+        "labelrotation": {
+            "type": "number"
+        },
+        "legend": {
+            "type": "boolean",
+            "default": true
+        },
+        "legendposition": {
+            "type": "string",
+            "default": ""
+        },
+        "labels": {
+            "type": "boolean",
+            "default": true
+        },
+        "horizontal": {
+            "type": "boolean",
+            "default": false
+        },
+        "tooltip": {
+            "type": "boolean",
+            "default": true
+        },
+        "sharedtooltip": {
+            "type": "boolean",
+            "default": true
+        },
+        "animate": {
+            "type": "boolean",
+            "default": true
+        },
+        "stackmode": {
+            "type": "string",
+            "default": "normal"
+        },
+        "innerradius": {
+            "type": "number",
+            "default": 0
+        },
+        "ymin": {
+            "type": "number"
+        },
+        "ymax": {
+            "type": "number"
+        },
+        "ylog": {
+            "type": "boolean",
+            "default": false
+        },
+        "bins": {
+            "type": "number"
+        },
+        "plotlines": {
+            "type": "array"
+        },
+        "plotbands": {
+            "type": "array"
+        },
+        "annotations": {
+            "type": "array"
+        },
+        "palette": {
+            "type": "string",
+            "default": "lemonade"
+        },
+        "colors": {
+            "type": "array"
+        },
+        "height": {
+            "type": "number",
+            "default": 0
+        },
+        "valueformat": {
+            "type": "function"
+        },
+        "compact": {
+            "type": "boolean",
+            "default": true
+        },
+        "thousands": {
+            "type": "boolean",
+            "default": false
+        },
+        "decimals": {
+            "type": "number"
+        },
+        "tooltipformat": {
+            "type": "function"
+        },
+        "drilldown": {
+            "type": "object"
+        }
+    },
+    "bind": null,
+    "events": [
+        "onpointclick",
+        "onlegendclick",
+        "ondrilldown",
+        "ondrillup"
+    ],
+    "api": []
+}

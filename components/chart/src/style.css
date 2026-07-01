@@ -1,0 +1,2204 @@
+/* <Chart /> — all layout is CSS so the chart is responsive with no JS. */
+
+.lm-chart {
+    --lm-chart-font: 13px system-ui, -apple-system, Segoe UI, sans-serif;
+    /* Framing colours read the shared template tokens but KEEP their
+       original value as the fallback, so the chart looks identical with no
+       global stylesheet and only re-themes (incl. dark mode) when one is
+       present. The tooltip pill stays dark on purpose (it's a good look). */
+    --lm-chart-grid: var(--lm-border-color-light, #eceef1);
+    --lm-chart-axis: var(--lm-font-grayout, #9aa1ab);
+    --lm-chart-baseline: var(--lm-border-color-highlight, #aeb4be);
+    --lm-chart-text: var(--lm-text-color, #3f444c);
+    --lm-chart-muted: var(--lm-font-grayout, #6b7280);
+    --lm-chart-title: var(--lm-text-color, #1f2329);
+    --lm-chart-tip-bg: #1f2329;
+    --lm-chart-tip-text: #ffffff;
+    --lm-chart-link: var(--lm-main-color, #3b82f6);
+    /* surface colour used for separators / floating label backings */
+    --lm-chart-surface: var(--lm-background-color, #ffffff);
+    --lm-chart-up: #16a34a;
+    --lm-chart-down: #dc2626;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    box-sizing: border-box;
+    font-family: var(--lm-chart-font);
+    color: var(--lm-chart-text);
+}
+
+.lm-chart-header {
+    margin: 0 0 22px; /* breathing room before the plot */
+    text-align: center;
+}
+
+.lm-chart-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--lm-chart-title);
+}
+
+.lm-chart-subtitle {
+    font-size: 12px;
+    color: var(--lm-chart-muted);
+    margin-top: 3px;
+}
+
+/* ---- layout regions (legend placement) ---- */
+
+.lm-chart-content {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.lm-chart-content[data-legend='left'],
+.lm-chart-content[data-legend='right'] {
+    flex-direction: row;
+    align-items: stretch;
+}
+
+.lm-chart-core {
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+    display: flex;
+}
+
+.lm-chart-plotblock {
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ytitle (left, rotated) + the plot column */
+.lm-chart-area {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+}
+
+.lm-chart-plotcol {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.lm-chart-ytitle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    font-size: 12px;
+    color: var(--lm-chart-muted);
+    padding: 0 2px 18px 0;
+}
+
+.lm-chart-xtitle {
+    text-align: center;
+    font-size: 12px;
+    color: var(--lm-chart-muted);
+    margin-top: 4px;
+    padding-left: 38px;
+}
+
+/* ---- plot area (bar / stacked bar) ---- */
+
+.lm-chart-plot {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    padding-left: 38px; /* room for the y-axis tick labels */
+}
+
+/* horizontal gridlines + tick labels, behind the bars */
+.lm-chart-grid {
+    position: absolute;
+    inset: 0 0 0 38px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    pointer-events: none;
+}
+
+.lm-chart-gridline {
+    position: relative;
+    border-top: 1px solid var(--lm-chart-grid);
+    height: 0;
+}
+
+/* the zero baseline is emphasized when the data crosses it */
+.lm-chart-gridline[data-zero='true'] {
+    border-top-color: var(--lm-chart-baseline);
+}
+
+/* gridlines off: hide the lines but keep the ticks + the zero baseline */
+.lm-chart-grid[data-off='true'] .lm-chart-gridline:not([data-zero='true']) {
+    border-top-color: transparent;
+}
+
+/* secondary (right) axis: tick labels only, aligned to the primary gridlines */
+.lm-chart-plot[data-right='true'] {
+    padding-right: 40px;
+}
+
+.lm-chart-grid-right {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    right: 0;
+    width: 38px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    pointer-events: none;
+}
+
+.lm-chart-gridline-r {
+    position: relative;
+    height: 0;
+}
+
+.lm-chart-tick-r {
+    position: absolute;
+    left: 8px;
+    top: -0.6em;
+    font-size: 11px;
+    color: var(--lm-chart-axis);
+    white-space: nowrap;
+}
+
+/* right-axis title mirrors the left one on the other side */
+.lm-chart-y2title {
+    padding: 0 0 18px 2px;
+    transform: rotate(0deg);
+    writing-mode: vertical-rl;
+}
+
+.lm-chart-tick {
+    position: absolute;
+    left: -8px;
+    top: -0.6em;
+    transform: translateX(-100%);
+    font-size: 11px;
+    color: var(--lm-chart-axis);
+    white-space: nowrap;
+}
+
+/* the columns sit on top of the grid, sharing its box */
+.lm-chart-cols {
+    position: relative;
+    display: flex;
+    align-items: stretch;
+    height: 100%;
+}
+
+.lm-chart-col {
+    position: relative;
+    flex: 1 1 0;
+    min-width: 0;
+    height: 100%;
+}
+
+/* crosshair: highlight the hovered column band (shared tooltip) */
+.lm-chart-band {
+    position: absolute;
+    inset: 0;
+    background: rgba(99, 110, 130, 0.08);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.1s ease;
+}
+
+.lm-chart-band[data-on='true'] {
+    opacity: 1;
+}
+
+/* keyboard-focused column: a stronger tint than plain hover */
+.lm-chart-band[data-kb='true'] {
+    background: rgba(99, 110, 130, 0.16);
+    box-shadow: inset 0 0 0 1px rgba(99, 110, 130, 0.35);
+}
+
+/* the plot is focusable for keyboard nav; show a clear focus ring */
+.lm-chart-cols:focus {
+    outline: none;
+}
+
+.lm-chart-cols:focus-visible {
+    outline: 2px solid var(--lm-border-outline, #2563eb);
+    outline-offset: 2px;
+    border-radius: var(--lm-radius, 6px);
+}
+
+/* inline tooltip anchored to the keyboard-focused column */
+.lm-chart-kbtip {
+    position: absolute;
+    top: 6px;
+    transform: translateX(-50%);
+    z-index: 5;
+    pointer-events: none;
+    background: var(--lm-chart-tip-bg, #2b2f36);
+    color: var(--lm-chart-tip-text, #fff);
+    border-radius: var(--lm-radius, 6px);
+    padding: 5px 8px;
+    font-size: 11px;
+    line-height: 1.5;
+    white-space: nowrap;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+}
+
+.lm-chart-kbtip-title {
+    font-weight: 600;
+    margin-bottom: 2px;
+}
+
+/* line/area: a thin vertical crosshair at the column centre, not a band */
+.lm-chart-band[data-line='true'] {
+    left: 50%;
+    right: auto;
+    width: 0;
+    border-left: 1px dashed rgba(99, 110, 130, 0.45);
+    background: none;
+}
+
+/* the per-column plot box; bars are absolutely positioned from a baseline */
+.lm-chart-stack {
+    position: relative;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    gap: 3px;
+}
+
+/* stacked: one slot (bars centred + absolute within) */
+.lm-chart-stack[data-stacked='true'] {
+    display: block;
+}
+
+/* grouped: one slot per series, sharing the width */
+.lm-chart-barslot {
+    position: relative;
+    flex: 1 1 0;
+    min-width: 2px;
+    height: 100%;
+}
+
+.lm-chart-bar {
+    position: absolute;
+    left: 13%;
+    right: 13%;
+    min-height: 1px;
+    border-radius: 4px 4px 0 0;
+    transition: height 0.35s ease, bottom 0.35s ease, filter 0.12s ease, opacity 0.12s ease;
+    cursor: default;
+    /* center an inside (stacked) label; outside labels are absolute anyway */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: visible;
+}
+
+/* bars below the zero baseline round the other way */
+.lm-chart-bar[data-neg='true'] {
+    border-radius: 0 0 3px 3px;
+}
+
+.lm-chart-stack[data-stacked='true'] .lm-chart-bar {
+    left: 20%;
+    right: 20%;
+    max-width: 56px;
+    margin: 0 auto;
+    border-radius: 0;
+    overflow: hidden;
+}
+
+.lm-chart-bar:hover {
+    filter: brightness(1.08);
+}
+
+/* dimmed when another series is highlighted via the legend */
+.lm-chart-bar[data-dim='true'] {
+    opacity: 0.25;
+}
+
+/* grouped bar labels sit just outside the bar (above positives, below negatives) */
+.lm-chart-value {
+    position: absolute;
+    left: -2px;
+    right: -2px;
+    text-align: center;
+    font-size: 11px;
+    color: var(--lm-chart-muted);
+    pointer-events: none;
+}
+
+.lm-chart-barslot .lm-chart-value {
+    bottom: 100%;
+    margin-bottom: 3px;
+}
+
+.lm-chart-barslot .lm-chart-bar[data-neg='true'] .lm-chart-value {
+    bottom: auto;
+    top: 100%;
+    margin-top: 3px;
+}
+
+/* stacked labels live centred inside the segment */
+.lm-chart-stack[data-stacked='true'] .lm-chart-value {
+    position: static;
+    color: #fff;
+    font-weight: 600;
+    line-height: 1;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    white-space: nowrap;
+}
+
+/* category labels: a row below the plot, aligned to the columns
+   (same left gutter + gap as .lm-chart-cols) */
+.lm-chart-xaxis {
+    flex: 0 0 auto;
+    display: flex;
+    padding-left: 38px;
+    margin-top: 6px;
+}
+
+.lm-chart-cat {
+    flex: 1 1 0;
+    min-width: 0;
+    text-align: center;
+}
+
+.lm-chart-cat-label {
+    font-size: 11px;
+    color: var(--lm-chart-muted);
+}
+
+/* unrotated: clip + ellipsis when a label is too wide */
+.lm-chart-xaxis:not([data-rotate='true']) .lm-chart-cat {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* rotated: anchor each label's RIGHT END at the column centre, angle down-left */
+.lm-chart-xaxis[data-rotate='true'] {
+    align-items: flex-start;
+    overflow: visible;
+}
+
+.lm-chart-xaxis[data-rotate='true'] .lm-chart-cat {
+    position: relative;
+    overflow: visible;
+}
+
+.lm-chart-xaxis[data-rotate='true'] .lm-chart-cat-label {
+    position: absolute;
+    top: 4px;
+    right: 50%;
+    white-space: nowrap;
+    transform-origin: right top;
+    transform: rotate(var(--lm-cat-angle, -35deg));
+}
+
+/* ---- line chart (SVG polylines + HTML markers, over the columns box) ---- */
+
+.lm-chart-lineoverlay {
+    position: absolute;
+    inset: 0;
+    pointer-events: none; /* columns underneath own the shared-tooltip hover */
+}
+
+.lm-chart-linesvg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+}
+
+.lm-chart-line {
+    fill: none;
+    stroke-width: 2;
+    vector-effect: non-scaling-stroke; /* constant width despite the stretch */
+    stroke-linejoin: round;
+    stroke-linecap: round;
+    transition: opacity 0.12s ease;
+}
+
+.lm-chart-line[data-dim='true'] {
+    opacity: 0.18;
+}
+
+.lm-chart-line[data-dashed='true'] {
+    stroke-dasharray: 5 4;
+}
+
+/* area fill under a line series */
+.lm-chart-areafill {
+    opacity: 0.16;
+    stroke: none;
+}
+
+.lm-chart-areafill[data-dim='true'] {
+    opacity: 0.05;
+}
+
+/* stacked areas tile on top of each other → render them more solid */
+.lm-chart-areafill[data-stacked='true'] {
+    opacity: 0.85;
+}
+
+.lm-chart-areafill[data-stacked='true'][data-dim='true'] {
+    opacity: 0.25;
+}
+
+.lm-chart-marker {
+    position: absolute;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    border: 2px solid var(--lm-chart-surface);
+    box-sizing: border-box;
+    transform: translate(-50%, -50%);
+    transition: opacity 0.12s ease;
+}
+
+.lm-chart-marker[data-dim='true'] {
+    opacity: 0.18;
+}
+
+/* marker shapes */
+.lm-chart-marker[data-shape='square'] {
+    border-radius: 1px;
+}
+
+.lm-chart-marker[data-shape='diamond'] {
+    border-radius: 1px;
+    transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.lm-chart-marker[data-shape='triangle'] {
+    border-radius: 0;
+    clip-path: polygon(50% 0, 100% 100%, 0 100%);
+}
+
+/* enlarge the markers in the hovered column (shared tooltip) */
+.lm-chart-marker[data-hot='true'] {
+    width: 13px;
+    height: 13px;
+    box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.06);
+}
+
+/* markers become interactive only when the shared tooltip is off */
+.lm-chart-lineoverlay[data-interactive='true'] .lm-chart-marker {
+    pointer-events: auto;
+}
+
+.lm-chart-marker-label {
+    position: absolute;
+    bottom: 11px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 11px;
+    color: var(--lm-chart-muted);
+    white-space: nowrap;
+}
+
+/* ---- horizontal orientation (categories on the y-axis, values on x) ---- */
+
+.lm-chart-plotblock[data-orient='h'] {
+    --lm-ycats-w: 84px;
+}
+
+.lm-chart-harea {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    align-items: stretch;
+}
+
+/* category labels: a left column, one row per category, aligned to the bars */
+.lm-chart-ycats {
+    flex: 0 0 var(--lm-ycats-w);
+    display: flex;
+    flex-direction: column;
+}
+
+.lm-chart-ycat {
+    flex: 1 1 0;
+    min-height: 0;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 8px;
+    font-size: 11px;
+    color: var(--lm-chart-muted);
+    text-align: right;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+/* horizontal plot: no left gutter (ticks are on the bottom row) */
+.lm-chart-plot[data-orient='h'] {
+    padding-left: 0;
+}
+
+/* grid → vertical lines */
+.lm-chart-grid[data-orient='h'] {
+    inset: 0;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+.lm-chart-grid[data-orient='h'] .lm-chart-gridline {
+    border-top: none;
+    border-left: 1px solid var(--lm-chart-grid);
+    height: auto;
+    width: 0;
+}
+
+.lm-chart-grid[data-orient='h'] .lm-chart-gridline[data-zero='true'] {
+    border-left-color: var(--lm-chart-baseline);
+}
+
+/* cols → stacked rows */
+.lm-chart-cols[data-orient='h'] {
+    flex-direction: column;
+    align-items: stretch;
+}
+
+.lm-chart-cols[data-orient='h'] .lm-chart-col {
+    height: auto;
+}
+
+/* grouped horizontal: bar slots stack vertically inside the row */
+.lm-chart-stack[data-orient='h'] {
+    flex-direction: column;
+    height: 100%;
+}
+
+.lm-chart-stack[data-orient='h'] .lm-chart-barslot {
+    height: auto;
+    width: 100%;
+    min-height: 2px;
+    min-width: 0;
+}
+
+/* horizontal bars grow rightward from the baseline */
+.lm-chart-bar[data-orient='h'] {
+    left: auto;
+    right: auto;
+    top: 13%;
+    bottom: 13%;
+    border-radius: 0 4px 4px 0;
+}
+
+.lm-chart-bar[data-orient='h'][data-neg='true'] {
+    border-radius: 4px 0 0 4px;
+}
+
+.lm-chart-stack[data-stacked='true'][data-orient='h'] .lm-chart-bar {
+    left: auto;
+    right: auto;
+    top: 20%;
+    bottom: 20%;
+    margin: 0;
+    max-width: none; /* segments span their full width (override the vertical cap) */
+    border-radius: 0;
+}
+
+/* grouped horizontal value label sits to the right of the bar end;
+   stacked horizontal labels stay centred in the segment (the stacked rule) */
+.lm-chart-stack:not([data-stacked='true']) .lm-chart-bar[data-orient='h'] .lm-chart-value {
+    left: 100%;
+    right: auto;
+    top: 50%;
+    bottom: auto;
+    transform: translateY(-50%);
+    margin: 0 0 0 4px;
+    text-align: left;
+}
+
+/* value tick row under the horizontal plot, offset to align under the bars */
+.lm-chart-xvalues {
+    flex: 0 0 auto;
+    display: flex;
+    justify-content: space-between;
+    padding-left: var(--lm-ycats-w, 0);
+    margin-top: 4px;
+    min-height: 15px; /* room for the absolute tick spans so xtitle clears them */
+}
+
+.lm-chart-xval {
+    width: 0;
+    position: relative;
+}
+
+.lm-chart-xval > span {
+    position: absolute;
+    left: 0;
+    top: 0;
+    transform: translateX(-50%);
+    font-size: 11px;
+    color: var(--lm-chart-axis);
+    white-space: nowrap;
+}
+
+.lm-chart-xtitle-h {
+    padding-left: var(--lm-ycats-w);
+}
+
+/* horizontal bars grow from the left (scaleX) instead of up */
+.lm-chart[data-animate='true'] .lm-chart-bar[data-orient='h'] {
+    transform-origin: left;
+}
+
+.lm-chart[data-animate='true'] .lm-chart-bar[data-orient='h'][data-neg='true'] {
+    transform-origin: right;
+}
+
+@keyframes lm-chart-grow-x {
+    from { transform: scaleX(0); }
+    to { transform: scaleX(1); }
+}
+
+.lm-chart[data-animate='true'] .lm-chart-bar[data-orient='h'] {
+    animation: lm-chart-grow-x 0.45s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+/* ---- reference lines & bands ---- */
+
+.lm-chart-refs {
+    position: absolute;
+    inset: 0 0 0 38px; /* match the cols box (left gutter) */
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.lm-chart-plot[data-right='true'] .lm-chart-refs {
+    right: 40px;
+}
+
+.lm-chart-plot[data-orient='h'] .lm-chart-refs {
+    left: 0;
+}
+
+.lm-chart-plotband {
+    position: absolute;
+    left: 0;
+    right: 0;
+}
+
+.lm-chart-plotband[data-orient='h'] {
+    top: 0;
+    bottom: 0;
+    left: auto;
+    right: auto;
+}
+
+.lm-chart-plotline {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 0;
+}
+
+.lm-chart-plotline[data-orient='h'] {
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: auto;
+    width: 0;
+    height: auto;
+}
+
+.lm-chart-plotline-label {
+    position: absolute;
+    right: 2px;
+    top: 2px;
+    font-size: 10px;
+    font-weight: 600;
+    background: var(--lm-chart-surface);
+    padding: 0 3px;
+    border-radius: var(--lm-radius, 6px);
+}
+
+.lm-chart-plotline[data-orient='h'] .lm-chart-plotline-label {
+    right: auto;
+    left: 2px;
+    top: 2px;
+}
+
+.lm-chart-plotband-label {
+    position: absolute;
+    left: 4px;
+    top: 2px;
+    font-size: 10px;
+    color: var(--lm-chart-muted);
+}
+
+/* annotations: a callout pinned to a data point */
+.lm-chart-anno {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.lm-chart-anno-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    border: 1.5px solid var(--lm-chart-surface);
+    box-sizing: border-box;
+    order: 2;
+}
+
+.lm-chart-anno-text {
+    order: 1;
+    margin-bottom: 3px;
+    padding: 2px 6px;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--lm-chart-text);
+    background: var(--lm-chart-surface);
+    border: 1px solid;
+    border-radius: var(--lm-radius, 6px);
+    white-space: nowrap;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+/* ---- radar / spider ---- */
+
+.lm-chart-radar-ring {
+    fill: none;
+    stroke: var(--lm-chart-grid);
+    stroke-width: 0.5;
+}
+
+.lm-chart-radar-spoke {
+    stroke: var(--lm-chart-grid);
+    stroke-width: 0.5;
+}
+
+.lm-chart-radar-area {
+    fill-opacity: 0.16;
+    stroke-width: 1.5;
+    stroke-linejoin: round;
+    vector-effect: non-scaling-stroke;
+    transition: opacity 0.12s ease;
+}
+
+.lm-chart-radar-area[data-dim='true'] {
+    opacity: 0.18;
+}
+
+.lm-chart-radar-dot {
+    cursor: default;
+    transition: opacity 0.12s ease;
+}
+
+.lm-chart-radar-dot:hover {
+    r: 2.4;
+}
+
+.lm-chart-radar-dot[data-dim='true'] {
+    opacity: 0.18;
+}
+
+.lm-chart-radar-label {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    font-size: 10px;
+    color: var(--lm-chart-muted);
+    white-space: nowrap;
+}
+
+/* ---- gauge ---- */
+
+.lm-chart-gauge-track {
+    stroke: var(--lm-chart-grid);
+}
+
+.lm-chart-gauge-needle {
+    stroke: var(--lm-chart-text);
+    stroke-width: 2;
+    stroke-linecap: round;
+}
+
+.lm-chart-gauge-hub {
+    fill: var(--lm-chart-text);
+}
+
+.lm-chart-gauge-center {
+    position: absolute;
+    left: 50%;
+    top: 70%; /* below the hub/needle */
+    transform: translate(-50%, -50%);
+    text-align: center;
+}
+
+.lm-chart-gauge-value {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--lm-chart-title);
+}
+
+.lm-chart-gauge-name {
+    font-size: 11px;
+    color: var(--lm-chart-muted);
+}
+
+/* ---- funnel ---- */
+
+.lm-chart-funnel {
+    position: relative;
+    height: 100%;
+    max-height: 320px;
+    width: 100%;
+    max-width: 440px;
+}
+
+.lm-chart-funnel-seg {
+    stroke: var(--lm-chart-surface);
+    stroke-width: 0.5;
+    transition: opacity 0.12s ease;
+}
+
+.lm-chart-funnel-seg:hover {
+    opacity: 0.9;
+}
+
+.lm-chart-funnel-label {
+    position: absolute;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 11px;
+    color: #fff;
+    font-weight: 600;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+    pointer-events: none;
+    white-space: nowrap;
+}
+
+/* narrow segments: label sits outside to the right in dark text */
+.lm-chart-funnel-label[data-out='true'] {
+    transform: translate(0, -50%);
+    color: var(--lm-chart-text);
+    font-weight: 500;
+    text-shadow: none;
+}
+
+/* ---- candlestick / OHLC ---- */
+
+.lm-chart-ohlc,
+.lm-chart-box {
+    position: absolute;
+    inset: 0;
+}
+
+.lm-chart-ohlc-wick {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 1px;
+}
+
+.lm-chart-ohlc-body {
+    position: absolute;
+    left: 28%;
+    right: 28%;
+    min-height: 1px;
+    border: 1px solid;
+    border-radius: 1px;
+}
+
+.lm-chart-ohlc-val {
+    position: absolute;
+    left: 50%;
+    font-size: 9px;
+    color: var(--lm-chart-muted);
+    white-space: nowrap;
+    pointer-events: none;
+}
+
+.lm-chart-ohlc-val[data-pos='hi'] {
+    transform: translate(-50%, -110%);
+}
+
+.lm-chart-ohlc-val[data-pos='lo'] {
+    transform: translate(-50%, 12%);
+}
+
+/* ---- boxplot ---- */
+
+.lm-chart-box-whisker {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 1px;
+    background: var(--lm-chart-axis);
+}
+
+.lm-chart-box-rect {
+    position: absolute;
+    left: 26%;
+    right: 26%;
+    border: 1.5px solid;
+    border-radius: var(--lm-radius, 6px);
+}
+
+.lm-chart-box-median {
+    position: absolute;
+    left: 26%;
+    right: 26%;
+    height: 2px;
+}
+
+/* whisker end caps */
+.lm-chart-box-cap {
+    position: absolute;
+    left: 40%;
+    right: 40%;
+    height: 1px;
+    background: var(--lm-chart-axis);
+}
+
+.lm-chart-box-val {
+    position: absolute;
+    font-size: 9px;
+    color: var(--lm-chart-muted);
+    white-space: nowrap;
+    pointer-events: none;
+}
+
+.lm-chart-box-val[data-pos='hi'] {
+    left: 50%;
+    transform: translate(-50%, -120%);
+}
+
+.lm-chart-box-val[data-pos='lo'] {
+    left: 50%;
+    transform: translate(-50%, 20%);
+}
+
+.lm-chart-box-val[data-pos='md'] {
+    left: 76%;
+    transform: translateY(-50%);
+}
+
+/* ---- range (area-range / column-range) ---- */
+
+.lm-chart-range-mark {
+    position: absolute;
+    inset: 0;
+}
+
+.lm-chart-range-bar {
+    position: absolute;
+    left: 18%;
+    right: 18%;
+    border-radius: var(--lm-radius, 6px);
+    min-height: 1px;
+}
+
+.lm-chart-range-val {
+    position: absolute;
+    left: 50%;
+    font-size: 9px;
+    color: var(--lm-chart-muted);
+    white-space: nowrap;
+    pointer-events: none;
+}
+
+.lm-chart-range-val[data-pos='hi'] {
+    transform: translate(-50%, -120%);
+}
+
+.lm-chart-range-val[data-pos='lo'] {
+    transform: translate(-50%, 20%);
+}
+
+/* ---- bullet (KPI) ---- */
+
+.lm-chart-bullet {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 6px;
+    height: 100%;
+    width: 100%;
+    padding: 0 4px;
+}
+
+.lm-chart-bullet-label {
+    font-size: 12px;
+    color: var(--lm-chart-muted);
+}
+
+.lm-chart-bullet-track {
+    position: relative;
+    height: 26px;
+    background: var(--lm-background-color-highlight, #f0f1f3);
+    border-radius: var(--lm-radius, 6px);
+}
+
+.lm-chart-bullet-band {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+}
+
+.lm-chart-bullet-measure {
+    position: absolute;
+    top: 28%;
+    bottom: 28%;
+    left: 0;
+    border-radius: var(--lm-radius, 6px);
+}
+
+.lm-chart-bullet-target {
+    position: absolute;
+    top: 8%;
+    bottom: 8%;
+    width: 3px;
+    transform: translateX(-50%);
+    border-radius: 1px;
+}
+
+.lm-chart-bullet-axis {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    color: var(--lm-chart-axis);
+}
+
+/* ---- heatmap ---- */
+
+.lm-chart-heat {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+    gap: 6px;
+}
+
+.lm-chart-heat-grid {
+    flex: 1;
+    display: grid;
+    gap: 2px;
+}
+
+.lm-chart-heat-rowlabel {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 8px;
+    font-size: 11px;
+    color: var(--lm-chart-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.lm-chart-heat-cell {
+    border-radius: var(--lm-radius, 6px);
+    min-height: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    color: #fff;
+    transition: filter 0.1s ease;
+}
+
+.lm-chart-heat-cell {
+    cursor: default;
+}
+
+.lm-chart-heat-cell:hover {
+    filter: brightness(1.1);
+}
+
+/* cross-highlight: dim cells outside the hovered row/column */
+.lm-chart-heat-cell[data-dim='true'] {
+    opacity: 0.35;
+}
+
+.lm-chart-heat-rowlabel[data-on='true'],
+.lm-chart-heat-xaxis .lm-chart-cat[data-on='true'] {
+    color: var(--lm-chart-text);
+    font-weight: 600;
+}
+
+.lm-chart-heat-cell[data-empty='true'] {
+    background: transparent;
+}
+
+.lm-chart-heat-xaxis {
+    display: flex;
+    padding-left: 76px;
+    gap: 2px;
+}
+
+.lm-chart-heat-xaxis .lm-chart-cat {
+    flex: 1 1 0;
+    min-width: 0;
+}
+
+.lm-chart-heat-scale {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 10px;
+    color: var(--lm-chart-muted);
+}
+
+.lm-chart-heat-bar {
+    width: 140px;
+    height: 8px;
+    border-radius: var(--lm-radius, 6px);
+}
+
+/* ---- scatter / bubble ---- */
+
+.lm-chart-scatter {
+    position: absolute;
+    inset: 0;
+    overflow: visible;
+}
+
+.lm-chart-dot {
+    opacity: 0.72;
+    cursor: default;
+    transition: opacity 0.12s ease;
+}
+
+.lm-chart-dot:hover {
+    opacity: 1;
+    stroke: rgba(0, 0, 0, 0.12);
+    stroke-width: 3;
+}
+
+.lm-chart-dot[data-dim='true'] {
+    opacity: 0.12;
+}
+
+/* bubble size-scale legend (bottom-right of the plot) */
+.lm-chart-bubble-legend {
+    position: absolute;
+    right: 6px;
+    bottom: 6px;
+    display: flex;
+    align-items: flex-end;
+    gap: 12px;
+    pointer-events: none;
+}
+
+.lm-chart-bubble-ref {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+}
+
+.lm-chart-bubble-dot {
+    border-radius: 50%;
+    border: 1px solid var(--lm-border-color, #e4e4e7);
+    background: rgba(99, 110, 130, 0.12);
+}
+
+.lm-chart-bubble-z {
+    font-size: 10px;
+    color: var(--lm-chart-muted);
+}
+
+/* ---- zoom-to-explore ---- */
+
+.lm-chart-cols[data-zoom='true'] {
+    cursor: crosshair;
+}
+
+.lm-chart-zoomsel {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    background: rgba(37, 99, 235, 0.12);
+    border-left: 1px solid rgba(37, 99, 235, 0.5);
+    border-right: 1px solid rgba(37, 99, 235, 0.5);
+    pointer-events: none;
+}
+
+.lm-chart-zoomreset {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    z-index: 4;
+    font-size: 12px;
+    line-height: 1;
+    color: var(--lm-chart-muted);
+    background: var(--lm-chart-surface);
+    border: 1px solid var(--lm-chart-grid);
+    border-radius: var(--lm-radius, 6px);
+    padding: 3px 6px;
+    cursor: pointer;
+}
+
+.lm-chart-zoomreset:hover {
+    background: var(--lm-chart-surface);
+    color: var(--lm-chart-text);
+}
+
+/* ---- toolbar (export) ---- */
+
+.lm-chart-toolbar {
+    position: absolute;
+    top: 0;
+    right: 0;
+    z-index: 4;
+    display: flex;
+    gap: 4px;
+}
+
+.lm-chart-tool {
+    font: inherit;
+    font-size: 11px;
+    color: var(--lm-chart-muted);
+    background: var(--lm-chart-surface);
+    border: 1px solid var(--lm-chart-grid);
+    border-radius: var(--lm-radius, 6px);
+    padding: 2px 7px;
+    cursor: pointer;
+}
+
+.lm-chart-tool:hover {
+    background: var(--lm-chart-surface);
+    color: var(--lm-chart-text);
+}
+
+/* ---- treemap: squarified rectangles ---- */
+
+.lm-chart-treemap {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+.lm-chart-treemap-tile {
+    position: absolute;
+    box-sizing: border-box;
+    border: 1px solid var(--lm-chart-surface);
+    overflow: hidden;
+    cursor: pointer;
+    transition: filter 0.1s ease, opacity 0.1s ease;
+    display: flex;
+    align-items: flex-start;
+}
+
+.lm-chart-treemap-tile:hover {
+    filter: brightness(1.08);
+}
+
+.lm-chart-treemap-tile[data-dim='true'] {
+    opacity: 0.4;
+}
+
+.lm-chart-treemap-label {
+    padding: 4px 6px;
+    line-height: 1.25;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.lm-chart-treemap-name {
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.lm-chart-treemap-val {
+    font-size: 11px;
+    opacity: 0.85;
+}
+
+/* ---- sparkline: tiny axisless inline chart ---- */
+
+.lm-chart[data-spark='true'] {
+    padding: 0;
+    min-height: 0;
+}
+
+.lm-chart-spark {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: stretch;
+    gap: 6px;
+}
+
+.lm-chart-spark-svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.lm-chart-spark-path {
+    fill: none;
+    stroke-width: 1.5;
+    vector-effect: non-scaling-stroke;
+}
+
+.lm-chart-spark-area {
+    opacity: 0.18;
+    stroke: none;
+}
+
+.lm-chart-spark-dot {
+    position: absolute;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+}
+
+.lm-chart-spark-bars {
+    flex: 1 1 auto;
+    display: flex;
+    align-items: stretch;
+    gap: 1px;
+    height: 100%;
+}
+
+.lm-chart-spark-slot {
+    position: relative;
+    flex: 1 1 0;
+    min-width: 0;
+    height: 100%;
+}
+
+.lm-chart-spark-bar {
+    position: absolute;
+    left: 0;
+    right: 0;
+    border-radius: 1px;
+}
+
+.lm-chart-spark-val {
+    flex: 0 0 auto;
+    align-self: center;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--lm-chart-text);
+    white-space: nowrap;
+}
+
+/* ---- navigator: overview sparkline + draggable x-window ---- */
+
+.lm-chart-nav {
+    margin-top: 8px;
+}
+
+.lm-chart-nav-inner {
+    position: relative;
+    height: 38px;
+    margin-left: 38px; /* align with the plot's left gutter */
+    background: var(--lm-chart-nav-bg, rgba(99, 110, 130, 0.06));
+    border-radius: var(--lm-radius, 6px);
+    overflow: hidden;
+    user-select: none;
+}
+
+.lm-chart-nav-inner[data-right='true'] {
+    margin-right: 40px;
+}
+
+.lm-chart-nav-svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.lm-chart-nav-line {
+    fill: none;
+    stroke-width: 1;
+    vector-effect: non-scaling-stroke;
+    opacity: 0.7;
+}
+
+/* dim the area outside the active window */
+.lm-chart-nav-mask {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    background: var(--lm-chart-surface); opacity: 0.62;
+    pointer-events: none;
+}
+
+.lm-chart-nav-win {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    box-sizing: border-box;
+    border: 1px solid var(--lm-chart-link, #3b82f6);
+    background: rgba(59, 130, 246, 0.08);
+    cursor: grab;
+}
+
+.lm-chart-nav-win:active {
+    cursor: grabbing;
+}
+
+.lm-chart-nav-handle {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 8px;
+    background: var(--lm-chart-link, #3b82f6);
+    opacity: 0.85;
+    cursor: ew-resize;
+}
+
+.lm-chart-nav-handle[data-edge='l'] {
+    left: -1px;
+    border-radius: 3px 0 0 3px;
+}
+
+.lm-chart-nav-handle[data-edge='r'] {
+    right: -1px;
+    border-radius: 0 3px 3px 0;
+}
+
+/* ---- drilldown breadcrumb ---- */
+
+.lm-chart-crumbs {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 2px;
+    margin: 0 0 6px;
+    font-size: 12px;
+}
+
+.lm-chart-crumb {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font: inherit;
+    font-size: 12px;
+    color: var(--lm-chart-muted);
+    background: none;
+    border: 0;
+    padding: 2px 4px;
+    border-radius: var(--lm-radius, 6px);
+}
+
+button.lm-chart-crumb {
+    cursor: pointer;
+    color: var(--lm-chart-link, #3b82f6);
+}
+
+button.lm-chart-crumb:hover {
+    background: var(--lm-chart-grid);
+}
+
+.lm-chart-crumb[aria-current='page'] {
+    color: var(--lm-chart-text);
+    font-weight: 600;
+}
+
+.lm-chart-crumb-sep {
+    color: var(--lm-chart-muted);
+    font-weight: 400;
+}
+
+/* ---- accessibility: visually-hidden data table (screen-reader source) ---- */
+
+.lm-chart-a11y {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* keyboard focus ring on interactive marks + legend */
+.lm-chart-legend-item:focus-visible,
+.lm-chart-bar:focus-visible,
+.lm-chart-slice:focus-visible,
+.lm-chart-dot:focus-visible {
+    outline: 2px solid var(--lm-border-outline, #2563eb);
+    outline-offset: 1px;
+}
+
+/* ---- continuous (datetime / linear) x-axis ---- */
+
+.lm-chart-xgrid {
+    position: absolute;
+    inset: 0 0 0 38px;
+    pointer-events: none;
+}
+
+.lm-chart-vline {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 0;
+    border-left: 1px solid var(--lm-chart-grid);
+}
+
+.lm-chart-xtime {
+    flex: 0 0 auto;
+    position: relative;
+    height: 16px;
+    margin: 6px 0 0 38px;
+}
+
+.lm-chart-xtick {
+    position: absolute;
+    top: 0;
+}
+
+.lm-chart-xtick > span {
+    position: absolute;
+    left: 0;
+    transform: translateX(-50%);
+    white-space: nowrap;
+    font-size: 11px;
+    color: var(--lm-chart-axis);
+}
+
+/* ---- empty / no-data placeholder ---- */
+
+.lm-chart-empty {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--lm-chart-muted);
+    font-size: 13px;
+    letter-spacing: 0.02em;
+}
+
+/* ---- pie ---- */
+
+.lm-chart-pie-core {
+    flex: 1;
+    min-height: 0;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 40px; /* room for external labels + leaders */
+}
+
+/* square area that holds the svg + the HTML percentage labels */
+.lm-chart-pie-area {
+    position: relative;
+    height: 100%;
+    max-height: 320px;
+    aspect-ratio: 1 / 1;
+    flex: 0 1 auto;
+    overflow: visible; /* let leaders + outside labels spill past the circle */
+}
+
+/* thin leader line from a small slice to its external label */
+.lm-chart-leader {
+    fill: none;
+    stroke: var(--lm-chart-axis);
+    stroke-width: 0.5;
+}
+
+.lm-chart-pie-olabel {
+    position: absolute;
+    transform: translate(0, -50%);
+    font-size: 11px;
+    color: var(--lm-chart-muted);
+    white-space: nowrap;
+    pointer-events: none;
+}
+
+/* left-side labels grow toward the left so they don't cross the pie */
+.lm-chart-pie-olabel[data-side='l'] {
+    transform: translate(-100%, -50%);
+}
+
+.lm-chart-pie {
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+}
+
+/* donut centre total */
+.lm-chart-donut-center {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--lm-chart-text);
+    pointer-events: none;
+}
+
+/* fixed-px label, identical size at any pie scale */
+.lm-chart-pie-label {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    font-size: 12px;
+    font-weight: 600;
+    color: #fff;
+    pointer-events: none;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+
+.lm-chart-slice {
+    stroke: var(--lm-chart-surface);
+    stroke-width: 0.6;
+    transition: transform 0.12s ease;
+    transform-origin: 50% 50%;
+    cursor: default;
+}
+
+.lm-chart-slice:hover {
+    transform: scale(1.03);
+}
+
+.lm-chart-slice[data-dim='true'] {
+    opacity: 0.3;
+}
+
+/* ---- legend (shared) ---- */
+
+.lm-chart-legend {
+    flex: 0 0 auto;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 16px;
+    justify-content: center;
+}
+
+/* placement: bottom (default) / top stack as a centered row */
+.lm-chart-content[data-legend='bottom'] .lm-chart-legend { margin-top: 14px; max-height: 64px; overflow-y: auto; }
+.lm-chart-content[data-legend='top'] .lm-chart-legend { margin-bottom: 14px; max-height: 64px; overflow-y: auto; }
+
+/* left / right: a centered vertical column beside the plot */
+.lm-chart-content[data-legend='left'] .lm-chart-legend,
+.lm-chart-content[data-legend='right'] .lm-chart-legend {
+    flex-direction: column;
+    flex-wrap: nowrap;
+    gap: 6px;
+    align-self: center;
+    justify-content: flex-start;
+    max-height: 100%;
+    overflow-y: auto;
+}
+
+.lm-chart-content[data-legend='right'] .lm-chart-legend { margin-left: 20px; }
+.lm-chart-content[data-legend='left'] .lm-chart-legend { margin-right: 20px; }
+
+.lm-chart-legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--lm-chart-text);
+    /* reset native <button> chrome */
+    margin: 0;
+    padding: 2px 4px;
+    border: 0;
+    background: none;
+    font-family: inherit;
+    cursor: pointer;
+    border-radius: var(--lm-radius, 6px);
+    transition: opacity 0.12s ease, background 0.12s ease;
+}
+
+.lm-chart-legend-item:hover {
+    background: var(--lm-background-color-highlight, rgba(0, 0, 0, 0.04));
+}
+
+/* toggled off: greyed and struck through */
+.lm-chart-legend-item[data-hidden='true'] {
+    opacity: 0.4;
+}
+
+.lm-chart-legend-item[data-hidden='true'] .lm-chart-legend-name {
+    text-decoration: line-through;
+}
+
+.lm-chart-legend-item[data-hidden='true'] .lm-chart-swatch {
+    background: var(--lm-border-color-highlight, #b6bbc2) !important;
+}
+
+/* hover-highlight: dim the entries that are NOT hovered */
+.lm-chart-legend-item[data-dim='true'] {
+    opacity: 0.35;
+}
+
+.lm-chart-swatch {
+    width: 11px;
+    height: 11px;
+    border-radius: var(--lm-radius, 6px);
+    flex: 0 0 auto;
+}
+
+/* line/area series: a short line swatch with a centre dot, not a square
+   (keeps the inline series colour as the bar background) */
+.lm-chart-swatch[data-line='true'] {
+    width: 16px;
+    height: 2px;
+    border-radius: 1px;
+    position: relative;
+    overflow: visible;
+}
+
+.lm-chart-swatch[data-line='true']::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: inherit;
+    transform: translate(-50%, -50%);
+}
+
+/* ---- cursor-following tooltip ---- */
+
+.lm-chart-tooltip {
+    position: absolute;
+    z-index: 5;
+    transform: translate(-50%, calc(-100% - 12px));
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 7px 10px;
+    background: var(--lm-chart-tip-bg);
+    color: var(--lm-chart-tip-text);
+    font-size: 12px;
+    line-height: 1.1;
+    white-space: nowrap;
+    border-radius: var(--lm-radius, 6px);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+    pointer-events: none;
+}
+
+.lm-chart-tip-title {
+    font-weight: 600;
+    margin-bottom: 2px;
+}
+
+.lm-chart-tooltip[data-custom='true'] {
+    white-space: pre-line;
+}
+
+.lm-chart-tip-row {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+}
+
+/* push the value to the right when a name is present (shared tooltip) */
+.lm-chart-tip-row .lm-chart-tip-name {
+    margin-right: auto;
+    padding-right: 12px;
+}
+
+/* little arrow under the pill, pointing down at the cursor */
+.lm-chart-tooltip::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 100%;
+    transform: translateX(-50%);
+    border: 5px solid transparent;
+    border-top-color: var(--lm-chart-tip-bg);
+}
+
+/* near the top edge: flip the pill below the cursor, arrow points up */
+.lm-chart-tooltip[data-below='true'] {
+    transform: translate(-50%, 12px);
+}
+
+.lm-chart-tooltip[data-below='true']::after {
+    top: auto;
+    bottom: 100%;
+    border-top-color: transparent;
+    border-bottom-color: var(--lm-chart-tip-bg);
+}
+
+.lm-chart-tip-swatch {
+    width: 9px;
+    height: 9px;
+    border-radius: var(--lm-radius, 6px);
+    flex: 0 0 auto;
+}
+
+.lm-chart-tip-name {
+    color: #d7dae0;
+}
+
+.lm-chart-tip-value {
+    font-weight: 600;
+}
+
+/* ---- lollipop (stem + dot per point) ---- */
+
+.lm-chart-loll {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    justify-content: center;
+    gap: 3px;
+}
+
+.lm-chart-loll-slot {
+    position: relative;
+    flex: 1 1 0;
+    min-width: 2px;
+    max-width: 28px;
+    height: 100%;
+}
+
+.lm-chart-loll-stem {
+    position: absolute;
+    left: 50%;
+    width: 2px;
+    transform: translateX(-50%);
+    opacity: 0.55;
+    transition: height 0.35s ease, bottom 0.35s ease, opacity 0.12s ease;
+}
+
+.lm-chart-loll-dot {
+    position: absolute;
+    left: 50%;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    transform: translate(-50%, 50%);
+    cursor: default;
+    transition: bottom 0.35s ease, opacity 0.12s ease;
+}
+
+.lm-chart-loll-dot:hover {
+    filter: brightness(1.08);
+    box-shadow: 0 0 0 3px rgba(99, 110, 130, 0.15);
+}
+
+.lm-chart-loll-stem[data-dim='true'],
+.lm-chart-loll-dot[data-dim='true'] {
+    opacity: 0.2;
+}
+
+.lm-chart-loll-val {
+    position: absolute;
+    left: 50%;
+    bottom: 100%;
+    transform: translateX(-50%);
+    margin-bottom: 5px;
+    font-size: 11px;
+    color: var(--lm-chart-muted);
+    white-space: nowrap;
+    pointer-events: none;
+}
+
+/* ---- dumbbell (two dots joined by a thin connector) ---- */
+
+.lm-chart-dumbbell-link {
+    position: absolute;
+    left: 50%;
+    width: 2px;
+    transform: translateX(-50%);
+    background: var(--lm-chart-baseline);
+    opacity: 0.7;
+}
+
+.lm-chart-dumbbell-dot {
+    position: absolute;
+    left: 50%;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    border: 2px solid var(--lm-chart-surface);
+    box-sizing: border-box;
+}
+
+/* the low end reads as the muted "before" point */
+.lm-chart-dumbbell-dot[data-end='lo'] {
+    background: var(--lm-chart-axis);
+}
+
+/* ---- radial bar (concentric progress rings) ---- */
+
+.lm-chart-radial-track {
+    fill: none;
+    stroke: var(--lm-chart-grid);
+}
+
+.lm-chart-radial-arc {
+    fill: none;
+    stroke-linecap: round;
+    cursor: default;
+    transition: opacity 0.12s ease;
+}
+
+.lm-chart-radial-arc:hover {
+    filter: brightness(1.08);
+}
+
+.lm-chart-radial[data-dim='true'] {
+    opacity: 0.2;
+}
+
+/* a single ring is a progress circle → its % sits in the true centre */
+.lm-chart[data-type='radialbar'] .lm-chart-gauge-center {
+    top: 50%;
+}
+
+/* ---- histogram (bar chart with touching bins) ---- */
+
+.lm-chart[data-type='histogram'] .lm-chart-stack {
+    gap: 0;
+}
+
+.lm-chart[data-type='histogram'] .lm-chart-bar {
+    left: 1%;
+    right: 1%;
+    border-radius: 0;
+}
+
+/* ---- streamgraph (soft stacked ribbons around a midline) ---- */
+
+/* a hairline of surface colour separates the ribbons */
+.lm-chart-areafill[data-stream='true'] {
+    stroke: var(--lm-chart-surface);
+    stroke-width: 1px;
+    vector-effect: non-scaling-stroke;
+}
+
+/* ---- sankey (layered flows) ---- */
+
+.lm-chart-flow {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+    padding: 4px 0;
+    box-sizing: border-box;
+}
+
+.lm-chart-flowsvg {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+.lm-chart-sankey-link {
+    fill-opacity: 0.3;
+    transition: fill-opacity 0.12s ease;
+    cursor: default;
+}
+
+.lm-chart-sankey-link:hover {
+    fill-opacity: 0.55;
+}
+
+.lm-chart-sankey-node {
+    stroke: none;
+}
+
+.lm-chart-sankey-label {
+    position: absolute;
+    transform: translateY(-50%);
+    font-size: 10px;
+    color: var(--lm-chart-text);
+    white-space: nowrap;
+    pointer-events: none;
+}
+
+.lm-chart-sankey-label[data-side='l'] {
+    transform: translate(-100%, -50%);
+}
+
+/* ---- chord / dependency wheel ---- */
+
+.lm-chart-chord-arc {
+    cursor: default;
+}
+
+.lm-chart-chord-link {
+    fill-opacity: 0.35;
+    transition: fill-opacity 0.12s ease;
+    cursor: default;
+}
+
+.lm-chart-chord-link:hover {
+    fill-opacity: 0.65;
+}
+
+/* ---- sunburst (radial partition) ---- */
+
+.lm-chart-sun-cell {
+    stroke: var(--lm-chart-surface);
+    stroke-width: 0.4;
+    cursor: default;
+    transition: filter 0.12s ease;
+}
+
+.lm-chart-sun-cell:hover {
+    filter: brightness(1.08);
+}
+
+.lm-chart-sun-label {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    font-size: 9px;
+    font-weight: 600;
+    white-space: nowrap;
+    pointer-events: none;
+}
+
+/* ---- icicle (rectangular partition) ---- */
+
+.lm-chart-icicle {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+}
+
+.lm-chart-icicle-tile {
+    position: absolute;
+    box-sizing: border-box;
+    border: 1px solid var(--lm-chart-surface);
+    border-radius: 2px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    padding: 0 6px;
+    font-size: 10px;
+    cursor: default;
+    transition: filter 0.12s ease;
+}
+
+.lm-chart-icicle-tile:hover {
+    filter: brightness(1.08);
+}
+
+.lm-chart-icicle-name {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.lm-chart-icicle-val {
+    opacity: 0.75;
+    font-weight: 600;
+}
+
+/* ---- packed bubble ---- */
+
+.lm-chart-pack {
+    stroke: var(--lm-chart-surface);
+    stroke-width: 0.4;
+    cursor: default;
+    transition: opacity 0.12s ease, filter 0.12s ease;
+}
+
+.lm-chart-pack:hover {
+    filter: brightness(1.08);
+}
+
+.lm-chart-pack[data-dim='true'] {
+    opacity: 0.2;
+}
+
+.lm-chart-pack-label {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    font-size: 9px;
+    font-weight: 600;
+    white-space: nowrap;
+    pointer-events: none;
+}
+
+/* ---- entrance animation (data-animate, reduced-motion aware) ---- */
+
+@keyframes lm-chart-grow {
+    from { transform: scaleY(0); }
+    to { transform: scaleY(1); }
+}
+
+@keyframes lm-chart-pie-in {
+    from { opacity: 0; transform: scale(0.85) rotate(-12deg); }
+    to { opacity: 1; transform: none; }
+}
+
+/* bars grow from their baseline (positive up, negative down) */
+.lm-chart[data-animate='true'] .lm-chart-bar {
+    animation: lm-chart-grow 0.45s cubic-bezier(0.2, 0.7, 0.2, 1);
+    transform-origin: bottom;
+}
+
+.lm-chart[data-animate='true'] .lm-chart-bar[data-neg='true'] {
+    transform-origin: top;
+}
+
+.lm-chart[data-animate='true'] .lm-chart-pie {
+    animation: lm-chart-pie-in 0.45s ease-out;
+    transform-origin: center;
+}
+
+/* lines/areas grow along x with a left-to-right reveal */
+@keyframes lm-chart-wipe {
+    from { clip-path: inset(0 100% 0 0); }
+    to { clip-path: inset(0 0 0 0); }
+}
+
+.lm-chart[data-animate='true'] .lm-chart-lineoverlay {
+    animation: lm-chart-wipe 0.65s ease-out;
+}
+
+/* scatter/bubble fade in (radar/gauge/funnel use .lm-chart-pie → pie-in) */
+@keyframes lm-chart-appear {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.lm-chart[data-animate='true'] .lm-chart-scatter {
+    animation: lm-chart-appear 0.5s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .lm-chart-bar,
+    .lm-chart-pie,
+    .lm-chart-lineoverlay,
+    .lm-chart-scatter {
+        animation: none !important;
+        transition: filter 0.12s ease !important;
+    }
+}

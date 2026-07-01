@@ -1,0 +1,311 @@
+/**
+ * <Chart /> standalone renderers — scatter/bubble, bullet, heatmap,
+ * treemap and the sparkline mode.
+ */
+import { css, html, type View } from 'lemonadejs';
+import { PALETTES, type Model, type NormSeries, type RenderCtx } from './model';
+import { lerpColor, niceExtent, polyPath, smoothPath, squarify, stepPath, textOn } from './helpers';
+
+/* ----- scatter / bubble (numeric x + y axes) ----- */
+export const scatterChart = (m: Model, ctx: RenderCtx): View => {
+    const bubble = m.type === 'bubble';
+    const vis = m.series.filter((s) => !ctx.isHidden(s.name));
+    const all = vis.flatMap((s) => s.points.filter((p) => !p.gap).map((p) => ({ p, s })));
+    let xmin = Infinity;
+    let xmax = -Infinity;
+    let ymin = Infinity;
+    let ymax = -Infinity;
+    let zmax = 0;
+    for (const { p } of all) {
+        xmin = Math.min(xmin, p.x); xmax = Math.max(xmax, p.x);
+        ymin = Math.min(ymin, p.value); ymax = Math.max(ymax, p.value);
+        zmax = Math.max(zmax, p.z);
+    }
+    if (!Number.isFinite(xmin)) { xmin = 0; xmax = 1; ymin = 0; ymax = 1; }
+    // pad the extents 5% so edge points sit INSIDE the plot instead of
+    // half-clipped on the axis line; an exact zero boundary stays put — a
+    // 0-based axis should not grow negative ticks just for padding
+    const pad = (min: number, max: number): [number, number] => {
+        const p = (max - min || 1) * 0.05;
+        return [min >= 0 && min - p < 0 ? Math.min(min, 0) : min - p,
+            max <= 0 && max + p > 0 ? Math.max(max, 0) : max + p];
+    };
+    const [pxlo, pxhi] = pad(xmin, xmax);
+    const [pylo, pyhi] = pad(ymin, ymax);
+    const xs = niceExtent(pxlo, pxhi);
+    const ys = niceExtent(pylo, pyhi);
+    const xf = (v: number): number => (xs.hi > xs.lo ? (v - xs.lo) / (xs.hi - xs.lo) : 0.5);
+    const yf = (v: number): number => (ys.hi > ys.lo ? (v - ys.lo) / (ys.hi - ys.lo) : 0.5);
+    // radius in px (the SVG has no viewBox → user units are pixels, so
+    // circles stay round; cx/cy are % of the viewport). Scales to many points.
+    const rOf = (z: number): number => bubble && zmax > 0 ? 3 + Math.sqrt(z / zmax) * 15 : 4.5;
+
+    const markers = all.map(({ p, s }) => {
+        const tipVal = ctx.fmt(p.x) + ', ' + ctx.fmt(p.value) + (bubble ? ' · ' + ctx.fmt(p.z) : '');
+        return html`<circle class="lm-chart-dot"
+            cx="${(xf(p.x) * 100).toFixed(2)}%" cy="${((1 - yf(p.value)) * 100).toFixed(2)}%" r="${rOf(p.z)}"
+            style="${css({ fill: s.color })}"
+            data-dim="${ctx.hover.value && ctx.hover.value !== s.name ? 'true' : false}"
+            onmousemove="${(e: MouseEvent) => ctx.showTip(e, s.name, [{ name: '', value: tipVal, color: s.color }])}"
+            ontouchstart="${(e: MouseEvent) => ctx.showTip(e, s.name, [{ name: '', value: tipVal, color: s.color }])}"
+            onmouseleave="${ctx.hideTip}"
+            onclick="${() => ctx.fire(p, m.series.indexOf(s), s.points.indexOf(p))}" />`;
+    });
+
+    // bubble size legend (two reference circles)
+    const sizeLegend = bubble && zmax > 0
+        ? html`<div class="lm-chart-bubble-legend">
+            ${[zmax, zmax / 4].map((z) => html`<span class="lm-chart-bubble-ref">
+                <span class="lm-chart-bubble-dot" style="${css({ width: rOf(z) * 2, height: rOf(z) * 2 })}"></span>
+                <span class="lm-chart-bubble-z">${ctx.fmt(z)}</span>
+            </span>`)}
+        </div>`
+        : false;
+
+    return html`<div class="lm-chart-plotblock">
+        <div class="lm-chart-area">
+            ${m.ytitle ? html`<div class="lm-chart-ytitle"><span>${m.ytitle}</span></div>` : false}
+            <div class="lm-chart-plotcol">
+                <div class="lm-chart-plot">
+                    <div class="lm-chart-grid" data-off="${m.gridlines ? false : 'true'}">${[...ys.ticks].reverse().map(
+                        (t) => html`<div class="lm-chart-gridline"><span class="lm-chart-tick">${ctx.fmt(t)}</span></div>`,
+                    )}</div>
+                    <div class="lm-chart-grid" data-orient="h" data-off="${m.gridlines ? false : 'true'}">${xs.ticks.map(
+                        () => html`<div class="lm-chart-gridline"></div>`,
+                    )}</div>
+                    <svg class="lm-chart-scatter" width="100%" height="100%">${markers}</svg>
+                    ${sizeLegend}
+                </div>
+                <div class="lm-chart-xvalues">${xs.ticks.map(
+                    (t) => html`<div class="lm-chart-xval"><span>${ctx.fmt(t)}</span></div>`)}</div>
+                ${m.xtitle ? html`<div class="lm-chart-xtitle">${m.xtitle}</div>` : false}
+            </div>
+        </div>
+    </div>`;
+};
+
+
+/* ----- bullet (KPI: measure bar over qualitative bands + target) ----- */
+export const bulletChart = (m: Model, ctx: RenderCtx): View => {
+    const value = m.series[0] && m.series[0].points[0] ? m.series[0].points[0].value : 0;
+    const lo = m.ymin != null ? m.ymin : 0;
+    const hi = m.ymax != null ? m.ymax : Math.max(value, 1) * 1.25;
+    const fr = (v: number): number => hi > lo ? Math.max(0, Math.min(1, (v - lo) / (hi - lo))) * 100 : 0;
+    const bands = (m.plotbands || []).filter((b) => b && b.from != null && b.to != null).map((b) =>
+        html`<div class="lm-chart-bullet-band" style="${css({ left: fr(b.from) + '%', width: (fr(b.to) - fr(b.from)) + '%', background: b.color || 'rgba(99,110,130,0.12)' })}"></div>`);
+    const targets = (m.plotlines || []).filter((l) => l && l.value != null).map((l) =>
+        html`<div class="lm-chart-bullet-target" style="${css({ left: fr(l.value) + '%', background: l.color || '#3f444c' })}"></div>`);
+    const color = (m.series[0] && m.series[0].color) || PALETTES.lemonade[0];
+    const tip = (e: MouseEvent): void => ctx.showTip(e, m.series[0] ? m.series[0].name : '', [{ name: '', value: ctx.fmt(value), color }]);
+    return html`<div class="lm-chart-bullet">
+        ${m.series[0] && m.series[0].name ? html`<div class="lm-chart-bullet-label">${m.series[0].name}</div>` : false}
+        <div class="lm-chart-bullet-track">
+            ${bands}
+            <div class="lm-chart-bullet-measure" style="${css({ width: fr(value) + '%', background: color })}"
+                onmousemove="${tip}" ontouchstart="${tip}" onmouseleave="${ctx.hideTip}"></div>
+            ${targets}
+        </div>
+        <div class="lm-chart-bullet-axis"><span>${ctx.fmt(lo)}</span><span>${ctx.fmt(hi)}</span></div>
+    </div>`;
+};
+
+/* ----- heatmap (matrix of coloured cells) ----- */
+export const heatmapChart = (m: Model, ctx: RenderCtx): View => {
+    const rows = m.series;
+    const cols = m.categories.length || (rows[0] ? rows[0].points.length : 0);
+    let lo = Infinity;
+    let hi = -Infinity;
+    for (const s of rows) for (const p of s.points) { if (p.gap) continue; lo = Math.min(lo, p.value); hi = Math.max(hi, p.value); }
+    if (!Number.isFinite(lo)) { lo = 0; hi = 1; }
+    const base = (m.series[0] && m.series[0].color) || PALETTES.lemonade[0];
+    const baseHex = /^#/.test(base) ? base : '#2196f3';
+    const cellColor = (v: number): string => lerpColor('#eef2f7', baseHex, hi > lo ? (v - lo) / (hi - lo) : 0.5);
+    // dark text on light cells, white text on dark cells (contrast)
+    const cellText = (rgb: string): string => {
+        const c = rgb.match(/\d+/g);
+        const lum = c ? 0.299 * +c[0] + 0.587 * +c[1] + 0.114 * +c[2] : 255;
+        return lum > 150 ? '#2b2f36' : '#ffffff';
+    };
+    // interleave a row label + its cells per row (grid auto-flows row by row)
+    const hl = ctx.heatHover.value;
+    const cell = (s: NormSeries, ri: number, ci: number): View => {
+        const p = s.points[ci];
+        if (!p || p.gap) return html`<div class="lm-chart-heat-cell" data-empty="true"></div>`;
+        const bg = cellColor(p.value);
+        const onHover = (e: MouseEvent): void => {
+            ctx.heatHover.value = { r: ri, c: ci };
+            ctx.showTip(e, (m.categories[ci] != null ? m.categories[ci] + ' · ' : '') + s.name, [{ name: '', value: ctx.fmt(p.value), color: bg }]);
+        };
+        // dim cells that are NOT in the hovered row or column
+        const dimmed = hl && hl.r !== ri && hl.c !== ci ? 'true' : false;
+        return html`<div class="lm-chart-heat-cell" style="${css({ background: bg, color: cellText(bg) })}"
+            data-dim="${dimmed}"
+            onmousemove="${onHover}" ontouchstart="${onHover}"
+            onmouseleave="${() => { ctx.hideTip(); ctx.heatHover.value = null; }}"
+            onclick="${() => ctx.fire({ ...p, name: s.name }, rows.indexOf(s), ci)}">${m.labels ? html`<span>${ctx.fmt(p.value)}</span>` : false}</div>`;
+    };
+    const gridChildren = rows.flatMap((s, ri) =>
+        [html`<div class="lm-chart-heat-rowlabel" data-on="${hl && hl.r === ri ? 'true' : false}">${s.name}</div>` as View].concat(
+            Array.from({ length: cols }, (_, ci) => cell(s, ri, ci))));
+    return html`<div class="lm-chart-heat">
+        <div class="lm-chart-heat-grid" style="${css({ gridTemplateColumns: '76px repeat(' + cols + ', 1fr)' })}">${gridChildren}</div>
+        <div class="lm-chart-heat-xaxis">${Array.from({ length: cols }, (_, ci) =>
+            html`<div class="lm-chart-cat" data-on="${hl && hl.c === ci ? 'true' : false}"><span class="lm-chart-cat-label">${m.categories[ci] != null ? m.categories[ci] : ''}</span></div>`)}</div>
+        <div class="lm-chart-heat-scale">
+            <span>${ctx.fmt(lo)}</span>
+            <span class="lm-chart-heat-bar" style="${css({ background: 'linear-gradient(to right,' + cellColor(lo) + ',' + cellColor(hi) + ')' })}"></span>
+            <span>${ctx.fmt(hi)}</span>
+        </div>
+    </div>`;
+};
+
+
+/* ----- treemap: squarified rectangles, sized by value (HTML divs) ----- */
+export const treemapChart = (m: Model, ctx: RenderCtx): View => {
+    const pts = (m.series[0] ? m.series[0].points : []).filter((p) => !p.gap && p.value > 0);
+    const total = pts.reduce((s, p) => s + p.value, 0) || 1;
+    const rects = squarify(pts.map((p) => p.value), 0, 0, 100, 100);
+    return html`<div class="lm-chart-treemap">${rects.map((r) => {
+        const p = pts[r.i];
+        const bg = p.color;
+        const pct = Math.round((p.value / total) * 100);
+        const tip = (e: MouseEvent): void => ctx.showTip(e, p.name || '', [{ name: '', value: ctx.fmt(p.value) + ' (' + pct + '%)', color: bg }]);
+        const big = r.w > 11 && r.h > 9; // only label tiles with room
+        return html`<div class="lm-chart-treemap-tile"
+            data-dim="${ctx.hover.value && ctx.hover.value !== (p.name || '#' + r.i) ? 'true' : false}"
+            style="${css({ left: r.x + '%', top: r.y + '%', width: r.w + '%', height: r.h + '%', background: bg, color: textOn(bg) })}"
+            onmousemove="${tip}" ontouchstart="${tip}" onmouseleave="${ctx.hideTip}"
+            onclick="${() => ctx.fire({ ...p }, 0, r.i)}">
+            ${big ? html`<span class="lm-chart-treemap-label">
+                <span class="lm-chart-treemap-name">${p.name}</span>
+                ${m.labels ? html`<span class="lm-chart-treemap-val">${ctx.fmt(p.value)}</span>` : false}
+            </span>` : false}
+        </div>`;
+    })}</div>`;
+};
+
+/* ----- sparkline: a tiny, axisless, chrome-free chart for inline use ----- */
+export const sparkline = (m: Model, ctx: RenderCtx): View => {
+    const vis = m.series.filter((s) => !ctx.isHidden(s.name));
+    const isBar = m.type === 'bar' || m.type === 'stackedbar';
+    let lo = Infinity; let hi = -Infinity;
+    for (const s of vis) for (const p of s.points) if (p && !p.gap) { lo = Math.min(lo, p.value); hi = Math.max(hi, p.value); }
+    if (!Number.isFinite(lo)) { lo = 0; hi = 1; }
+    if (isBar) { lo = Math.min(lo, 0); hi = Math.max(hi, 0); }
+    if (hi <= lo) hi = lo + 1;
+    const yf = (v: number): number => 100 - ((v - lo) / (hi - lo)) * 100;
+
+    if (isBar) {
+        const s = vis[0];
+        const pts = s ? s.points : [];
+        const zero = yf(0);
+        return html`<div class="lm-chart-spark" data-kind="bar">
+            <div class="lm-chart-spark-bars">${pts.map((p) => {
+                const v = p && !p.gap ? p.value : 0;
+                const top = Math.min(yf(v), zero);
+                const h = Math.abs(yf(v) - zero);
+                return html`<span class="lm-chart-spark-slot"><span class="lm-chart-spark-bar" data-neg="${v < 0 ? 'true' : false}"
+                    style="${css({ top: top + '%', height: Math.max(h, 1) + '%', background: (s && s.color) || '#2196f3' })}"></span></span>`;
+            })}</div>
+            ${m.labels && s ? html`<span class="lm-chart-spark-val">${ctx.fmt(s.points.length ? s.points[s.points.length - 1].value : 0)}</span>` : false}
+        </div>`;
+    }
+
+    const n = m.categories.length || (vis[0] ? vis[0].points.length : 0);
+    const xf = (i: number): number => (n <= 1 ? 0 : (i / (n - 1)) * 100);
+    const areas: View[] = [];
+    const paths: View[] = [];
+    let endDot: View | false = false;
+    let endVal = 0;
+    for (const s of vis) {
+        const seg: Array<[number, number]> = [];
+        for (let i = 0; i < s.points.length; i++) { const p = s.points[i]; if (p && !p.gap) seg.push([xf(i), yf(p.value)]); }
+        if (!seg.length) continue;
+        const d = s.step ? stepPath(seg, s.step === 'mid') : s.smooth ? smoothPath(seg) : polyPath(seg);
+        if (s.type === 'area' || m.type === 'stackedarea') {
+            areas.push(html`<path class="lm-chart-spark-area" d="${d + ' L ' + seg[seg.length - 1][0].toFixed(2) + ',100 L ' + seg[0][0].toFixed(2) + ',100 Z'}" style="${css({ fill: s.color })}" />`);
+        }
+        paths.push(html`<path class="lm-chart-spark-path" d="${d}" style="${css({ stroke: s.color })}" />`);
+        const last = seg[seg.length - 1];
+        endDot = html`<span class="lm-chart-spark-dot" style="${css({ left: last[0].toFixed(2) + '%', top: last[1].toFixed(2) + '%', background: s.color })}"></span>`;
+        const lp = [...s.points].reverse().find((p) => p && !p.gap);
+        endVal = lp ? lp.value : 0;
+    }
+    return html`<div class="lm-chart-spark" data-kind="line">
+        <svg class="lm-chart-spark-svg" viewBox="0 0 100 100" preserveAspectRatio="none">${areas}${paths}</svg>
+        ${endDot}
+        ${m.labels ? html`<span class="lm-chart-spark-val">${ctx.fmt(endVal)}</span>` : false}
+    </div>`;
+};
+
+/* ----- packed bubble (greedy spiral circle-packing; groups = series) ----- */
+export const packedbubbleChart = (m: Model, ctx: RenderCtx): View => {
+    const vis = m.series.filter((s) => !ctx.isHidden(s.name));
+    const items = vis.flatMap((s) => s.points
+        .map((p, i) => ({ p, s, i }))
+        .filter((e) => !e.p.gap && e.p.value > 0));
+    const n = items.length;
+    if (!n) return html`<div class="lm-chart-pie-core"></div>`;
+
+    // radius: area ∝ value, normalized so the bubbles fill ~42% of the box
+    const total = items.reduce((s, e) => s + e.p.value, 0) || 1;
+    const k = Math.sqrt((100 * 100 * 0.42) / Math.PI / total);
+    const rs = items.map((e) => Math.max(1.5, k * Math.sqrt(e.p.value)));
+
+    // greedy spiral packing, largest first: walk an Archimedean spiral out
+    // from the centre until the candidate spot collides with nothing
+    const order = items.map((_, i) => i).sort((a, b) => rs[b] - rs[a]);
+    const cx = new Array(n).fill(50);
+    const cy = new Array(n).fill(50);
+    const placed: number[] = [];
+    for (const i of order) {
+        if (placed.length) {
+            for (let t = 0; t < 3000; t++) {
+                const ang = t * 0.35;
+                const rad = 0.5 + t * 0.04;
+                const x = 50 + rad * Math.cos(ang);
+                const y = 50 + rad * Math.sin(ang);
+                const ok = placed.every((j) => {
+                    const dx = x - cx[j];
+                    const dy = y - cy[j];
+                    const min = rs[i] + rs[j] + 0.4;
+                    return dx * dx + dy * dy >= min * min;
+                });
+                if (ok) { cx[i] = x; cy[i] = y; break; }
+            }
+        }
+        placed.push(i);
+    }
+    // recentre + scale the cluster to fill the 0..100 box
+    let lo = Infinity; let hi = -Infinity;
+    for (let i = 0; i < n; i++) {
+        lo = Math.min(lo, cx[i] - rs[i], cy[i] - rs[i]);
+        hi = Math.max(hi, cx[i] + rs[i], cy[i] + rs[i]);
+    }
+    const fit = 96 / (hi - lo || 1);
+    const mid = (lo + hi) / 2;
+    const px = (v: number): number => 50 + (v - mid) * fit;
+
+    const bubbles = items.map((e, i) => {
+        const dim = ctx.hover.value && ctx.hover.value !== e.s.name ? 'true' : false;
+        const tip = (ev: MouseEvent): void => ctx.showTip(ev, e.p.name || e.s.name,
+            [{ name: '', value: ctx.fmt(e.p.value), color: e.s.color }]);
+        return html`<circle class="lm-chart-pack" cx="${px(cx[i]).toFixed(2)}" cy="${px(cy[i]).toFixed(2)}" r="${(rs[i] * fit).toFixed(2)}"
+            style="${css({ fill: e.s.color })}" data-dim="${dim}"
+            onmousemove="${tip}" ontouchstart="${tip}" onmouseleave="${ctx.hideTip}"
+            onclick="${() => ctx.fire(e.p, m.series.indexOf(e.s), e.i)}" />`;
+    });
+    const labels = m.labels ? items.map((e, i) => {
+        if (rs[i] * fit < 6 || !e.p.name) return false as const;
+        return html`<span class="lm-chart-pack-label" style="${css({
+            left: px(cx[i]).toFixed(2) + '%', top: px(cy[i]).toFixed(2) + '%', color: textOn(e.s.color),
+        })}">${e.p.name}</span>`;
+    }) : [];
+
+    return html`<div class="lm-chart-pie-core">
+        <div class="lm-chart-pie-area">
+            <svg class="lm-chart-pie" viewBox="0 0 100 100" aria-hidden="true">${bubbles}</svg>
+            ${labels}
+        </div>
+    </div>`;
+};
