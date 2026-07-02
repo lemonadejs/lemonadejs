@@ -14,6 +14,15 @@ const log = (name: string, ok: boolean, detail: object = {}) =>
 
 const frame = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(() => r(0))));
 const modal = () => document.querySelector('.lm-modal') as HTMLElement | null;
+// geometry checks must measure the SETTLED modal — the 220ms entrance
+// animation (scale + translateY) shifts getBoundingClientRect while it runs
+const settle = async () => {
+    const el = modal();
+    if (el && el.getAnimations) {
+        await Promise.allSettled(el.getAnimations().map((a) => a.finished));
+    }
+    await frame();
+};
 const rect = () => {
     const r = modal()!.getBoundingClientRect();
     return {
@@ -102,7 +111,7 @@ const run = async () => {
 
     // ---- 3. centered open + reopen
     plain.open();
-    await frame();
+    await settle();
     r = rect();
     const centered = () =>
         Math.abs(r.left - (window.innerWidth - r.w) / 2) <= 2 && Math.abs(r.top - (window.innerHeight - r.h) / 2) <= 2;
@@ -110,7 +119,7 @@ const run = async () => {
     plain.close();
     await frame();
     plain.open();
-    await frame();
+    await settle();
     r = rect();
     log('plain-reopen-centered', centered(), r);
     plain.close();
@@ -118,7 +127,7 @@ const run = async () => {
 
     // ---- 4. minimize → restore returns the exact rect
     fancy.open();
-    await frame();
+    await settle();
     const before = rect();
     (document.querySelector('.lm-modal-minimize') as HTMLElement).click();
     await frame();
@@ -204,7 +213,7 @@ const run = async () => {
 
     // ---- 9. position is REACTIVE while open: center → right → bottom
     posApi.open();
-    await frame();
+    await settle();
     const pm = () => document.querySelector('.lm-modal')!.getBoundingClientRect();
     const middle = pm();
     posState.value = 'right';

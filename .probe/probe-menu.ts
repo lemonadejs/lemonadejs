@@ -18,6 +18,16 @@ const log = (name: string, ok: boolean, detail: object = {}) =>
 
 const frame = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(() => r(0))));
 const menus = () => [...document.querySelectorAll('.lm-modal')] as HTMLElement[];
+// anchoring checks must measure the SETTLED menu — the modal entrance
+// animation (scale + translateY) shifts getBoundingClientRect while it runs
+const settle = async () => {
+    for (const el of menus()) {
+        if (el.getAnimations) {
+            await Promise.allSettled(el.getAnimations().map((a) => a.finished));
+        }
+    }
+    await frame();
+};
 const rectOf = (el: HTMLElement) => {
     const r = el.getBoundingClientRect();
     return {
@@ -54,7 +64,7 @@ const run = async () => {
 
     // ---- 1. open in the middle: menu sits exactly at the cursor
     api.openAt(300, 200);
-    await frame();
+    await settle();
     let m = menus();
     let r = rectOf(m[0]);
     log('open-at-cursor', m.length === 1 && Math.abs(r.left - 300) <= 1 && Math.abs(r.top - 200) <= 1, r);
@@ -65,7 +75,7 @@ const run = async () => {
     const cx = window.innerWidth - 10;
     const cy = window.innerHeight - 10;
     api.openAt(cx, cy);
-    await frame();
+    await settle();
     m = menus();
     r = rectOf(m[0]);
     log(
@@ -98,7 +108,7 @@ const run = async () => {
 
     // ---- 3. REOPEN after corner: fresh position at the new cursor
     api.openAt(400, 300);
-    await frame();
+    await settle();
     m = menus();
     r = rectOf(m[0]);
     log('reopen-at-new-cursor', m.length === 1 && Math.abs(r.left - 400) <= 1 && Math.abs(r.top - 300) <= 1, r);

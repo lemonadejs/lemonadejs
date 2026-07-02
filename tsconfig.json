@@ -13,7 +13,7 @@
         "declaration": true,
         "emitDeclarationOnly": true,
         "outDir": "dist",
-        "types": [],
+        "types": ["node"],
         "baseUrl": ".",
         "paths": {
             "lemonadejs": ["src/index.ts"],

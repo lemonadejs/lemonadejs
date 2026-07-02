@@ -10,19 +10,8 @@ Agreed work, in rough priority order. Done items get removed, not checked.
       their globals. Extend `scripts/build-components.js`.
 - [ ] Publish pipeline: version bump + `npm publish` across `components/*`
       (workspaces or a script), engine first.
-- [ ] **Accessibility pass** (deliberate, behavior-changing — flagged by the
-      final audit): card clickable surface keyboard activation (Enter/Space),
-      tabs roving tabindex + aria-orientation, rating star roles, signature
-      canvas role/label, color tab/option semantics, Modal `role` pass-through
-      prop (dialog vs headless panel), datagrid aria-rowindex.
 - [ ] Datagrid v2 candidates (v1 shipped): column reorder, fixed columns,
       horizontal virtualization, row grouping, CSV export.
-
-## Modal (platform primitive)
-
-- [ ] Scroll lock while a backdrop modal is open (MUI `disableScrollLock` gap).
-- [ ] Focus trap: Tab cycles inside an open modal (a11y, dialog mode only).
-- [ ] `width`/`height` live while open (position already is).
 
 ## Engine — candidate primitives (receipts on file, none urgent; the final
 audit closed the round, these re-open only with NEW receipts)
@@ -50,9 +39,8 @@ audit closed the round, these re-open only with NEW receipts)
 
 ## Verification
 
-- [ ] Chrome probes for newer blocks (color spectrum sampling, tabs
-      drag-reorder geometry, topmenu dropdown placement, kanban drag,
-      carousel swipe are jsdom-blind).
+- [ ] Chrome probe for topmenu dropdown placement (color/tabs/kanban/
+      carousel/cropper probes shipped; topmenu is the one still jsdom-blind).
 - [ ] Agent eval suite: tokens from intent to verified component (PAIN.md
       metric) — also the continuous primitive-discovery instrument.
 

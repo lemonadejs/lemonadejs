@@ -36,6 +36,7 @@
   "probe:demos": "node scripts/probe-demos.mjs"
  },
  "devDependencies": {
+  "@types/node": "^26.1.0",
   "@types/react": "^18.3.31",
   "@types/react-dom": "^18.3.7",
   "esbuild": "^0.24.0",

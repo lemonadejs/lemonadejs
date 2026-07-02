@@ -43,6 +43,12 @@ const run = async () => {
     const rect = inputs()[0].getBoundingClientRect();
     inputs()[0].dispatchEvent(new MouseEvent('click', { bubbles: true }));
     await frame();
+    // measure SETTLED: the popup's entrance animation shifts the rect while it runs
+    const anim = panel();
+    if (anim && anim.getAnimations) {
+        await Promise.allSettled(anim.getAnimations().map((a) => a.finished));
+        await frame();
+    }
     const p = panel();
     const pr = p ? p.getBoundingClientRect() : null;
     log('popup-anchored-under-input', !!pr && Math.abs(pr.top - (rect.bottom + 1)) <= 2 && Math.abs(pr.left - rect.left) <= 2, {
