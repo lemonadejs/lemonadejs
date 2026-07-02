@@ -159,7 +159,8 @@ export const Color = component('color', {
     // form-associated: the root reflects a native `value` wired to the bound
     // color. Setter is silent (assignment, not .set) so a form write doesn't
     // echo as an input event; only genuine user picks emit input (see above).
-    onMount((el: HTMLElement) => {
+    onMount((node) => {
+        const el = node as HTMLElement;
         Object.defineProperty(el, 'value', {
             configurable: true,
             get: () => picked.value,
@@ -265,13 +266,16 @@ export const Color = component('color', {
 
     // ---- views
     const gridView = () =>
-        html`<div class="lm-color-grid">
+        html`<div class="lm-color-grid" role="grid" aria-label="Color palette">
             ${() =>
                 palette().map(
-                    (row) => html`<div class="lm-color-row">
+                    (row) => html`<div class="lm-color-row" role="row">
                         ${row.map(
                             (c) => html`<div class="lm-color-cell ${() =>
                                 pending.value === c ? 'lm-color-selected' : ''}"
+                                role="gridcell"
+                                aria-selected="${() => (pending.value === c ? 'true' : 'false')}"
+                                aria-label="${c}"
                                 data-value="${c}"
                                 style="background-color: ${c}"
                                 onclick="${() => select(c)}"></div>`
@@ -296,11 +300,13 @@ export const Color = component('color', {
                 <button type="button" class="lm-color-reset" onclick="${reset}">Reset</button>
                 <button type="button" class="lm-color-done" onclick="${update}">Done</button>
             </div>
-            <div class="lm-color-tabs">
-                <button type="button" class="lm-color-tab"
+            <div class="lm-color-tabs" role="tablist">
+                <button type="button" class="lm-color-tab" role="tab"
+                    aria-selected="${() => (tab.value === 'grid' ? 'true' : 'false')}"
                     data-active="${() => tab.value === 'grid' || false}"
                     onclick="${() => (tab.value = 'grid')}">Grid</button>
-                <button type="button" class="lm-color-tab"
+                <button type="button" class="lm-color-tab" role="tab"
+                    aria-selected="${() => (tab.value === 'spectrum' ? 'true' : 'false')}"
                     data-active="${() => tab.value === 'spectrum' || false}"
                     onclick="${() => (tab.value = 'spectrum')}">Spectrum</button>
             </div>

@@ -192,9 +192,10 @@ export const Tabs = component('tabs', {
         if (!length) {
             return;
         }
-        if (e.key === 'Enter') {
+        if (e.key === 'Enter' || e.key === ' ') {
             const index = headerIndex(e.target);
             if (index >= 0) {
+                e.preventDefault(); // Space must not scroll the page
                 doSelect(index);
             }
         } else {
@@ -295,7 +296,7 @@ export const Tabs = component('tabs', {
         data-position="${() => props.position.value || false}"
         data-variant="${() => props.variant.value || false}"
         data-round="${() => (props.round.value ? 'true' : false)}">
-        <div class="lm-tabs-headers" role="tablist"
+        <div class="lm-tabs-headers" role="tablist" aria-orientation="horizontal"
             data-scroll="${() => (canScroll.value.left || canScroll.value.right ? 'true' : false)}">
             ${() =>
                 (canScroll.value.left || canScroll.value.right) &&
@@ -319,7 +320,7 @@ export const Tabs = component('tabs', {
                         // create-at-position MOVE the header <li> instead of
                         // rewriting every header right of the change
                         html`<li key="${item}" class="lm-tabs-tab ${() => (selected.value === i ? 'lm-tabs-selected' : '')}"
-                            tabindex="0" role="tab" draggable="true"
+                            tabindex="${() => (selected.value === i ? '0' : '-1')}" role="tab" draggable="true"
                             aria-selected="${() => (selected.value === i ? 'true' : 'false')}"
                             data-icon="${item.icon || false}">${item.title || ''}</li>`
                 )}</ul>

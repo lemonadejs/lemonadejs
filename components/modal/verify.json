@@ -119,6 +119,14 @@
             "pass": true
         },
         {
+            "name": "prop role",
+            "pass": true
+        },
+        {
+            "name": "prop role (live state)",
+            "pass": true
+        },
+        {
             "name": "prop autoclose",
             "pass": true
         },

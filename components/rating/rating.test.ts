@@ -195,3 +195,33 @@ describe('components/rating', () => {
         expect(root().hasAttribute('data-disabled')).toBe(true);
     });
 });
+
+describe('a11y', () => {
+    it('slider semantics: role/value attributes track the rating', () => {
+        handle = t(Rating, { number: 5, value: 3 });
+        const el = root();
+        expect(el.getAttribute('role')).toBe('slider');
+        expect(el.getAttribute('aria-valuemin')).toBe('0');
+        expect(el.getAttribute('aria-valuemax')).toBe('5');
+        expect(el.getAttribute('aria-valuenow')).toBe('3');
+        expect(el.getAttribute('tabindex')).toBe('0');
+    });
+
+    it('arrow keys step the value and fire onchange like a click', () => {
+        handle = t(Rating, { number: 5, value: 3 });
+        const el = root();
+        el.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+        expect(el.getAttribute('aria-valuenow')).toBe('4');
+        el.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true }));
+        el.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true }));
+        expect(el.getAttribute('aria-valuenow')).toBe('2');
+    });
+
+    it('readonly rating: no tab stop, arrows ignored', () => {
+        handle = t(Rating, { number: 5, value: 2, readonly: true });
+        const el = root();
+        expect(el.getAttribute('tabindex')).toBeNull();
+        el.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+        expect(el.getAttribute('aria-valuenow')).toBe('2');
+    });
+});

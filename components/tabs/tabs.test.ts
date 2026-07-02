@@ -269,3 +269,15 @@ describe('components/tabs', () => {
         expect(handle.query('.lm-tabs')!.getAttribute('data-round')).toBe('true');
     });
 });
+
+describe('a11y', () => {
+    it('roving tabindex: only the selected tab is in the tab order', () => {
+        handle = t(Tabs, { data: [{ title: 'A' }, { title: 'B' }, { title: 'C' }], selected: 1 });
+        const tabs = handle.queryAll('.lm-tabs-tab');
+        expect(tabs.map((el) => el.getAttribute('tabindex'))).toEqual(['-1', '0', '-1']);
+        expect(handle.query('.lm-tabs-headers')!.getAttribute('aria-orientation')).toBe('horizontal');
+        // selecting another tab moves the tab stop
+        (tabs[2] as HTMLElement).click();
+        expect(tabs.map((el) => el.getAttribute('tabindex'))).toEqual(['-1', '-1', '0']);
+    });
+});

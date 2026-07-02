@@ -2,7 +2,7 @@
 
 LemonadeJS color block — contract-verified, framework-agnostic.
 
-**✓ verified** — 14 contract checks · framework-agnostic · zero dependencies beyond `@lemonadejs/modal`
+**✓ verified** — 16 contract checks · framework-agnostic · zero dependencies beyond `@lemonadejs/modal`
 
 ## Overview
 
@@ -64,6 +64,7 @@ state for a two-way live wire. Attribute strings are coerced to the declared typ
 | Prop | Type | Default | Description |
 |---|---|---|---|
 | `bind` | string | — | Two-way bound value. `.set()` fires `onchange`; plain assignment is silent. the picked color (v5: value) |
+| `name` | string | `''` | form field name — root reflects el.value (form-associated) |
 | `palette` | array | — | string[][] matrix — a flat string[] becomes one row |
 | `type` | string | `''` | '' (popup via api) | 'input' | 'inline' |
 | `placeholder` | string | `''` | input placeholder (v5) |

@@ -367,6 +367,73 @@ describe('components/modal — behaviors', () => {
         expect(fetcher).toHaveBeenCalledTimes(1);
     });
 
+    it('scroll lock: a backdrop modal freezes body scroll; close restores it', async () => {
+        document.body.style.overflow = '';
+        const { api } = await openModal({ backdrop: true });
+        expect(document.body.style.overflow).toBe('hidden');
+        api.close();
+        await flush();
+        expect(document.body.style.overflow).toBe('');
+        // reopen locks again
+        api.open();
+        await flush();
+        expect(document.body.style.overflow).toBe('hidden');
+        api.close();
+        await flush();
+        expect(document.body.style.overflow).toBe('');
+    });
+
+    it('scroll lock: backdrop-less modals leave the page alone', async () => {
+        document.body.style.overflow = '';
+        const { api } = await openModal({});
+        expect(document.body.style.overflow).toBe('');
+        api.close();
+        await flush();
+    });
+
+    it('scroll lock: minimize frees the page, restore re-locks', async () => {
+        document.body.style.overflow = '';
+        const { el } = await openModal({ backdrop: true, minimizable: true });
+        expect(document.body.style.overflow).toBe('hidden');
+        (el.querySelector('.lm-modal-minimize') as HTMLElement).click();
+        expect(document.body.style.overflow).toBe('');
+        (el.querySelector('.lm-modal-minimize') as HTMLElement).click();
+        expect(document.body.style.overflow).toBe('hidden');
+    });
+
+    it('focus trap (dialog mode): Tab wraps from the last control to the first', async () => {
+        const { el } = await openModal({ backdrop: true, closable: true, minimizable: true });
+        const buttons = [...el.querySelectorAll('button')] as HTMLElement[];
+        expect(buttons.length).toBe(2); // minimize + close
+        buttons[buttons.length - 1].focus();
+        el.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true }));
+        expect(document.activeElement).toBe(buttons[0]);
+        // Shift+Tab from the first wraps back to the last
+        el.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', shiftKey: true, bubbles: true }));
+        expect(document.activeElement).toBe(buttons[buttons.length - 1]);
+    });
+
+    it('focus trap: backdrop-less panels keep the native tab order', async () => {
+        const { el } = await openModal({ closable: true });
+        const btn = el.querySelector('button') as HTMLElement;
+        btn.focus();
+        el.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true }));
+        // no trap: focus untouched by the handler (the browser would move it)
+        expect(document.activeElement).toBe(btn);
+    });
+
+    it('width/height are live while open (position already is)', async () => {
+        const width = store(300);
+        const height = store(200);
+        const { el } = await openModal({ width, height });
+        expect(el.style.width).toBe('300px');
+        expect(el.style.height).toBe('200px');
+        width.value = 440;
+        height.value = 260;
+        expect(el.style.width).toBe('440px');
+        expect(el.style.height).toBe('260px');
+    });
+
     it('flip + adjust(): an anchored panel overflowing the bottom flips above its anchor', async () => {
         const { api, el } = await openModal({ position: 'absolute', autoadjust: true, flip: 37 });
         // Panel bottom crosses the viewport edge: flip above, clearing the
@@ -388,5 +455,23 @@ describe('components/modal — behaviors', () => {
         api.adjust();
         await flush();
         expect(el.style.marginTop).toBe('');
+    });
+});
+
+describe('a11y', () => {
+    it('backdrop modal: role=dialog + aria-modal by default; title labels it', async () => {
+        const { el } = await openModal({ backdrop: true, title: 'Settings' });
+        expect(el.getAttribute('role')).toBe('dialog');
+        expect(el.getAttribute('aria-modal')).toBe('true');
+        expect(el.getAttribute('aria-label')).toBe('Settings');
+    });
+
+    it('headless panel: no implicit role; the role prop overrides', async () => {
+        const { el } = await openModal({});
+        expect(el.getAttribute('role')).toBeNull();
+        handle?.unmount();
+        const second = await openModal({ role: 'menu' });
+        expect(second.el.getAttribute('role')).toBe('menu');
+        expect(second.el.getAttribute('aria-modal')).toBeNull();
     });
 });

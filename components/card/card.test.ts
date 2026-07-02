@@ -220,3 +220,24 @@ describe('components/card', () => {
         expect((handle.query('.lm-card-media') as HTMLImageElement).style.height).toBe('320px');
     });
 });
+
+describe('a11y', () => {
+    it('clickable card: Enter and Space activate like a click', () => {
+        const clicks: string[] = [];
+        handle = t(Card, { clickable: true, title: 'Go', onclick: () => clicks.push('hit') });
+        const el = handle.query('.lm-card')!;
+        expect(el.getAttribute('role')).toBe('button');
+        el.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+        el.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', bubbles: true }));
+        expect(clicks.length).toBe(2);
+    });
+
+    it('non-clickable card: no role, no keyboard activation', () => {
+        const clicks: string[] = [];
+        handle = t(Card, { title: 'Static', onclick: () => clicks.push('hit') });
+        const el = handle.query('.lm-card')!;
+        expect(el.getAttribute('role')).toBeNull();
+        el.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+        expect(clicks.length).toBe(0);
+    });
+});

@@ -44,6 +44,28 @@ export const Rating = component('rating', {
         }
     };
 
+    // Keyboard (slider pattern): arrows step the value, committed like a click
+    const onArrow = (e: KeyboardEvent) => {
+        if (!interactive()) {
+            return;
+        }
+        const cur = Number(rating.value) || 0;
+        const max = Math.max(0, Number(props.number.value) || 0);
+        let next: number | null = null;
+        if (e.key === 'ArrowRight' || e.key === 'ArrowUp') {
+            next = Math.min(max, cur + 1);
+        } else if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') {
+            next = Math.max(0, cur - 1);
+        }
+        if (next !== null) {
+            e.preventDefault();
+            if (next !== cur) {
+                rating.set(next);
+                root?.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+        }
+    };
+
     // v5 parity: shrinking the star count clamps the value (and, as in v5,
     // the clamp is a component-initiated change — onchange fires)
     onUnmount(
@@ -69,7 +91,8 @@ export const Rating = component('rating', {
     // form-associated: the root reflects a native `value` (wired to the bound
     // rating) so Formify / FormData read it with no hidden input. Setter is
     // silent (assignment, not .set) so a form write doesn't echo as input.
-    onMount((el: HTMLElement) => {
+    onMount((node) => {
+        const el = node as HTMLElement;
         root = el;
         Object.defineProperty(el, 'value', {
             configurable: true,
@@ -86,6 +109,13 @@ export const Rating = component('rating', {
     });
 
     return html`<div class="lm-rating"
+        role="slider"
+        tabindex="${() => (interactive() ? '0' : false)}"
+        aria-valuemin="0"
+        aria-valuemax="${() => Math.max(0, Number(props.number.value) || 0)}"
+        aria-valuenow="${() => Number(rating.value) || 0}"
+        aria-label="${() => (props.name.value as string) || 'Rating'}"
+        onkeydown="${onArrow}"
         name="${() => props.name.value || false}"
         data-value="${() => rating.value}"
         data-size="${() => props.size.value || false}"
@@ -96,7 +126,7 @@ export const Rating = component('rating', {
         const count = Math.max(0, Number(props.number.value) || 0);
         return Array.from(
             { length: count },
-            (_, i) => html`<i class="lm-rating-star"
+            (_, i) => html`<i class="lm-rating-star" aria-hidden="true"
                 title="${() => titleFor(i)}"
                 data-selected="${() => (i < rating.value ? '1' : false)}"
                 data-hover="${() => (hover.value > 0 && i < hover.value ? '1' : false)}"

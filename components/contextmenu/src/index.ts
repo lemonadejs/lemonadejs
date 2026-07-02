@@ -126,16 +126,20 @@ export const Contextmenu = component('contextmenu', {
             // (auto-adjust margins included) ran inside it — measurable now.
             const el = modalEl(0);
             if (el) {
-                const rect = el.getBoundingClientRect();
+                // offsetWidth/Height, NOT getBoundingClientRect: the modal's
+                // entrance animation is scaling the rect right now, and an
+                // under-measured width anchors the flipped edge past the cursor
+                const w = el.offsetWidth;
+                const h = el.offsetHeight;
                 if (parseFloat(el.style.marginLeft) || 0) {
-                    let margin = -rect.width - 1;
+                    let margin = -w - 1;
                     if (x + margin < 10) {
                         margin = 10 - x;
                     }
                     el.style.marginLeft = margin + 'px';
                 }
                 if (parseFloat(el.style.marginTop) || 0) {
-                    let margin = -rect.height - 1;
+                    let margin = -h - 1;
                     if (y + margin < 10) {
                         margin = 10 - y;
                     }
@@ -154,6 +158,21 @@ export const Contextmenu = component('contextmenu', {
         }
     };
 
+    /** Run `fn` with the element's RUNNING entrance animation jumped to its
+     *  end state (then put back, so it still plays): the modal animates
+     *  scale+translate for 220ms and rects measured mid-flight misplace
+     *  submenus by a few px. */
+    const withSettled = <T>(el: HTMLElement, fn: () => T): T => {
+        const anims = el.getAnimations ? el.getAnimations().filter((a) => a.playState === 'running') : [];
+        const saved = anims.map((a) => a.currentTime);
+        for (const a of anims) {
+            try { a.currentTime = a.effect?.getComputedTiming().endTime ?? 0; } catch { /* detached */ }
+        }
+        const out = fn();
+        anims.forEach((a, i) => { try { a.currentTime = saved[i]; } catch { /* detached */ } });
+        return out;
+    };
+
     /** v5 submenu placement: right of the parent, flipping when cramped */
     const openSub = (level: number, index: number, withCursor = false) => {
         const current = levels.value[level];
@@ -163,9 +182,16 @@ export const Contextmenu = component('contextmenu', {
             return;
         }
         const parentEl = modalEl(level);
-        const rect = parentEl?.getBoundingClientRect() || ({ x: current.left, width: MENU_WIDTH } as DOMRect);
         const itemEl = parentEl?.querySelectorAll('[data-item]')[index] as HTMLElement | undefined;
-        const top = itemEl ? itemEl.getBoundingClientRect().y : current.top;
+        // measure parent + item with the parent's entrance animation settled
+        const measured = parentEl
+            ? withSettled(parentEl, () => ({
+                rect: parentEl.getBoundingClientRect(),
+                top: itemEl ? itemEl.getBoundingClientRect().y : current.top,
+            }))
+            : { rect: { x: current.left, width: MENU_WIDTH } as DOMRect, top: current.top };
+        const rect = measured.rect;
+        const top = measured.top;
 
         const spaceRight = window.innerWidth - (rect.x + rect.width);
         const spaceLeft = rect.x;
@@ -191,10 +217,11 @@ export const Contextmenu = component('contextmenu', {
             }
         });
         // Vertical overflow correction — synchronous: the submenu's Modal
-        // mounted (and ran its setup) inside the batch above
+        // mounted (and ran its setup) inside the batch above. Settled: its
+        // own entrance animation is running right now.
         const el = modalEl(level + 1);
         if (el) {
-            const r = el.getBoundingClientRect();
+            const r = withSettled(el, () => el.getBoundingClientRect());
             if (r.bottom > window.innerHeight - 10) {
                 el.style.top = Math.max(10, top - (r.bottom - (window.innerHeight - 10))) + 'px';
             }

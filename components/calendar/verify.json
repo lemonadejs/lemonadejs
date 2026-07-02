@@ -7,6 +7,14 @@
             "pass": true
         },
         {
+            "name": "prop name",
+            "pass": true
+        },
+        {
+            "name": "prop name (live state)",
+            "pass": true
+        },
+        {
             "name": "prop range",
             "pass": true
         },

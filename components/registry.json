@@ -253,10 +253,14 @@
         "name": "calendar",
         "path": "components/calendar",
         "verified": true,
-        "checks": 39,
+        "checks": 41,
         "contract": {
             "name": "calendar",
             "props": {
+                "name": {
+                    "type": "string",
+                    "default": ""
+                },
                 "range": {
                     "type": "boolean",
                     "default": false
@@ -439,7 +443,7 @@
         "name": "chart",
         "path": "components/chart",
         "verified": true,
-        "checks": 97,
+        "checks": 99,
         "contract": {
             "name": "chart",
             "props": {
@@ -573,6 +577,9 @@
                     "type": "boolean",
                     "default": false
                 },
+                "bins": {
+                    "type": "number"
+                },
                 "plotlines": {
                     "type": "array"
                 },
@@ -628,10 +635,14 @@
         "name": "color",
         "path": "components/color",
         "verified": true,
-        "checks": 14,
+        "checks": 16,
         "contract": {
             "name": "color",
             "props": {
+                "name": {
+                    "type": "string",
+                    "default": ""
+                },
                 "palette": {
                     "type": "array"
                 },
@@ -1324,7 +1335,7 @@
         "name": "modal",
         "path": "components/modal",
         "verified": true,
-        "checks": 51,
+        "checks": 53,
         "contract": {
             "name": "modal",
             "props": {
@@ -1383,6 +1394,10 @@
                 "header": {
                     "type": "boolean",
                     "default": true
+                },
+                "role": {
+                    "type": "string",
+                    "default": ""
                 },
                 "autoclose": {
                     "type": "boolean",

@@ -2,7 +2,7 @@
 
 LemonadeJS calendar block — date, datetime and range picker on the Modal primitive; contract-verified, framework-agnostic.
 
-**✓ verified** — 39 contract checks · framework-agnostic · zero dependencies beyond `@lemonadejs/modal`
+**✓ verified** — 41 contract checks · framework-agnostic · zero dependencies beyond `@lemonadejs/modal`
 
 ## Overview
 
@@ -80,6 +80,7 @@ state for a two-way live wire. Attribute strings are coerced to the declared typ
 | Prop | Type | Default | Description |
 |---|---|---|---|
 | `bind` | string | — | Two-way bound value. `.set()` fires `onchange`; plain assignment is silent. selected value (v5: value) — see formats above |
+| `name` | string | `''` | form field name — when set, the root reflects |
 | `range` | boolean | `false` | two-click range selection |
 | `time` | boolean | `false` | hour/minute picker, value carries time |
 | `numeric` | boolean | `false` | value as Excel serial number(s) |

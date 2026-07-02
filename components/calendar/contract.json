@@ -1,6 +1,10 @@
 {
     "name": "calendar",
     "props": {
+        "name": {
+            "type": "string",
+            "default": ""
+        },
         "range": {
             "type": "boolean",
             "default": false

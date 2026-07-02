@@ -44,6 +44,11 @@ let layerIndex = 20;
  */
 const dock: { el: HTMLElement; place: (top: number, left: number) => void }[] = [];
 
+// ---- scroll lock: refcounted across instances so stacked backdrop
+// modals restore the page's overflow only when the LAST one closes
+let scrollLocks = 0;
+let savedBodyOverflow = '';
+
 const refreshDock = () => {
     let left = 10;
     let bottom = 55;
@@ -90,6 +95,7 @@ export const Modal = component('modal', {
     minimized: false,
     fullscreen: false,            // cover the whole viewport
     header: true,                 // false: headerless floating panel (menus, chips)
+    role: '',                     // ARIA role: '' = auto (backdrop → dialog, else none)
     autoclose: false,             // v5: auto-close
     autoadjust: false,            // v5: auto-adjust
     flip: 0,                      // anchored panels: at the bottom edge, flip ABOVE the natural top,
@@ -125,10 +131,32 @@ export const Modal = component('modal', {
     let root: HTMLElement | null = null;
     let restoreTo = { top: 0, left: 0 };
 
+    // ---- scroll lock (backdrop modals only): the backdrop already blocks
+    // interaction with the page — letting it scroll underneath reads broken
+    let scrollLocked = false;
+    const lockScroll = () => {
+        if (!scrollLocked && props.backdrop.value) {
+            scrollLocked = true;
+            if (++scrollLocks === 1) {
+                savedBodyOverflow = document.body.style.overflow;
+                document.body.style.overflow = 'hidden';
+            }
+        }
+    };
+    const unlockScroll = () => {
+        if (scrollLocked) {
+            scrollLocked = false;
+            if (--scrollLocks === 0) {
+                document.body.style.overflow = savedBodyOverflow;
+            }
+        }
+    };
+
     // ---- interactions: one in flight, ONE cleanup registered at setup
     let releaseInteraction: (() => void) | null = null;
     onUnmount(() => {
         releaseInteraction?.();
+        unlockScroll();
         if (root) {
             const i = dock.findIndex((entry) => entry.el === root);
             if (i >= 0) {
@@ -201,6 +229,11 @@ export const Modal = component('modal', {
         if (!root || minimized.value) {
             return;
         }
+        // The entrance animation transforms the rect (scale + translate);
+        // jump it to its end state first, or minimizing within its 220ms
+        // (a quick click, or the `minimized` prop at open) consolidates a
+        // mid-animation position and restore lands the modal displaced
+        root.getAnimations?.().forEach((a) => { try { a.finish(); } catch { /* infinite animation */ } });
         // Remember the EFFECTIVE position (margins consolidated — v5
         // removeMargin) and exact dimensions: restore must return the
         // modal precisely as it looked
@@ -214,6 +247,8 @@ export const Modal = component('modal', {
             // modal visually is, not from a pre-margin position
             pos.value = { top: rect.top, left: rect.left, fixed: true };
             minimized.value = true;
+            // docked to the taskbar: the backdrop is gone, free the page
+            unlockScroll();
             dock.push({
                 el: root!,
                 place: (top, left) => {
@@ -236,6 +271,25 @@ export const Modal = component('modal', {
             pos.value = { top: restoreTo.top, left: restoreTo.left, fixed: true };
             refreshDock();
         });
+        lockScroll();
+    };
+
+    // The rect with any RUNNING entrance animation jumped to its end state
+    // for the measurement (and put back, so the animation still plays):
+    // margins computed from the mid-animation scale under-adjust by a few
+    // px and STICK after the animation finishes (corner-opened menus).
+    const settledRect = (el: HTMLElement): DOMRect => {
+        const anims = el.getAnimations ? el.getAnimations().filter((a) => a.playState === 'running') : [];
+        if (!anims.length) {
+            return el.getBoundingClientRect();
+        }
+        const saved = anims.map((a) => a.currentTime);
+        for (const a of anims) {
+            try { a.currentTime = a.effect?.getComputedTiming().endTime ?? 0; } catch { /* detached */ }
+        }
+        const r = el.getBoundingClientRect();
+        anims.forEach((a, i) => { try { a.currentTime = saved[i]; } catch { /* detached */ } });
+        return r;
     };
 
     // ---- v5 auto-adjust: how far back inside the viewport (10px margin)?
@@ -269,7 +323,7 @@ export const Modal = component('modal', {
         // assignment, and the registry verify() gate runs in jsdom
         el.style.removeProperty('margin-left');
         el.style.removeProperty('margin-top');
-        const r = el.getBoundingClientRect();
+        const r = settledRect(el);
         let { dx, dy } = overflow(r);
         // Anchored panels (flip): sliding the panel up would COVER the
         // anchor (the dropdown input the user is typing into) — flip it
@@ -311,6 +365,7 @@ export const Modal = component('modal', {
     const runSetup = () => {
         if (!setupDone && root && root.isConnected && open.value) {
             setupDone = true;
+            lockScroll();
             setup();
         }
     };
@@ -322,7 +377,14 @@ export const Modal = component('modal', {
 
     // Reopen reuses the cached branch — refs do NOT re-fire, so setup is
     // re-armed by watching the open state itself (api, bind or backdrop)
-    onMount(() => open.subscribe((v) => (v ? runSetup() : (setupDone = false))));
+    onMount(() => open.subscribe((v) => {
+        if (v) {
+            runSetup();
+        } else {
+            setupDone = false;
+            unlockScroll();
+        }
+    }));
 
     // position is live while open (v5 reactive properties): drop the
     // explicit coordinates and re-place under the new positioning model
@@ -335,6 +397,21 @@ export const Modal = component('modal', {
             }
         })
     );
+
+    // width/height are live while open too (position already is): a resize
+    // keeps the current placement, it only re-checks the viewport fit
+    const liveResize = () => {
+        if (open.value && root && !minimized.value) {
+            const w = props.width.value || size.value.w;
+            const h = props.height.value || size.value.h;
+            if (w !== size.value.w || h !== size.value.h) {
+                size.value = { w, h };
+                autoAdjust(root);
+            }
+        }
+    };
+    onMount(() => props.width.subscribe(liveResize));
+    onMount(() => props.height.subscribe(liveResize));
 
 
     const setup = () => {
@@ -513,6 +590,30 @@ export const Modal = component('modal', {
             doClose('escape');
             e.preventDefault();
             e.stopImmediatePropagation();
+            return;
+        }
+        // Focus trap — DIALOG MODE ONLY (backdrop): Tab cycles inside the
+        // modal instead of escaping to the page the backdrop is masking.
+        // Headless/anchored panels keep native tab order.
+        if (e.key === 'Tab' && props.backdrop.value && !minimized.value && root) {
+            const focusables = [...root.querySelectorAll<HTMLElement>(
+                'a[href], button:not([disabled]), input:not([disabled]), ' +
+                'select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+            )];
+            if (!focusables.length) {
+                e.preventDefault(); // nothing tabbable: focus stays on the modal
+                return;
+            }
+            const first = focusables[0];
+            const last = focusables[focusables.length - 1];
+            const active = document.activeElement;
+            if (e.shiftKey && (active === first || active === root)) {
+                e.preventDefault();
+                last.focus();
+            } else if (!e.shiftKey && active === last) {
+                e.preventDefault();
+                first.focus();
+            }
         }
     };
 
@@ -544,6 +645,9 @@ export const Modal = component('modal', {
                 props.fullscreen.value ? 'lm-modal-fullscreen' : ''} ${() =>
                 props.overflow.value ? 'lm-modal-overflow' : ''}"
                 style="${styles}"
+                role="${() => props.role.value || (props.backdrop.value ? 'dialog' : false)}"
+                aria-modal="${() => ((props.role.value || (props.backdrop.value ? 'dialog' : '')) === 'dialog' ? 'true' : false)}"
+                aria-label="${() => props.title.value || false}"
                 tabindex="-1"
                 ref="${(el: HTMLElement) => onOpened(el)}"
                 onmousemove="${onHover}"

@@ -53,6 +53,13 @@ export const Card = component('card', {
         data-variant="${() => props.variant.value || false}"
         role="${() => (props.clickable.value ? 'button' : false)}"
         tabindex="${() => (props.clickable.value ? '0' : false)}"
+        onkeydown="${(e: KeyboardEvent) => {
+            // role=button contract: Enter/Space activate like a click
+            if (props.clickable.value && (e.key === 'Enter' || e.key === ' ')) {
+                e.preventDefault();
+                props.onclick?.(e);
+            }
+        }}"
         onclick="${press}">
         ${() =>
             props.image.value &&

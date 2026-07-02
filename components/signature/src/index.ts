@@ -166,7 +166,7 @@ export const Signature = component('signature', {
     onMount(() => strokes.subscribe(() => redraw()));
 
     return html`<div class="lm-signature ${() => (props.disabled.value ? 'lm-signature-disabled' : '')}">
-        <canvas class="lm-signature-canvas"
+        <canvas class="lm-signature-canvas" role="img" aria-label="Signature"
             width="${() => props.width.value || false}"
             height="${() => props.height.value || false}"
             ref="${init}"

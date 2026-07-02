@@ -2,7 +2,7 @@
 
 LemonadeJS modal block — contract-verified, framework-agnostic.
 
-**✓ verified** — 51 contract checks · framework-agnostic · zero dependencies
+**✓ verified** — 53 contract checks · framework-agnostic · zero dependencies
 
 ## Overview
 
@@ -86,6 +86,7 @@ state for a two-way live wire. Attribute strings are coerced to the declared typ
 | `minimized` | boolean | `false` |  |
 | `fullscreen` | boolean | `false` |  |
 | `header` | boolean | `true` |  |
+| `role` | string | `''` |  |
 | `autoclose` | boolean | `false` |  |
 | `autoadjust` | boolean | `false` |  |
 | `flip` | number | `0` |  |

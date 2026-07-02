@@ -995,7 +995,8 @@ export const Calendar = component('calendar', {
     // native field — no hidden mirror input. The SETTER is silent (assignment,
     // not commit) so an external form write does NOT echo back as an input
     // event; only genuine user commits dispatch input (see commitValue).
-    onMount((el: HTMLElement) => {
+    onMount((node) => {
+        const el = node as HTMLElement;
         Object.defineProperty(el, 'value', {
             configurable: true,
             get: () => picked.peek(),

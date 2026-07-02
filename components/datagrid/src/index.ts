@@ -519,6 +519,7 @@ export const Datagrid = component('datagrid', {
         // render() mounted, with its state) instead of rebuilding them
         return html`<div key="${row}" class="lm-datagrid-row ${() => (selected.value.has(row) ? 'lm-datagrid-selected' : '')}"
             role="row"
+            aria-rowindex="${entry.dataIndex + 2}"
             style="${() => 'height:' + rowHeight() + 'px;grid-template-columns:' + gridTemplate()}"
             onclick="${(e: MouseEvent) => {
                 if (props.selectable.value === 'single') {
@@ -541,7 +542,7 @@ export const Datagrid = component('datagrid', {
     const headerContent = (col: Column): string | View =>
         col.headerrender ? col.headerrender(col) : col.title || col.name;
 
-    const headerView = () => html`<div class="lm-datagrid-header" role="row"
+    const headerView = () => html`<div class="lm-datagrid-header" role="row" aria-rowindex="1"
         style="grid-template-columns:${() => gridTemplate()}">
         ${() =>
             props.selectable.value === 'multiple'
