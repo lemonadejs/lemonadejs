@@ -1,0 +1,352 @@
+/* <Organogram /> — lm-organogram-* convention, themeable via --lm-* tokens.
+   Every value reads a shared token with the original literal as fallback,
+   so the block is self-sufficient (works with no global stylesheet) yet
+   re-themes with the rest of the catalog when the tokens are present. */
+
+.lm-organogram {
+    position: relative;
+    width: 100%;
+    box-sizing: border-box;
+    border: 1px solid var(--lm-border-color, #e4e4e7);
+    border-radius: var(--lm-radius-lg, 10px);
+    background:
+        var(--lm-organogram-bg, var(--lm-background-color, #fff))
+        radial-gradient(var(--lm-organogram-grid, rgba(0, 0, 0, 0.06)) 1px, transparent 1px);
+    background-size: 22px 22px;
+    overflow: hidden;
+    color: var(--lm-font-color, #18181b);
+    font-size: var(--lm-organogram-font-size, 13px);
+    user-select: none;
+}
+
+/* The clipping window the world is dragged/zoomed inside */
+.lm-organogram .lm-organogram-viewport {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    cursor: grab;
+    touch-action: none; /* we own the pan/zoom gesture */
+}
+
+.lm-organogram .lm-organogram-viewport:active {
+    cursor: grabbing;
+}
+
+/* The single transformed layer holding the connectors + every card */
+.lm-organogram .lm-organogram-world {
+    position: absolute;
+    top: 0;
+    left: 0;
+    transform-origin: 0 0;
+    will-change: transform;
+}
+
+/* Connectors — one SVG behind the cards */
+.lm-organogram .lm-organogram-edges {
+    position: absolute;
+    top: 0;
+    left: 0;
+    overflow: visible;
+    pointer-events: none;
+}
+
+.lm-organogram .lm-organogram-edges path {
+    fill: none;
+    stroke: var(--lm-organogram-edge, var(--lm-border-color-highlight, #c4c4c8));
+    stroke-width: 1.5;
+}
+
+/* A person card */
+.lm-organogram .lm-organogram-node {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    box-sizing: border-box;
+    padding: 8px 10px;
+    background: var(--lm-organogram-card-bg, var(--lm-background-color, #fff));
+    border: 1px solid var(--lm-border-color, #e4e4e7);
+    border-left: 4px solid transparent; /* status accent set inline */
+    border-radius: var(--lm-radius, 6px);
+    box-shadow: var(--lm-shadow, 0 1px 2px rgba(0, 0, 0, 0.06));
+    cursor: pointer;
+    transition: left 0.3s ease, top 0.3s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+    /* no overflow:hidden — it would clip the collapse pill hanging off the bottom edge;
+       the avatar and the name/role lines each clip themselves instead */
+}
+
+.lm-organogram .lm-organogram-node:hover {
+    box-shadow: var(--lm-shadow-lg, 0 12px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.06));
+}
+
+.lm-organogram .lm-organogram-node.lm-organogram-selected {
+    border-color: var(--lm-main-color, #2563eb);
+    box-shadow: 0 0 0 2px var(--lm-main-color, #2563eb);
+}
+
+/* Status dot, top-right */
+.lm-organogram .lm-organogram-status {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    box-shadow: 0 0 0 2px var(--lm-organogram-card-bg, var(--lm-background-color, #fff));
+}
+
+/* Avatar — image over an initials fallback */
+.lm-organogram .lm-organogram-avatar {
+    position: relative;
+    flex: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    overflow: hidden;
+    background: var(--lm-background-color-highlight, #ececec);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.lm-organogram .lm-organogram-initials {
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--lm-font-grayout, #777);
+}
+
+.lm-organogram .lm-organogram-avatar img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.lm-organogram .lm-organogram-info {
+    min-width: 0;
+    flex: 1;
+}
+
+.lm-organogram .lm-organogram-name {
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.lm-organogram .lm-organogram-role {
+    color: var(--lm-font-grayout, #777);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Collapse/expand pill that hangs just under the card (fully visible — the
+   card no longer clips it, and it sits above the connectors via z-index) */
+.lm-organogram .lm-organogram-toggle {
+    position: absolute;
+    bottom: -11px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    border: 1px solid var(--lm-border-color-highlight, #c4c4c8);
+    border-radius: 50%;
+    background: var(--lm-organogram-card-bg, var(--lm-background-color, #fff));
+    color: var(--lm-font-grayout, #777);
+    font-size: 14px;
+    line-height: 1;
+    cursor: pointer;
+    box-shadow: var(--lm-shadow, 0 1px 2px rgba(0, 0, 0, 0.12));
+    z-index: 2;
+}
+
+/* A collapsed branch gets a filled pill so it reads as "more hidden here" */
+.lm-organogram .lm-organogram-toggle[data-collapsed="true"] {
+    background: var(--lm-main-color, #2563eb);
+    border-color: var(--lm-main-color, #2563eb);
+    color: #fff;
+}
+
+.lm-organogram .lm-organogram-toggle::before {
+    content: '\2212'; /* minus when expanded */
+}
+
+.lm-organogram .lm-organogram-toggle[data-collapsed="true"]::before {
+    content: '\002B'; /* plus when collapsed */
+}
+
+/* expanded pill (white bg, grey glyph): hover tints it blue */
+.lm-organogram .lm-organogram-toggle:not([data-collapsed="true"]):hover {
+    border-color: var(--lm-main-color, #2563eb);
+    color: var(--lm-main-color, #2563eb);
+}
+
+/* collapsed pill is ALREADY blue with a white glyph — never repaint the glyph
+   blue (that hid the +); just darken the circle a touch for hover feedback */
+.lm-organogram .lm-organogram-toggle[data-collapsed="true"]:hover {
+    color: #fff;
+    border-color: var(--lm-main-color, #2563eb);
+    filter: brightness(0.92);
+}
+
+/* Zoom / fit cluster, bottom-right — Google-Maps style: a rounded zoom
+   "pill" (+ / − split by an inset divider) with the "fit" button detached
+   below as its own card. */
+.lm-organogram .lm-organogram-controls {
+    position: absolute;
+    right: 12px;
+    bottom: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* the +/− pill — a crisp white card like Maps: dedicated shadow + hairline
+   border (NOT the catalog --lm-shadow, which the theme softens to near-zero
+   and washes the control out against the chart background) */
+.lm-organogram .lm-organogram-zoom {
+    display: flex;
+    flex-direction: column;
+    border-radius: var(--lm-radius, 8px);
+    background: var(--lm-background-color, #fff);
+    border: 1px solid var(--lm-organogram-control-border, #d0d2d7);
+    box-shadow: var(--lm-organogram-control-shadow, 0 1px 4px rgba(0, 0, 0, 0.25));
+    overflow: hidden;
+}
+
+.lm-organogram .lm-organogram-controls button {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border: none;
+    background: var(--lm-background-color, #fff);
+    color: var(--lm-organogram-control-icon, #5f6368);
+    cursor: pointer;
+    transition: color 0.15s ease, background 0.15s ease;
+}
+
+/* inset divider between + and − (does not run edge to edge, like Maps) */
+.lm-organogram .lm-organogram-zoom button:first-child::after {
+    content: '';
+    position: absolute;
+    left: 8px;
+    right: 8px;
+    bottom: 0;
+    height: 1px;
+    background: var(--lm-border-color-light, #e8e8e8);
+}
+
+.lm-organogram .lm-organogram-controls button .material-symbols-outlined {
+    font-size: 22px;
+    line-height: 1;
+    font-variation-settings: 'wght' 500, 'opsz' 24;
+}
+
+.lm-organogram .lm-organogram-controls button:hover:not(:disabled) {
+    color: var(--lm-font-color, #202124);
+    background: var(--lm-background-color-highlight, #f1f3f4);
+}
+
+/* greyed-out at the zoom limits, exactly like Maps */
+.lm-organogram .lm-organogram-controls button:disabled {
+    color: var(--lm-border-color-highlight, #c4c4c8);
+    cursor: default;
+}
+
+/* the "fit" button is detached below the pill with its own card (selector is
+   more specific than the base `button { border: none }` so the border sticks) */
+.lm-organogram .lm-organogram-controls button.lm-organogram-fit {
+    border: 1px solid var(--lm-organogram-control-border, #d0d2d7);
+    border-radius: var(--lm-radius, 8px);
+    box-shadow: var(--lm-organogram-control-shadow, 0 1px 4px rgba(0, 0, 0, 0.25));
+}
+
+/* Quick search, top-left */
+.lm-organogram .lm-organogram-search {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    width: 220px;
+    max-width: calc(100% - 24px);
+}
+
+.lm-organogram .lm-organogram-search input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 7px 10px;
+    border: 1px solid var(--lm-border-color, #e4e4e7);
+    border-radius: var(--lm-radius, 6px);
+    background: var(--lm-background-color, #fff);
+    color: var(--lm-font-color, #18181b);
+    font-family: inherit;
+    font-size: inherit;
+    box-shadow: var(--lm-shadow, 0 1px 2px rgba(0, 0, 0, 0.06));
+}
+
+.lm-organogram .lm-organogram-results {
+    list-style: none;
+    margin: 6px 0 0;
+    padding: 4px;
+    max-height: 240px;
+    overflow-y: auto;
+    border: 1px solid var(--lm-border-color, #e4e4e7);
+    border-radius: var(--lm-radius, 6px);
+    background: var(--lm-background-color, #fff);
+    box-shadow: var(--lm-shadow-lg, 0 12px 32px rgba(0, 0, 0, 0.12));
+}
+
+.lm-organogram .lm-organogram-results li {
+    display: flex;
+    flex-direction: column;
+    padding: 6px 8px;
+    border-radius: var(--lm-radius, 6px);
+    cursor: pointer;
+}
+
+.lm-organogram .lm-organogram-results li:hover {
+    background: var(--lm-background-color-highlight, #ececec);
+}
+
+.lm-organogram .lm-organogram-result-name {
+    font-weight: 600;
+}
+
+.lm-organogram .lm-organogram-result-role {
+    color: var(--lm-font-grayout, #777);
+    font-size: 12px;
+}
+
+/* Status legend, bottom-left */
+.lm-organogram .lm-organogram-legend {
+    position: absolute;
+    left: 12px;
+    bottom: 12px;
+    display: flex;
+    gap: 12px;
+    padding: 6px 10px;
+    border-radius: var(--lm-radius, 6px);
+    background: var(--lm-background-color, #fff);
+    box-shadow: var(--lm-shadow, 0 1px 2px rgba(0, 0, 0, 0.06));
+}
+
+.lm-organogram .lm-organogram-legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.lm-organogram .lm-organogram-legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+}

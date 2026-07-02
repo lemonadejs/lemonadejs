@@ -1,0 +1,178 @@
+{
+    "component": "organogram",
+    "pass": true,
+    "checks": [
+        {
+            "name": "mounts with defaults",
+            "pass": true
+        },
+        {
+            "name": "prop data",
+            "pass": true
+        },
+        {
+            "name": "prop data (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop orientation",
+            "pass": true
+        },
+        {
+            "name": "prop orientation (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop nodewidth",
+            "pass": true
+        },
+        {
+            "name": "prop nodewidth (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop nodeheight",
+            "pass": true
+        },
+        {
+            "name": "prop nodeheight (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop hspacing",
+            "pass": true
+        },
+        {
+            "name": "prop hspacing (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop vspacing",
+            "pass": true
+        },
+        {
+            "name": "prop vspacing (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop compact",
+            "pass": true
+        },
+        {
+            "name": "prop compact (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop height",
+            "pass": true
+        },
+        {
+            "name": "prop height (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop controls",
+            "pass": true
+        },
+        {
+            "name": "prop controls (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop search",
+            "pass": true
+        },
+        {
+            "name": "prop search (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop collapsible",
+            "pass": true
+        },
+        {
+            "name": "prop collapsible (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop avatars",
+            "pass": true
+        },
+        {
+            "name": "prop avatars (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop legend",
+            "pass": true
+        },
+        {
+            "name": "prop legend (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop statuslabels",
+            "pass": true
+        },
+        {
+            "name": "prop statuslabels (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop minzoom",
+            "pass": true
+        },
+        {
+            "name": "prop minzoom (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop maxzoom",
+            "pass": true
+        },
+        {
+            "name": "prop maxzoom (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop zoom",
+            "pass": true
+        },
+        {
+            "name": "prop zoom (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop fit",
+            "pass": true
+        },
+        {
+            "name": "prop fit (live state)",
+            "pass": true
+        },
+        {
+            "name": "event onchange",
+            "pass": true
+        },
+        {
+            "name": "event onnodeclick",
+            "pass": true
+        },
+        {
+            "name": "event oncollapse",
+            "pass": true
+        },
+        {
+            "name": "event onzoom",
+            "pass": true
+        },
+        {
+            "name": "bind",
+            "pass": true
+        },
+        {
+            "name": "api via ref",
+            "pass": true
+        }
+    ]
+}

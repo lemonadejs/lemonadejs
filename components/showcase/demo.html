@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>LemonadeJS — Theme showcase</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
+    <!-- the global template (tokens + themes + dark mode) -->
+    <link rel="stylesheet" href="../style.css" />
+    <!-- every component shown on this page -->
+    <link rel="stylesheet" href="../switch/src/style.css" />
+    <link rel="stylesheet" href="../toggle/src/style.css" />
+    <link rel="stylesheet" href="../rating/src/style.css" />
+    <link rel="stylesheet" href="../slider/src/style.css" />
+    <link rel="stylesheet" href="../progress/src/style.css" />
+    <link rel="stylesheet" href="../dropdown/src/style.css" />
+    <link rel="stylesheet" href="../accordion/src/style.css" />
+    <link rel="stylesheet" href="../tabs/src/style.css" />
+    <link rel="stylesheet" href="../alert/src/style.css" />
+    <link rel="stylesheet" href="../card/src/style.css" />
+    <link rel="stylesheet" href="../chart/src/style.css" />
+    <link rel="stylesheet" href="../modal/src/style.css" />
+    <style>
+        body { font-family: system-ui, sans-serif; margin: 0;
+            background: var(--lm-background-color); color: var(--lm-text-color); }
+        .bar {
+            position: sticky; top: 0; z-index: 10;
+            display: flex; align-items: center; justify-content: space-between; gap: 16px;
+            padding: 14px 24px; background: var(--lm-background-color);
+            border-bottom: 1px solid var(--lm-border-color);
+        }
+        .bar h1 { font-size: 17px; margin: 0; }
+        .switcher { display: flex; align-items: center; gap: 16px; font-size: 13px; }
+        .switcher label { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+        .switcher select { padding: 5px 8px; border: 1px solid var(--lm-border-color);
+            border-radius: var(--lm-radius); background: var(--lm-background-color); color: inherit; font: inherit; }
+        .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 16px; padding: 24px; align-items: start; }
+        .cell {
+            border: 1px solid var(--lm-border-color); border-radius: var(--lm-radius-lg);
+            padding: 16px; background: var(--lm-background-color); box-shadow: var(--lm-shadow);
+        }
+        .cell.wide { grid-column: span 2; }
+        .cell h4 { margin: 0 0 12px; font-size: 11px; text-transform: uppercase;
+            letter-spacing: .06em; color: var(--lm-font-grayout); }
+        .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+        @media (max-width: 620px) { .cell.wide { grid-column: auto; } }
+    </style>
+</head>
+<body class="lm-theme-modern">
+    <div id="app"></div>
+    <script src="/.dev/components/showcase/demo.js"></script>
+</body>
+</html>

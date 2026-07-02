@@ -1,0 +1,14 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <!-- Strict policy, NO 'unsafe-inline' and NO nonce: bound styles go
+         through the CSSOM, component <style> via adoptedStyleSheets — both
+         are CSSOM writes style-src does not govern. -->
+    <meta http-equiv="Content-Security-Policy" content="style-src 'self'" />
+</head>
+<body>
+    <div id="app"></div>
+    <script src="./probe-csp.js"></script>
+</body>
+</html>
