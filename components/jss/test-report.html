@@ -1,0 +1,135 @@
+<html>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Material+Icons"/>
+
+<script src="https://cdn.jsdelivr.net/npm/jspreadsheet@12/dist/index.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jspreadsheet@12/dist/jspreadsheet.min.css" type="text/css" />
+<script src="https://cdn.jsdelivr.net/npm/jsuites@6/dist/jsuites.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jsuites@6/dist/jsuites.min.css" type="text/css" />
+
+<script type="importmap">
+{
+    "imports": {
+        "lemonadejs": "../../dist/lemonade.mjs",
+        "@lemonadejs/modal": "../../components/modal/dist/index.mjs",
+        "@lemonadejs/contextmenu": "../../components/contextmenu/dist/index.mjs",
+        "@lemonadejs/color": "../../components/color/dist/index.mjs",
+        "@lemonadejs/toolbar": "../../components/toolbar/dist/index.mjs",
+        "@lemonadejs/editor": "../../components/editor/dist/index.mjs"
+    }
+}
+</script>
+
+<style>
+    body { font-family: system-ui, sans-serif; margin: 24px; }
+    button { margin: 12px 8px 12px 0; padding: 6px 14px; }
+    #preview { border: 1px solid #ddd; border-radius: 6px; padding: 16px; max-height: 420px; overflow: auto; }
+    #preview .page-sep { border-top: 2px dashed #bbb; margin: 24px 0; }
+</style>
+
+<h2>JSS report extension — HTML piping to PDF</h2>
+<p>Each spreadsheet row fills the invoice template and becomes <b>one page</b> of a locally generated PDF.</p>
+
+<div id='spreadsheet'></div>
+
+<button id="export">Export 10 invoices as PDF</button>
+<button id="show">Preview merged HTML</button>
+<div id="preview"></div>
+
+<script type="module">
+import report from './report/report.js';
+
+// You can use the following license for quick testing on localhost, StackBlitz, or CodeSandbox.
+// The license is valid for one day, after which the spreadsheet will become read-only.
+jspreadsheet.license = 'NWExNjYxZTQ3ZjBlNWNhZDllZTVmMGUyMTg4OGU0YzliMzJlNGQyNTY5YzI2MTlmY2NhZTc4YWFkNmI0NzcyZDQ5ZDFlMDAzNDA4ZWFkODBlNzA2NGZmMTM3Mzc0MTkwOWY0ZTdiOGNkOWIxM2U3MzU0N2JjZTIxZTU2MDIwOTcsZXlKamJHbGxiblJKWkNJNklpSXNJbTVoYldVaU9pSktjM0J5WldGa2MyaGxaWFFpTENKa1lYUmxJam94Tnpnek1EVXpNalExTENKa2IyMWhhVzRpT2xzaWFuTndjbVZoWkhOb1pXVjBMbU52YlNJc0ltTnZaR1Z6WVc1a1ltOTRMbWx2SWl3aWFuTm9aV3hzTG01bGRDSXNJbU56WWk1aGNIQWlMQ0p6ZEdGamEySnNhWFI2TG1sdklpd2lkMlZpWTI5dWRHRnBibVZ5TG1sdklpd2liRzlqWVd4b2IzTjBJbDBzSW5Cc1lXNGlPaUl6TkNJc0luTmpiM0JsSWpwYkluWTNJaXdpZGpnaUxDSjJPU0lzSW5ZeE1DSXNJbll4TVNJc0luWXhNaUlzSW1Ob1lYSjBjeUlzSW1admNtMXpJaXdpWm05eWJYVnNZU0lzSW5CaGNuTmxjaUlzSW5KbGJtUmxjaUlzSW1OdmJXMWxiblJ6SWl3aWFXMXdiM0owWlhJaUxDSmlZWElpTENKMllXeHBaR0YwYVc5dWN5SXNJbk5sWVhKamFDSXNJbkJ5YVc1MElpd2ljMmhsWlhSeklpd2lZMnhwWlc1MElpd2ljMlZ5ZG1WeUlpd2ljMmhoY0dWeklpd2labTl5YldGMElpd2ljR2wyYjNRaVhTd2laR1Z0YnlJNmRISjFaWDA9';
+
+jspreadsheet.setExtensions({ report });
+
+const spreadsheet = jspreadsheet(document.getElementById('spreadsheet'), {
+    worksheets: [
+        {
+            columns: [
+                { title: 'Client', width: 160 },
+                { title: 'Date', width: 100 },
+                { title: 'Description', width: 220 },
+                { title: 'Qty', width: 60 },
+                { title: 'Unit price', width: 90 },
+                { title: 'Total', width: 90 },
+            ],
+            data: [
+                ['Acme Corp', '2026-07-01', 'Editor block license', '2', '$120.00', '$240.00'],
+                ['Globex', '2026-07-01', 'Toolbar block license', '1', '$80.00', '$80.00'],
+                ['Initech', '2026-07-02', 'Datagrid support plan', '3', '$150.00', '$450.00'],
+                ['Umbrella', '2026-07-02', 'Chart block license', '5', '$60.00', '$300.00'],
+                ['Stark Industries', '2026-07-02', 'Premium bundle', '1', '$900.00', '$900.00'],
+                ['Wayne Enterprises', '2026-07-03', 'Calendar block license', '4', '$45.00', '$180.00'],
+                ['Wonka Inc', '2026-07-03', 'Formula extension', '2', '$75.00', '$150.00'],
+                ['Tyrell Corp', '2026-07-03', 'Organogram license', '1', '$110.00', '$110.00'],
+                ['Cyberdyne', '2026-07-04', 'Kanban block license', '6', '$35.00', '$210.00'],
+                ['Hooli', '2026-07-04', 'Editor + PDF writer', '1', '$240.00', '$240.00'],
+            ],
+        },
+    ],
+});
+
+const template = [
+    '<p style="text-align:right"><b>LemonadeJS Ltd.</b><br>1 Lemon Street</p>',
+    '<h1>Invoice #{{#}}</h1>',
+    '<p><b>Billed to:</b> {{Client}}<br><b>Date:</b> {{Date}}</p>',
+    '<table><colgroup><col style="width:280px"><col style="width:70px"><col style="width:100px"><col style="width:100px"></colgroup><tbody>',
+    '<tr><th>Description</th><th>Qty</th><th>Unit</th><th>Total</th></tr>',
+    '<tr><td>{{Description}}</td><td>{{Qty}}</td><td>{{Unit price}}</td><td>{{Total}}</td></tr>',
+    '<tr><td colspan="3" style="text-align:right"><b>Amount due</b></td><td><b>{{F}}</b></td></tr>',
+    '</tbody></table>',
+    '<blockquote>Payment due within 30 days.</blockquote>',
+    '<hr><p style="text-align:center">Thank you for your business, {{Client}}!</p>',
+].join('');
+
+document.getElementById('export').onclick = () => {
+    spreadsheet[0].parent.plugins.report.toPdf(template, { filename: 'invoices.pdf' });
+};
+
+document.getElementById('show').onclick = () => {
+    const html = report.merge(spreadsheet[0], template);
+    document.getElementById('preview').innerHTML =
+        html.split('<div style="page-break-before: always"></div>').join('<div class="page-sep"></div>');
+};
+
+// ---- probe mode (?probe): self-checks into #lm-probe for the CDP runner
+if (location.search.indexOf('probe') !== -1) {
+    const out = [];
+    const log = (name, ok, detail) => out.push((ok ? 'PASS ' : 'FAIL ') + name + ' ' + JSON.stringify(detail || {}));
+    try {
+        const merged = report.merge(spreadsheet[0], template);
+        const copies = merged.split('Invoice #').length - 1;
+        log('merge-one-copy-per-row', copies === 10, { copies });
+        log('merge-title-placeholders', merged.indexOf('Acme Corp') !== -1 && merged.indexOf('Hooli') !== -1, {});
+        log('merge-letter-placeholder', merged.indexOf('<b>$ 240.00</b>') !== -1, {}); // {{F}} = Total, as displayed
+        log('merge-keeps-display-format', merged.indexOf('2026-07-01') !== -1, {});
+        log('merge-row-counter', merged.indexOf('Invoice #10') !== -1, {});
+        const bytes = await report.toBytes(spreadsheet[0], template);
+        let all = '';
+        for (let i = 0; i < bytes.length; i++) {
+            all += String.fromCharCode(bytes[i]);
+        }
+        const pages = (all.match(/\/Type \/Page[^s]/g) || []).length;
+        log('pdf-ten-rows-ten-pages', pages === 10, { pages, bytes: bytes.length });
+        log('pdf-carries-row-data', all.indexOf('Stark Industries) Tj') !== -1, {});
+        // instance plugin api is wired
+        log('plugin-api-exposed', typeof spreadsheet[0].parent.plugins.report.toPdf === 'function', {});
+        if (location.search.indexOf('full') !== -1) {
+            let b64 = '';
+            for (let i = 0; i < bytes.length; i += 0x8000) {
+                b64 += String.fromCharCode.apply(null, bytes.slice(i, i + 0x8000));
+            }
+            out.push('PDFB64:' + btoa(b64));
+        }
+    } catch (e) {
+        out.push('ERROR ' + e.message);
+    }
+    const pre = document.createElement('pre');
+    pre.id = 'lm-probe';
+    pre.textContent = '\nLM-PROBE-BEGIN\n' + out.join('\n') + '\nLM-PROBE-END\n';
+    document.body.appendChild(pre);
+}
+</script>
+</html>

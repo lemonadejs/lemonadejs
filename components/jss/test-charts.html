@@ -1,0 +1,62 @@
+<html>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Material+Icons"/>
+
+<script src="https://cdn.jsdelivr.net/npm/jspreadsheet@12/dist/index.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jspreadsheet@12/dist/jspreadsheet.min.css" type="text/css" />
+<script src="https://cdn.jsdelivr.net/npm/jsuites@6/dist/jsuites.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jsuites@6/dist/jsuites.min.css" type="text/css" />
+
+<script type="importmap">
+{
+    "imports": {
+        "lemonadejs": "../../dist/lemonade.mjs",
+        "@lemonadejs/modal": "../../components/modal/dist/index.mjs",
+        "@lemonadejs/chart": "../../components/chart/dist/index.mjs"
+    }
+}
+</script>
+
+<link rel="stylesheet" href="../../components/modal/dist/style.css" type="text/css"/>
+<link rel="stylesheet" href="../../components/chart/dist/style.css" type="text/css"/>
+<link rel="stylesheet" href="./charts/charts.css" type="text/css"/>
+
+<div id='spreadsheet'></div>
+
+<script type="module">
+import charts from './charts/charts.js';
+
+// You can use the following license for quick testing on localhost, StackBlitz, or CodeSandbox.
+// The license is valid for one day, after which the spreadsheet will become read-only.
+// For a longer trial period, you can create a free account and generate a demo license with an extended expiration date.
+jspreadsheet.license = 'MjhjNzFkMGFjZjQ2YTY2MjcxZDAxNDJkNTAwMDJlZjE0NGJjOGI0N2EwMTAyNzM5YTk5YTgyZTVjMGJjMjUyNGQ0MDMyMzc4M2VkZTY5YjY4MGUzY2NiZTM2NzRjZDUzMzVhNDZkYTBhZDQyNDA5ZDEwZWVjNzU0Y2JjMzJkYTYsZXlKamJHbGxiblJKWkNJNklpSXNJbTVoYldVaU9pSktjM0J5WldGa2MyaGxaWFFpTENKa1lYUmxJam94Tnpnek1UVTJNakl6TENKa2IyMWhhVzRpT2xzaWFuTndjbVZoWkhOb1pXVjBMbU52YlNJc0ltTnZaR1Z6WVc1a1ltOTRMbWx2SWl3aWFuTm9aV3hzTG01bGRDSXNJbU56WWk1aGNIQWlMQ0p6ZEdGamEySnNhWFI2TG1sdklpd2lkMlZpWTI5dWRHRnBibVZ5TG1sdklpd2liRzlqWVd4b2IzTjBJbDBzSW5Cc1lXNGlPaUl6TkNJc0luTmpiM0JsSWpwYkluWTNJaXdpZGpnaUxDSjJPU0lzSW5ZeE1DSXNJbll4TVNJc0luWXhNaUlzSW1Ob1lYSjBjeUlzSW1admNtMXpJaXdpWm05eWJYVnNZU0lzSW5CaGNuTmxjaUlzSW5KbGJtUmxjaUlzSW1OdmJXMWxiblJ6SWl3aWFXMXdiM0owWlhJaUxDSmlZWElpTENKMllXeHBaR0YwYVc5dWN5SXNJbk5sWVhKamFDSXNJbkJ5YVc1MElpd2ljMmhsWlhSeklpd2lZMnhwWlc1MElpd2ljMlZ5ZG1WeUlpd2ljMmhoY0dWeklpd2labTl5YldGMElpd2ljR2wyYjNRaVhTd2laR1Z0YnlJNmRISjFaWDA9';
+
+// Charts on the @lemonadejs/chart block
+jspreadsheet.setExtensions({ charts });
+
+// Create the spreadsheets
+window.grid = jspreadsheet(document.getElementById('spreadsheet'), {
+    toolbar: true,
+    worksheets: [{
+        minDimensions: [6,6],
+        data: [
+            ['Months','Product A','Product B'],
+            ['Jan','400','234'],
+            ['Fev','300','431'],
+            ['Mar','200','134'],
+            ['Apr','321','513'],
+        ],
+        media: [{
+            type: 'chart',
+            options: {
+                type: 'column',
+                range: 'A1:C5',
+            },
+            top: 10,
+            left: 300,
+            width: 400,
+            height: 300,
+        }]
+    }],
+});
+</script>
+</html>

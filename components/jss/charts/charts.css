@@ -1,0 +1,163 @@
+/* Charts extension for the JSS data grid — glue between the jss media
+   layer and the @lemonadejs/chart block (which carries its own CSS) */
+
+.jss_charts {
+    background-color: var(--jss-background-color, #fff);
+    box-sizing: border-box;
+    cursor: default;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    outline: #ccc solid 1px;
+    padding: 30px;
+}
+
+.jss_charts_error {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--lm-color-danger, #dc2626);
+    font: 12px system-ui, sans-serif;
+}
+
+.jss_charts_error::after {
+    content: 'Something went wrong';
+}
+
+.jss_charts_error .lm-chart {
+    display: none;
+}
+
+/* ---- the right-side editor panel */
+.jss_charts_panel {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 14px 16px;
+    width: 100%;
+    box-sizing: border-box;
+    font: 13px system-ui, sans-serif;
+    overflow-y: auto;
+}
+
+.jss_charts_label {
+    margin-top: 10px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--lm-font-grayout, #6b7280);
+}
+
+.jss_charts_panel select,
+.jss_charts_panel input[type="text"] {
+    padding: 6px 8px;
+    border: 1px solid var(--lm-border-color, #d4d4d8);
+    border-radius: 6px;
+    font: inherit;
+    box-sizing: border-box;
+    width: 100%;
+    background: var(--lm-background-color, #fff);
+}
+
+/* Configuration | Styling tabs */
+.jss_charts_tabs {
+    display: flex;
+    gap: 4px;
+    border-bottom: 1px solid var(--lm-border-color, #e4e4e7);
+    margin-bottom: 8px;
+}
+
+.jss_charts_tab {
+    padding: 8px 14px;
+    cursor: pointer;
+    color: var(--lm-font-grayout, #6b7280);
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    user-select: none;
+}
+
+.jss_charts_tab:hover {
+    color: var(--lm-text-color, #18181b);
+}
+
+.jss_charts_tab.selected {
+    color: var(--lm-main-color, #2563eb);
+    border-bottom-color: var(--lm-main-color, #2563eb);
+    font-weight: 600;
+}
+
+/* The range picker element (JSS.picker turns it into a live control) */
+.jss_charts_picker {
+    padding: 6px 8px;
+    border: 1px solid var(--lm-border-color, #d4d4d8);
+    border-radius: 6px;
+    min-height: 17px;
+    cursor: text;
+    background: var(--lm-background-color, #fff);
+}
+
+/* Series rows: field dropdown + remove */
+.jss_charts_series {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 6px;
+}
+
+.jss_charts_serie {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.jss_charts_serie select {
+    flex: 1;
+}
+
+.jss_charts_serie .material-icons {
+    font-size: 16px;
+    color: var(--lm-font-grayout, #6b7280);
+    cursor: pointer;
+}
+
+.jss_charts_serie .material-icons:hover {
+    color: var(--lm-color-danger, #dc2626);
+}
+
+.jss_charts_add {
+    padding: 5px 10px;
+    border: 1px solid var(--lm-border-color, #d4d4d8);
+    border-radius: 6px;
+    background: var(--lm-background-color, #fff);
+    font: inherit;
+    cursor: pointer;
+}
+
+.jss_charts_add:hover {
+    background: var(--lm-background-color-highlight, #f4f4f5);
+}
+
+.jss_charts_row {
+    display: flex;
+    gap: 16px;
+    margin-top: 6px;
+}
+
+.jss_charts_check {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.jss_charts_buttons {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    margin-top: 16px;
+}
+
+.jss_charts_buttons .jss_style_button {
+    width: 90px;
+}

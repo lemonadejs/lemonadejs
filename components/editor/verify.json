@@ -1,0 +1,82 @@
+{
+    "component": "editor",
+    "pass": true,
+    "checks": [
+        {
+            "name": "mounts with defaults",
+            "pass": true
+        },
+        {
+            "name": "prop value",
+            "pass": true
+        },
+        {
+            "name": "prop value (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop placeholder",
+            "pass": true
+        },
+        {
+            "name": "prop placeholder (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop toolbar",
+            "pass": true
+        },
+        {
+            "name": "prop toolbar (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop height",
+            "pass": true
+        },
+        {
+            "name": "prop height (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop readonly",
+            "pass": true
+        },
+        {
+            "name": "prop readonly (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop filterpaste",
+            "pass": true
+        },
+        {
+            "name": "prop filterpaste (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop acceptimages",
+            "pass": true
+        },
+        {
+            "name": "prop acceptimages (live state)",
+            "pass": true
+        },
+        {
+            "name": "event onfocus",
+            "pass": true
+        },
+        {
+            "name": "event onblur",
+            "pass": true
+        },
+        {
+            "name": "bind",
+            "pass": true
+        },
+        {
+            "name": "api via ref",
+            "pass": true
+        }
+    ]
+}

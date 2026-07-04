@@ -2,7 +2,7 @@
 
 LemonadeJS toolbar block — contract-verified, framework-agnostic.
 
-**✓ verified** — 10 contract checks · framework-agnostic · zero dependencies beyond `@lemonadejs/contextmenu`
+**✓ verified** — 10 contract checks · framework-agnostic · zero dependencies beyond `@lemonadejs/contextmenu`, `@lemonadejs/color`
 
 ## Overview
 
@@ -39,10 +39,11 @@ Editor-host additions (the Editor block drives its bar through these):
     writes, not a bar teardown.
   - item.tooltip: hover text for icon-only items (title renders as a
     visible label, so icon bars need a separate hover string)
-  - type 'color': a swatch item backed by the NATIVE color input —
-    activation opens the platform picker, the chosen value lands on
+  - type 'color': a swatch item that opens the Color block (grid +
+    spectrum panel) in a small popover under the item. A pick lands on
     item.value (swatch underline), fires item.onchange(value, item)
-    and the bar-level onchange(e, item, { value }).
+    and the bar-level onchange(e, item, { value }), then closes.
+    Outside mousedown and Escape dismiss.
 
 ## Install
 
@@ -54,6 +55,7 @@ npm install @lemonadejs/toolbar
 import Toolbar from '@lemonadejs/toolbar';
 import '@lemonadejs/toolbar/style.css';
 import '@lemonadejs/contextmenu/style.css'; // composed primitive
+import '@lemonadejs/color/style.css'; // composed primitive
 ```
 
 ## Usage

@@ -1,0 +1,70 @@
+<html>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Material+Icons"/>
+
+<script src="https://cdn.jsdelivr.net/npm/jspreadsheet@12/dist/index.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jspreadsheet@12/dist/jspreadsheet.min.css" type="text/css" />
+<script src="https://cdn.jsdelivr.net/npm/jsuites@6/dist/jsuites.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jsuites@6/dist/jsuites.min.css" type="text/css" />
+
+<script type="importmap">
+{
+    "imports": {
+        "lemonadejs": "../../dist/lemonade.mjs",
+        "@lemonadejs/gantt": "../../components/gantt/dist/index.mjs"
+    }
+}
+</script>
+
+<link rel="stylesheet" href="../../components/gantt/dist/style.css" type="text/css"/>
+<link rel="stylesheet" href="./gantt/gantt.css" type="text/css"/>
+
+<div id='spreadsheet'></div>
+
+<script type="module">
+import ganttChart from './gantt/gantt.js';
+
+// You can use the following license for quick testing on localhost, StackBlitz, or CodeSandbox.
+// The license is valid for one day, after which the spreadsheet will become read-only.
+// For a longer trial period, you can create a free account and generate a demo license with an extended expiration date.
+jspreadsheet.license = 'NWExNjYxZTQ3ZjBlNWNhZDllZTVmMGUyMTg4OGU0YzliMzJlNGQyNTY5YzI2MTlmY2NhZTc4YWFkNmI0NzcyZDQ5ZDFlMDAzNDA4ZWFkODBlNzA2NGZmMTM3Mzc0MTkwOWY0ZTdiOGNkOWIxM2U3MzU0N2JjZTIxZTU2MDIwOTcsZXlKamJHbGxiblJKWkNJNklpSXNJbTVoYldVaU9pSktjM0J5WldGa2MyaGxaWFFpTENKa1lYUmxJam94Tnpnek1EVXpNalExTENKa2IyMWhhVzRpT2xzaWFuTndjbVZoWkhOb1pXVjBMbU52YlNJc0ltTnZaR1Z6WVc1a1ltOTRMbWx2SWl3aWFuTm9aV3hzTG01bGRDSXNJbU56WWk1aGNIQWlMQ0p6ZEdGamEySnNhWFI2TG1sdklpd2lkMlZpWTI5dWRHRnBibVZ5TG1sdklpd2liRzlqWVd4b2IzTjBJbDBzSW5Cc1lXNGlPaUl6TkNJc0luTmpiM0JsSWpwYkluWTNJaXdpZGpnaUxDSjJPU0lzSW5ZeE1DSXNJbll4TVNJc0luWXhNaUlzSW1Ob1lYSjBjeUlzSW1admNtMXpJaXdpWm05eWJYVnNZU0lzSW5CaGNuTmxjaUlzSW5KbGJtUmxjaUlzSW1OdmJXMWxiblJ6SWl3aWFXMXdiM0owWlhJaUxDSmlZWElpTENKMllXeHBaR0YwYVc5dWN5SXNJbk5sWVhKamFDSXNJbkJ5YVc1MElpd2ljMmhsWlhSeklpd2lZMnhwWlc1MElpd2ljMlZ5ZG1WeUlpd2ljMmhoY0dWeklpd2labTl5YldGMElpd2ljR2wyYjNRaVhTd2laR1Z0YnlJNmRISjFaWDA9';
+
+// Smartsheet-style gantt lanes for the JSS data grid
+jspreadsheet.setExtensions({ ganttChart });
+
+// Map the task fields to grid columns (x indexes); predecessors holds
+// comma-separated row numbers and draws the dependency arrows
+jspreadsheet.ganttChart({
+    columns: { label: 0, start: 1, end: 2, progress: 3, color: 4, predecessors: 5 },
+    width: 460,
+    editable: true,
+    snap: 1,
+});
+
+// Create the spreadsheets
+window.grid = jspreadsheet(document.getElementById('spreadsheet'), {
+    toolbar: true,
+    worksheets: [
+        {
+            columns: [
+                { title: 'Task', width: 140 },
+                { title: 'Start', width: 100 },
+                { title: 'End', width: 100 },
+                { title: '%', width: 50 },
+                { title: 'Color', width: 80 },
+                { title: 'Pred.', width: 60 },
+            ],
+            data: [
+                ['Discovery', '2026-06-01', '2026-06-04', 100, '#0ea5e9', ''],
+                ['Design',    '2026-06-03', '2026-06-09', 80,  '',        '1'],
+                ['Build',     '2026-06-08', '2026-06-18', 45,  '#16a34a', '2'],
+                ['QA',        '2026-06-16', '2026-06-22', 10,  '#f59e0b', '3'],
+                ['Launch',    '2026-06-24', '2026-06-24', '',  '',        '4'],
+                ['', '', '', '', '', ''],
+                ['', '', '', '', '', ''],
+                ['', '', '', '', '', ''],
+            ],
+        },
+    ],
+});
+</script>
+</html>

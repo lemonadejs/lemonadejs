@@ -1,0 +1,362 @@
+/* <Editor /> — lm-editor-* convention. Consumes the global token spine;
+   every reference carries an original-value fallback so the block renders
+   standalone with NO global stylesheet (catalog rule). */
+
+.lm-editor {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--lm-border-color, #d8d8d8);
+    border-radius: var(--lm-radius-lg, 10px);
+    background: var(--lm-background-color, #fff);
+    color: var(--lm-font-color, #202020);
+    overflow: visible;
+}
+
+.lm-editor:focus-within {
+    outline: 2px solid var(--lm-border-outline, #000);
+    outline-offset: 2px;
+}
+
+.lm-editor[data-fullscreen="true"] {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    border-radius: 0;
+}
+
+.lm-editor[data-fullscreen="true"] .lm-editor-area {
+    flex: 1;
+    height: auto !important;
+    overflow-y: auto !important;
+}
+
+/* ---- toolbar row (the Toolbar block, hosted) ---- */
+
+.lm-editor-toolbar {
+    border-bottom: 1px solid var(--lm-border-color-light, #e8e8e8);
+    background: var(--lm-background-color-header, #f7f7f7);
+    border-radius: var(--lm-radius-lg, 10px) var(--lm-radius-lg, 10px) 0 0;
+}
+
+.lm-editor-toolbar .lm-toolbar[data-position="static"] {
+    background: transparent;
+    box-shadow: none;
+    flex-wrap: wrap;
+    padding: var(--lm-space-1, 4px);
+    row-gap: 2px;
+}
+
+.lm-editor-toolbar .lm-toolbar[data-position="static"] .lm-toolbar-item {
+    padding: 4px;
+    border-radius: var(--lm-radius, 6px);
+    cursor: pointer;
+}
+
+.lm-editor-toolbar .lm-toolbar[data-position="static"] .lm-toolbar-item:hover,
+.lm-editor-balloon .lm-toolbar[data-position="static"] .lm-toolbar-item:hover {
+    background-color: var(--lm-background-color-highlight, #e8e8e8);
+}
+
+.lm-editor[data-readonly="true"] .lm-editor-toolbar {
+    opacity: 0.55;
+    pointer-events: none;
+}
+
+/* ---- writing area ---- */
+
+.lm-editor-area {
+    padding: var(--lm-space-4, 16px);
+    min-height: 120px;
+    outline: none;
+    line-height: 1.55;
+    overflow-wrap: break-word;
+}
+
+.lm-editor-area[data-empty="true"]::before {
+    content: attr(data-placeholder);
+    position: absolute;
+    color: var(--lm-font-grayout, #646464);
+    pointer-events: none;
+}
+
+.lm-editor-area img {
+    max-width: 100%;
+}
+
+.lm-editor-area blockquote {
+    margin: 0;
+    padding: 2px 0 2px 14px;
+    border-left: 3px solid var(--lm-border-color, #d8d8d8);
+    color: var(--lm-secondary-color, #646464);
+}
+
+.lm-editor-area pre {
+    background: var(--lm-neutral-3, #f0f0f0);
+    padding: var(--lm-space-2, 8px) var(--lm-space-3, 12px);
+    border-radius: var(--lm-radius, 6px);
+    font-size: 0.9em;
+    white-space: pre-wrap;
+}
+
+.lm-editor-area hr {
+    border: 0;
+    border-top: 1px solid var(--lm-border-color-highlight, #bbbbbb);
+}
+
+/* ---- tables inside the writing area ---- */
+
+.lm-editor-area table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: var(--lm-space-2, 8px) 0;
+}
+
+.lm-editor-area td,
+.lm-editor-area th {
+    border: 1px solid var(--lm-neutral-7, #cccccc);
+    padding: 6px 8px;
+    vertical-align: top;
+    min-width: 24px;
+}
+
+.lm-editor-area th {
+    background: var(--lm-background-color-header, #f7f7f7);
+    text-align: left;
+}
+
+.lm-editor-area td.lm-editor-cell-selected,
+.lm-editor-area th.lm-editor-cell-selected {
+    background-color: var(--lm-main-color-tint, #2563eb1a);
+    box-shadow: inset 0 0 0 1px var(--lm-main-color, #2563eb);
+}
+
+/* ---- floating table balloon (a hosted Toolbar) ---- */
+
+.lm-editor-balloon {
+    position: absolute;
+    z-index: 12;
+    background: var(--lm-background-color, #fff);
+    border: 1px solid var(--lm-border-color, #d8d8d8);
+    border-radius: var(--lm-radius, 6px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+}
+
+.lm-editor-balloon .lm-toolbar[data-position="static"] {
+    background: transparent;
+    box-shadow: none;
+    padding: 2px 4px;
+    border-radius: var(--lm-radius, 6px);
+}
+
+.lm-editor-balloon .lm-toolbar-picker-header {
+    font-size: 0.85em;
+}
+
+/* ---- table grid picker (insert n × m) ---- */
+
+.lm-editor-grid {
+    position: absolute;
+    z-index: 12;
+    background: var(--lm-background-color, #fff);
+    border: 1px solid var(--lm-border-color, #d8d8d8);
+    border-radius: var(--lm-radius, 6px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+    padding: var(--lm-space-2, 8px);
+}
+
+.lm-editor-grid-cells {
+    display: grid;
+    grid-template-columns: repeat(10, 16px);
+    gap: 3px;
+}
+
+.lm-editor-grid-cell {
+    width: 16px;
+    height: 16px;
+    border: 1px solid var(--lm-neutral-7, #cccccc);
+    border-radius: 3px;
+    box-sizing: border-box;
+    cursor: pointer;
+}
+
+.lm-editor-grid-cell[data-on="true"] {
+    background: var(--lm-main-color-tint-strong, #2563eb29);
+    border-color: var(--lm-main-color, #2563eb);
+}
+
+.lm-editor-grid-label {
+    margin-top: 6px;
+    text-align: center;
+    font-size: 12px;
+    color: var(--lm-secondary-color, #646464);
+}
+
+/* ---- link balloon ---- */
+
+.lm-editor-link {
+    position: absolute;
+    z-index: 12;
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    background: var(--lm-background-color, #fff);
+    border: 1px solid var(--lm-border-color, #d8d8d8);
+    border-radius: var(--lm-radius, 6px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+    padding: 6px;
+}
+
+.lm-editor-link input {
+    width: 220px;
+    padding: var(--lm-input-padding, 6px);
+    border: 1px solid var(--lm-border-color, #d8d8d8);
+    border-radius: var(--lm-radius-input, 4px);
+    background: var(--lm-background-color-input, transparent);
+    color: inherit;
+    font: inherit;
+    font-size: 0.9em;
+}
+
+.lm-editor-link input:focus {
+    outline: 2px solid var(--lm-border-outline, #000);
+    outline-offset: 1px;
+}
+
+.lm-editor-link button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    border: 0;
+    background: transparent;
+    border-radius: var(--lm-radius, 6px);
+    cursor: pointer;
+    color: var(--lm-icon-color, #646464);
+}
+
+.lm-editor-link button:hover {
+    background: var(--lm-background-color-highlight, #e8e8e8);
+}
+
+.lm-editor-link button i {
+    font-size: 18px;
+}
+
+/* ---- resize handles (CKEditor-style boundary guides) ---- */
+
+.lm-editor-col-resize {
+    position: absolute;
+    z-index: 11;
+    width: 5px;
+    margin-left: -1px;
+    cursor: col-resize;
+    background: var(--lm-main-color, #2563eb);
+    opacity: 0.55;
+    border-radius: 2px;
+}
+
+.lm-editor-row-resize {
+    position: absolute;
+    z-index: 11;
+    height: 5px;
+    margin-top: -1px;
+    cursor: row-resize;
+    background: var(--lm-main-color, #2563eb);
+    opacity: 0.55;
+    border-radius: 2px;
+}
+
+.lm-editor-col-resize:hover,
+.lm-editor-row-resize:hover {
+    opacity: 0.9;
+}
+
+/* ---- image object selection: box, corner handles, alignment bar ---- */
+
+.lm-editor-img-box {
+    position: absolute;
+    z-index: 10;
+    outline: 2px solid var(--lm-main-color, #2563eb);
+    outline-offset: -1px;
+    pointer-events: none; /* the image below stays clickable */
+    border-radius: 2px;
+}
+
+.lm-editor-img-handle {
+    position: absolute;
+    width: 9px;
+    height: 9px;
+    background: var(--lm-background-color, #fff);
+    border: 2px solid var(--lm-main-color, #2563eb);
+    border-radius: 2px;
+    pointer-events: auto;
+    box-sizing: border-box;
+}
+
+.lm-editor-img-handle[data-corner="nw"] { left: -5px; top: -5px; cursor: nwse-resize; }
+.lm-editor-img-handle[data-corner="ne"] { right: -5px; top: -5px; cursor: nesw-resize; }
+.lm-editor-img-handle[data-corner="sw"] { left: -5px; bottom: -5px; cursor: nesw-resize; }
+.lm-editor-img-handle[data-corner="se"] { right: -5px; bottom: -5px; cursor: nwse-resize; }
+
+/* edge handles: one-axis stretch (corners keep the aspect ratio) */
+.lm-editor-img-handle[data-corner="n"] { left: calc(50% - 4px); top: -5px; cursor: ns-resize; }
+.lm-editor-img-handle[data-corner="s"] { left: calc(50% - 4px); bottom: -5px; cursor: ns-resize; }
+.lm-editor-img-handle[data-corner="e"] { right: -5px; top: calc(50% - 4px); cursor: ew-resize; }
+.lm-editor-img-handle[data-corner="w"] { left: -5px; top: calc(50% - 4px); cursor: ew-resize; }
+
+.lm-editor-img-bar {
+    position: absolute;
+    top: -44px;
+    left: 0;
+    pointer-events: auto;
+    background: var(--lm-background-color, #fff);
+    border: 1px solid var(--lm-border-color, #d8d8d8);
+    border-radius: var(--lm-radius, 6px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+    white-space: nowrap;
+}
+
+.lm-editor-img-bar .lm-toolbar[data-position="static"] {
+    background: transparent;
+    box-shadow: none;
+    padding: 2px 4px;
+    border-radius: var(--lm-radius, 6px);
+    flex-wrap: nowrap;
+}
+
+/* ---- HTML source-editing mode ---- */
+
+.lm-editor[data-source="true"] .lm-editor-area {
+    display: none; /* the textarea IS the surface while source is open */
+}
+
+.lm-editor-source {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    min-height: 220px;
+    border: 0;
+    outline: none;
+    resize: vertical;
+    padding: var(--lm-space-4, 16px);
+    font-family: Consolas, Menlo, monospace;
+    font-size: 13px;
+    line-height: 1.5;
+    tab-size: 4;
+    background: var(--lm-neutral-1, #fcfcfc);
+    color: var(--lm-font-color, #202020);
+    border-radius: 0 0 var(--lm-radius-lg, 10px) var(--lm-radius-lg, 10px);
+}
+
+.lm-editor[data-fullscreen="true"] .lm-editor-source {
+    flex: 1;
+    height: auto !important;
+    resize: none;
+}
+
+/* ---- misc ---- */
+
+.lm-editor-file {
+    display: none;
+}

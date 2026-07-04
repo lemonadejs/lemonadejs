@@ -1,0 +1,50 @@
+/* Gantt extension for the JSS data grid — glue between the grid table
+   and the @lemonadejs/gantt block (which carries its own lm-gantt-* CSS) */
+
+/* The extra header cell hosts the <Gantt> element (timeline header only
+   in table mode); the block draws its own month/day rows */
+th.lm-gantt-header-cell {
+    padding: 0 !important;
+    vertical-align: bottom;
+    background-color: var(--jss-background-color, #fff);
+    text-align: left;
+    font-weight: normal;
+}
+
+/* jss data rows are ~24px; the block's standalone lane floor is 32px */
+.jss_worksheet .lm-gantt-lane {
+    min-height: 20px;
+}
+
+/* Connectors go UNDER the bars (bars are z-index 1; the block's default
+   layer is 2): elbow segments never paint across a bar face, while the
+   arrowheads — placed just outside the target bar — stay visible.
+   jss chrome (headers z4+, corner z6, editor z7) stays above both. */
+.jss-gantt-link-layer {
+    z-index: 0;
+}
+
+/* The connect handles and the drag preview line stay above the bars
+   (z1) but below the jss chrome (z4+) */
+.jss-gantt-handle-layer {
+    z-index: 2;
+}
+
+/* Drag onto another task's row to write its predecessors cell */
+.jss-gantt-link-handle {
+    position: absolute;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    box-sizing: border-box;
+    background: var(--lm-main-color, #2563eb);
+    border: 2px solid var(--lm-background-color, #fff);
+    transform: translate(0, -50%);
+    pointer-events: auto;
+    cursor: crosshair;
+    opacity: 0.35;
+}
+
+.jss-gantt-link-handle:hover {
+    opacity: 1;
+}

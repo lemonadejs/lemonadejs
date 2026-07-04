@@ -1096,7 +1096,9 @@
                 "insertTable",
                 "undo",
                 "redo",
+                "toggleSource",
                 "print",
+                "exportPDF",
                 "exportWord"
             ]
         }

@@ -1,0 +1,54 @@
+{
+    "name": "editor",
+    "props": {
+        "value": {
+            "type": "string",
+            "default": ""
+        },
+        "placeholder": {
+            "type": "string",
+            "default": ""
+        },
+        "toolbar": {
+            "type": "boolean",
+            "default": true
+        },
+        "height": {
+            "type": "string",
+            "default": ""
+        },
+        "readonly": {
+            "type": "boolean",
+            "default": false
+        },
+        "filterpaste": {
+            "type": "boolean",
+            "default": true
+        },
+        "acceptimages": {
+            "type": "boolean",
+            "default": true
+        }
+    },
+    "bind": {
+        "type": "string"
+    },
+    "events": [
+        "onfocus",
+        "onblur"
+    ],
+    "api": [
+        "getData",
+        "setData",
+        "getText",
+        "exec",
+        "focus",
+        "insertTable",
+        "undo",
+        "redo",
+        "toggleSource",
+        "print",
+        "exportPDF",
+        "exportWord"
+    ]
+}
