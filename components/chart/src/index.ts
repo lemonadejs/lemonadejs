@@ -35,13 +35,13 @@
 import { component, css, html, type View } from 'lemonadejs';
 import {
     normalize, type Annotation, type ChartOptions, type ChartSeries, type Model,
-    type NormPoint, type PlotBand, type PlotLine, type RenderCtx, type TipRow,
+    type NormPoint, type NormSeries, type PlotBand, type PlotLine, type RenderCtx, type TipRow,
 } from './model';
 import { compact, plain } from './helpers';
 import { bars, boxplotChart, lollipopChart, ohlcChart, rangeChart, waterfallChart } from './cartesian';
 import { funnelChart, gaugeChart, pie, polarareaChart, radarChart, radialbarChart } from './radial';
-import { bulletChart, heatmapChart, packedbubbleChart, scatterChart, sparkline, treemapChart } from './extras';
-import { chordChart, sankeyChart } from './flow';
+import { bulletChart, heatmapChart, packedbubbleChart, scatterChart, sparkline, treemapChart, wordcloudChart } from './extras';
+import { arcChart, chordChart, sankeyChart } from './flow';
 import { icicleChart, sunburstChart } from './hierarchy';
 
 export type { ChartPoint, ChartSeries, PlotBand, PlotLine, Annotation } from './model';
@@ -51,7 +51,7 @@ export type { ChartPoint, ChartSeries, PlotBand, PlotLine, Annotation } from './
  * ------------------------------------------------------------------ */
 
 export const Chart = component('chart', {
-    type: 'bar',             // bar | stackedbar | line | stackedarea | streamgraph | pie | scatter | bubble | radar | radialbar | polararea | gauge | funnel | pyramid | waterfall | bullet | lollipop | dumbbell | histogram | heatmap | candlestick | ohlc | boxplot | arearange | columnrange | treemap | sunburst | icicle | sankey | chord | packedbubble | pareto
+    type: 'bar',             // bar | stackedbar | line | stackedarea | streamgraph | pie | scatter | bubble | radar | radialbar | polararea | gauge | funnel | pyramid | waterfall | bullet | lollipop | dumbbell | histogram | heatmap | candlestick | ohlc | boxplot | arearange | columnrange | treemap | sunburst | icicle | sankey | chord | arcdiagram | packedbubble | pareto | wordcloud
     series: Array,           // [{ name, data, color? }]; pie uses the first series
     categories: Array,       // x-axis labels (bar/stacked) / slice names (pie)
     title: '',               // optional heading above the plot
@@ -77,11 +77,13 @@ export const Chart = component('chart', {
     legendposition: '',      // '' auto | 'top' | 'bottom' | 'left' | 'right'
     labels: true,            // value labels on bars / % on slices (set false to hide)
     horizontal: false,       // bar/stacked: horizontal bars (categories on the y-axis)
+    mirror: false,           // horizontal bars: population pyramid — series[0] grows leftward, abs labels
     tooltip: true,           // styled hover tooltip following the cursor
     sharedtooltip: true,     // bar/stacked: hover a column → all series + crosshair
     animate: true,           // CSS entrance/update animation (reduced-motion aware)
     stackmode: 'normal',     // stackedbar only: 'normal' | 'percent' (100%-stacked)
     innerradius: 0,          // pie: donut hole as a fraction (0–0.9) or percent (10–90); ring thickness = radius × (1 − innerradius)
+    borderradius: null,      // corner rounding: donut segment corners / heatmap cells; default = subtle per-type value
     ymin: Number,            // bar/stacked: force the y-axis lower bound (auto if unset)
     ymax: Number,            // bar/stacked: force the y-axis upper bound (auto if unset)
     ylog: false,             // logarithmic y-axis (positive values only)
@@ -147,10 +149,12 @@ export const Chart = component('chart', {
         legendposition: props.legendposition.value,
         labels: props.labels.value,
         horizontal: props.horizontal.value,
+        mirror: props.mirror.value,
         tooltip: props.tooltip.value,
         sharedtooltip: props.sharedtooltip.value,
         stackmode: props.stackmode.value,
         innerRadius: props.innerradius.value as number,
+        borderradius: props.borderradius.value as number | null,
         ymin: props.ymin.value as number,
         ymax: props.ymax.value as number,
         ylog: props.ylog.value,
@@ -247,13 +251,19 @@ export const Chart = component('chart', {
     };
 
     /* ----- legend (shared by all types) — real <button>s, toggle + highlight --- */
-    interface LegendEntry { name: string; color: string; key: string; line: boolean; }
+    interface LegendEntry { name: string; color: string; key: string; line: boolean; shape: string; }
     const legendEntries = (m: Model): LegendEntry[] => {
-        if (m.type === 'pie' || m.type === 'polararea' || m.type === 'radialbar') {
+        // multi-series radialbar (stacked polar) legends by SERIES like bars
+        if (m.type === 'pie' || m.type === 'polararea' || (m.type === 'radialbar' && m.series.length < 2)) {
             const points = m.series[0] ? m.series[0].points : [];
-            return points.map((p, i) => ({ name: p.name || '—', color: p.color, key: p.name || '#' + i, line: false }));
+            return points.map((p, i) => ({ name: p.name || '—', color: p.color, key: p.name || '#' + i, line: false, shape: '' }));
         }
-        return m.series.map((s) => ({ name: s.name, color: s.color, key: s.name, line: s.type !== 'bar' }));
+        // scatter swatches mirror the marker shape (explicit or the cycled
+        // default — keep the order in sync with scatterChart's CYCLE)
+        const cycle = ['circle', 'diamond', 'square', 'triangle'];
+        const shapeOf = (s: NormSeries, i: number): string =>
+            m.type === 'scatter' ? s.marker || cycle[i % cycle.length] : '';
+        return m.series.map((s, i) => ({ name: s.name, color: s.color, key: s.name, line: s.type !== 'bar' && m.type !== 'scatter', shape: shapeOf(s, i) }));
     };
     const legend = (entries: LegendEntry[]): View | false =>
         html`<div class="lm-chart-legend">${entries.map(
@@ -265,6 +275,7 @@ export const Chart = component('chart', {
                 onmouseenter="${() => (hover.value = e.key)}"
                 onmouseleave="${() => (hover.value = null)}">
                 <span class="lm-chart-swatch" data-line="${e.line ? 'true' : false}"
+                    data-shape="${e.shape || false}"
                     style="${css({ background: e.color })}"></span>
                 <span class="lm-chart-legend-name">${e.name}</span>
             </button>`,
@@ -276,7 +287,15 @@ export const Chart = component('chart', {
             || (['pie', 'radar', 'polararea', 'radialbar'].includes(m.type) ? 'right' : 'bottom');
         const noLegend = ['gauge', 'funnel', 'pyramid', 'waterfall', 'bullet', 'heatmap',
             'candlestick', 'ohlc', 'boxplot', 'arearange', 'columnrange', 'dumbbell', 'histogram', 'treemap',
-            'sankey', 'chord', 'sunburst', 'icicle'].includes(m.type);
+            'sankey', 'chord', 'arcdiagram', 'sunburst', 'icicle', 'wordcloud'].includes(m.type)
+            // pie slice names live on the callout labels (Highcharts-style);
+            // the legend only shows when labels are off or a position is
+            // explicitly requested (it would duplicate the callouts)
+            || (m.type === 'pie' && m.labels && !m.legendposition)
+            // multi-series pure-line charts label each series at its line
+            // end instead (cleaner than legend + colour matching)
+            || (m.type === 'line' && m.labels && !m.legendposition
+                && m.series.length > 1 && m.series.every((s) => s.type === 'line'));
         const leg = m.legend && !noLegend ? legend(legendEntries(m)) : false;
         return html`<div class="lm-chart-content" data-legend="${pos}">
             ${pos === 'top' || pos === 'left' ? leg : false}
@@ -302,7 +321,7 @@ export const Chart = component('chart', {
         }
         if (m.type === 'gauge' || m.type === 'bullet') return !!(m.series[0] && m.series[0].points[0]);
         // link diagrams need at least one complete positive link
-        if (m.type === 'sankey' || m.type === 'chord') {
+        if (m.type === 'sankey' || m.type === 'chord' || m.type === 'arcdiagram') {
             const pts = m.series[0] ? m.series[0].points : [];
             return pts.some((p) => !p.gap && p.from !== '' && p.to !== '' && p.value > 0);
         }
@@ -310,7 +329,7 @@ export const Chart = component('chart', {
         if (['scatter', 'bubble', 'radar', 'funnel', 'pyramid', 'waterfall',
             'heatmap', 'candlestick', 'ohlc', 'boxplot', 'arearange', 'columnrange',
             'dumbbell', 'lollipop', 'radialbar', 'polararea', 'treemap',
-            'sunburst', 'icicle', 'packedbubble'].includes(m.type)) {
+            'sunburst', 'icicle', 'packedbubble', 'wordcloud'].includes(m.type)) {
             return m.series.some((s) => !isHidden(s.name) && s.points.some((p) => !p.gap));
         }
         return m.series.some((s) => !isHidden(s.name) && s.points.some((p) => p.value !== 0));
@@ -334,7 +353,7 @@ export const Chart = component('chart', {
         const cols = m.categories.length
             ? m.categories
             : (m.series[0] ? m.series[0].points.map((p, i) => p.name || String(i + 1)) : []);
-        if (m.type === 'sankey' || m.type === 'chord') {
+        if (m.type === 'sankey' || m.type === 'chord' || m.type === 'arcdiagram') {
             const pts = m.series[0] ? m.series[0].points : [];
             return html`<table class="lm-chart-a11y">
                 <caption>${m.title || describeChart(m)}</caption>
@@ -343,7 +362,7 @@ export const Chart = component('chart', {
                     html`<tr><td>${p.from}</td><td>${p.to}</td><td>${fmt(p.value)}</td></tr>`)}</tbody>
             </table>`;
         }
-        const nameVal = ['pie', 'funnel', 'treemap', 'polararea', 'radialbar', 'sunburst', 'icicle', 'packedbubble'].includes(m.type);
+        const nameVal = ['pie', 'funnel', 'treemap', 'polararea', 'radialbar', 'sunburst', 'icicle', 'packedbubble', 'wordcloud'].includes(m.type);
         const head = nameVal
             ? html`<tr><th>Name</th><th>Value</th></tr>`
             : html`<tr><th>Series</th>${cols.map((c) => html`<th>${String(c)}</th>`)}</tr>`;
@@ -368,7 +387,7 @@ export const Chart = component('chart', {
             boxplot: ['Min', 'Q1', 'Median', 'Q3', 'Max'],
             arearange: ['Low', 'High'], columnrange: ['Low', 'High'], dumbbell: ['Low', 'High'],
         };
-        if (m.type === 'sankey' || m.type === 'chord') {
+        if (m.type === 'sankey' || m.type === 'chord' || m.type === 'arcdiagram') {
             lines.push('From,To,Value');
             (m.series[0] ? m.series[0].points : []).filter((p) => !p.gap && p.from !== '' && p.to !== '')
                 .forEach((p) => lines.push([p.from, p.to, String(p.value)].map(esc).join(',')));
@@ -376,7 +395,7 @@ export const Chart = component('chart', {
             lines.push('Name,Parent,Value');
             (m.series[0] ? m.series[0].points : []).filter((p) => !p.gap)
                 .forEach((p, i) => lines.push([p.name || String(i + 1), p.parent, String(p.value)].map(esc).join(',')));
-        } else if (['pie', 'funnel', 'pyramid', 'treemap', 'polararea', 'radialbar', 'packedbubble'].includes(m.type)) {
+        } else if (['pie', 'funnel', 'pyramid', 'treemap', 'polararea', 'radialbar', 'packedbubble', 'wordcloud'].includes(m.type)) {
             lines.push('Name,Value');
             (m.series[0] ? m.series[0].points : []).forEach((p, i) => lines.push(esc(p.name || String(i + 1)) + ',' + p.value));
         } else if (ext[m.type]) {
@@ -428,7 +447,7 @@ export const Chart = component('chart', {
     const toolbar = (): View | false => {
         if (!props.toolbar.value || props.sparkline.value) return false;
         const svgType = ['pie', 'radar', 'gauge', 'funnel', 'pyramid', 'radialbar', 'polararea',
-            'sankey', 'chord', 'sunburst', 'packedbubble'].includes(model.value.type);
+            'sankey', 'chord', 'arcdiagram', 'sunburst', 'packedbubble', 'wordcloud'].includes(model.value.type);
         return html`<div class="lm-chart-toolbar">
             ${svgType ? html`<button type="button" class="lm-chart-tool" title="Download SVG" onclick="${downloadSVG}">⤓ SVG</button>` : false}
             <button type="button" class="lm-chart-tool" title="Download CSV" onclick="${downloadCSV}">⤓ CSV</button>
@@ -470,8 +489,12 @@ export const Chart = component('chart', {
         </div>`;
     };
 
-    const sparkHeight = (): number => {
-        const h = Number(props.height.value);
+    const sparkHeight = (): number | string => {
+        const raw = props.height.value as number | string;
+        // percentage height: fill the container (embedding hosts — a jss
+        // media box, a dashboard cell — size the wrapper, the chart follows)
+        if (typeof raw === 'string' && raw.indexOf('%') !== -1) return raw;
+        const h = Number(raw);
         return props.sparkline.value ? (h > 0 ? h : 36) : model.value.height;
     };
     return html`<div class="lm-chart" data-type="${() => model.value.type}"
@@ -494,10 +517,12 @@ export const Chart = component('chart', {
             : t === 'pie' ? pie(m, ctx)
                 : t === 'scatter' || t === 'bubble' ? scatterChart(m, ctx)
                     : t === 'sankey' ? sankeyChart(m, ctx)
+                    : t === 'arcdiagram' ? arcChart(m, ctx)
                     : t === 'chord' ? chordChart(m, ctx)
                     : t === 'sunburst' ? sunburstChart(m, ctx)
                     : t === 'icicle' ? icicleChart(m, ctx)
                     : t === 'packedbubble' ? packedbubbleChart(m, ctx)
+                    : t === 'wordcloud' ? wordcloudChart(m, ctx)
                     : t === 'radar' ? radarChart(m, ctx)
                         : t === 'radialbar' ? radialbarChart(m, ctx)
                             : t === 'polararea' ? polarareaChart(m, ctx)

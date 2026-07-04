@@ -101,6 +101,10 @@
             "type": "boolean",
             "default": false
         },
+        "mirror": {
+            "type": "boolean",
+            "default": false
+        },
         "tooltip": {
             "type": "boolean",
             "default": true
@@ -120,6 +124,9 @@
         "innerradius": {
             "type": "number",
             "default": 0
+        },
+        "borderradius": {
+            "type": "any"
         },
         "ymin": {
             "type": "number"

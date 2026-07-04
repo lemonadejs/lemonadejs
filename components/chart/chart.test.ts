@@ -259,6 +259,26 @@ describe('components/chart', () => {
         expect(handle.queryAll('.lm-chart-legend-name').map((n) => n.textContent)).toEqual(['G1', 'G2']);
     });
 
+    it('wordcloud: one word per positive named point, font size grows with value', () => {
+        handle = t(Chart, {
+            type: 'wordcloud',
+            series: [{ data: [
+                { name: 'big', value: 90 }, { name: 'mid', value: 40 },
+                { name: 'small', value: 10 }, { name: 'zero', value: 0 },
+            ] }],
+        });
+        expect(handle.query('.lm-chart')!.getAttribute('data-type')).toBe('wordcloud');
+        const words = handle.queryAll('.lm-chart-cloud-word');
+        expect(words.length).toBe(3); // the zero-value point is dropped
+        expect(words.map((w) => w.textContent)).toEqual(['big', 'mid', 'small']);
+        const size = (el: Element) => parseFloat(el.getAttribute('font-size')!);
+        expect(size(words[0])).toBeGreaterThan(size(words[1]));
+        expect(size(words[1])).toBeGreaterThan(size(words[2]));
+        // no legend for a word cloud; the a11y table lists name/value rows
+        expect(handle.query('.lm-chart-legend')).toBeNull();
+        expect(handle.query('.lm-chart-a11y')).not.toBeNull();
+    });
+
     it('pareto: sorts descending and adds a cumulative-% line on the right axis', () => {
         handle = t(Chart, {
             type: 'pareto', categories: ['Late', 'Damage', 'Wrong', 'Other'],
@@ -341,9 +361,14 @@ describe('components/chart', () => {
         expect(handle.queryAll('.lm-chart-dot').length).toBe(3);
         expect(handle.queryAll('.lm-chart-bar').length).toBe(0);
         const dots = handle.queryAll('.lm-chart-dot');
-        // SVG circles: x=0 → cx 0%, y=0 → cy 100% (bottom)
-        expect(dots[0].getAttribute('cx')).toBe('0.00%');
-        expect(dots[0].getAttribute('cy')).toBe('100.00%');
+        // padding applies past zero too: the (0,0) point sits INSIDE the
+        // plot (not half-clipped on the axis), so cx > 0% and cy < 100%
+        const cx = parseFloat(dots[0].getAttribute('cx')!);
+        const cy = parseFloat(dots[0].getAttribute('cy')!);
+        expect(cx).toBeGreaterThan(0);
+        expect(cx).toBeLessThan(30);
+        expect(cy).toBeLessThan(100);
+        expect(cy).toBeGreaterThan(70);
     });
 
     it('scatter: extents pad past the data so edge points sit inside the plot', () => {
@@ -861,8 +886,10 @@ describe('components/chart', () => {
     });
 
     it('pie: one path per non-zero slice, legend names from points', () => {
+        // the pie legend only renders when a position is explicitly asked for
+        // (names live on the callout labels by default)
         handle = t(Chart, {
-            type: 'pie',
+            type: 'pie', legendposition: 'right',
             series: [{ data: [{ name: 'X', value: 30 }, { name: 'Y', value: 70 }, { name: 'Z', value: 0 }] }],
         });
         expect(handle.query('.lm-chart')!.getAttribute('data-type')).toBe('pie');
@@ -880,9 +907,9 @@ describe('components/chart', () => {
                 { name: 'Tiny', value: 4 },
             ] }],
         });
-        expect(handle.queryAll('.lm-chart-pie-label').length).toBe(1);   // Big (94%) inside
-        expect(handle.queryAll('.lm-chart-pie-olabel').length).toBe(2);  // Small + Tiny outside
-        expect(handle.queryAll('.lm-chart-leader').length).toBe(2);      // one leader each
+        expect(handle.queryAll('.lm-chart-pie-label').length).toBe(1);   // Big (94%) gets the % chip
+        expect(handle.queryAll('.lm-chart-pie-olabel').length).toBe(3);  // every slice: name callout
+        expect(handle.queryAll('.lm-chart-leader').length).toBe(3);      // one connector each
     });
 
     it('donut: innerRadius renders ring paths and a centre total', () => {
@@ -983,7 +1010,7 @@ describe('components/chart', () => {
 
     it('legend: hiding a pie slice renormalises the rest', () => {
         handle = t(Chart, {
-            type: 'pie',
+            type: 'pie', legendposition: 'right',
             series: [{ data: [{ name: 'A', value: 50 }, { name: 'B', value: 50 }] }],
         });
         expect(handle.queryAll('.lm-chart-slice').length).toBe(2);

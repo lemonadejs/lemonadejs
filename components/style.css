@@ -105,14 +105,14 @@
     /* Shared categorical palette — the single source of series colors for
        every data component (chart, gantt, kanban, schedule, progress...).
        Override these on a theme class and every chart + board recolors. */
-    --lm-series-1: #2563eb;
-    --lm-series-2: #39a33b;
-    --lm-series-3: #f59e0b;
-    --lm-series-4: #a23131;
-    --lm-series-5: #7c3aed;
-    --lm-series-6: #0ea5e9;
-    --lm-series-7: #db2777;
-    --lm-series-8: #64748b;
+    --lm-series-1: #4b81de;
+    --lm-series-2: #6342a1;
+    --lm-series-3: #c0554a;
+    --lm-series-4: #bd7f40;
+    --lm-series-5: #578163;
+    --lm-series-6: #45889c;
+    --lm-series-7: #b05a7e;
+    --lm-series-8: #75808f;
 
     --lm-safe-area-top: 0;
     --lm-safe-area-bottom: 0;
@@ -143,14 +143,14 @@
     --lm-border-outline: #000;
     --lm-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
     --lm-shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.06);
-    --lm-series-1: #2563eb;
-    --lm-series-2: #16a34a;
-    --lm-series-3: #f59e0b;
-    --lm-series-4: #dc2626;
-    --lm-series-5: #7c3aed;
-    --lm-series-6: #0ea5e9;
-    --lm-series-7: #db2777;
-    --lm-series-8: #64748b;
+    --lm-series-1: #4b81de;
+    --lm-series-2: #6342a1;
+    --lm-series-3: #c0554a;
+    --lm-series-4: #bd7f40;
+    --lm-series-5: #578163;
+    --lm-series-6: #45889c;
+    --lm-series-7: #b05a7e;
+    --lm-series-8: #75808f;
 }
 
 /* Minimal — dense + crisp: near-mono slate accent, 3px radius, tight pad */

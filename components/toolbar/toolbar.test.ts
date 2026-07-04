@@ -252,6 +252,70 @@ describe('components/toolbar — an action bar with Contextmenu pickers', () => 
         expect(menus()).toHaveLength(0);
     });
 
+    it('api.refresh() re-evaluates flags and titles mutated in place (editor host)', () => {
+        let api: { refresh(): void } | null = null;
+        const bold: ToolbarItem = { icon: 'format_bold' };
+        const heading: ToolbarItem = { type: 'select', title: 'Paragraph', options: ['Paragraph', 'Heading 1'] };
+        mountBar({ options: [bold, heading], ref: (a: { refresh(): void }) => (api = a) });
+        expect(items()[0].hasAttribute('data-selected')).toBe(false);
+
+        bold.selected = true; // a caret move flips the toggle states...
+        heading.title = 'Heading 1';
+        api!.refresh(); // ...and one refresh patches the bar in place
+        expect(items()[0].getAttribute('data-selected')).toBe('true');
+        expect(headers()[0].textContent).toBe('Heading 1');
+
+        bold.selected = false;
+        api!.refresh();
+        expect(items()[0].hasAttribute('data-selected')).toBe(false);
+    });
+
+    it('item.tooltip renders as the anchor title without a visible label', () => {
+        mountBar({ options: [{ icon: 'format_bold', tooltip: 'Bold (Ctrl+B)' }] as ToolbarItem[] });
+        expect(anchor(0).getAttribute('title')).toBe('Bold (Ctrl+B)');
+        expect(items()[0].querySelector('span')).toBeNull();
+    });
+
+    it('color items open the Color block popover; a pick reports on both channels and closes', async () => {
+        const log: string[] = [];
+        const color: ToolbarItem = {
+            type: 'color',
+            icon: 'format_color_text',
+            tooltip: 'Text color',
+            onchange: (value: string) => log.push('item:' + value),
+        };
+        mountBar({
+            options: [color],
+            onchange: (e: Event | null, item: ToolbarItem, option: { value?: string }) =>
+                log.push('bar:' + option.value),
+        });
+        expect(handle!.query('.lm-toolbar-color-pop')).toBeNull();
+        click(anchor(0));
+        await flush();
+        const pop = handle!.query('.lm-toolbar-color-pop');
+        expect(pop).not.toBeNull();
+        expect(pop!.querySelector('.lm-color-grid')).not.toBeNull(); // the Color block panel
+
+        const swatchCell = pop!.querySelector('.lm-color-cell[data-value="#f44336"]') as HTMLElement;
+        swatchCell.click();
+        expect(log).toEqual(['item:#f44336', 'bar:#f44336']);
+        expect(color.value).toBe('#f44336');
+        expect(handle!.query('.lm-toolbar-color-pop')).toBeNull(); // a pick closes it
+        const swatch = items()[0].querySelector('.lm-toolbar-swatch') as HTMLElement;
+        expect(swatch.style.backgroundColor).toBe('rgb(244, 67, 54)');
+    });
+
+    it('outside mousedown closes the color popover without a pick', async () => {
+        const color: ToolbarItem = { type: 'color', icon: 'format_color_fill' };
+        mountBar({ options: [color] });
+        click(anchor(0));
+        await flush();
+        expect(handle!.query('.lm-toolbar-color-pop')).not.toBeNull();
+        document.body.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+        expect(handle!.query('.lm-toolbar-color-pop')).toBeNull();
+        expect(color.value).toBeUndefined();
+    });
+
     it('options is live: replacing it re-renders the bar', () => {
         const opts = store<ToolbarItem[]>([{ icon: 'undo', title: 'Undo' }]);
         mountBar({ options: opts });

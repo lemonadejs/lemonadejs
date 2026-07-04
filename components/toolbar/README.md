@@ -31,6 +31,19 @@ plumbing via item.gap. One Contextmenu is shared by all pickers
 (v5 mounted one per picker), so hovering another picker moves the
 open dropdown instead of stacking menus.
 
+Editor-host additions (the Editor block drives its bar through these):
+  - item flags are LIVE: mutate selected / disabled / visible / title
+    on the item objects, then api.refresh() — the bar patches the
+    affected attributes in place (no rebuild, keyed by item identity).
+    A caret move updating twelve toggle states costs twelve attribute
+    writes, not a bar teardown.
+  - item.tooltip: hover text for icon-only items (title renders as a
+    visible label, so icon bars need a separate hover string)
+  - type 'color': a swatch item backed by the NATIVE color input —
+    activation opens the platform picker, the chosen value lands on
+    item.value (swatch underline), fires item.onchange(value, item)
+    and the bar-level onchange(e, item, { value }).
+
 ## Install
 
 ```bash
@@ -79,7 +92,7 @@ state for a two-way live wire. Attribute strings are coerced to the declared typ
 All event names are lowercase (the platform convention — LJS-305 warns otherwise).
 
 - `onitemclick` — (e, item, index) on any item activation
-- `onchange` — (e, item, option) when a picker option is chosen
+- `onchange` — (e, item, option) when a picker option is chosen, (e, item, { value }) on a color pick
 
 ## API (via `ref`)
 
@@ -87,11 +100,12 @@ All event names are lowercase (the platform convention — LJS-305 warns otherwi
 import { ref } from 'lemonadejs';
 const toolbar = ref();
 html`<${Toolbar} ref="${toolbar}" />`;
-// toolbar.current.open(...)  ·  toolbar.current.close(...)
+// toolbar.current.open(...)  ·  toolbar.current.close(...)  ·  toolbar.current.refresh(...)
 ```
 
 - `open()`
 - `close()`
+- `refresh()`
 
 ## Styling
 

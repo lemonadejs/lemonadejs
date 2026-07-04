@@ -592,7 +592,7 @@ export const Gantt = component('gantt', {
                 <div class="lm-gantt-days">${() =>
                     dayTicks().map(
                         (t) => html`<div class="lm-gantt-day" data-weekend="${t.weekend ? 'true' : false}"
-                            style="left:${t.left}%;width:${t.width}%">${t.day ? String(t.day) : ''}</div>`
+                            style="left:${t.left}%;width:${t.width}%">${t.day ? String(t.day).padStart(2, '0') : ''}</div>`
                     )}</div>
             </div>`}
         ${() =>

@@ -2,8 +2,25 @@
    Everything horizontal is %-positioned: instances sharing a range
    align across any containers (the table-row embedding story). */
 .lm-gantt {
-    font: 12.5px/1.4 system-ui, sans-serif;
-    color: var(--lm-font-color, #18181b);
+    /* Typography + framing follow the chart's Highcharts standards:
+       Helvetica Neue stack on a 1rem base, em-scaled labels (0.8em axis,
+       0.7em bold data labels), #333/#666 text, #e6e6e6 rules. Colours
+       read the shared template tokens with those values as fallbacks so
+       the gantt matches the chart with or without the global stylesheet. */
+    --lm-gantt-font: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    --lm-gantt-font-size: 1rem;
+    --lm-gantt-text: var(--lm-font-color, #333333);
+    --lm-gantt-muted: var(--lm-font-grayout, #666666);
+    --lm-gantt-grid: var(--lm-border-color, #e6e6e6);
+    /* the categorical series tokens keep gantt bars in step with chart
+       series: bar = series-1, milestone = series-2, today = series-4 */
+    --lm-gantt-bar: var(--lm-series-1, #4b81de);
+    --lm-gantt-milestone: var(--lm-series-2, #6342a1);
+    --lm-gantt-today: var(--lm-series-4, #bd7f40);
+    font-family: var(--lm-gantt-font);
+    font-size: var(--lm-gantt-font-size);
+    line-height: 1.4;
+    color: var(--lm-gantt-text);
     position: relative;
     width: 100%;
 }
@@ -12,7 +29,7 @@
 .lm-gantt-header {
     position: relative;
     user-select: none;
-    border-bottom: 1px solid var(--lm-border-color, #e4e4e7);
+    border-bottom: 1px solid var(--lm-gantt-grid);
     cursor: grab; /* drag to pan the viewport */
 }
 
@@ -33,12 +50,17 @@
     align-items: center;
     padding-left: 8px;
     box-sizing: border-box;
-    font-weight: 600;
-    font-size: 11.5px;
-    color: var(--lm-font-color, #3f3f46);
-    border-left: 1px solid var(--lm-border-color, #e4e4e7);
+    font-weight: bold;
+    font-size: 0.8em;
+    color: var(--lm-gantt-text);
+    border-left: 1px solid var(--lm-gantt-grid);
     white-space: nowrap;
     overflow: hidden;
+}
+
+/* the first segment starts at the chart edge — no divider needed there */
+.lm-gantt-month:first-child {
+    border-left: none;
 }
 
 .lm-gantt-days {
@@ -53,13 +75,13 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 10px;
-    color: var(--lm-font-grayout, #a1a1aa);
+    font-size: 0.7em;
+    color: var(--lm-gantt-muted);
     overflow: hidden;
 }
 
 .lm-gantt-day[data-weekend='true'] {
-    color: var(--lm-border-color, #e4e4e7);
+    color: var(--lm-gantt-grid);
 }
 
 /* ---- chart area */
@@ -86,7 +108,7 @@
     top: 0;
     height: 100%;
     width: 0;
-    border-left: 2px dashed #f59e0b;
+    border-left: 2px dashed var(--lm-gantt-today);
     pointer-events: none;
     z-index: 2;
 }
@@ -103,10 +125,10 @@
     transform: translateY(-50%);
     height: 62%;
     min-width: 6px;
-    background: var(--lm-main-color, #2563eb);
-    background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0) 55%);
+    /* flat series colour, like the chart bars (no gloss gradient) */
+    background: var(--lm-gantt-bar);
     border-radius: var(--lm-radius, 6px);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
     display: flex;
     align-items: center;
     overflow: hidden;
@@ -168,8 +190,8 @@
     position: relative;
     padding: 0 10px;
     color: #fff;
-    font-weight: 600;
-    font-size: 11.5px;
+    font-weight: bold;
+    font-size: 0.7em;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -183,7 +205,7 @@
     top: 50%;
     width: 12px;
     height: 12px;
-    background: var(--lm-color-purple, #7c3aed);
+    background: var(--lm-gantt-milestone);
     transform: translate(-50%, -50%) rotate(45deg);
     border-radius: 3px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
@@ -217,7 +239,7 @@
 
 .lm-gantt-link {
     fill: none;
-    stroke: var(--lm-gantt-link, var(--lm-icon-color, #777));
+    stroke: var(--lm-gantt-link, var(--lm-icon-color, #666666));
     stroke-width: 1.5;
     vector-effect: non-scaling-stroke;
 }
@@ -228,7 +250,7 @@
     height: 0;
     transform: translate(-100%, -50%);
     border: 4px solid transparent;
-    border-left-color: var(--lm-gantt-link, var(--lm-icon-color, #777));
+    border-left-color: var(--lm-gantt-link, var(--lm-icon-color, #666666));
     pointer-events: none;
     z-index: 2;
 }

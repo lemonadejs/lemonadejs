@@ -75,6 +75,7 @@ export interface ChartOptions {
     legendposition?: string;
     labels?: boolean;
     horizontal?: boolean;
+    mirror?: boolean;
     markers?: boolean;
     smooth?: boolean;
     step?: boolean | 'before' | 'mid';
@@ -83,6 +84,7 @@ export interface ChartOptions {
     sharedtooltip?: boolean;
     stackmode?: string;
     innerRadius?: number;
+    borderradius?: number | null;
     ymin?: number;
     ymax?: number;
     ylog?: boolean;
@@ -135,6 +137,10 @@ export interface Annotation {
  *   - tableau    : Tableau 10 — calm, balanced BI palette
  *   - category10 : D3 schemeCategory10 — the classic web palette
  *   - material   : Material Design 500s — bright, high-saturation
+ *   - focus      : hero + neutrals (the Highcharts pie-demo scheme): the
+ *                  first slot is the series blue, the rest a cool-gray
+ *                  ramp — emphasises the leading slice/series. Best with
+ *                  data sorted descending.
  *
  * NOTE: `lemonade` is kept in sync (by value) with --lm-series-* in
  * components/style.css. Live re-theming of series colours from the CSS
@@ -143,14 +149,15 @@ export interface Annotation {
  * label luminance) to resolve a concrete hex, so it can't just emit var().
  */
 export const PALETTES: Record<string, string[]> = {
-    lemonade: ['#2563eb', '#39a33b', '#f59e0b', '#a23131', '#7c3aed',
-        '#0ea5e9', '#db2777', '#64748b', '#14b8a6', '#eab308'],
+    lemonade: ['#4b81de', '#6342a1', '#c0554a', '#bd7f40', '#578163',
+        '#45889c', '#b05a7e', '#75808f', '#a3a442', '#8b6a52'],
     tableau: ['#4e79a7', '#f28e2b', '#e15759', '#76b7b2', '#59a14f',
         '#edc948', '#b07aa1', '#ff9da7', '#9c755f', '#bab0ac'],
     category10: ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd',
         '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf'],
     material: ['#2196f3', '#4caf50', '#ff9800', '#f44336', '#9c27b0',
         '#00bcd4', '#ffc107', '#795548', '#607d8b', '#e91e63'],
+    focus: ['#4b81de', '#a5afb6', '#d6dbde', '#e8eef1', '#f5fcff'],
 };
 
 /** Resolve a palette: explicit colours win, else a named built-in, else lemonade. */
@@ -208,7 +215,7 @@ export interface Model {
         | 'radar' | 'gauge' | 'funnel' | 'pyramid' | 'waterfall' | 'bullet'
         | 'heatmap' | 'candlestick' | 'ohlc' | 'boxplot' | 'arearange' | 'columnrange' | 'dumbbell'
         | 'lollipop' | 'histogram' | 'radialbar' | 'polararea' | 'treemap' | 'pie'
-        | 'sankey' | 'chord' | 'sunburst' | 'icicle' | 'packedbubble' | 'pareto';
+        | 'sankey' | 'chord' | 'arcdiagram' | 'sunburst' | 'icicle' | 'packedbubble' | 'pareto' | 'wordcloud';
     title: string;
     subtitle: string;
     xtype: '' | 'datetime' | 'linear';
@@ -223,11 +230,16 @@ export interface Model {
     legendposition: 'top' | 'bottom' | 'left' | 'right' | '';
     labels: boolean;
     horizontal: boolean;
+    /** population pyramid: series[0] grows leftward (horizontal only) */
+    mirror: boolean;
     markers: boolean;
     tooltip: boolean;
     sharedtooltip: boolean;
     stackmode: 'normal' | 'percent';
     innerRadius: number;
+    /** corner rounding: donut segment corners (viewBox units) / heatmap
+     *  cell radius (px); null = the per-type subtle default */
+    borderRadius: number | null;
     ymin: number | null;
     ymax: number | null;
     ylog: boolean;
@@ -247,13 +259,13 @@ export const normalize = (def: ChartOptions): Model => {
     let categories = Array.isArray(def.categories) ? def.categories.map(String) : [];
     let rawSeries = Array.isArray(def.series) ? def.series : [];
 
-    const alias: Record<string, string> = { lines: 'line', rose: 'polararea', dependencywheel: 'chord' };
+    const alias: Record<string, string> = { lines: 'line', rose: 'polararea', dependencywheel: 'chord', tagcloud: 'wordcloud' };
     const rawType = def.type != null && alias[def.type] ? alias[def.type] : def.type;
     const known = ['stackedbar', 'line', 'stackedarea', 'streamgraph', 'scatter', 'bubble',
         'radar', 'gauge', 'funnel', 'pyramid', 'waterfall', 'bullet',
         'heatmap', 'candlestick', 'ohlc', 'boxplot', 'arearange', 'columnrange', 'dumbbell',
         'lollipop', 'histogram', 'radialbar', 'polararea', 'treemap', 'pie',
-        'sankey', 'chord', 'sunburst', 'icicle', 'packedbubble', 'pareto'];
+        'sankey', 'chord', 'arcdiagram', 'sunburst', 'icicle', 'packedbubble', 'pareto', 'wordcloud'];
     const chartType = (known.includes(rawType as string) ? rawType : 'bar') as Model['type'];
 
     // Histogram: the first series carries raw SAMPLES; bin them here so the
@@ -312,7 +324,8 @@ export const normalize = (def: ChartOptions): Model => {
             smooth: s.smooth === true || (s.smooth == null && def.smooth === true),
             dashed: s.dashed === true,
             step: s.step === true || s.step === 'mid' || (s.step == null && (def.step === true || def.step === 'mid')) ? (s.step === 'mid' || (s.step == null && def.step === 'mid') ? 'mid' : 'before') : '',
-            marker: ['square', 'triangle', 'diamond'].includes(s.marker as string) ? (s.marker as string) : 'circle',
+            // '' = not specified (scatter cycles shapes per series, HC-style)
+            marker: ['circle', 'square', 'triangle', 'diamond'].includes(s.marker as string) ? (s.marker as string) : '',
             points: data.map((p, pi) => p == null
                 ? { name: categories[pi] != null ? categories[pi] : '', value: 0, x: pi, z: 0, extra: [], color: palette[pi % palette.length], gap: true, from: '', to: '', parent: '' }
                 : {
@@ -351,6 +364,7 @@ export const normalize = (def: ChartOptions): Model => {
         legendposition: pos === 'top' || pos === 'bottom' || pos === 'left' || pos === 'right' ? pos : '',
         labels: def.labels !== false,
         horizontal: def.horizontal === true,
+        mirror: def.mirror === true,
         markers: def.markers !== false,
         tooltip: def.tooltip !== false,
         sharedtooltip: def.sharedtooltip !== false,
@@ -359,6 +373,8 @@ export const normalize = (def: ChartOptions): Model => {
         // (innerradius="60" would otherwise clamp to 0.9 silently)
         innerRadius: Math.max(0, Math.min(0.9, (Number(def.innerRadius) || 0) > 1
             ? (Number(def.innerRadius) || 0) / 100 : Number(def.innerRadius) || 0)),
+        borderRadius: def.borderradius != null && Number.isFinite(Number(def.borderradius))
+            ? Math.max(0, Number(def.borderradius)) : null,
         ymin: def.ymin != null && Number.isFinite(Number(def.ymin)) ? Number(def.ymin) : null,
         ymax: def.ymax != null && Number.isFinite(Number(def.ymax)) ? Number(def.ymax) : null,
         ylog: def.ylog === true,

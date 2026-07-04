@@ -66,6 +66,32 @@
     margin: 0 5px;
 }
 
+/* Color items: the icon carries a swatch underline showing the current
+   value; activation opens the Color block panel in a fixed popover
+   anchored under the item (load @lemonadejs/color/style.css) */
+.lm-toolbar-color {
+    position: relative;
+}
+
+.lm-toolbar-color .lm-toolbar-swatch {
+    display: block;
+    width: 18px;
+    height: 3px;
+    margin: -2px auto 2px;
+    border-radius: 2px;
+    border: 1px solid var(--lm-border-color-light, #e8e8e8);
+}
+
+.lm-toolbar-color-pop {
+    position: fixed;
+    z-index: 40;
+    background: var(--lm-background-color, #fff);
+    border: 1px solid var(--lm-border-color, #d8d8d8);
+    border-radius: var(--lm-radius, 6px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+    padding: 4px;
+}
+
 /* Pickers: v5 shipped no styles for them at all */
 .lm-toolbar-picker-header {
     cursor: pointer;

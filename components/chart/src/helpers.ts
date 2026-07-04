@@ -271,6 +271,36 @@ export const ring = (start: number, end: number, rInner: number): string => {
         `L ${f(ix1)} ${f(iy1)} A ${rInner} ${rInner} 0 ${large} 1 ${f(ix2)} ${f(iy2)} Z`;
 };
 
+/**
+ * Ring segment with rounded corners (the donut `borderradius`). `q` is the
+ * corner radius in viewBox units, clamped to the half-thickness and to the
+ * slice's angular room so tiny slices degrade to plain ring segments.
+ */
+export const roundedRing = (start: number, end: number, rOut: number, rIn: number, q: number): string => {
+    const span = end - start;
+    q = Math.max(0, Math.min(q, (rOut - rIn) / 2));
+    const halfRad = Math.min(Math.PI / 2, (span / 2) * (Math.PI / 180));
+    q = Math.min(q, (rIn * Math.sin(halfRad)) / (1 + Math.sin(halfRad)) || 0);
+    const rco = rOut - q; // corner-centre radii
+    const rci = rIn + q;
+    const fo = (Math.asin(Math.min(1, q / rco)) * 180) / Math.PI; // corner angular size
+    const fi = (Math.asin(Math.min(1, q / rci)) * 180) / Math.PI;
+    if (q < 0.05 || span <= 2 * Math.max(fo, fi) + 0.2) return ring(start, end, rIn);
+    const to = Math.sqrt(rco * rco - q * q); // tangent radius on the edge lines
+    const ti = Math.sqrt(rci * rci - q * q);
+    const P = (a: number, r: number): string => { const [x, y] = polar(a, r); return f(x) + ' ' + f(y); };
+    const cr = f(q) + ' ' + f(q) + ' 0 0 1 ';
+    return 'M ' + P(start + fo, rOut) +
+        ' A ' + f(rOut) + ' ' + f(rOut) + ' 0 ' + (span - 2 * fo > 180 ? 1 : 0) + ' 1 ' + P(end - fo, rOut) +
+        ' A ' + cr + P(end, to) +
+        ' L ' + P(end, ti) +
+        ' A ' + cr + P(end - fi, rIn) +
+        ' A ' + f(rIn) + ' ' + f(rIn) + ' 0 ' + (span - 2 * fi > 180 ? 1 : 0) + ' 0 ' + P(start + fi, rIn) +
+        ' A ' + cr + P(start, ti) +
+        ' L ' + P(start, to) +
+        ' A ' + cr + P(start + fo, rOut) + ' Z';
+};
+
 /** A full annulus (single-slice donut) via even-odd fill of two circles. */
 export const fullRing = (rInner: number): string =>
     `M 50 ${f(50 - R)} A ${R} ${R} 0 1 1 50 ${f(50 + R)} A ${R} ${R} 0 1 1 50 ${f(50 - R)} Z ` +

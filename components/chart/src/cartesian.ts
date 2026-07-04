@@ -23,9 +23,20 @@ export const bars = (mFull: Model, ctx: RenderCtx): View => {
     const zoomable = ctx.zoom() && rangeType; // drag-select on the plot
     const zr = (zoomable || (ctx.navigator() && rangeType)) ? ctx.zoomRange.value : null;
     const fullN = mFull.categories.length || (mFull.series[0] ? mFull.series[0].points.length : 0);
-    const m: Model = zr
+    const mz: Model = zr
         ? { ...mFull, categories: mFull.categories.slice(zr[0], zr[1] + 1), series: mFull.series.map((s) => ({ ...s, points: s.points.slice(zr[0], zr[1] + 1) })) }
         : mFull;
+
+    // population pyramid (`mirror`, horizontal only): series[0] grows
+    // leftward — negate its values here and read ABSOLUTE numbers in every
+    // tick/label/tooltip via the local fmt below (the Highcharts recipe,
+    // minus making the user supply negative data themselves)
+    const mirror = mz.mirror && mz.horizontal && mz.series.length >= 2;
+    const m: Model = mirror
+        ? { ...mz, series: mz.series.map((s, si) => (si === 0
+            ? { ...s, points: s.points.map((p) => (p.gap ? p : { ...p, value: -p.value })) } : s)) }
+        : mz;
+    const fmt = mirror ? (v: number): string => ctx.fmt(Math.abs(v)) : ctx.fmt;
 
     const stacked = m.type === 'stackedbar';
     // streamgraph = stacked area with a centred (silhouette) baseline
@@ -111,10 +122,20 @@ export const bars = (mFull: Model, ctx: RenderCtx): View => {
             // streamgraph: bands hang half above / half below the midline
             if (stream) { const half = (dmax - dmin) / 2; dmax = half; dmin = -half; }
         } else {
+            dmin = Infinity;
+            dmax = -Infinity;
             for (const s of sset) for (const p of s.points) {
                 if (p.gap) continue;
                 dmax = Math.max(dmax, p.value);
                 dmin = Math.min(dmin, p.value);
+            }
+            if (!Number.isFinite(dmin)) { dmin = 0; dmax = 0; }
+            // bars (and area fills) anchor at zero; a pure LINE set floats
+            // on its data range instead (Highcharts startOnTick behaviour),
+            // so a 30–60 series fills the plot with no dead band below it
+            if (!(sset.length && sset.every((s) => s.type === 'line'))) {
+                dmin = Math.min(dmin, 0);
+                dmax = Math.max(dmax, 0);
             }
         }
         let lo: number;
@@ -138,8 +159,17 @@ export const bars = (mFull: Model, ctx: RenderCtx): View => {
             if (!(hi > lo)) hi = lo + 1;
             const step = (hi - lo) / 4;
             ticks = [4, 3, 2, 1, 0].map((k) => lo + step * k);
+        } else if (fixedK != null) {
+            const sc = fixedScale(dmin, dmax, fixedK);
+            lo = sc.lo; hi = sc.hi; ticks = sc.ticks;
+        } else if (sset.length && sset.every((s) => s.type === 'line')) {
+            // pure line set: a zero-free extent (niceScale would re-anchor
+            // the axis at zero); ticks come back ascending → flip for the
+            // top-down gridline rows
+            const sc = niceExtent(dmin, dmax, 4);
+            lo = sc.lo; hi = sc.hi; ticks = [...sc.ticks].reverse();
         } else {
-            const sc = fixedK != null ? fixedScale(dmin, dmax, fixedK) : niceScale(dmin, dmax);
+            const sc = niceScale(dmin, dmax);
             lo = sc.lo; hi = sc.hi; ticks = sc.ticks;
         }
         const range = hi - lo || 1;
@@ -189,9 +219,9 @@ export const bars = (mFull: Model, ctx: RenderCtx): View => {
 
             const share = percent ? Math.round(len) : null;
             const tipName = cat ? cat + ' · ' + s.name : s.name;
-            const tipValue = share != null ? ctx.fmt(v) + ' (' + share + '%)' : ctx.fmt(v);
+            const tipValue = share != null ? fmt(v) + ' (' + share + '%)' : fmt(v);
             const showLabel = m.labels && v !== 0 && (!stacked || len >= 9);
-            const labelText = share != null ? share + '%' : ctx.fmt(v);
+            const labelText = share != null ? share + '%' : fmt(v);
             // bottom/height map to the value axis; horizontal swaps them to left/width
             const barStyle = horizontal
                 ? css({ left: bottom + '%', width: len + '%', background: s.color })
@@ -217,7 +247,7 @@ export const bars = (mFull: Model, ctx: RenderCtx): View => {
         const colTip = (e: MouseEvent): void => {
             ctx.hoverCol.value = i;
             ctx.showTip(e, cat || 'Series', vis.filter((s) => s.points[i] && !s.points[i].gap).map((s) => ({
-                name: s.name, value: ctx.fmt(s.points[i].value), color: s.color,
+                name: s.name, value: fmt(s.points[i].value), color: s.color,
             })));
         };
         return html`<div class="lm-chart-col"
@@ -229,7 +259,8 @@ export const bars = (mFull: Model, ctx: RenderCtx): View => {
                 data-kb="${ctx.kb.value === i ? 'true' : false}"
                 data-line="${crosshair ? 'true' : false}"></div>
             <div class="lm-chart-stack" data-stacked="${stacked ? 'true' : false}"
-                data-orient="${horizontal ? 'h' : false}">${inner}</div>
+                data-orient="${horizontal ? 'h' : false}"
+                data-mirror="${mirror ? 'true' : false}">${inner}</div>
         </div>`;
     };
 
@@ -288,7 +319,7 @@ export const bars = (mFull: Model, ctx: RenderCtx): View => {
                         markers.push(html`<span class="lm-chart-marker"
                             style="${css({ left: x.toFixed(2) + '%', top: y.toFixed(2) + '%', background: s.color })}"
                             data-dim="${dim}" data-hot="${ctx.hoverCol.value === i ? 'true' : false}"
-                            onmousemove="${(e: MouseEvent) => { if (!shared) ctx.showTip(e, tipName, [{ name: s.name, value: ctx.fmt(p.value), color: s.color }]); }}"
+                            onmousemove="${(e: MouseEvent) => { if (!shared) ctx.showTip(e, tipName, [{ name: s.name, value: fmt(p.value), color: s.color }]); }}"
                             onmouseleave="${() => { if (!shared) ctx.hideTip(); }}"
                             onclick="${() => ctx.fire({ ...p, color: s.color }, sIndex(s), i)}"></span>`);
                     }
@@ -299,6 +330,9 @@ export const bars = (mFull: Model, ctx: RenderCtx): View => {
                 ${markers}
             </div>`;
         }
+
+        // line-end series labels, nudged apart when two lines end close
+        const endLabels: Array<{ x: number; y: number; name: string; color: string; dim: string | false }> = [];
 
         for (const s of lineSeries) {
             const sc = scaleOf(s);
@@ -327,6 +361,17 @@ export const bars = (mFull: Model, ctx: RenderCtx): View => {
                     style="${css({ stroke: s.color })}" data-dim="${dim}"
                     data-dashed="${s.dashed ? 'true' : false}" />`);
             }
+            // series-name label at the line's end (multi-series pure-line
+            // charts; the legend is suppressed for these in layout())
+            if (crosshair && m.labels && lineSeries.length > 1) {
+                for (let i = n - 1; i >= 0; i--) {
+                    const p = s.points[i];
+                    if (!p || p.gap) continue;
+                    const [ex, ey] = xy(i, p.value);
+                    endLabels.push({ x: ex, y: ey, name: s.name, color: s.color, dim });
+                    break;
+                }
+            }
             if (m.markers) {
                 for (let i = 0; i < n; i++) {
                     const p = s.points[i];
@@ -339,17 +384,28 @@ export const bars = (mFull: Model, ctx: RenderCtx): View => {
                         data-dim="${dim}"
                         data-hot="${ctx.hoverCol.value === i ? 'true' : false}"
                         onmousemove="${(e: MouseEvent) => {
-                            if (!shared) ctx.showTip(e, tipName, [{ name: s.name, value: ctx.fmt(p.value), color: s.color }]);
+                            if (!shared) ctx.showTip(e, tipName, [{ name: s.name, value: fmt(p.value), color: s.color }]);
                         }}"
                         onmouseleave="${() => { if (!shared) ctx.hideTip(); }}"
                         onclick="${() => ctx.fire({ ...p, color: s.color }, sIndex(s), i)}">${
                         // value labels only for a single, not-too-dense series (else overlap; tooltip covers it)
                         m.labels && lineSeries.length === 1 && n <= 15
-                            ? html`<span class="lm-chart-marker-label">${ctx.fmt(p.value)}</span>` : false
+                            ? html`<span class="lm-chart-marker-label">${fmt(p.value)}</span>` : false
                     }</span>`);
                 }
             }
         }
+        // separate colliding end labels: sort by y and enforce a minimum
+        // vertical spread so two lines ending together stay readable
+        endLabels.sort((a, b) => a.y - b.y);
+        for (let i = 1; i < endLabels.length; i++) {
+            if (endLabels[i].y - endLabels[i - 1].y < 7) endLabels[i].y = endLabels[i - 1].y + 7;
+        }
+        for (const e of endLabels) {
+            markers.push(html`<span class="lm-chart-line-endlabel" data-dim="${e.dim}"
+                style="${css({ left: e.x.toFixed(2) + '%', top: Math.min(97, e.y).toFixed(2) + '%', color: e.color })}">${e.name}</span>`);
+        }
+
         return html`<div class="lm-chart-lineoverlay" data-interactive="${shared ? false : 'true'}">
             <svg class="lm-chart-linesvg" viewBox="0 0 100 100" preserveAspectRatio="none">${areas}${paths}</svg>
             ${markers}
@@ -367,7 +423,7 @@ export const bars = (mFull: Model, ctx: RenderCtx): View => {
     const rotate = angle !== 0;
     // reserve row height for the rotated labels (estimate from longest label)
     const maxChars = Math.max(0, ...m.categories.map((c) => String(c).length));
-    const estW = Math.min(maxChars * 6.5 + 6, 130);
+    const estW = Math.min(maxChars * 7 + 6, 130); // ~0.55em/char at the 0.8em label size
     const xh = rotate ? Math.ceil(estW * Math.sin((Math.abs(angle) * Math.PI) / 180)) + 12 : 0;
     const xaxisStyle = rotate
         ? css({ '--lm-cat-angle': -angle + 'deg', minHeight: xh })
@@ -376,7 +432,7 @@ export const bars = (mFull: Model, ctx: RenderCtx): View => {
     // continuous x-axis: smart ticks placed by value, + vertical gridlines + labels
     const xfmtFn = ctx.xformat();
     const xTicks = continuousX
-        ? (m.xtype === 'datetime' ? timeTicks(xmin, xmax) : niceExtent(xmin, xmax).ticks.map((v) => ({ v, label: ctx.fmt(v) })))
+        ? (m.xtype === 'datetime' ? timeTicks(xmin, xmax) : niceExtent(xmin, xmax).ticks.map((v) => ({ v, label: fmt(v) })))
             .filter((tk) => tk.v >= xmin - 1e-6 && tk.v <= xmax + 1e-6)
             .map((tk) => ({ pos: ((tk.v - xmin) / xspan) * 100, label: typeof xfmtFn === 'function' ? String(xfmtFn(tk.v)) : tk.label }))
         : [];
@@ -474,7 +530,7 @@ export const bars = (mFull: Model, ctx: RenderCtx): View => {
             ${rows.map((s) => html`<div class="lm-chart-tip-row">
                 <span class="lm-chart-tip-swatch" style="${css({ background: s.color })}"></span>
                 ${rows.length > 1 ? html`<span class="lm-chart-tip-name">${s.name}</span>` : false}
-                <span class="lm-chart-tip-value">${ctx.fmt(s.points[i].value)}</span>
+                <span class="lm-chart-tip-value">${fmt(s.points[i].value)}</span>
             </div>`)}
         </div>`;
     })();
@@ -482,7 +538,7 @@ export const bars = (mFull: Model, ctx: RenderCtx): View => {
         const i = kbActive();
         if (i == null) return n ? 'Chart, ' + n + ' points. Use arrow keys to explore.' : '';
         const cat = m.categories[i] != null ? m.categories[i] : '#' + i;
-        const vals = vis.filter((s) => s.points[i] && !s.points[i].gap).map((s) => s.name + ' ' + ctx.fmt(s.points[i].value)).join(', ');
+        const vals = vis.filter((s) => s.points[i] && !s.points[i].gap).map((s) => s.name + ' ' + fmt(s.points[i].value)).join(', ');
         return cat + ': ' + vals + '. Point ' + (i + 1) + ' of ' + n + '.';
     })();
 
@@ -553,13 +609,13 @@ export const bars = (mFull: Model, ctx: RenderCtx): View => {
     // secondary (right) axis tick labels, aligned to the primary gridlines
     const rightAxis = secondary
         ? html`<div class="lm-chart-grid-right">${secondary.ticks.map(
-            (t) => html`<div class="lm-chart-gridline-r"><span class="lm-chart-tick-r">${ctx.fmt(t)}</span></div>`,
+            (t) => html`<div class="lm-chart-gridline-r"><span class="lm-chart-tick-r">${fmt(t)}</span></div>`,
         )}</div>`
         : false;
 
     // ---- horizontal orientation: categories on the y-axis, values on x ----
     if (horizontal) {
-        const ycatsW = Math.min(150, Math.max(48, maxChars * 7 + 14));
+        const ycatsW = Math.min(150, Math.max(48, maxChars * 7.5 + 14));
         const vticks = [...ticks].reverse(); // lo → hi, left to right
         return html`<div class="lm-chart-plotblock" data-orient="h"
             style="${css({ '--lm-ycats-w': ycatsW + 'px' })}">
@@ -577,7 +633,7 @@ export const bars = (mFull: Model, ctx: RenderCtx): View => {
                 </div>
             </div>
             <div class="lm-chart-xvalues">${vticks.map(
-                (t) => html`<div class="lm-chart-xval"><span>${percent ? Math.round(t) + '%' : ctx.fmt(t)}</span></div>`)}</div>
+                (t) => html`<div class="lm-chart-xval"><span>${percent ? Math.round(t) + '%' : fmt(t)}</span></div>`)}</div>
             ${m.xtitle ? html`<div class="lm-chart-xtitle lm-chart-xtitle-h">${m.xtitle}</div>` : false}
         </div>`;
     }
@@ -591,7 +647,7 @@ export const bars = (mFull: Model, ctx: RenderCtx): View => {
                         style="${hasRight ? css({ right: 40 }) : false}">${ticks.map(
                         (t) => html`<div class="lm-chart-gridline"
                             data-zero="${Math.abs(t - baseV) < 1e-9 ? 'true' : false}">
-                            <span class="lm-chart-tick">${percent ? Math.round(t) + '%' : ctx.fmt(t)}</span>
+                            <span class="lm-chart-tick">${percent ? Math.round(t) + '%' : fmt(t)}</span>
                         </div>`,
                     )}</div>
                     ${refBands}${xGrid}
@@ -658,6 +714,14 @@ export const waterfallChart = (m: Model, ctx: RenderCtx): View => {
             </div>
         </div>`;
     });
+    // Highcharts-style connectors: a dashed line from each bar's end level
+    // across to the next bar (the running-total handoff)
+    const links = steps.slice(0, -1).map((s, i) => html`<div class="lm-chart-wf-link"
+        style="${css({
+            top: (100 - frac(s.top) * 100).toFixed(2) + '%',
+            left: (((i + 0.74) / n) * 100).toFixed(2) + '%',
+            width: ((0.52 / n) * 100).toFixed(2) + '%',
+        })}"></div>`);
     return html`<div class="lm-chart-plotblock">
         <div class="lm-chart-area">
             ${m.ytitle ? html`<div class="lm-chart-ytitle"><span>${m.ytitle}</span></div>` : false}
@@ -668,6 +732,7 @@ export const waterfallChart = (m: Model, ctx: RenderCtx): View => {
                             <span class="lm-chart-tick">${ctx.fmt(t)}</span></div>`,
                     )}</div>
                     <div class="lm-chart-cols">${cols}</div>
+                    <div class="lm-chart-refs">${links}</div>
                 </div>
                 <div class="lm-chart-xaxis">${steps.map((s) =>
                     html`<div class="lm-chart-cat"><span class="lm-chart-cat-label">${s.name || ''}</span></div>`)}</div>

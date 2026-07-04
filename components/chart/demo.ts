@@ -7,13 +7,34 @@
 import { html, mount, store, type Component } from 'lemonadejs';
 import Chart, { type ChartSeries } from '@lemonadejs/chart';
 
-/* ---- shared data sets ---- */
+/* ---- shared data sets (randomised per load — refresh for new data) ---- */
+const rnd = (lo: number, hi: number): number => Math.round(lo + Math.random() * (hi - lo));
+const walk = (n: number, start: number, step: number): number[] => {
+    let v = start;
+    return Array.from({ length: n }, () => {
+        v = Math.max(2, v + (Math.random() * 2 - 1) * step);
+        return Math.round(v * 10) / 10;
+    });
+};
 const cats = ['Q1', 'Q2', 'Q3', 'Q4'];
 const revenue: ChartSeries[] = [
-    { name: 'Product A', data: [12, 19, 8, 22] },
-    { name: 'Product B', data: [7, 11, 14, 9] },
-    { name: 'Product C', data: [4, 6, 10, 13] },
+    { name: 'Product A', data: walk(4, rnd(10, 22), 6) },
+    { name: 'Product B', data: walk(4, rnd(6, 14), 4) },
+    { name: 'Product C', data: walk(4, rnd(4, 10), 3) },
 ];
+const months12 = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const traffic = walk(12, rnd(50, 70), 14);
+const ageCats = ['0-9', '10-19', '20-29', '30-39', '40-49', '50-59', '60-69', '70-79', '80+'];
+const pyr = (o: number): number[] => ageCats.map((_, i) =>
+    Math.round((1.2 + 3.6 * Math.sin((Math.PI * (i + 1)) / (ageCats.length + 1)) + Math.random() * o) * 10) / 10);
+const arcLinks = [{ data: [
+    { from: 'Hamburg', to: 'München', value: 2 }, { from: 'Berlin', to: 'Köln', value: 2 },
+    { from: 'Berlin', to: 'München', value: 3 }, { from: 'München', to: 'Wien', value: 2 },
+    { from: 'Paris', to: 'Nantes', value: 2 }, { from: 'Paris', to: 'Bordeaux', value: 3 },
+    { from: 'Paris', to: 'Marseille', value: 3 }, { from: 'Paris', to: 'Milano', value: 2 },
+    { from: 'Frankfurt', to: 'Paris', value: 3 }, { from: 'Milano', to: 'Roma', value: 3 },
+    { from: 'Roma', to: 'Napoli', value: 2 }, { from: 'Milano', to: 'Venezia', value: 1 },
+] }] as unknown as ChartSeries[];
 const pieData: ChartSeries[] = [
     {
         data: [
@@ -103,6 +124,13 @@ interface Cfg {
     ymax?: number;
     plotbands?: unknown[];
     plotlines?: unknown[];
+    mirror?: boolean;
+    palette?: string;
+    borderradius?: number;
+    xtype?: string;
+    valuesuffix?: string;
+    annotations?: unknown[];
+    drilldown?: Record<string, unknown>;
 }
 
 const base = {
@@ -118,6 +146,16 @@ const presets = (): Cfg[] => [
     { title: 'Grouped bar', type: 'bar', categories: cats, series: revenue, ...base },
     { title: 'Stacked bar', type: 'stackedbar', categories: cats, series: revenue, ...base },
     { title: 'Line', type: 'line', categories: cats, series: revenue, ...base, smooth: true },
+    { title: 'Lines + end labels', type: 'line', categories: months12, series: [
+        { name: 'Users', data: walk(12, rnd(40, 70), 12) },
+        { name: 'Sessions', data: walk(12, rnd(25, 45), 8) },
+        { name: 'Average', data: walk(12, rnd(10, 20), 4), dashed: true },
+    ] as ChartSeries[], ...base, labels: true, markers: false, smooth: true },
+    { title: 'Datetime axis', type: 'line', xtype: 'datetime',
+        categories: Array.from({ length: 12 }, (_, i) => new Date(2026, 0, 1 + i * 7).toISOString().slice(0, 10)),
+        series: [{ name: 'Visitors', data: walk(12, rnd(40, 80), 10) }], ...base, area: true, markers: false, smooth: true },
+    { title: 'Zoom + navigator (drag)', type: 'line', categories: Array.from({ length: 40 }, (_, i) => 'D' + (i + 1)),
+        series: [{ name: 'Price', data: walk(40, rnd(60, 90), 7) }], ...base, markers: false, zoom: true, navigator: true },
     { title: 'Stacked area', type: 'stackedarea', categories: cats, series: revenue, ...base, smooth: true, area: true },
     { title: 'Streamgraph', type: 'streamgraph', categories: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'], series: [
         { name: 'A', data: [4, 6, 9, 7, 5, 8, 6] },
@@ -130,7 +168,18 @@ const presets = (): Cfg[] => [
     ] as ChartSeries[], ...base },
     { title: 'Pie', type: 'pie', categories: [], series: pieData, ...base, labels: true, gridlines: false },
     { title: 'Donut', type: 'pie', categories: [], series: pieData, ...base, labels: true, gridlines: false, innerradius: 0.6 },
+    { title: 'Rounded donut', type: 'pie', categories: [], series: pieData, ...base, labels: true, gridlines: false, innerradius: 0.62, borderradius: 10 },
+    { title: 'Focus pie (hero palette)', type: 'pie', categories: [], series: [{ data: [
+        { name: 'Webform', value: 63 }, { name: 'Call', value: 20 }, { name: 'Email', value: 8 },
+        { name: 'Webchat', value: 6 }, { name: 'Other', value: 3 },
+    ] }] as unknown as ChartSeries[], ...base, labels: true, gridlines: false, palette: 'focus' },
     { title: 'Radial bar', type: 'radialbar', categories: [], series: pieData, ...base },
+    { title: 'Stacked radial (medals)', type: 'radialbar', categories: ['Norway', 'USA', 'Germany', 'Austria', 'Canada'],
+        series: [
+            { name: 'Gold', color: '#e8c132', data: walk(5, rnd(80, 130), 30) },
+            { name: 'Silver', color: '#b6b8bd', data: walk(5, rnd(70, 120), 30) },
+            { name: 'Bronze', color: '#b1762b', data: walk(5, rnd(60, 110), 30) },
+        ], ...base },
     { title: 'Polar area', type: 'polararea', categories: [], series: pieData, ...base, labels: true, gridlines: false },
     { title: 'Gauge', type: 'gauge', categories: [], series: [{ name: 'Load', data: [73] }], ...base,
         ymin: 0, ymax: 100, plotbands: [
@@ -156,6 +205,9 @@ const presets = (): Cfg[] => [
     { title: 'Waterfall', type: 'waterfall', categories: ['Start', 'Sales', 'Refunds', 'Fees', 'Net'], series: [
         { data: [120, 45, -30, -15, 25] },
     ], ...base, labels: true },
+    { title: 'Population pyramid', type: 'bar', categories: ageCats, series: [
+        { name: 'Male', data: pyr(1.4) }, { name: 'Female', data: pyr(1.4) },
+    ], ...base, horizontal: true, mirror: true, valuesuffix: '%' },
     { title: 'Scatter', type: 'scatter', categories: [], series: scatterData, ...base },
     { title: 'Bubble', type: 'bubble', categories: [], series: bubbleData, ...base },
     { title: 'Radar', type: 'radar', categories: radarCats, series: radarData, ...base },
@@ -188,18 +240,39 @@ const presets = (): Cfg[] => [
     { title: 'Icicle', type: 'icicle', categories: [], series: treeData, ...base, labels: true },
     { title: 'Sankey', type: 'sankey', categories: [], series: linkData, ...base, labels: true },
     { title: 'Dependency wheel', type: 'chord', categories: [], series: tradeData, ...base, labels: true },
+    { title: 'Arc diagram', type: 'arcdiagram', categories: [], series: arcLinks, ...base, labels: true },
+    { title: 'Drilldown (click a bar)', type: 'bar', categories: ['Americas', 'EMEA', 'APAC'],
+        series: [{ name: 'Sales', data: [rnd(60, 90), rnd(45, 75), rnd(35, 60)] }], ...base, labels: true, drilldown: {
+            Americas: { categories: ['US', 'CA', 'BR', 'MX'], series: [{ name: 'Sales', data: walk(4, 20, 10) }] },
+            EMEA: { categories: ['DE', 'UK', 'FR', 'ES'], series: [{ name: 'Sales', data: walk(4, 15, 8) }] },
+            APAC: { categories: ['CN', 'JP', 'IN', 'AU'], series: [{ name: 'Sales', data: walk(4, 13, 7) }] },
+        } },
+    { title: 'Annotations + bands', type: 'line', categories: months12,
+        series: [{ name: 'Traffic', data: traffic }], ...base, markers: false, smooth: true,
+        plotbands: [{ from: 40, to: 60, color: 'rgba(87,129,99,.12)', label: 'Target' }],
+        plotlines: [{ value: 80, dashed: true, label: 'SLA' }],
+        annotations: [{ x: 6, y: traffic[6], text: 'Launch' }] },
     { title: 'Packed bubble', type: 'packedbubble', categories: [], series: [
         { name: 'North', data: [{ name: 'NY', value: 40 }, { name: 'BOS', value: 22 }, { name: 'CHI', value: 30 }] },
         { name: 'South', data: [{ name: 'MIA', value: 26 }, { name: 'ATL', value: 18 }, { name: 'DAL', value: 34 }] },
     ] as unknown as ChartSeries[], ...base, labels: true },
+    { title: 'Word cloud', type: 'wordcloud', categories: [], series: [
+        { data: [
+            { name: 'Lemonade', value: 90 }, { name: 'Reactive', value: 64 }, { name: 'Charts', value: 52 },
+            { name: 'Components', value: 46 }, { name: 'Template', value: 38 }, { name: 'State', value: 34 },
+            { name: 'Bindings', value: 30 }, { name: 'Signals', value: 26 }, { name: 'Props', value: 24 },
+            { name: 'Events', value: 20 }, { name: 'Tooltips', value: 16 }, { name: 'Palette', value: 14 },
+            { name: 'SVG', value: 12 }, { name: 'Flexbox', value: 10 }, { name: 'Zero deps', value: 8 },
+        ] },
+    ] as unknown as ChartSeries[], ...base },
 ];
 
 const TYPES = ['bar', 'stackedbar', 'line', 'stackedarea', 'streamgraph', 'scatter', 'bubble', 'pie',
     'radar', 'radialbar', 'polararea', 'gauge', 'funnel', 'pyramid', 'waterfall', 'bullet',
     'lollipop', 'dumbbell', 'histogram', 'pareto', 'heatmap', 'candlestick', 'ohlc', 'boxplot',
-    'arearange', 'columnrange', 'treemap', 'sunburst', 'icicle', 'sankey', 'chord', 'packedbubble'];
+    'arearange', 'columnrange', 'treemap', 'sunburst', 'icicle', 'sankey', 'chord', 'arcdiagram', 'packedbubble', 'wordcloud'];
 const FLAGS: (keyof Cfg)[] = ['labels', 'legend', 'gridlines', 'animate', 'tooltip', 'markers',
-    'smooth', 'step', 'area', 'horizontal', 'zoom', 'navigator', 'toolbar', 'ylog'];
+    'smooth', 'step', 'area', 'horizontal', 'mirror', 'zoom', 'navigator', 'toolbar', 'ylog'];
 const POSITIONS = ['', 'top', 'bottom', 'left', 'right'];
 
 const App: Component = (_props, { state }) => {
@@ -242,6 +315,7 @@ const App: Component = (_props, { state }) => {
                 <option value="tableau">tableau</option>
                 <option value="category10">category10</option>
                 <option value="material">material</option>
+                <option value="focus">focus</option>
             </select>
 
             <h4>Height (all charts) <span class="rangeval">${() => size.value + 'px'}</span></h4>
@@ -288,14 +362,16 @@ const App: Component = (_props, { state }) => {
                 data-selected="${() => (sel.value === i ? 'true' : 'false')}"
                 onclick="${() => (sel.value = i)}">
                 <${Chart} type="${c.type}" categories="${c.categories}" series="${c.series}"
-                    title="${c.title}" palette="${palette}" height="${size}"
+                    title="${c.title}" palette="${c.palette || palette}" height="${size}"
                     labels="${c.labels}" legend="${c.legend}" gridlines="${c.gridlines}"
                     animate="${c.animate}" smooth="${c.smooth}" step="${c.step}" area="${c.area}"
                     horizontal="${c.horizontal}" markers="${c.markers}" tooltip="${c.tooltip}"
                     zoom="${c.zoom}" navigator="${c.navigator}" toolbar="${c.toolbar}" ylog="${c.ylog}"
                     stackmode="${c.stackmode}" legendposition="${c.legendposition}"
                     innerradius="${c.innerradius}" ymin="${c.ymin}" ymax="${c.ymax}"
-                    plotbands="${c.plotbands}" plotlines="${c.plotlines}" />
+                    plotbands="${c.plotbands}" plotlines="${c.plotlines}"
+                    mirror="${c.mirror}" borderradius="${c.borderradius}" xtype="${c.xtype}"
+                    valuesuffix="${c.valuesuffix}" annotations="${c.annotations}" drilldown="${c.drilldown}" />
             </div>`)}
         </div>
     </div>`;

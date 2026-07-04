@@ -121,6 +121,67 @@ export const sankeyChart = (m: Model, ctx: RenderCtx): View => {
     </div>`;
 };
 
+/* ----- arc diagram (nodes on a baseline, semicircular arcs between) ----- */
+export const arcChart = (m: Model, ctx: RenderCtx): View => {
+    const { links, nodes, index } = flowData(m);
+    const N = nodes.length;
+    if (!N) return html`<div class="lm-chart-flow"></div>`;
+
+    // nodes sit evenly on a baseline in first-appearance order; radius ∝
+    // sqrt of the node's total flow (area encodes weight, like bubbles)
+    const BASE = 76; // baseline y (viewBox units); labels hang below in HTML
+    const xOf = (i: number): number => (N === 1 ? 50 : 4 + (i / (N - 1)) * 92);
+    const peak = nodes.reduce((mx, n) => Math.max(mx, n.in + n.out), 0) || 1;
+    // node dots are HTML (px-sized) so they stay ROUND in the stretched svg
+    const rPx = (i: number): number => 4 + Math.sqrt((nodes[i].in + nodes[i].out) / peak) * 14;
+
+    // arcs: a semi-ellipse from source to target, height capped by the box;
+    // stroke = source colour, width ∝ link value
+    const vmax = links.reduce((mx, e) => Math.max(mx, e.p.value), 0) || 1;
+    const hover = ctx.hover.value;
+    const arcs = links.map((e) => {
+        const a = index.get(e.p.from) as number;
+        const b = index.get(e.p.to) as number;
+        const xa = xOf(Math.min(a, b));
+        const xb = xOf(Math.max(a, b));
+        const rx = (xb - xa) / 2;
+        const ry = Math.min(BASE - 8, rx);
+        const dim = hover && hover !== e.p.from && hover !== e.p.to ? 'true' : false;
+        const tip = (ev: MouseEvent): void => ctx.showTip(ev, e.p.from + ' → ' + e.p.to,
+            [{ name: '', value: ctx.fmt(e.p.value), color: nodes[a].color }]);
+        return html`<path class="lm-chart-arc-link"
+            d="M ${f2(xa)} ${f2(BASE)} A ${f2(rx)} ${f2(ry)} 0 0 1 ${f2(xb)} ${f2(BASE)}"
+            style="${css({ stroke: nodes[a].color, strokeWidth: 0.35 + (e.p.value / vmax) * 1.8 })}"
+            data-dim="${dim}"
+            onmousemove="${tip}" ontouchstart="${tip}" onmouseleave="${ctx.hideTip}"
+            onclick="${() => ctx.fire(e.p, 0, e.i)}" />`;
+    });
+
+    // hovering a node highlights its arcs (ctx.hover carries the node name)
+    const dots = nodes.map((n, i) => {
+        const tip = (ev: MouseEvent): void => {
+            if (ctx.hover.value !== n.name) ctx.hover.value = n.name;
+            ctx.showTip(ev, n.name, [{ name: '', value: ctx.fmt(n.in + n.out), color: n.color }]);
+        };
+        const d = rPx(i) * 2;
+        return html`<span class="lm-chart-arc-node"
+            style="${css({ left: xOf(i) + '%', top: BASE + '%', width: d, height: d, background: n.color })}"
+            data-dim="${hover && hover !== n.name ? 'true' : false}"
+            onmousemove="${tip}" ontouchstart="${tip}"
+            onmouseleave="${() => { ctx.hideTip(); if (ctx.hover.value === n.name) ctx.hover.value = null; }}"></span>`;
+    });
+
+    // vertical labels below the baseline (rotated, anchored at the node)
+    const labels = m.labels ? nodes.map((n, i) => html`<span class="lm-chart-arc-label"
+        style="${css({ left: xOf(i) + '%', top: (BASE + 4) + '%' })}"
+        data-on="${hover === n.name ? 'true' : false}">${n.name}</span>`) : [];
+
+    return html`<div class="lm-chart-flow">
+        <svg class="lm-chart-flowsvg" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">${arcs}</svg>
+        ${dots}${labels}
+    </div>`;
+};
+
 /* ----- chord / dependency wheel (circular flows) ----- */
 export const chordChart = (m: Model, ctx: RenderCtx): View => {
     const { links, nodes, index } = flowData(m);

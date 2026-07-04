@@ -1,0 +1,58 @@
+.jss_comments {
+    background: transparent url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAYAAADED76LAAAAAXNSR0IArs4c6QAAAIhJREFUKFNj/P3u2/87qSsYvt94xoANMIIEf738/P9u1mqsisAK/v//H/P7zdfFd1NWMHy/8wLFILgCkOjPh+8W3y/ayPD9JkjRP7BCsAKYKSD696vPi+8Xb2T4ev4xWBFcAbKiXy8+LX5Qtpnh67lHqApQTHr9dfH9ovWYCuBW/v2/+NerTzEAGQRQmrB5FBUAAAAASUVORK5CYII=') no-repeat top 0 right -1px;
+}
+
+/* The box content lives inside a <Modal /> — the modal owns the floating
+   surface (position, border, background, shadow); this styles the inside */
+.jss_comments_box {
+    -webkit-font-smoothing: antialiased;
+    color: var(--jss-font-color);
+    box-sizing: border-box;
+    min-width: 260px;
+    padding: 8px;
+}
+
+/* Hover preview: the modal is open but the cell is not selected —
+   visible, translucent and inert until the user clicks the cell.
+   (.lm-modal-root is pointer-events:none by design; the panel opts in) */
+.lm-modal-root:has(.jss_comments_box:not(.selected)) .lm-modal {
+    pointer-events: none;
+    opacity: 0.9;
+}
+
+/* The input area and entry actions stay rendered in the hover preview —
+   the Modal measures its height once on open, so ghost and selected
+   states must share one layout (the ghost is inert anyway) */
+.jss_comments_box .jss_comments_input,
+.jss_comments_box .jss_comments_actions {
+    padding: 2px;
+}
+
+.jss_comments_box img {
+    width: 32px;
+    height: 32px;
+    border-radius: 16px;
+    border: 1px solid var(--jss-border-color);
+}
+
+.jss_comments_box textarea {
+    resize: none;
+    width:100%;
+}
+
+/* Lighter entry-actions menu: two short items need no 220px panel */
+.jss_comments_box .lm-contextmenu .lm-modal {
+    min-width: 150px;
+}
+
+.jss_comments_entry {
+    border-bottom: 1px solid var(--jss-border-color-light) !important;
+}
+
+.jss_comments_entry:hover {
+    background-color: var(--jss-background-color-highlight);
+}
+
+.material-icons.cursor {
+    cursor: pointer;
+}

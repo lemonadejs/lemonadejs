@@ -215,6 +215,14 @@
             "pass": true
         },
         {
+            "name": "prop mirror",
+            "pass": true
+        },
+        {
+            "name": "prop mirror (live state)",
+            "pass": true
+        },
+        {
             "name": "prop tooltip",
             "pass": true
         },
@@ -252,6 +260,14 @@
         },
         {
             "name": "prop innerradius (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop borderradius",
+            "pass": true
+        },
+        {
+            "name": "prop borderradius (live state)",
             "pass": true
         },
         {

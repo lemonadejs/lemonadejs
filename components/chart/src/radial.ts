@@ -4,7 +4,7 @@
  */
 import { css, html, type View } from 'lemonadejs';
 import { PALETTES, type Model, type NormPoint, type RenderCtx } from './model';
-import { R, f, fullRing, niceScale, polar, ring, wedge } from './helpers';
+import { R, f, fullRing, niceScale, polar, roundedRing, textOn, wedge } from './helpers';
 
 /* ----- radar / spider (SVG polar) ----- */
 export const radarChart = (m: Model, ctx: RenderCtx): View => {
@@ -52,17 +52,79 @@ export const radarChart = (m: Model, ctx: RenderCtx): View => {
         return html`<span class="lm-chart-radar-label" style="${css({ left: x.toFixed(2) + '%', top: y.toFixed(2) + '%' })}"
             >${m.categories[i] != null ? m.categories[i] : ''}</span>`;
     });
+    // value tick labels up the 12-o'clock spoke (Highcharts yAxis labels)
+    const tickLabels = m.labels
+        ? [1, 2, 3, 4].map((k) => html`<span class="lm-chart-radar-tickval"
+            style="${css({ left: '50.5%', top: (50 - (RR * k) / 4).toFixed(2) + '%' })}">${ctx.fmt((top * k) / 4)}</span>`)
+        : [];
 
     return html`<div class="lm-chart-pie-core">
         <div class="lm-chart-pie-area">
             <svg class="lm-chart-pie" viewBox="0 0 100 100" aria-hidden="true">${rings}${spokes}${shapes}${dots}</svg>
-            ${labels}
+            ${labels}${tickLabels}
         </div>
     </div>`;
 };
 
 /* ----- radial bar (concentric progress rings; each point = one ring) ----- */
 export const radialbarChart = (m: Model, ctx: RenderCtx): View => {
+    // MULTI-SERIES: stacked polar columns (the Highcharts "Winter Olympic
+    // medals" look) — one ring per category, series segments stacked along
+    // a shared 0..360° value axis, category names at the ring start and
+    // value tick labels around the outside.
+    if (m.series.length > 1) {
+        const n = m.categories.length || (m.series[0] ? m.series[0].points.length : 0);
+        const vis = m.series.filter((s) => !ctx.isHidden(s.name));
+        let peak = 0;
+        for (let i = 0; i < n; i++) {
+            let t = 0;
+            for (const s of vis) { const p = s.points[i]; if (p && !p.gap) t += Math.max(0, p.value); }
+            peak = Math.max(peak, t);
+        }
+        const hi = niceScale(0, peak).hi || 1;
+        const R0 = 44;
+        const per = (R0 - 14) / (n || 1);
+        const th = Math.min(10, Math.max(3, per * 0.7));
+        const segs: View[] = [];
+        const catLabels: View[] = [];
+        for (let i = 0; i < n; i++) {
+            const r = R0 - per * i - th / 2;
+            const cat = m.categories[i] != null ? m.categories[i] : '';
+            let acc = 0;
+            for (const s of vis) {
+                const p = s.points[i];
+                if (!p || p.gap || p.value <= 0) continue;
+                const a0 = (acc / hi) * 360;
+                acc += p.value;
+                const a1 = Math.min(359.9, (acc / hi) * 360);
+                const [x0, y0] = polar(a0, r);
+                const [x1, y1] = polar(a1, r);
+                const dim = ctx.hover.value && ctx.hover.value !== s.name ? 'true' : false;
+                const tip = (ev: MouseEvent): void =>
+                    ctx.showTip(ev, cat ? cat + ' · ' + s.name : s.name, [{ name: '', value: ctx.fmt(p.value), color: s.color }]);
+                segs.push(html`<path class="lm-chart-radial-arc" data-stack="true"
+                    d="M ${f(x0)} ${f(y0)} A ${f(r)} ${f(r)} 0 ${a1 - a0 > 180 ? 1 : 0} 1 ${f(x1)} ${f(y1)}"
+                    stroke-width="${String(th)}" style="${css({ stroke: s.color })}" data-dim="${dim}"
+                    onmousemove="${tip}" ontouchstart="${tip}" onmouseleave="${ctx.hideTip}"
+                    onclick="${() => ctx.fire(p, m.series.indexOf(s), i)}" />`);
+            }
+            catLabels.push(html`<span class="lm-chart-radial-cat"
+                style="${css({ left: '50%', top: (50 - r) + '%' })}">${cat}</span>`);
+        }
+        const tickLabels = m.labels
+            ? niceScale(0, peak).ticks.filter((t) => t >= 0 && t < hi - 1e-9).map((t) => {
+                const [x, y] = polar((t / hi) * 360, R0 + 5);
+                return html`<span class="lm-chart-radial-tick"
+                    style="${css({ left: x.toFixed(2) + '%', top: y.toFixed(2) + '%' })}">${ctx.fmt(t)}</span>`;
+            })
+            : [];
+        return html`<div class="lm-chart-pie-core">
+            <div class="lm-chart-pie-area">
+                <svg class="lm-chart-pie" viewBox="0 0 100 100" aria-hidden="true">${segs}</svg>
+                ${catLabels}${tickLabels}
+            </div>
+        </div>`;
+    }
     const pts = (m.series[0] ? m.series[0].points : []).filter((p) => !p.gap);
     const entries = pts.map((p, i) => ({ p, i, key: p.name || '#' + i })).filter((e) => !ctx.isHidden(e.key));
     const max = m.ymax != null ? m.ymax : 100;
@@ -184,19 +246,35 @@ export const gaugeChart = (m: Model, ctx: RenderCtx): View => {
     });
     const valueAngle = A0 + f * span;
     const [nx, ny] = polar(valueAngle, r - 4);
+    // tick ring (speedometer look): minor marks inside the band, major
+    // marks + value labels on the nice-scale ticks
+    const angleOf = (v: number): number => A0 + (max > min ? (v - min) / (max - min) : 0) * span;
+    const scaleTicks = niceScale(min, max).ticks.filter((t) => t >= min - 1e-9 && t <= max + 1e-9);
+    const minorTicks = Array.from({ length: 41 }, (_, k) => {
+        const a = A0 + (k / 40) * span;
+        const [x0, y0] = polar(a, r - 8);
+        const [x1, y1] = polar(a, k % 8 === 0 ? r - 4.5 : r - 6.5);
+        return html`<line class="lm-chart-gauge-tickline" data-major="${k % 8 === 0 ? 'true' : false}"
+            x1="${x0.toFixed(2)}" y1="${y0.toFixed(2)}" x2="${x1.toFixed(2)}" y2="${y1.toFixed(2)}" />`;
+    });
+    const tickLabels = scaleTicks.map((t) => {
+        const [x, y] = polar(angleOf(t), r + 8);
+        return html`<span class="lm-chart-gauge-tick" style="${css({ left: x.toFixed(2) + '%', top: y.toFixed(2) + '%' })}">${ctx.fmt(t)}</span>`;
+    });
     const svg = hasBands
         ? html`<svg class="lm-chart-pie" viewBox="0 0 100 100" aria-hidden="true">
-            ${bandEls}
+            ${bandEls}${minorTicks}
             <line x1="50" y1="50" x2="${nx.toFixed(2)}" y2="${ny.toFixed(2)}" class="lm-chart-gauge-needle" />
             <circle cx="50" cy="50" r="3.5" class="lm-chart-gauge-hub" />
         </svg>`
         : html`<svg class="lm-chart-pie" viewBox="0 0 100 100" aria-hidden="true">
             <path d="${arc(A0, A0 + span)}" fill="none" class="lm-chart-gauge-track" stroke-width="9" stroke-linecap="round" />
             <path d="${arc(A0, valueAngle)}" fill="none" style="${css({ stroke: color })}" stroke-width="9" stroke-linecap="round" />
+            ${minorTicks}
         </svg>`;
     return html`<div class="lm-chart-pie-core">
         <div class="lm-chart-pie-area">
-            ${svg}
+            ${svg}${m.labels ? tickLabels : false}
             <div class="lm-chart-gauge-center">
                 <div class="lm-chart-gauge-value">${ctx.fmt(value)}</div>
                 ${m.series[0] && m.series[0].name ? html`<div class="lm-chart-gauge-name">${m.series[0].name}</div>` : false}
@@ -287,9 +365,18 @@ export const pie = (m: Model, ctx: RenderCtx): View => {
                 onmousemove="${(e: MouseEvent) => sliceTip(e, drawn[0])}"
             ontouchstart="${(e: MouseEvent) => sliceTip(e, drawn[0])}"
                 onmouseleave="${ctx.hideTip}" />`]
-        : drawn.map((s) => html`<path
-            d="${donut ? ring(s.start, s.end, rInner) : wedge(s.start, s.end)}"
+        : drawn.map((s) => {
+            // donut segments: real ring paths with rounded corners — the
+            // radius comes from `borderradius` (default a subtle 1.5 units,
+            // Highcharts-like; crank it up for the fully-round pill look).
+            // A small angular gap separates the segments.
+            const q = m.borderRadius != null ? m.borderRadius : 1.5;
+            const a0 = s.start + (donut ? 0.4 : 0);
+            const a1 = donut ? Math.max(a0 + 0.3, s.end - 0.4) : s.end;
+            return html`<path
+            d="${donut ? roundedRing(a0, a1, R, rInner, q) : wedge(s.start, s.end)}"
             class="lm-chart-slice"
+            data-donut="${donut ? 'true' : false}"
             style="${css({ fill: s.p.color })}"
             data-dim="${dim(s.key)}"
             onmousemove="${(e: MouseEvent) => sliceTip(e, s)}"
@@ -297,33 +384,40 @@ export const pie = (m: Model, ctx: RenderCtx): View => {
             onmouseleave="${ctx.hideTip}"
             onclick="${() => ctx.fire(s.p, 0, s.i)}">
             <title>${s.p.name + ': ' + s.p.value + ' (' + s.percent + '%)'}</title>
-        </path>`);
+        </path>`;
+        });
 
     // Labels as fixed-px HTML overlays (consistent across pie sizes, unlike
-    // SVG <text> which scales with the viewBox). Big slices get an inside
-    // label at mid-radius; small slices get an OUTSIDE label with a thin
-    // leader line so they stay readable instead of crowding the centre.
+    // SVG <text> which scales with the viewBox). Highcharts-pie style:
+    // EVERY labelled slice gets its NAME outside on an elbow connector;
+    // big-enough slices also carry a percentage CHIP at mid-radius whose
+    // colours invert against the slice (dark chip on dark, white on light).
     const insideLabels: View[] = [];
     const outsideLabels: View[] = [];
     const leaders: View[] = [];
     if (m.labels) {
         for (const s of drawn) {
+            if (s.frac < 0.015) continue; // invisible sliver: no label
             const mid = (s.start + s.end) / 2;
-            if (s.frac >= 0.06) {
+            const chip = s.frac >= 0.05;
+            if (chip) {
+                const darkSlice = textOn(s.p.color) === '#ffffff';
                 insideLabels.push(html`<span class="lm-chart-pie-label" style="${css({
                     left: s.lx.toFixed(2) + '%',
                     top: s.ly.toFixed(2) + '%',
+                    background: darkSlice ? '#1f2329' : '#ffffff',
+                    color: darkSlice ? '#ffffff' : '#333333',
                 })}">${s.percent + '%'}</span>`);
-            } else if (s.frac >= 0.015) {
-                const [ax, ay] = polar(mid, R - 1);   // leader start (slice edge)
-                const [bx, by] = polar(mid, R + 7);   // leader elbow
-                const [ex, ey] = polar(mid, R + 9);   // label anchor (outside)
-                leaders.push(html`<polyline class="lm-chart-leader"
-                    points="${ax.toFixed(2)},${ay.toFixed(2)} ${bx.toFixed(2)},${by.toFixed(2)}" />`);
-                outsideLabels.push(html`<span class="lm-chart-pie-olabel" data-side="${ex < 50 ? 'l' : 'r'}"
-                    style="${css({ left: ex.toFixed(2) + '%', top: ey.toFixed(2) + '%' })}"
-                    >${s.p.name ? s.p.name + ' ' : ''}${s.percent + '%'}</span>`);
             }
+            const [ax, ay] = polar(mid, R - 1);   // connector start (slice edge)
+            const [bx, by] = polar(mid, R + 5);   // radial elbow
+            const side = bx < 50 ? -1 : 1;        // horizontal stub direction
+            const ex = bx + side * 3.5;
+            leaders.push(html`<polyline class="lm-chart-leader"
+                points="${ax.toFixed(2)},${ay.toFixed(2)} ${bx.toFixed(2)},${by.toFixed(2)} ${ex.toFixed(2)},${by.toFixed(2)}" />`);
+            outsideLabels.push(html`<span class="lm-chart-pie-olabel" data-side="${side < 0 ? 'l' : 'r'}"
+                style="${css({ left: (ex + side).toFixed(2) + '%', top: by.toFixed(2) + '%' })}"
+                >${(s.p.name || ctx.fmt(s.p.value)) + (chip ? '' : ' · ' + s.percent + '%')}</span>`);
         }
     }
 

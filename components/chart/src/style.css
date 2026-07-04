@@ -1,17 +1,24 @@
 /* <Chart /> — all layout is CSS so the chart is responsive with no JS. */
 
 .lm-chart {
-    --lm-chart-font: 13px system-ui, -apple-system, Segoe UI, sans-serif;
+    /* Typography mirrors the Highcharts defaults: the Helvetica Neue stack
+       on a 1rem base, with every text size in em so the whole chart scales
+       from --lm-chart-font-size (title 1.2em bold, labels 0.8em, data
+       labels 0.7em bold). */
+    --lm-chart-font: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    --lm-chart-font-size: 1rem;
     /* Framing colours read the shared template tokens but KEEP their
        original value as the fallback, so the chart looks identical with no
        global stylesheet and only re-themes (incl. dark mode) when one is
-       present. The tooltip pill stays dark on purpose (it's a good look). */
-    --lm-chart-grid: var(--lm-border-color-light, #eceef1);
-    --lm-chart-axis: var(--lm-font-grayout, #9aa1ab);
-    --lm-chart-baseline: var(--lm-border-color-highlight, #aeb4be);
-    --lm-chart-text: var(--lm-text-color, #3f444c);
-    --lm-chart-muted: var(--lm-font-grayout, #6b7280);
-    --lm-chart-title: var(--lm-text-color, #1f2329);
+       present. The fallbacks are the Highcharts framing values: #333333
+       labels/axis, #666666 secondary text, #e6e6e6 gridlines. The tooltip
+       pill stays dark on purpose (it's a good look). */
+    --lm-chart-grid: var(--lm-border-color-light, #e6e6e6);
+    --lm-chart-axis: var(--lm-text-color, #333333);
+    --lm-chart-baseline: var(--lm-border-color-highlight, #333333);
+    --lm-chart-text: var(--lm-text-color, #333333);
+    --lm-chart-muted: var(--lm-font-grayout, #666666);
+    --lm-chart-title: var(--lm-text-color, #333333);
     --lm-chart-tip-bg: #1f2329;
     --lm-chart-tip-text: #ffffff;
     --lm-chart-link: var(--lm-main-color, #3b82f6);
@@ -19,12 +26,18 @@
     --lm-chart-surface: var(--lm-background-color, #ffffff);
     --lm-chart-up: #16a34a;
     --lm-chart-down: #dc2626;
+    /* plot gutters: room for the y ticks on the left, breathing room on
+       the right (Highcharts spacingRight) so the last column doesn't sit
+       flush against the container edge */
+    --lm-chart-gutter: 44px;
+    --lm-chart-pad-r: 10px;
     position: relative;
     display: flex;
     flex-direction: column;
     width: 100%;
     box-sizing: border-box;
     font-family: var(--lm-chart-font);
+    font-size: var(--lm-chart-font-size);
     color: var(--lm-chart-text);
 }
 
@@ -34,13 +47,13 @@
 }
 
 .lm-chart-title {
-    font-size: 15px;
-    font-weight: 600;
+    font-size: 1.2em;
+    font-weight: bold;
     color: var(--lm-chart-title);
 }
 
 .lm-chart-subtitle {
-    font-size: 12px;
+    font-size: 0.8em;
     color: var(--lm-chart-muted);
     margin-top: 3px;
 }
@@ -96,17 +109,17 @@
     justify-content: center;
     writing-mode: vertical-rl;
     transform: rotate(180deg);
-    font-size: 12px;
+    font-size: 0.8em;
     color: var(--lm-chart-muted);
     padding: 0 2px 18px 0;
 }
 
 .lm-chart-xtitle {
     text-align: center;
-    font-size: 12px;
+    font-size: 0.8em;
     color: var(--lm-chart-muted);
     margin-top: 4px;
-    padding-left: 38px;
+    padding-left: var(--lm-chart-gutter);
 }
 
 /* ---- plot area (bar / stacked bar) ---- */
@@ -115,13 +128,14 @@
     position: relative;
     flex: 1;
     min-height: 0;
-    padding-left: 38px; /* room for the y-axis tick labels */
+    /* left: room for the y-axis tick labels; right: spacing */
+    padding: 0 var(--lm-chart-pad-r) 0 var(--lm-chart-gutter);
 }
 
 /* horizontal gridlines + tick labels, behind the bars */
 .lm-chart-grid {
     position: absolute;
-    inset: 0 0 0 38px;
+    inset: 0 var(--lm-chart-pad-r) 0 var(--lm-chart-gutter);
     display: flex;
     flex-direction: column;
     justify-content: space-between;
@@ -170,7 +184,7 @@
     position: absolute;
     left: 8px;
     top: -0.6em;
-    font-size: 11px;
+    font-size: 0.8em;
     color: var(--lm-chart-axis);
     white-space: nowrap;
 }
@@ -187,7 +201,7 @@
     left: -8px;
     top: -0.6em;
     transform: translateX(-100%);
-    font-size: 11px;
+    font-size: 0.8em;
     color: var(--lm-chart-axis);
     white-space: nowrap;
 }
@@ -269,13 +283,17 @@
     background: none;
 }
 
-/* the per-column plot box; bars are absolutely positioned from a baseline */
+/* the per-column plot box; bars are absolutely positioned from a baseline.
+   The 20% side padding is the Highcharts groupPadding (0.2): the group of
+   bars occupies the middle 60% of the category slot. */
 .lm-chart-stack {
     position: relative;
     height: 100%;
     display: flex;
     justify-content: center;
     gap: 3px;
+    padding: 0 20%;
+    box-sizing: border-box;
 }
 
 /* stacked: one slot (bars centred + absolute within) */
@@ -292,9 +310,11 @@
 }
 
 .lm-chart-bar {
+    /* 10% each side of the slot = Highcharts pointPadding (0.1); with the
+       stack's 20% groupPadding a single series bar is 48% of its category */
     position: absolute;
-    left: 13%;
-    right: 13%;
+    left: 10%;
+    right: 10%;
     min-height: 1px;
     border-radius: 4px 4px 0 0;
     transition: height 0.35s ease, bottom 0.35s ease, filter 0.12s ease, opacity 0.12s ease;
@@ -312,8 +332,8 @@
 }
 
 .lm-chart-stack[data-stacked='true'] .lm-chart-bar {
-    left: 20%;
-    right: 20%;
+    left: 10%;
+    right: 10%;
     max-width: 56px;
     margin: 0 auto;
     border-radius: 0;
@@ -329,14 +349,16 @@
     opacity: 0.25;
 }
 
-/* grouped bar labels sit just outside the bar (above positives, below negatives) */
+/* grouped bar labels sit just outside the bar (above positives, below negatives);
+   Highcharts data-label type: 0.7em bold in the label colour */
 .lm-chart-value {
     position: absolute;
-    left: -2px;
-    right: -2px;
+    left: -12px;
+    right: -12px;
     text-align: center;
-    font-size: 11px;
-    color: var(--lm-chart-muted);
+    font-size: 0.7em;
+    font-weight: bold;
+    color: var(--lm-chart-text);
     pointer-events: none;
 }
 
@@ -355,7 +377,7 @@
 .lm-chart-stack[data-stacked='true'] .lm-chart-value {
     position: static;
     color: #fff;
-    font-weight: 600;
+    font-weight: bold;
     line-height: 1;
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
     white-space: nowrap;
@@ -366,7 +388,8 @@
 .lm-chart-xaxis {
     flex: 0 0 auto;
     display: flex;
-    padding-left: 38px;
+    padding-left: var(--lm-chart-gutter);
+    padding-right: var(--lm-chart-pad-r);
     margin-top: 6px;
 }
 
@@ -377,8 +400,8 @@
 }
 
 .lm-chart-cat-label {
-    font-size: 11px;
-    color: var(--lm-chart-muted);
+    font-size: 0.8em;
+    color: var(--lm-chart-axis);
 }
 
 /* unrotated: clip + ellipsis when a label is too wide */
@@ -501,13 +524,30 @@
     pointer-events: auto;
 }
 
+/* series-name label at the end of its line (multi-series line charts) */
+.lm-chart-line-endlabel {
+    position: absolute;
+    transform: translate(calc(-100% + 4px), -150%);
+    font-size: 0.7em;
+    font-weight: bold;
+    white-space: nowrap;
+    pointer-events: none;
+    text-shadow: 0 0 3px var(--lm-chart-surface), 0 0 3px var(--lm-chart-surface);
+    transition: opacity 0.12s ease;
+}
+
+.lm-chart-line-endlabel[data-dim='true'] {
+    opacity: 0.18;
+}
+
 .lm-chart-marker-label {
     position: absolute;
     bottom: 11px;
     left: 50%;
     transform: translateX(-50%);
-    font-size: 11px;
-    color: var(--lm-chart-muted);
+    font-size: 0.7em;
+    font-weight: bold;
+    color: var(--lm-chart-text);
     white-space: nowrap;
 }
 
@@ -538,8 +578,8 @@
     align-items: center;
     justify-content: flex-end;
     padding-right: 8px;
-    font-size: 11px;
-    color: var(--lm-chart-muted);
+    font-size: 0.8em;
+    color: var(--lm-chart-axis);
     text-align: right;
     overflow: hidden;
     white-space: nowrap;
@@ -553,7 +593,7 @@
 
 /* grid → vertical lines */
 .lm-chart-grid[data-orient='h'] {
-    inset: 0;
+    inset: 0 var(--lm-chart-pad-r) 0 0;
     flex-direction: row;
     justify-content: space-between;
 }
@@ -579,10 +619,13 @@
     height: auto;
 }
 
-/* grouped horizontal: bar slots stack vertically inside the row */
+/* grouped horizontal: bar slots stack vertically inside the row
+   (% padding resolves against the WIDTH, so the vertical groupPadding
+   comes from the bar insets below instead) */
 .lm-chart-stack[data-orient='h'] {
     flex-direction: column;
     height: 100%;
+    padding: 0;
 }
 
 .lm-chart-stack[data-orient='h'] .lm-chart-barslot {
@@ -592,13 +635,40 @@
     min-width: 0;
 }
 
+/* population pyramid (mirror): the two series share the row — slots
+   overlay instead of stacking into sub-rows (they sit on opposite sides
+   of the baseline so they never collide) */
+.lm-chart-stack[data-mirror='true'] .lm-chart-barslot {
+    position: absolute;
+    inset: 0;
+}
+
+.lm-chart-stack[data-mirror='true'] .lm-chart-bar[data-orient='h'] {
+    top: 16%;
+    bottom: 16%;
+}
+
+/* mirrored (negative) horizontal bar labels sit at the bar's outer end */
+.lm-chart-stack:not([data-stacked='true']) .lm-chart-bar[data-orient='h'][data-neg='true'] .lm-chart-value {
+    left: auto;
+    right: 100%;
+    margin: 0 4px 0 0;
+    text-align: right;
+}
+
 /* horizontal bars grow rightward from the baseline */
 .lm-chart-bar[data-orient='h'] {
     left: auto;
     right: auto;
-    top: 13%;
-    bottom: 13%;
+    top: 10%;
+    bottom: 10%;
     border-radius: 0 4px 4px 0;
+}
+
+/* single horizontal series: match the vertical group+point padding (48%) */
+.lm-chart-barslot:only-child .lm-chart-bar[data-orient='h'] {
+    top: 26%;
+    bottom: 26%;
 }
 
 .lm-chart-bar[data-orient='h'][data-neg='true'] {
@@ -608,8 +678,8 @@
 .lm-chart-stack[data-stacked='true'][data-orient='h'] .lm-chart-bar {
     left: auto;
     right: auto;
-    top: 20%;
-    bottom: 20%;
+    top: 26%;
+    bottom: 26%;
     margin: 0;
     max-width: none; /* segments span their full width (override the vertical cap) */
     border-radius: 0;
@@ -633,6 +703,7 @@
     display: flex;
     justify-content: space-between;
     padding-left: var(--lm-ycats-w, 0);
+    padding-right: var(--lm-chart-pad-r);
     margin-top: 4px;
     min-height: 15px; /* room for the absolute tick spans so xtitle clears them */
 }
@@ -647,7 +718,7 @@
     left: 0;
     top: 0;
     transform: translateX(-50%);
-    font-size: 11px;
+    font-size: 0.8em;
     color: var(--lm-chart-axis);
     white-space: nowrap;
 }
@@ -678,7 +749,7 @@
 
 .lm-chart-refs {
     position: absolute;
-    inset: 0 0 0 38px; /* match the cols box (left gutter) */
+    inset: 0 var(--lm-chart-pad-r) 0 var(--lm-chart-gutter); /* match the cols box */
     pointer-events: none;
     overflow: hidden;
 }
@@ -743,6 +814,15 @@
     top: 2px;
     font-size: 10px;
     color: var(--lm-chart-muted);
+}
+
+/* waterfall running-total connectors (dashed handoff between bars) */
+.lm-chart-wf-link {
+    position: absolute;
+    height: 0;
+    border-top: 1px dashed var(--lm-chart-axis);
+    opacity: 0.55;
+    pointer-events: none;
 }
 
 /* annotations: a callout pinned to a data point */
@@ -815,6 +895,16 @@
     opacity: 0.18;
 }
 
+/* radar value ticks up the 12-o'clock spoke */
+.lm-chart-radar-tickval {
+    position: absolute;
+    transform: translate(3px, -50%);
+    font-size: 0.65em;
+    color: var(--lm-chart-muted);
+    white-space: nowrap;
+    pointer-events: none;
+}
+
 .lm-chart-radar-label {
     position: absolute;
     transform: translate(-50%, -50%);
@@ -839,6 +929,26 @@
     fill: var(--lm-chart-text);
 }
 
+.lm-chart-gauge-tickline {
+    stroke: var(--lm-chart-axis);
+    stroke-width: 0.35;
+    opacity: 0.55;
+}
+
+.lm-chart-gauge-tickline[data-major='true'] {
+    stroke-width: 0.7;
+    opacity: 0.9;
+}
+
+.lm-chart-gauge-tick {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    font-size: 0.7em;
+    color: var(--lm-chart-muted);
+    white-space: nowrap;
+    pointer-events: none;
+}
+
 .lm-chart-gauge-center {
     position: absolute;
     left: 50%;
@@ -848,13 +958,13 @@
 }
 
 .lm-chart-gauge-value {
-    font-size: 22px;
+    font-size: 1.4em;
     font-weight: 700;
     color: var(--lm-chart-title);
 }
 
 .lm-chart-gauge-name {
-    font-size: 11px;
+    font-size: 0.7em;
     color: var(--lm-chart-muted);
 }
 
@@ -1111,7 +1221,8 @@
 }
 
 .lm-chart-heat-cell {
-    border-radius: var(--lm-radius, 6px);
+    /* subtle by default; the `borderradius` prop sets the var */
+    border-radius: var(--lm-chart-cell-radius, 2px);
     min-height: 14px;
     display: flex;
     align-items: center;
@@ -1192,6 +1303,32 @@
 
 .lm-chart-dot[data-dim='true'] {
     opacity: 0.12;
+}
+
+/* non-circle scatter markers: <rect>s anchored by x/y in %, centred and
+   reshaped here (transform-box makes % transforms use the marker's own box) */
+.lm-chart-dot[data-shape] {
+    transform-box: fill-box;
+    transform: translate(-50%, -50%);
+}
+
+.lm-chart-dot[data-shape='diamond'] {
+    transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.lm-chart-dot[data-shape='triangle'] {
+    clip-path: polygon(50% 0, 100% 100%, 0 100%);
+}
+
+/* bubble name labels, centred over their bubble */
+.lm-chart-bubble-name {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    font-size: 0.7em;
+    font-weight: bold;
+    color: var(--lm-chart-text);
+    pointer-events: none;
+    white-space: nowrap;
 }
 
 /* bubble size-scale legend (bottom-right of the plot) */
@@ -1417,7 +1554,9 @@
 .lm-chart-nav-inner {
     position: relative;
     height: 38px;
-    margin-left: 38px; /* align with the plot's left gutter */
+    /* align with the plot's gutters */
+    margin-left: var(--lm-chart-gutter);
+    margin-right: var(--lm-chart-pad-r);
     background: var(--lm-chart-nav-bg, rgba(99, 110, 130, 0.06));
     border-radius: var(--lm-radius, 6px);
     overflow: hidden;
@@ -1555,7 +1694,7 @@ button.lm-chart-crumb:hover {
 
 .lm-chart-xgrid {
     position: absolute;
-    inset: 0 0 0 38px;
+    inset: 0 var(--lm-chart-pad-r) 0 var(--lm-chart-gutter);
     pointer-events: none;
 }
 
@@ -1571,7 +1710,7 @@ button.lm-chart-crumb:hover {
     flex: 0 0 auto;
     position: relative;
     height: 16px;
-    margin: 6px 0 0 38px;
+    margin: 6px var(--lm-chart-pad-r) 0 var(--lm-chart-gutter);
 }
 
 .lm-chart-xtick {
@@ -1584,7 +1723,7 @@ button.lm-chart-crumb:hover {
     left: 0;
     transform: translateX(-50%);
     white-space: nowrap;
-    font-size: 11px;
+    font-size: 0.8em;
     color: var(--lm-chart-axis);
 }
 
@@ -1596,7 +1735,7 @@ button.lm-chart-crumb:hover {
     align-items: center;
     justify-content: center;
     color: var(--lm-chart-muted);
-    font-size: 13px;
+    font-size: 0.8em;
     letter-spacing: 0.02em;
 }
 
@@ -1632,8 +1771,9 @@ button.lm-chart-crumb:hover {
 .lm-chart-pie-olabel {
     position: absolute;
     transform: translate(0, -50%);
-    font-size: 11px;
-    color: var(--lm-chart-muted);
+    font-size: 0.7em;
+    font-weight: bold;
+    color: var(--lm-chart-text);
     white-space: nowrap;
     pointer-events: none;
 }
@@ -1656,26 +1796,29 @@ button.lm-chart-crumb:hover {
     left: 50%;
     top: 50%;
     transform: translate(-50%, -50%);
-    font-size: 18px;
+    font-size: 1.1em;
     font-weight: 700;
     color: var(--lm-chart-text);
     pointer-events: none;
 }
 
-/* fixed-px label, identical size at any pie scale */
+/* percentage chip at mid-radius, identical size at any pie scale;
+   background/colour are set inline to invert against the slice */
 .lm-chart-pie-label {
     position: absolute;
     transform: translate(-50%, -50%);
-    font-size: 12px;
-    font-weight: 600;
-    color: #fff;
+    font-size: 0.7em;
+    font-weight: bold;
+    padding: 2px 7px;
+    border-radius: 4px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+    white-space: nowrap;
     pointer-events: none;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
 }
 
 .lm-chart-slice {
     stroke: var(--lm-chart-surface);
-    stroke-width: 0.6;
+    stroke-width: 1;
     transition: transform 0.12s ease;
     transform-origin: 50% 50%;
     cursor: default;
@@ -1684,6 +1827,7 @@ button.lm-chart-crumb:hover {
 .lm-chart-slice:hover {
     transform: scale(1.03);
 }
+
 
 .lm-chart-slice[data-dim='true'] {
     opacity: 0.3;
@@ -1722,7 +1866,9 @@ button.lm-chart-crumb:hover {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    font-size: 12px;
+    /* Highcharts legend type: 0.8em bold */
+    font-size: 0.8em;
+    font-weight: bold;
     color: var(--lm-chart-text);
     /* reset native <button> chrome */
     margin: 0;
@@ -1764,6 +1910,25 @@ button.lm-chart-crumb:hover {
     flex: 0 0 auto;
 }
 
+/* scatter series: the swatch mirrors the marker shape */
+.lm-chart-swatch[data-shape='circle'] {
+    border-radius: 50%;
+}
+
+.lm-chart-swatch[data-shape='square'] {
+    border-radius: 1px;
+}
+
+.lm-chart-swatch[data-shape='diamond'] {
+    border-radius: 1px;
+    transform: rotate(45deg) scale(0.85);
+}
+
+.lm-chart-swatch[data-shape='triangle'] {
+    border-radius: 0;
+    clip-path: polygon(50% 0, 100% 100%, 0 100%);
+}
+
 /* line/area series: a short line swatch with a centre dot, not a square
    (keeps the inline series colour as the bar background) */
 .lm-chart-swatch[data-line='true'] {
@@ -1798,7 +1963,7 @@ button.lm-chart-crumb:hover {
     padding: 7px 10px;
     background: var(--lm-chart-tip-bg);
     color: var(--lm-chart-tip-text);
-    font-size: 12px;
+    font-size: 0.8em;
     line-height: 1.1;
     white-space: nowrap;
     border-radius: var(--lm-radius, 6px);
@@ -1919,8 +2084,9 @@ button.lm-chart-crumb:hover {
     bottom: 100%;
     transform: translateX(-50%);
     margin-bottom: 5px;
-    font-size: 11px;
-    color: var(--lm-chart-muted);
+    font-size: 0.7em;
+    font-weight: bold;
+    color: var(--lm-chart-text);
     white-space: nowrap;
     pointer-events: none;
 }
@@ -1979,10 +2145,38 @@ button.lm-chart-crumb:hover {
     top: 50%;
 }
 
+/* stacked polar segments join flush (round caps would overlap colours) */
+.lm-chart-radial-arc[data-stack='true'] {
+    stroke-linecap: butt;
+}
+
+/* category name at each ring's start (12 o'clock, anchored to the left) */
+.lm-chart-radial-cat {
+    position: absolute;
+    transform: translate(-100%, -50%);
+    padding-right: 6px;
+    font-size: 0.7em;
+    font-weight: bold;
+    color: var(--lm-chart-text);
+    white-space: nowrap;
+    pointer-events: none;
+}
+
+/* value-axis tick labels around the stacked polar rings */
+.lm-chart-radial-tick {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    font-size: 0.7em;
+    color: var(--lm-chart-muted);
+    white-space: nowrap;
+    pointer-events: none;
+}
+
 /* ---- histogram (bar chart with touching bins) ---- */
 
 .lm-chart[data-type='histogram'] .lm-chart-stack {
     gap: 0;
+    padding: 0; /* bins touch: no group padding */
 }
 
 .lm-chart[data-type='histogram'] .lm-chart-bar {
@@ -2042,6 +2236,58 @@ button.lm-chart-crumb:hover {
 
 .lm-chart-sankey-label[data-side='l'] {
     transform: translate(-100%, -50%);
+}
+
+/* ---- arc diagram (nodes on a baseline, arcs between) ---- */
+
+.lm-chart-arc-link {
+    fill: none;
+    stroke-linecap: round;
+    opacity: 0.4;
+    transition: opacity 0.12s ease;
+    cursor: default;
+}
+
+.lm-chart-arc-link:hover {
+    opacity: 0.85;
+}
+
+.lm-chart-arc-link[data-dim='true'] {
+    opacity: 0.08;
+}
+
+/* node dots are HTML spans (px-sized → stay round in the stretched svg) */
+.lm-chart-arc-node {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    border: 1.5px solid var(--lm-chart-surface);
+    box-sizing: border-box;
+    cursor: default;
+    transition: opacity 0.12s ease;
+}
+
+.lm-chart-arc-node[data-dim='true'] {
+    opacity: 0.25;
+}
+
+/* rotated node labels hanging below the baseline */
+.lm-chart-arc-label {
+    position: absolute;
+    transform: translateX(-50%);
+    writing-mode: vertical-rl;
+    font-size: 0.7em;
+    font-weight: bold;
+    color: var(--lm-chart-text);
+    max-height: 20%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    pointer-events: none;
+}
+
+.lm-chart-arc-label[data-on='true'] {
+    color: var(--lm-chart-link, #3b82f6);
 }
 
 /* ---- chord / dependency wheel ---- */
@@ -2122,19 +2368,29 @@ button.lm-chart-crumb:hover {
 
 /* ---- packed bubble ---- */
 
+/* Highcharts style: translucent fill + solid series-colour border; the
+   colour/border come inline, the opacity treatment lives here */
 .lm-chart-pack {
-    stroke: var(--lm-chart-surface);
-    stroke-width: 0.4;
+    stroke-width: 0.5;
+    fill-opacity: 0.5;
     cursor: default;
-    transition: opacity 0.12s ease, filter 0.12s ease;
+    transform-box: fill-box;
+    transform-origin: center;
+    transition: opacity 0.12s ease, fill-opacity 0.12s ease, transform 0.15s ease;
 }
 
 .lm-chart-pack:hover {
-    filter: brightness(1.08);
+    fill-opacity: 0.85;
+    transform: scale(1.05);
+}
+
+/* same-cluster highlight: siblings of the hovered bubble firm up */
+.lm-chart-pack[data-hot='true'] {
+    fill-opacity: 0.72;
 }
 
 .lm-chart-pack[data-dim='true'] {
-    opacity: 0.2;
+    opacity: 0.15;
 }
 
 .lm-chart-pack-label {
@@ -2142,8 +2398,36 @@ button.lm-chart-crumb:hover {
     transform: translate(-50%, -50%);
     font-size: 9px;
     font-weight: 600;
+    color: var(--lm-chart-text);
     white-space: nowrap;
     pointer-events: none;
+}
+
+/* ---- word cloud ---- */
+
+.lm-chart-cloud {
+    flex: 1;
+    min-height: 0;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px;
+}
+
+.lm-chart-cloud-svg {
+    width: 100%;
+    height: 100%;
+}
+
+.lm-chart-cloud-word {
+    font-weight: 600;
+    cursor: default;
+    transition: opacity 0.12s ease;
+}
+
+.lm-chart-cloud-word:hover {
+    opacity: 0.7;
 }
 
 /* ---- entrance animation (data-animate, reduced-motion aware) ---- */
@@ -2193,11 +2477,31 @@ button.lm-chart-crumb:hover {
     animation: lm-chart-appear 0.5s ease-out;
 }
 
+/* packed bubble: each bubble pops in with a springy stagger (delay comes
+   inline per bubble) instead of the whole-svg pie spin */
+@keyframes lm-chart-pack-in {
+    from { transform: scale(0); opacity: 0; }
+}
+
+.lm-chart[data-type='packedbubble'][data-animate='true'] .lm-chart-pie {
+    animation: none;
+}
+
+.lm-chart[data-animate='true'] .lm-chart-pack {
+    animation: lm-chart-pack-in 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+}
+
+.lm-chart[data-animate='true'] .lm-chart-cloud-svg {
+    animation: lm-chart-appear 0.5s ease-out;
+}
+
 @media (prefers-reduced-motion: reduce) {
     .lm-chart-bar,
     .lm-chart-pie,
     .lm-chart-lineoverlay,
-    .lm-chart-scatter {
+    .lm-chart-scatter,
+    .lm-chart-pack,
+    .lm-chart-cloud-svg {
         animation: none !important;
         transition: filter 0.12s ease !important;
     }

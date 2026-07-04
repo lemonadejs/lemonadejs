@@ -1,0 +1,72 @@
+<html>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Material+Icons"/>
+
+<script src="https://cdn.jsdelivr.net/npm/jspreadsheet@12/dist/index.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jspreadsheet@12/dist/jspreadsheet.min.css" type="text/css" />
+<script src="https://cdn.jsdelivr.net/npm/jsuites@6/dist/jsuites.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jsuites@6/dist/jsuites.min.css" type="text/css" />
+
+<script type="importmap">
+{
+    "imports": {
+        "lemonadejs": "../../dist/lemonade.mjs",
+        "@lemonadejs/modal": "../../components/modal/dist/index.mjs",
+        "@lemonadejs/contextmenu": "../../components/contextmenu/dist/index.mjs"
+    }
+}
+</script>
+
+<link rel="stylesheet" href="../../components/modal/dist/style.css" type="text/css"/>
+<link rel="stylesheet" href="../../components/contextmenu/dist/style.css" type="text/css"/>
+<link rel="stylesheet" href="./comments/comments.css" type="text/css"/>
+
+<div id='spreadsheet'></div>
+
+<script type="module">
+import comments from './comments/comments.js';
+
+// You can use the following license for quick testing on localhost, StackBlitz, or CodeSandbox.
+// The license is valid for one day, after which the spreadsheet will become read-only.
+// For a longer trial period, you can create a free account and generate a demo license with an extended expiration date.
+jspreadsheet.license = 'NWExNjYxZTQ3ZjBlNWNhZDllZTVmMGUyMTg4OGU0YzliMzJlNGQyNTY5YzI2MTlmY2NhZTc4YWFkNmI0NzcyZDQ5ZDFlMDAzNDA4ZWFkODBlNzA2NGZmMTM3Mzc0MTkwOWY0ZTdiOGNkOWIxM2U3MzU0N2JjZTIxZTU2MDIwOTcsZXlKamJHbGxiblJKWkNJNklpSXNJbTVoYldVaU9pSktjM0J5WldGa2MyaGxaWFFpTENKa1lYUmxJam94Tnpnek1EVXpNalExTENKa2IyMWhhVzRpT2xzaWFuTndjbVZoWkhOb1pXVjBMbU52YlNJc0ltTnZaR1Z6WVc1a1ltOTRMbWx2SWl3aWFuTm9aV3hzTG01bGRDSXNJbU56WWk1aGNIQWlMQ0p6ZEdGamEySnNhWFI2TG1sdklpd2lkMlZpWTI5dWRHRnBibVZ5TG1sdklpd2liRzlqWVd4b2IzTjBJbDBzSW5Cc1lXNGlPaUl6TkNJc0luTmpiM0JsSWpwYkluWTNJaXdpZGpnaUxDSjJPU0lzSW5ZeE1DSXNJbll4TVNJc0luWXhNaUlzSW1Ob1lYSjBjeUlzSW1admNtMXpJaXdpWm05eWJYVnNZU0lzSW5CaGNuTmxjaUlzSW5KbGJtUmxjaUlzSW1OdmJXMWxiblJ6SWl3aWFXMXdiM0owWlhJaUxDSmlZWElpTENKMllXeHBaR0YwYVc5dWN5SXNJbk5sWVhKamFDSXNJbkJ5YVc1MElpd2ljMmhsWlhSeklpd2lZMnhwWlc1MElpd2ljMlZ5ZG1WeUlpd2ljMmhoY0dWeklpd2labTl5YldGMElpd2ljR2wyYjNRaVhTd2laR1Z0YnlJNmRISjFaWDA9';
+
+// Advance comments add-on for the JSS data grid
+jspreadsheet.setExtensions({ comments });
+
+// Define the information about the user
+jspreadsheet.comments({
+    user_id: 1000,
+    name: 'John Lennon',
+    image: 'img/lennon.png'
+});
+
+// Create the spreadsheets
+jspreadsheet(document.getElementById('spreadsheet'), {
+    toolbar: true,
+    worksheets: [
+        {
+            minDimensions: [6,8],
+            comments: {
+                // Advance comments receive an object
+                A3: [
+                    {
+                         name: 'George Michael',
+                         image: 'img/4.jpg',
+                         date: '2022-04-28 12:00:21',
+                         comments: 'Please can you try that one?',
+                    },
+                    {
+                         name: 'Miguel Rodrigues',
+                         image: 'img/7359.jpg',
+                         date: '2022-05-01 00:00:21',
+                         comments: 'Yes. Can you send more details about the calculations?',
+                    }
+                ],
+                // Simple comments (notes)
+                F1: 'test',
+             }
+        },
+    ],
+});
+</script>
+</html>

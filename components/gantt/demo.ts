@@ -7,17 +7,17 @@ import { html, mount, store, type Component } from 'lemonadejs';
 import Gantt, { type GanttTask } from '@lemonadejs/gantt';
 
 const project = store<GanttTask[]>([
-    { id: 'discovery', label: 'Discovery', start: '2026-06-01', end: '2026-06-04', progress: 100, color: '#0ea5e9' },
+    { id: 'discovery', label: 'Discovery', start: '2026-06-01', end: '2026-06-04', progress: 100, color: '#45889c' },
     { id: 'design', label: 'Design', start: '2026-06-03', end: '2026-06-09', progress: 80, dependencies: ['discovery'] },
-    { id: 'build', label: 'Build', start: '2026-06-08', end: '2026-06-18', progress: 45, color: '#16a34a', dependencies: ['design'] },
-    { id: 'qa', label: 'QA', start: '2026-06-16', end: '2026-06-22', progress: 10, color: '#f59e0b', dependencies: ['build'] },
+    { id: 'build', label: 'Build', start: '2026-06-08', end: '2026-06-18', progress: 45, color: '#578163', dependencies: ['design'] },
+    { id: 'qa', label: 'QA', start: '2026-06-16', end: '2026-06-22', progress: 10, color: '#bd7f40', dependencies: ['build'] },
     { id: 'launch', label: 'Launch', start: '2026-06-24', end: '2026-06-24', type: 'milestone', dependencies: ['qa'] },
 ]);
 
 const tableTasks = store<GanttTask[]>([
     { label: 'Backend', start: '2026-06-02', end: '2026-06-10', progress: 70 },
-    { label: 'Frontend', start: '2026-06-06', end: '2026-06-16', progress: 40, color: '#16a34a' },
-    { label: 'Docs', start: '2026-06-14', end: '2026-06-19', progress: 0, color: '#7c3aed' },
+    { label: 'Frontend', start: '2026-06-06', end: '2026-06-16', progress: 40, color: '#578163' },
+    { label: 'Docs', start: '2026-06-14', end: '2026-06-19', progress: 0, color: '#6342a1' },
 ]);
 
 const App: Component = (props, { state }) => {

@@ -23,14 +23,30 @@
  * plumbing via item.gap. One Contextmenu is shared by all pickers
  * (v5 mounted one per picker), so hovering another picker moves the
  * open dropdown instead of stacking menus.
+ *
+ * Editor-host additions (the Editor block drives its bar through these):
+ *   - item flags are LIVE: mutate selected / disabled / visible / title
+ *     on the item objects, then api.refresh() — the bar patches the
+ *     affected attributes in place (no rebuild, keyed by item identity).
+ *     A caret move updating twelve toggle states costs twelve attribute
+ *     writes, not a bar teardown.
+ *   - item.tooltip: hover text for icon-only items (title renders as a
+ *     visible label, so icon bars need a separate hover string)
+ *   - type 'color': a swatch item that opens the Color block (grid +
+ *     spectrum panel) in a small popover under the item. A pick lands on
+ *     item.value (swatch underline), fires item.onchange(value, item)
+ *     and the bar-level onchange(e, item, { value }), then closes.
+ *     Outside mousedown and Escape dismiss.
  */
 
 import { component, html } from 'lemonadejs';
 import Contextmenu, { type ContextItem } from '@lemonadejs/contextmenu';
+import Color from '@lemonadejs/color';
 
 export interface ToolbarItem {
-    type?: 'item' | 'divider' | 'divisor' | 'select';
+    type?: 'item' | 'divider' | 'divisor' | 'select' | 'color';
     title?: string;
+    tooltip?: string; // hover text (title is a visible label; icon bars need both)
     icon?: string; // material icon name
     image?: string; // <img> source
     route?: string; // anchor href (pairs with the Router block)
@@ -39,7 +55,9 @@ export interface ToolbarItem {
     disabled?: boolean; // blocks activation
     gap?: boolean; // flexible spacer in the left rail (v5 data-gap)
     options?: (string | ContextItem)[]; // 'select' dropdown entries
+    value?: string; // 'color' items: the current color (swatch underline)
     onclick?: (e: Event, item: ToolbarItem) => void;
+    onchange?: (value: string, item: ToolbarItem) => void; // 'color' items
 }
 
 type MenuApi = {
@@ -53,15 +71,24 @@ export const Toolbar = component('toolbar', {
     position: '', // '' = fixed bottom bar (v5 default) | 'static' | 'left'
     visible: true, // false hides the whole bar
     onitemclick: Function, // (e, item, index) on any item activation
-    onchange: Function, // (e, item, option) when a picker option is chosen
-    api: { open: Function, close: Function },
-}, (props, { state }) => {
+    onchange: Function, // (e, item, option) when a picker option is chosen, (e, item, { value }) on a color pick
+    api: { open: Function, close: Function, refresh: Function },
+}, (props, { state, listen }) => {
     const expanded = state<number | null>(null); // items index of the open picker
+    const version = state(0); // bumped by api.refresh() — re-evaluates the live item bindings
+    const colorAt = state<{ index: number; left: number; top: number } | null>(null); // the open color popover
 
     let root: HTMLElement | null = null;
     let menu: MenuApi | null = null;
 
     const items = (): ToolbarItem[] => (props.options.value as ToolbarItem[]) || [];
+
+    /** A live item binding: reads version so api.refresh() re-evaluates it
+     *  after in-place item mutations (selected / disabled / title / value) */
+    const live = <T>(fn: () => T) => () => {
+        void version.value;
+        return fn();
+    };
 
     /** The Nth picker header in DOM order belongs to the Nth select item */
     const headerEl = (index: number): HTMLElement | null => {
@@ -129,6 +156,54 @@ export const Toolbar = component('toolbar', {
         /** Open the picker dropdown of the select item at items index */
         open: (index: number) => open(index),
         close: () => menu?.close(),
+        /** Re-evaluate the live item bindings after in-place mutations */
+        refresh: () => {
+            version.value = version.value + 1;
+        },
+    });
+
+    /** A 'color' item toggles the Color block popover under itself */
+    const pickColor = (e: Event, index: number) => {
+        const item = items()[index];
+        if (!item || item.disabled) {
+            e.preventDefault();
+            return;
+        }
+        item.onclick?.(e, item);
+        props.onitemclick?.(e, item, index);
+        if (colorAt.value && colorAt.value.index === index) {
+            colorAt.value = null;
+            return;
+        }
+        const host = (e.currentTarget as HTMLElement).closest('.lm-toolbar-item') as HTMLElement | null;
+        const rect = host?.getBoundingClientRect();
+        // fixed positioning (viewport coords) — the popover never clips
+        // inside scrolled or absolutely-positioned toolbar hosts
+        colorAt.value = { index, left: rect ? rect.left : 0, top: rect ? rect.bottom + 4 : 0 };
+    };
+
+    const colorPicked = (value: string, index: number) => {
+        const item = items()[index];
+        if (!item) {
+            return;
+        }
+        item.value = value;
+        version.value = version.value + 1; // repaint the swatch
+        item.onchange?.(value, item);
+        props.onchange?.(null, item, { value });
+        colorAt.value = null; // a pick closes the popover
+    };
+
+    // Outside mousedown and Escape dismiss the color popover
+    listen<MouseEvent>(document, 'mousedown', (e) => {
+        if (colorAt.value && !(e.target as Element)?.closest?.('.lm-toolbar-color-pop, .lm-toolbar-color')) {
+            colorAt.value = null;
+        }
+    });
+    listen<KeyboardEvent>(document, 'keydown', (e) => {
+        if (e.key === 'Escape' && colorAt.value) {
+            colorAt.value = null;
+        }
     });
 
     // Items are keyed by identity: inserting/removing/reordering options
@@ -139,11 +214,12 @@ export const Toolbar = component('toolbar', {
         }
         if (item.type === 'select') {
             return html`<div class="lm-toolbar-picker" key="${item}"
-                data-selected="${item.selected ? 'true' : false}"
-                data-visible="${item.visible === undefined ? false : String(item.visible)}"
-                data-disabled="${item.disabled ? 'true' : false}">
+                data-selected="${live(() => (item.selected ? 'true' : false))}"
+                data-visible="${live(() => (item.visible === undefined ? false : String(item.visible)))}"
+                data-disabled="${live(() => (item.disabled ? 'true' : false))}">
                 <div class="lm-toolbar-picker-header" role="button"
                     tabindex="${item.disabled ? false : '0'}"
+                    title="${item.tooltip || false}"
                     aria-haspopup="true"
                     aria-expanded="${() => (expanded.value === index ? 'true' : 'false')}"
                     onmousedown="${(e: MouseEvent) => press(e, index)}"
@@ -153,21 +229,39 @@ export const Toolbar = component('toolbar', {
                         if (e.key === 'Enter') {
                             press(e, index);
                         }
-                    }}">${item.title || ''}</div>
+                    }}">${live(() => item.title || '')}</div>
+            </div>`;
+        }
+        if (item.type === 'color') {
+            // Swatch item — activation opens the Color block popover
+            return html`<div class="lm-toolbar-item lm-toolbar-color" key="${item}"
+                data-visible="${live(() => (item.visible === undefined ? false : String(item.visible)))}"
+                data-disabled="${live(() => (item.disabled ? 'true' : false))}">
+                <a title="${item.tooltip || item.title || false}" role="button"
+                    aria-label="${item.tooltip || item.title || false}"
+                    aria-haspopup="true"
+                    aria-expanded="${() => (colorAt.value?.index === index ? 'true' : 'false')}"
+                    onclick="${(e: MouseEvent) => pickColor(e, index)}">
+                    ${item.icon
+                        ? html`<i class="material-icons material-symbols-outlined">${item.icon}</i>`
+                        : ''}
+                    <span class="lm-toolbar-swatch"
+                        style="${live(() => 'background-color:' + (item.value || 'transparent'))}"></span>
+                </a>
             </div>`;
         }
         return html`<div class="lm-toolbar-item" key="${item}"
-            data-selected="${item.selected ? 'true' : false}"
-            data-visible="${item.visible === undefined ? false : String(item.visible)}"
-            data-disabled="${item.disabled ? 'true' : false}"
+            data-selected="${live(() => (item.selected ? 'true' : false))}"
+            data-visible="${live(() => (item.visible === undefined ? false : String(item.visible)))}"
+            data-disabled="${live(() => (item.disabled ? 'true' : false))}"
             data-gap="${item.gap ? 'true' : false}">
-            <a href="${item.route || false}" title="${item.title || false}"
+            <a href="${item.route || false}" title="${live(() => item.tooltip || item.title || false)}"
                 onclick="${(e: MouseEvent) => activate(e, index)}">
                 ${item.image ? html`<img src="${item.image}" alt="" />` : ''}
                 ${item.icon
-                    ? html`<i class="material-icons material-symbols-outlined">${item.icon}</i>`
+                    ? html`<i class="material-icons material-symbols-outlined">${live(() => item.icon)}</i>`
                     : ''}
-                ${item.title ? html`<span>${item.title}</span>` : ''}
+                ${item.title ? html`<span>${live(() => item.title)}</span>` : ''}
             </a>
         </div>`;
     };
@@ -180,6 +274,19 @@ export const Toolbar = component('toolbar', {
         ${() => items().map((item, i) => itemView(item, i))}
         <${Contextmenu} ref="${(a: MenuApi) => (menu = a)}"
             onclose="${() => (expanded.value = null)}" />
+        ${() => {
+            const at = colorAt.value;
+            if (!at) {
+                return '';
+            }
+            const item = items()[at.index];
+            // remounted per open: the panel starts on the item's current value
+            return html`<div class="lm-toolbar-color-pop"
+                style="${'left:' + at.left + 'px;top:' + at.top + 'px'}">
+                <${Color} type="inline" bind="${(item && item.value) || ''}"
+                    onchange="${(value: string) => colorPicked(value, at.index)}" />
+            </div>`;
+        }}
     </div>`;
 });
 

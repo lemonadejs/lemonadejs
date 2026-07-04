@@ -2,7 +2,7 @@
 
 LemonadeJS chart block — one unified data definition, bar/stacked/pie, responsive with no JS layout.
 
-**✓ verified** — 99 contract checks · framework-agnostic · zero dependencies
+**✓ verified** — 103 contract checks · framework-agnostic · zero dependencies
 
 ## Overview
 
@@ -76,7 +76,7 @@ state for a two-way live wire. Attribute strings are coerced to the declared typ
 
 | Prop | Type | Default | Description |
 |---|---|---|---|
-| `type` | string | `"bar"` | bar | stackedbar | line | stackedarea | streamgraph | pie | scatter | bubble | radar | radialbar | polararea | gauge | funnel | pyramid | waterfall | bullet | lollipop | dumbbell | histogram | heatmap | candlestick | ohlc | boxplot | arearange | columnrange | treemap | sunburst | icicle | sankey | chord | packedbubble | pareto |
+| `type` | string | `"bar"` | bar | stackedbar | line | stackedarea | streamgraph | pie | scatter | bubble | radar | radialbar | polararea | gauge | funnel | pyramid | waterfall | bullet | lollipop | dumbbell | histogram | heatmap | candlestick | ohlc | boxplot | arearange | columnrange | treemap | sunburst | icicle | sankey | chord | arcdiagram | packedbubble | pareto | wordcloud |
 | `series` | array | — | [{ name, data, color? }]; pie uses the first series |
 | `categories` | array | — | x-axis labels (bar/stacked) / slice names (pie) |
 | `title` | string | `''` | optional heading above the plot |
@@ -102,11 +102,13 @@ state for a two-way live wire. Attribute strings are coerced to the declared typ
 | `legendposition` | string | `''` | '' auto | 'top' | 'bottom' | 'left' | 'right' |
 | `labels` | boolean | `true` | value labels on bars / % on slices (set false to hide) |
 | `horizontal` | boolean | `false` | bar/stacked: horizontal bars (categories on the y-axis) |
+| `mirror` | boolean | `false` | horizontal bars: population pyramid — series[0] grows leftward, abs labels |
 | `tooltip` | boolean | `true` | styled hover tooltip following the cursor |
 | `sharedtooltip` | boolean | `true` | bar/stacked: hover a column → all series + crosshair |
 | `animate` | boolean | `true` | CSS entrance/update animation (reduced-motion aware) |
 | `stackmode` | string | `"normal"` | stackedbar only: 'normal' | 'percent' (100%-stacked) |
 | `innerradius` | number | `0` | pie: donut hole as a fraction (0–0.9) or percent (10–90); ring thickness = radius × (1 − innerradius) |
+| `borderradius` | any | — | corner rounding: donut segment corners / heatmap cells; default = subtle per-type value |
 | `ymin` | number | — | bar/stacked: force the y-axis lower bound (auto if unset) |
 | `ymax` | number | — | bar/stacked: force the y-axis upper bound (auto if unset) |
 | `ylog` | boolean | `false` | logarithmic y-axis (positive values only) |

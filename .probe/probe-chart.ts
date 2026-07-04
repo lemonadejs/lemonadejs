@@ -31,6 +31,13 @@ const App: Component = () => html`<div style="padding:20px;display:flex;flex-dir
         series="${[{ data: [{ name: 'A', value: 30 }, { name: 'B', value: 70 }] }]}" /></div>
     <div id="c-zoom" style="height:300px"><${Chart} type="bar" zoom animate="${false}"
         categories="${Array.from({ length: 10 }, (_, i) => 'c' + i)}" series="${[{ data: Array.from({ length: 10 }, (_, i) => i + 1) }]}" /></div>
+    <div id="c-cloud" style="height:300px"><${Chart} type="wordcloud" animate="${false}"
+        series="${[{ data: [
+            { name: 'Lemonade', value: 90 }, { name: 'Reactive', value: 64 }, { name: 'Charts', value: 52 },
+            { name: 'Components', value: 46 }, { name: 'Template', value: 38 }, { name: 'State', value: 34 },
+            { name: 'Bindings', value: 30 }, { name: 'Signals', value: 26 }, { name: 'Props', value: 24 },
+            { name: 'Events', value: 20 }, { name: 'Tooltips', value: 16 }, { name: 'Palette', value: 14 },
+        ] }]}" /></div>
 </div>`;
 
 const mouse = (el: Element, type: string, x: number, y: number): void =>
@@ -71,7 +78,9 @@ const run = async (): Promise<void> => {
     const plot = scC.querySelector('.lm-chart-plot')!;
     const dots = [...scC.querySelectorAll('.lm-chart-dot')];
     const pr = r(plot);
-    log('scatter dot at x-min = left edge', near(cx(dots[0]), pr.left, 3), { dot: Math.round(cx(dots[0])), left: Math.round(pr.left) });
+    // extent padding now applies past zero too: the x-min dot must sit
+    // fully INSIDE the plot (it used to sit half-clipped on the axis line)
+    log('scatter dot at x-min inside the plot', cx(dots[0]) > pr.left + 4, { dot: Math.round(cx(dots[0])), left: Math.round(pr.left) });
     // the extent pads 5% past the data max, so the last dot must be fully
     // inside the plot (it used to sit half-clipped on the right edge)
     log('scatter dot at x-max inside the plot', cx(dots[1]) < pr.right - 4 && cx(dots[1]) > pr.left + (pr.right - pr.left) * 0.6,
@@ -99,6 +108,31 @@ const run = async (): Promise<void> => {
     (zoomC.querySelector('.lm-chart-zoomreset') as HTMLElement)?.click();
     await frame();
     log('zoom reset restores all categories', zoomC.querySelectorAll('.lm-chart-cat').length === 10, { n: zoomC.querySelectorAll('.lm-chart-cat').length });
+
+    // 7. wordcloud: every word inside the svg box, no pair of words overlapping
+    // (the layout estimates text widths — only a real font can prove the boxes)
+    const cloudC = document.getElementById('c-cloud')!;
+    const words = [...cloudC.querySelectorAll('.lm-chart-cloud-word')];
+    log('wordcloud renders every word', words.length === 12, { n: words.length });
+    const box = r(cloudC.querySelector('.lm-chart-cloud-svg'));
+    const inside = words.every((w) => {
+        const b = r(w);
+        return b.left >= box.left - 1 && b.right <= box.right + 1 && b.top >= box.top - 1 && b.bottom <= box.bottom + 1;
+    });
+    log('wordcloud words inside the box', inside, {});
+    let collisions = 0;
+    for (let i = 0; i < words.length; i++) {
+        for (let j = i + 1; j < words.length; j++) {
+            const a = r(words[i]);
+            const b = r(words[j]);
+            // text bounding boxes carry ascender/descender padding; only count
+            // a real overlap (more than a couple of px in both axes)
+            const ox = Math.min(a.right, b.right) - Math.max(a.left, b.left);
+            const oy = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
+            if (ox > 2 && oy > 2) collisions++;
+        }
+    }
+    log('wordcloud words do not overlap', collisions === 0, { collisions });
 
     const pre = document.createElement('pre');
     pre.id = 'lm-probe';

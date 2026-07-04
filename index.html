@@ -6,85 +6,307 @@
     <title>LemonadeJS — component playground</title>
     <style>
         :root { color-scheme: light; }
+        * { box-sizing: border-box; }
         body {
-            font-family: system-ui, sans-serif;
+            font-family: 'Helvetica Neue', Helvetica, Arial, system-ui, sans-serif;
             margin: 0;
             background: #fafafa;
-            color: #18181b;
+            color: #333;
         }
         header {
-            padding: 36px 40px 8px;
+            padding: 34px 40px 0;
+            max-width: 1460px;
+            margin: 0 auto;
         }
         h1 { margin: 0 0 4px; font-size: 26px; }
         h1 span { color: #eab308; }
-        header p { margin: 0; color: #71717a; }
+        header p { margin: 0 0 18px; color: #666; }
+        .stats { display: flex; gap: 18px; flex-wrap: wrap; margin: 0 0 18px; }
+        .stat { font-size: 13px; color: #666; }
+        .stat b { color: #333; font-size: 15px; }
+
+        /* toolbar: search + category pills */
+        .bar {
+            position: sticky;
+            top: 0;
+            z-index: 5;
+            background: rgba(250, 250, 250, 0.94);
+            backdrop-filter: blur(4px);
+            border-bottom: 1px solid #ececec;
+        }
+        .bar-inner {
+            max-width: 1460px;
+            margin: 0 auto;
+            padding: 12px 40px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        #search {
+            flex: 0 1 320px;
+            font: inherit;
+            font-size: 14px;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: #fff;
+            outline: none;
+        }
+        #search:focus { border-color: #4b81de; box-shadow: 0 0 0 3px rgba(75, 129, 222, 0.15); }
+        .pill {
+            font: inherit;
+            font-size: 13px;
+            padding: 6px 12px;
+            border: 1px solid #ddd;
+            border-radius: 99px;
+            background: #fff;
+            color: #444;
+            cursor: pointer;
+        }
+        .pill:hover { border-color: #bbb; }
+        .pill[data-on='true'] { background: #333; color: #fff; border-color: #333; }
+        .pill small { opacity: 0.65; margin-left: 3px; }
+        .kbd {
+            margin-left: auto;
+            font-size: 12px;
+            color: #999;
+        }
+        .kbd code { background: #f0f0f0; border: 1px solid #e2e2e2; border-radius: 4px; padding: 1px 6px; }
+
+        main { max-width: 1460px; margin: 0 auto; padding: 8px 40px 60px; }
+        .section-title {
+            margin: 30px 0 12px;
+            font-size: 13px;
+            font-weight: bold;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: #888;
+        }
         .grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-            gap: 16px;
-            padding: 28px 40px 48px;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 14px;
         }
         a.card {
             display: block;
             background: #fff;
             border: 1px solid #e4e4e7;
             border-radius: 12px;
-            padding: 18px;
+            padding: 16px 18px;
             text-decoration: none;
             color: inherit;
-            transition: box-shadow 0.15s ease, transform 0.15s ease;
+            transition: box-shadow 0.15s ease, transform 0.15s ease, border-color 0.15s ease;
         }
         a.card:hover {
             box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
             transform: translateY(-1px);
+            border-color: #d4d4d8;
         }
-        .card h2 { margin: 0 0 6px; font-size: 17px; text-transform: capitalize; }
+        .card h2 { margin: 0 0 5px; font-size: 16px; text-transform: capitalize; display: flex; align-items: center; gap: 8px; }
         .badge {
-            display: inline-block;
-            font-size: 11px;
+            font-size: 10px;
             font-weight: 600;
             color: #166534;
             background: #dcfce7;
             border-radius: 99px;
-            padding: 2px 8px;
-            margin-bottom: 10px;
+            padding: 2px 7px;
         }
         .badge[data-fail] { color: #991b1b; background: #fee2e2; }
-        .meta { font-size: 12.5px; color: #71717a; line-height: 1.6; }
-        .empty { padding: 40px; color: #71717a; }
+        .desc { font-size: 13px; color: #555; line-height: 1.45; margin: 0 0 8px; min-height: 2.6em; }
+        .meta { font-size: 12px; color: #999; }
+        .chips { margin-top: 9px; display: flex; flex-wrap: wrap; gap: 4px; }
+        .chip {
+            font-size: 11px;
+            color: #445;
+            background: #f1f4f9;
+            border-radius: 5px;
+            padding: 2px 7px;
+        }
+        .empty { padding: 40px 0; color: #71717a; }
+        mark { background: #fef08a; border-radius: 2px; padding: 0 1px; }
     </style>
 </head>
 <body>
     <header>
         <h1><span>●</span> LemonadeJS components</h1>
-        <p>Every block below passed the registry gate (contract + verify). Click to open its playground.</p>
+        <p>Every block passed the registry gate (contract + verify). Click a card to open its live playground.</p>
+        <div class="stats" id="stats"></div>
     </header>
-    <div class="grid" id="grid"><div class="empty">Loading components/registry.json…</div></div>
+    <div class="bar"><div class="bar-inner">
+        <input id="search" type="search" placeholder="Search components, chart types, keywords…" autocomplete="off" />
+        <span id="pills"></span>
+        <span class="kbd">press <code>/</code> to search</span>
+    </div></div>
+    <main id="main"><div class="empty">Loading components/registry.json…</div></main>
     <script>
-        fetch('/components/registry.json')
-            .then((r) => r.json())
-            .then((registry) => {
-                const grid = document.getElementById('grid');
-                grid.innerHTML = '';
-                for (const block of registry) {
+        // ---- static catalog metadata (the registry has no category/blurb) ----
+        const CHART_TYPES = ['bar', 'stackedbar', 'line', 'area', 'stackedarea', 'streamgraph', 'pie', 'donut',
+            'scatter', 'bubble', 'radar', 'gauge', 'radialbar', 'polararea', 'funnel', 'pyramid', 'waterfall',
+            'bullet', 'heatmap', 'candlestick', 'ohlc', 'boxplot', 'arearange', 'columnrange', 'dumbbell',
+            'lollipop', 'histogram', 'treemap', 'sankey', 'chord', 'arcdiagram', 'sunburst', 'icicle', 'packedbubble',
+            'pareto', 'wordcloud', 'sparkline'];
+        const META = {
+            chart:        ['Data & Visualization', '33+ chart types on one reactive block — Highcharts looks at a fraction of the size.', CHART_TYPES],
+            gantt:        ['Data & Visualization', 'Percent-positioned gantt: drag to move/resize, dependencies, milestones, table mode.', ['tasks', 'dependencies', 'milestones', 'drag']],
+            kanban:       ['Data & Visualization', 'Card board with drag-and-drop columns.', []],
+            schedule:     ['Data & Visualization', 'Calendar/agenda scheduling views.', []],
+            timeline:     ['Data & Visualization', 'Vertical event timeline.', []],
+            organogram:   ['Data & Visualization', 'Org-chart tree of nodes.', []],
+            datagrid:     ['Data & Visualization', 'Lightweight data table with sorting and editing.', []],
+            treeview:     ['Data & Visualization', 'Collapsible tree with selection.', []],
+            accordion:    ['Layout & Content', 'Expandable content panels.', []],
+            card:         ['Layout & Content', 'Content card with media/header/footer slots.', []],
+            carousel:     ['Layout & Content', 'Swipeable slide carousel.', []],
+            list:         ['Layout & Content', 'Virtualised list rendering.', []],
+            progress:     ['Layout & Content', 'Linear and circular progress indicators.', []],
+            imagelist:    ['Media', 'Image gallery grid.', []],
+            cropper:      ['Media', 'Image cropping with zoom and rotate.', []],
+            button:       ['Forms & Inputs', 'Buttons in all variants and sizes.', []],
+            buttongroup:  ['Forms & Inputs', 'Segmented button group.', []],
+            calendar:     ['Forms & Inputs', 'Date picker calendar.', []],
+            color:        ['Forms & Inputs', 'Color picker.', []],
+            dropdown:     ['Forms & Inputs', 'Select with search, groups and multi-select.', []],
+            formify:      ['Forms & Inputs', 'Schema-driven form builder.', []],
+            login:        ['Forms & Inputs', 'Ready-made login/password form.', []],
+            rating:       ['Forms & Inputs', 'Star rating input.', []],
+            signature:    ['Forms & Inputs', 'Signature drawing pad.', []],
+            slider:       ['Forms & Inputs', 'Range slider input.', []],
+            switch:       ['Forms & Inputs', 'On/off switch.', []],
+            toggle:       ['Forms & Inputs', 'Toggle button.', []],
+            transferlist: ['Forms & Inputs', 'Two-pane item transfer picker.', []],
+            wheel:        ['Forms & Inputs', 'iOS-style wheel picker.', []],
+            navbar:       ['Navigation', 'Top navigation bar.', []],
+            tabs:         ['Navigation', 'Tabbed views.', []],
+            topmenu:      ['Navigation', 'Menu bar with nested submenus.', []],
+            toolbar:      ['Navigation', 'Icon/action toolbar.', []],
+            router:       ['Navigation', 'Client-side route outlet.', []],
+            modal:        ['Overlays & Popups', 'Draggable, resizable window overlay.', []],
+            dialog:       ['Overlays & Popups', 'Confirm/prompt dialogs.', []],
+            drawer:       ['Overlays & Popups', 'Slide-in side panel.', []],
+            toast:        ['Overlays & Popups', 'Transient notification toasts.', []],
+            tooltip:      ['Overlays & Popups', 'Hover tooltips.', []],
+            alert:        ['Overlays & Popups', 'Inline alert banners.', []],
+            backdrop:     ['Overlays & Popups', 'Dimming backdrop layer.', []],
+            actionsheet:  ['Overlays & Popups', 'Bottom action sheet.', []],
+            contextmenu:  ['Overlays & Popups', 'Right-click context menu.', []],
+            quickmenu:    ['Overlays & Popups', 'Command palette / quick actions.', []],
+            speeddial:    ['Overlays & Popups', 'Floating action button with fan-out actions.', []],
+        };
+        const ORDER = ['Data & Visualization', 'Forms & Inputs', 'Overlays & Popups', 'Navigation', 'Layout & Content', 'Media', 'Other'];
+
+        const state = { q: '', cat: 'All', registry: [] };
+
+        const norm = (s) => s.toLowerCase();
+        const matches = (block) => {
+            const meta = META[block.name] || ['Other', '', []];
+            if (state.cat !== 'All' && meta[0] !== state.cat) return false;
+            if (!state.q) return true;
+            const q = norm(state.q);
+            return norm(block.name).includes(q) || norm(meta[1]).includes(q) || norm(meta[0]).includes(q)
+                || meta[2].some((t) => norm(t).includes(q));
+        };
+        const hl = (text) => {
+            if (!state.q) return text;
+            const i = norm(text).indexOf(norm(state.q));
+            if (i < 0) return text;
+            return text.slice(0, i) + '<mark>' + text.slice(i, i + state.q.length) + '</mark>' + text.slice(i + state.q.length);
+        };
+
+        const render = () => {
+            const main = document.getElementById('main');
+            const bycat = {};
+            let shown = 0;
+            for (const block of state.registry) {
+                if (!matches(block)) continue;
+                const cat = (META[block.name] || ['Other'])[0];
+                (bycat[cat] = bycat[cat] || []).push(block);
+                shown++;
+            }
+            main.innerHTML = '';
+            for (const cat of ORDER) {
+                const blocks = bycat[cat];
+                if (!blocks || !blocks.length) continue;
+                const title = document.createElement('div');
+                title.className = 'section-title';
+                title.textContent = cat + ' · ' + blocks.length;
+                main.appendChild(title);
+                const grid = document.createElement('div');
+                grid.className = 'grid';
+                for (const block of blocks) {
+                    const meta = META[block.name] || ['Other', '', []];
                     const props = Object.keys(block.contract.props || {}).length;
                     const events = (block.contract.events || []).length;
                     const api = (block.contract.api || []).length;
+                    const q = norm(state.q);
+                    const tags = state.q
+                        ? meta[2].filter((t) => norm(t).includes(q))
+                        : meta[2].slice(0, 8);
                     const a = document.createElement('a');
                     a.className = 'card';
                     a.href = '/' + block.path + '/demo.html';
                     a.innerHTML =
-                        '<h2>' + block.name + '</h2>' +
-                        '<span class="badge"' + (block.verified ? '' : ' data-fail') + '>' +
-                        (block.verified ? 'verified · ' + block.checks + ' checks' : 'FAILED verify') + '</span>' +
-                        '<div class="meta">' + props + ' props · ' + events + ' events · ' + api + ' api methods</div>';
+                        '<h2>' + hl(block.name) +
+                        ' <span class="badge"' + (block.verified ? '' : ' data-fail') + '>' +
+                        (block.verified ? block.checks + ' checks' : 'FAILED') + '</span></h2>' +
+                        '<p class="desc">' + hl(meta[1]) + '</p>' +
+                        '<div class="meta">' + props + ' props · ' + events + ' events · ' + api + ' api</div>' +
+                        (tags.length
+                            ? '<div class="chips">' + tags.map((t) => '<span class="chip">' + hl(t) + '</span>').join('')
+                                + (!state.q && meta[2].length > 8 ? '<span class="chip">+' + (meta[2].length - 8) + ' more</span>' : '')
+                                + '</div>'
+                            : '');
                     grid.appendChild(a);
                 }
+                main.appendChild(grid);
+            }
+            if (!shown) main.innerHTML = '<div class="empty">No components match “' + state.q + '”.</div>';
+        };
+
+        const renderPills = () => {
+            const counts = { All: state.registry.length };
+            for (const block of state.registry) {
+                const cat = (META[block.name] || ['Other'])[0];
+                counts[cat] = (counts[cat] || 0) + 1;
+            }
+            const holder = document.getElementById('pills');
+            holder.innerHTML = '';
+            for (const cat of ['All', ...ORDER]) {
+                if (!counts[cat]) continue;
+                const b = document.createElement('button');
+                b.className = 'pill';
+                b.dataset.on = state.cat === cat ? 'true' : 'false';
+                b.innerHTML = cat + '<small>' + counts[cat] + '</small>';
+                b.onclick = () => { state.cat = cat; renderPills(); render(); };
+                holder.appendChild(b);
+            }
+        };
+
+        fetch('/components/registry.json')
+            .then((r) => r.json())
+            .then((registry) => {
+                state.registry = registry;
+                const props = registry.reduce((s, b) => s + Object.keys(b.contract.props || {}).length, 0);
+                const checks = registry.reduce((s, b) => s + (b.checks || 0), 0);
+                document.getElementById('stats').innerHTML =
+                    '<span class="stat"><b>' + registry.length + '</b> components</span>' +
+                    '<span class="stat"><b>' + CHART_TYPES.length + '</b> chart types</span>' +
+                    '<span class="stat"><b>' + props + '</b> documented props</span>' +
+                    '<span class="stat"><b>' + checks + '</b> verify checks</span>';
+                renderPills();
+                render();
             })
             .catch(() => {
-                document.getElementById('grid').innerHTML =
+                document.getElementById('main').innerHTML =
                     '<div class="empty">Could not load registry.json — run <code>npm run registry</code>.</div>';
             });
+
+        const search = document.getElementById('search');
+        search.addEventListener('input', () => { state.q = search.value.trim(); render(); });
+        document.addEventListener('keydown', (e) => {
+            if (e.key === '/' && document.activeElement !== search) { e.preventDefault(); search.focus(); }
+            if (e.key === 'Escape' && document.activeElement === search) { search.value = ''; state.q = ''; render(); }
+        });
     </script>
 </body>
 </html>

@@ -1,6 +1,6 @@
 # LemonadeJS Studio — the block catalog
 
-45 contract-verified blocks. Every block: a publishable npm package,
+46 contract-verified blocks. Every block: a publishable npm package,
 a machine-readable contract, a conformance proof, a live playground demo, and
 three deployment forms (by value, by name, custom element).
 
@@ -15,7 +15,7 @@ three deployment forms (by value, by name, custom element).
 | [Calendar](./calendar/README.md) | `@lemonadejs/calendar` | 41 | LemonadeJS calendar block — date, datetime and range picker on the Modal primitive; contract-verified, framework-agnostic. |
 | [Card](./card/README.md) | `@lemonadejs/card` | 20 | LemonadeJS card block — contract-verified, framework-agnostic. |
 | [Carousel](./carousel/README.md) | `@lemonadejs/carousel` | 14 | LemonadeJS carousel block — single-file (styles ship inside the component), contract-verified, framework-agnostic. |
-| [Chart](./chart/README.md) | `@lemonadejs/chart` | 99 | LemonadeJS chart block — one unified data definition, bar/stacked/pie, responsive with no JS layout. |
+| [Chart](./chart/README.md) | `@lemonadejs/chart` | 103 | LemonadeJS chart block — one unified data definition, bar/stacked/pie, responsive with no JS layout. |
 | [Color](./color/README.md) | `@lemonadejs/color` | 16 | LemonadeJS color block — contract-verified, framework-agnostic. |
 | [Contextmenu](./contextmenu/README.md) | `@lemonadejs/contextmenu` | 6 | LemonadeJS contextmenu block — contract-verified, framework-agnostic. |
 | [Cropper](./cropper/README.md) | `@lemonadejs/cropper` | 31 | LemonadeJS cropper block — contract-verified, framework-agnostic. |
@@ -23,6 +23,7 @@ three deployment forms (by value, by name, custom element).
 | [Dialog](./dialog/README.md) | `@lemonadejs/dialog` | 19 | LemonadeJS dialog block — contract-verified, framework-agnostic. |
 | [Drawer](./drawer/README.md) | `@lemonadejs/drawer` | 15 | LemonadeJS drawer block — anchored side panels and the bottom sheet on the Modal primitive; contract-verified, framework-agnostic. |
 | [Dropdown](./dropdown/README.md) | `@lemonadejs/dropdown` | 39 | LemonadeJS dropdown block — select, autocomplete and picker on the Modal primitive; contract-verified, framework-agnostic. |
+| [Editor](./editor/README.md) | `@lemonadejs/editor` | 19 | LemonadeJS editor block — rich text on the Toolbar block, CKEditor-style tables with resize handles, local print/PDF and Word export; contract-verified, framework-agnostic. |
 | [Formify](./formify/README.md) | `@lemonadejs/formify` | 8 | LemonadeJS formify block — smart HTML forms: your markup in, one data object out (get/set/load/save, two-way bind). Contract-verified, framework-agnostic. |
 | [Gantt](./gantt/README.md) | `@lemonadejs/gantt` | 26 | LemonadeJS gantt block — %-positioned bars that align across embedded instances; contract-verified, framework-agnostic. |
 | [Imagelist](./imagelist/README.md) | `@lemonadejs/imagelist` | 14 | LemonadeJS imagelist block — contract-verified, framework-agnostic. |
