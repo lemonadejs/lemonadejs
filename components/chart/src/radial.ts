@@ -86,7 +86,12 @@ export const radialbarChart = (m: Model, ctx: RenderCtx): View => {
         const per = (R0 - 14) / (n || 1);
         const th = Math.min(10, Math.max(3, per * 0.7));
         const segs: View[] = [];
+        const leads: View[] = [];
         const catLabels: View[] = [];
+        // category labels sit a fixed gap LEFT of the ring starts, with a
+        // thin leader line connecting each label to its ring (the labels
+        // used to hug the 12-o'clock arc starts and collide with them)
+        const LABEL_X = 44;
         for (let i = 0; i < n; i++) {
             const r = R0 - per * i - th / 2;
             const cat = m.categories[i] != null ? m.categories[i] : '';
@@ -108,8 +113,10 @@ export const radialbarChart = (m: Model, ctx: RenderCtx): View => {
                     onmousemove="${tip}" ontouchstart="${tip}" onmouseleave="${ctx.hideTip}"
                     onclick="${() => ctx.fire(p, m.series.indexOf(s), i)}" />`);
             }
+            leads.push(html`<line class="lm-chart-radial-lead"
+                x1="${f(LABEL_X + 0.5)}" y1="${f(50 - r)}" x2="50" y2="${f(50 - r)}" />`);
             catLabels.push(html`<span class="lm-chart-radial-cat"
-                style="${css({ left: '50%', top: (50 - r) + '%' })}">${cat}</span>`);
+                style="${css({ left: LABEL_X + '%', top: (50 - r) + '%' })}">${cat}</span>`);
         }
         const tickLabels = m.labels
             ? niceScale(0, peak).ticks.filter((t) => t >= 0 && t < hi - 1e-9).map((t) => {
@@ -120,7 +127,7 @@ export const radialbarChart = (m: Model, ctx: RenderCtx): View => {
             : [];
         return html`<div class="lm-chart-pie-core">
             <div class="lm-chart-pie-area">
-                <svg class="lm-chart-pie" viewBox="0 0 100 100" aria-hidden="true">${segs}</svg>
+                <svg class="lm-chart-pie" viewBox="0 0 100 100" aria-hidden="true">${leads}${segs}</svg>
                 ${catLabels}${tickLabels}
             </div>
         </div>`;

@@ -380,6 +380,71 @@ describe('components/chart', () => {
         expect(parseFloat(dots[1].getAttribute('cy')!)).toBeGreaterThan(0);
     });
 
+    it('scatter combo: per-series type:line draws a connecting path; points-only series keep markers', () => {
+        handle = t(Chart, {
+            type: 'scatter',
+            series: [
+                { name: 'Measured', type: 'scatter', data: [[1, 4], [2, 7], [3, 3]] },
+                { name: 'Trend', type: 'line', data: [[1, 3], [2, 5], [3, 6]] },
+            ],
+        });
+        // the scatter series keeps its 3 markers; the line series draws none
+        expect(handle.queryAll('.lm-chart-dot').length).toBe(3);
+        // exactly one connecting path, for the line series
+        const lines = handle.queryAll('.lm-chart-line');
+        expect(lines.length).toBe(1);
+        expect(lines[0].getAttribute('d')!.startsWith('M ')).toBe(true);
+        // legend: line series gets a line swatch, scatter series a marker shape
+        const items = handle.queryAll('.lm-chart-legend-item');
+        expect(items.length).toBe(2);
+    });
+
+    it('pictogram: one row per point, glyphs filled by value/total (percent default)', () => {
+        handle = t(Chart, {
+            type: 'pictogram', icon: 'person', columns: 10, labels: true,
+            series: [{ data: [{ name: 'Satisfied', value: 70 }, { name: 'Unhappy', value: 25 }] }],
+        });
+        const rows = handle.queryAll('.lm-chart-picto-row');
+        expect(rows.length).toBe(2);                                   // one row per point
+        expect(rows[0].querySelectorAll('.lm-chart-picto').length).toBe(10); // 10 glyphs
+        // 70% → 7 glyphs get a fill window; 25% → 3 (2 full + 1 fractional at 50%)
+        expect(rows[0].querySelectorAll('.lm-chart-picto-fill').length).toBe(7);
+        expect(rows[1].querySelectorAll('.lm-chart-picto-fill').length).toBe(3);
+        // percent readout label
+        expect(rows[0].querySelector('.lm-chart-picto-value')!.textContent).toBe('70%');
+    });
+
+    it('waffle: type=waffle is a 100-square grid partitioned across the points', () => {
+        handle = t(Chart, {
+            type: 'waffle',
+            series: [{ data: [{ name: 'Chrome', value: 45 }, { name: 'Safari', value: 30 }, { name: 'Other', value: 25 }] }],
+        });
+        const grid = handle.query('.lm-chart-waffle .lm-chart-picto-grid')!;
+        expect(grid.querySelectorAll('.lm-chart-picto').length).toBe(100); // 10×10 grid
+        // categories fill 45+30+25 = all 100 cells, in palette order
+        expect(grid.querySelectorAll('.lm-chart-picto-fill').length).toBe(100);
+        // interactive cells carry the category partition (45/30/25 → 3 colours)
+        const fills = [...grid.querySelectorAll<HTMLElement>('.lm-chart-picto-fill path')];
+        expect(new Set(fills.map((p) => p.style.fill)).size).toBe(3);
+        // the category legend shows (waffle colours aren't labelled inline)
+        expect(handle.queryAll('.lm-chart-legend-item').length).toBe(3);
+    });
+
+    it('waffle: one grid per series when multiple datasets are provided', () => {
+        handle = t(Chart, {
+            type: 'waffle',
+            series: [
+                { name: '2023', data: [{ name: 'A', value: 60 }, { name: 'B', value: 40 }] },
+                { name: '2024', data: [{ name: 'A', value: 50 }, { name: 'B', value: 50 }] },
+            ],
+        });
+        const grids = handle.queryAll('.lm-chart-waffle');
+        expect(grids.length).toBe(2);
+        // each waffle is labelled with its series name
+        const names = handle.queryAll('.lm-chart-waffle-name').map((n) => n.textContent);
+        expect(names).toEqual(['2023', '2024']);
+    });
+
     it('donut: innerradius accepts a percent (60 ≡ 0.6)', () => {
         const data = [{ name: 'A', value: 30 }, { name: 'B', value: 70 }];
         handle = t(Chart, { type: 'pie', innerradius: 0.6, series: [{ data }] });

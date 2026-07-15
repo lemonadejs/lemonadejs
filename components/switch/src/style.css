@@ -14,6 +14,57 @@
     height: 0;
 }
 
+/* ---- coexistence with jsuites/jspreadsheet pages: jsuites ships its own
+   .lm-switch drawn with `> input` (a 30px fading circle) and generic
+   `> span::before/::after` pseudo pills — on our markup those paint a
+   SECOND phantom switch next to ours and drop a stray thumb on our track.
+   Neutralize them on our structure; where specificity ties, the v6 sheet
+   loads after the jsuites/jspreadsheet CDN css by convention. */
+.lm-switch::before {
+    content: none;
+}
+
+.lm-switch > .lm-switch-track,
+.lm-switch > .lm-switch-label {
+    margin: 0;
+}
+
+/* jsuites' `>span { max-width: -webkit-fill-available }` squeezes the
+   track (we never set max-width, so nothing contested it) and the thumb
+   overhangs — pin the track rigid */
+.lm-switch > .lm-switch-track {
+    max-width: none;
+    flex: none;
+}
+
+/* !important: jsuites' checked-state variants (`>input:checked+span::after`,
+   0-2-2) outgun any plain structural selector we can write here */
+.lm-switch > .lm-switch-track::before,
+.lm-switch > .lm-switch-track::after,
+.lm-switch > .lm-switch-label::before,
+.lm-switch > .lm-switch-label::after {
+    content: none !important;
+}
+
+.lm-switch > input.lm-switch-input {
+    appearance: none;
+    -webkit-appearance: none;
+    position: absolute;
+    left: auto;
+    right: auto;
+    margin: 0;
+    opacity: 0 !important;
+    width: 0;
+    height: 0;
+    max-width: none;
+    max-height: none;
+    background: none;
+    border-radius: 0;
+    transform: none !important;
+    transition: none;
+    pointer-events: none;
+}
+
 .lm-switch .lm-switch-track {
     display: inline-block;
     width: 40px;
@@ -41,7 +92,13 @@
     outline-offset: 2px;
 }
 
+/* ON = the catalog accent (Radix/shadcn convention: primary, not a status
+   colour); green stays available as an explicit color="green" variant */
 .lm-switch.lm-switch-on .lm-switch-track {
+    background: var(--lm-main-color, #2563eb);
+}
+
+.lm-switch.lm-switch-on[data-color='green'] .lm-switch-track {
     background: var(--lm-color-success, #16a34a);
 }
 

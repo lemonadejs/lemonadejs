@@ -40,7 +40,7 @@ import {
 import { compact, plain } from './helpers';
 import { bars, boxplotChart, lollipopChart, ohlcChart, rangeChart, waterfallChart } from './cartesian';
 import { funnelChart, gaugeChart, pie, polarareaChart, radarChart, radialbarChart } from './radial';
-import { bulletChart, heatmapChart, packedbubbleChart, scatterChart, sparkline, treemapChart, wordcloudChart } from './extras';
+import { bulletChart, heatmapChart, packedbubbleChart, pictogramChart, scatterChart, sparkline, treemapChart, waffleChart, wordcloudChart } from './extras';
 import { arcChart, chordChart, sankeyChart } from './flow';
 import { icicleChart, sunburstChart } from './hierarchy';
 
@@ -51,7 +51,7 @@ export type { ChartPoint, ChartSeries, PlotBand, PlotLine, Annotation } from './
  * ------------------------------------------------------------------ */
 
 export const Chart = component('chart', {
-    type: 'bar',             // bar | stackedbar | line | stackedarea | streamgraph | pie | scatter | bubble | radar | radialbar | polararea | gauge | funnel | pyramid | waterfall | bullet | lollipop | dumbbell | histogram | heatmap | candlestick | ohlc | boxplot | arearange | columnrange | treemap | sunburst | icicle | sankey | chord | arcdiagram | packedbubble | pareto | wordcloud
+    type: 'bar',             // bar | stackedbar | line | stackedarea | streamgraph | pie | scatter | bubble | radar | radialbar | polararea | gauge | funnel | pyramid | waterfall | bullet | lollipop | dumbbell | histogram | heatmap | candlestick | ohlc | boxplot | arearange | columnrange | treemap | sunburst | icicle | sankey | chord | arcdiagram | packedbubble | pareto | wordcloud | pictogram (aka pictorial/isotype/waffle)
     series: Array,           // [{ name, data, color? }]; pie uses the first series
     categories: Array,       // x-axis labels (bar/stacked) / slice names (pie)
     title: '',               // optional heading above the plot
@@ -94,6 +94,10 @@ export const Chart = component('chart', {
     palette: 'lemonade',     // built-in palette: lemonade | tableau | category10 | material
     colors: Array,           // custom palette (overrides `palette`)
     height: 0,               // plot height in px (width is always fluid); default 320
+    icon: '',                // pictogram: preset ('person'|'square'|'circle'|'capsule'|'star'|'heart') or an SVG path
+    columns: Number,         // pictogram: glyphs across one row (default 10)
+    iconcount: Number,       // pictogram: total glyphs per row (0 = one row of `columns`; e.g. 100 = a waffle grid)
+    total: Number,           // pictogram: the value that fills every glyph (default 100 = percentages)
     valueformat: Function,   // (n) => string; override the default compact formatter
     compact: true,           // compact numbers (1.2k/3.4M); false = full numbers
     thousands: false,        // group full numbers with separators (1,234) when not compact
@@ -165,6 +169,10 @@ export const Chart = component('chart', {
         palette: props.palette.value,
         colors: props.colors.value as string[],
         height: props.height.value,
+        icon: props.icon.value,
+        columns: props.columns.value as number,
+        iconcount: props.iconcount.value as number,
+        total: props.total.value as number,
     }; }
 
     /** Drill into the sub-chart registered for `key`, if any; returns whether it drilled. */
@@ -239,6 +247,8 @@ export const Chart = component('chart', {
     const zsel = state<{ a: number; b: number } | null>(null);
     // heatmap row/column cross-highlight
     const heatHover = state<{ r: number; c: number } | null>(null);
+    /** arc diagram plot aspect (W/H), measured once when the plot attaches */
+    const arcAspect = state<number | null>(null);
     // keyboard navigation: the active column index (cartesian plots), or null
     const kb = state<number | null>(null);
     // navigator strip drag: which edge/body is being dragged + the window at grab
@@ -253,8 +263,10 @@ export const Chart = component('chart', {
     /* ----- legend (shared by all types) — real <button>s, toggle + highlight --- */
     interface LegendEntry { name: string; color: string; key: string; line: boolean; shape: string; }
     const legendEntries = (m: Model): LegendEntry[] => {
-        // multi-series radialbar (stacked polar) legends by SERIES like bars
-        if (m.type === 'pie' || m.type === 'polararea' || (m.type === 'radialbar' && m.series.length < 2)) {
+        // multi-series radialbar (stacked polar) legends by SERIES like bars;
+        // waffle legends by CATEGORY (its cells are palette-partitioned)
+        if (m.type === 'pie' || m.type === 'polararea' || (m.type === 'radialbar' && m.series.length < 2)
+            || (m.type === 'pictogram' && m.waffle)) {
             const points = m.series[0] ? m.series[0].points : [];
             return points.map((p, i) => ({ name: p.name || '—', color: p.color, key: p.name || '#' + i, line: false, shape: '' }));
         }
@@ -262,8 +274,13 @@ export const Chart = component('chart', {
         // default — keep the order in sync with scatterChart's CYCLE)
         const cycle = ['circle', 'diamond', 'square', 'triangle'];
         const shapeOf = (s: NormSeries, i: number): string =>
-            m.type === 'scatter' ? s.marker || cycle[i % cycle.length] : '';
-        return m.series.map((s, i) => ({ name: s.name, color: s.color, key: s.name, line: s.type !== 'bar' && m.type !== 'scatter', shape: shapeOf(s, i) }));
+            m.type === 'scatter' && s.type !== 'line' ? s.marker || cycle[i % cycle.length] : '';
+        return m.series.map((s, i) => ({
+            name: s.name, color: s.color, key: s.name,
+            // scatter base: only 'line' series show a line swatch (the rest are points)
+            line: m.type === 'scatter' ? s.type === 'line' : s.type !== 'bar',
+            shape: shapeOf(s, i),
+        }));
     };
     const legend = (entries: LegendEntry[]): View | false =>
         html`<div class="lm-chart-legend">${entries.map(
@@ -288,6 +305,9 @@ export const Chart = component('chart', {
         const noLegend = ['gauge', 'funnel', 'pyramid', 'waterfall', 'bullet', 'heatmap',
             'candlestick', 'ohlc', 'boxplot', 'arearange', 'columnrange', 'dumbbell', 'histogram', 'treemap',
             'sankey', 'chord', 'arcdiagram', 'sunburst', 'icicle', 'wordcloud'].includes(m.type)
+            // pictogram rows carry their own labels; the WAFFLE variant needs
+            // the category legend (its colours aren't labelled anywhere else)
+            || (m.type === 'pictogram' && !m.waffle)
             // pie slice names live on the callout labels (Highcharts-style);
             // the legend only shows when labels are off or a position is
             // explicitly requested (it would duplicate the callouts)
@@ -307,7 +327,7 @@ export const Chart = component('chart', {
     /* ----- the render context: what the renderer files need from here ----- */
     const ctx: RenderCtx = {
         fmt, showTip, hideTip, isHidden, fire,
-        hover, hoverCol, kb, zoomRange, zsel, navDrag, heatHover,
+        hover, hoverCol, kb, zoomRange, zsel, navDrag, heatHover, arcAspect,
         zoom: () => props.zoom.value === true,
         navigator: () => props.navigator.value === true,
         xformat: () => props.xformat.value as ((x: number) => unknown) | undefined,
@@ -329,7 +349,7 @@ export const Chart = component('chart', {
         if (['scatter', 'bubble', 'radar', 'funnel', 'pyramid', 'waterfall',
             'heatmap', 'candlestick', 'ohlc', 'boxplot', 'arearange', 'columnrange',
             'dumbbell', 'lollipop', 'radialbar', 'polararea', 'treemap',
-            'sunburst', 'icicle', 'packedbubble', 'wordcloud'].includes(m.type)) {
+            'sunburst', 'icicle', 'packedbubble', 'wordcloud', 'pictogram'].includes(m.type)) {
             return m.series.some((s) => !isHidden(s.name) && s.points.some((p) => !p.gap));
         }
         return m.series.some((s) => !isHidden(s.name) && s.points.some((p) => p.value !== 0));
@@ -362,7 +382,9 @@ export const Chart = component('chart', {
                     html`<tr><td>${p.from}</td><td>${p.to}</td><td>${fmt(p.value)}</td></tr>`)}</tbody>
             </table>`;
         }
-        const nameVal = ['pie', 'funnel', 'treemap', 'polararea', 'radialbar', 'sunburst', 'icicle', 'packedbubble', 'wordcloud'].includes(m.type);
+        // multi-series waffles read as a Series × Category matrix instead
+        const nameVal = ['pie', 'funnel', 'treemap', 'polararea', 'radialbar', 'sunburst', 'icicle', 'packedbubble', 'wordcloud', 'pictogram'].includes(m.type)
+            && !(m.waffle && m.series.length > 1);
         const head = nameVal
             ? html`<tr><th>Name</th><th>Value</th></tr>`
             : html`<tr><th>Series</th>${cols.map((c) => html`<th>${String(c)}</th>`)}</tr>`;
@@ -395,7 +417,8 @@ export const Chart = component('chart', {
             lines.push('Name,Parent,Value');
             (m.series[0] ? m.series[0].points : []).filter((p) => !p.gap)
                 .forEach((p, i) => lines.push([p.name || String(i + 1), p.parent, String(p.value)].map(esc).join(',')));
-        } else if (['pie', 'funnel', 'pyramid', 'treemap', 'polararea', 'radialbar', 'packedbubble', 'wordcloud'].includes(m.type)) {
+        } else if (['pie', 'funnel', 'pyramid', 'treemap', 'polararea', 'radialbar', 'packedbubble', 'wordcloud', 'pictogram'].includes(m.type)
+            && !(m.waffle && m.series.length > 1)) {
             lines.push('Name,Value');
             (m.series[0] ? m.series[0].points : []).forEach((p, i) => lines.push(esc(p.name || String(i + 1)) + ',' + p.value));
         } else if (ext[m.type]) {
@@ -536,6 +559,7 @@ export const Chart = component('chart', {
                                                             : t === 'boxplot' ? boxplotChart(m, ctx)
                                                                 : t === 'arearange' || t === 'columnrange' || t === 'dumbbell' ? rangeChart(m, ctx)
                                                                     : t === 'treemap' ? treemapChart(m, ctx)
+                                                                        : t === 'pictogram' ? (m.waffle ? waffleChart(m, ctx) : pictogramChart(m, ctx))
                                                                         : bars(m, ctx);
         return layout(m, core);
     }}${tooltip}</div>`;

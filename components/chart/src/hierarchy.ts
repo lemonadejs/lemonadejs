@@ -45,7 +45,7 @@ const shade = (rootColor: string, depth: number): string =>
 /* ----- sunburst (radial partition) ----- */
 export const sunburstChart = (m: Model, ctx: RenderCtx): View => {
     const { roots, levels } = buildTree(m);
-    const RMAX = 46;
+    const RMAX = 48; // labels sit inside the rings, so nearly the full box
     const RIN = 7;
     const step = (RMAX - RIN) / levels;
     const cells: View[] = [];

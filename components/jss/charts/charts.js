@@ -26,6 +26,8 @@
 import { html, mount, store } from 'lemonadejs';
 import Modal from '@lemonadejs/modal';
 import Chart from '@lemonadejs/chart';
+import Dropdown from '@lemonadejs/dropdown';
+import Switch from '@lemonadejs/switch';
 
 let JSS = null;
 
@@ -346,9 +348,20 @@ const pluginChart = (function(spreadsheet) {
     const dlgLegendPosition = store('');
     const dlgGridlines = store(true);
     const dlgPalette = store('lemonade');
+    // Dropdown item lists + the orientation-dependent switch label live in
+    // stores: component props only stay live when they receive a store
+    // (an inline arrow is kept as a FUNCTION value, not a binding)
+    const dlgFieldItems = store([]);
+    const dlgLabelItems = store([]);
+    const dlgHeadersText = store('');
     let dlgWorksheet = null;
     let dlgRecord = null;
     let pickerEl = null;
+
+    const syncHeadersText = function() {
+        dlgHeadersText.value = T(dlgOrientation.value === '0' ?
+            'Use the first column as headers' : 'Use the first row as headers');
+    }
 
     const collect = function() {
         return {
@@ -384,11 +397,23 @@ const pluginChart = (function(spreadsheet) {
         if (! a) {
             dlgFields.value = [];
             dlgDatasets.value = [];
+            dlgFieldItems.value = [];
+            dlgLabelItems.value = [
+                { value: 'auto', text: T('Automatic') },
+                { value: 'none', text: T('None') },
+            ];
             return;
         }
         dlgFields.value = a.fields.map(function(f) {
             return { index: f.index, label: f.label, numeric: f.numeric };
         });
+        dlgFieldItems.value = a.fields.map(function(f) {
+            return { value: String(f.index), text: f.label };
+        });
+        dlgLabelItems.value = [
+            { value: 'auto', text: T('Automatic') },
+            { value: 'none', text: T('None') },
+        ].concat(dlgFieldItems.value);
         if (! keep) {
             dlgLabels.value = 'auto';
             dlgDatasets.value = a.autoDatasets.slice();
@@ -443,6 +468,7 @@ const pluginChart = (function(spreadsheet) {
             loadFields(false);
             dlgLabels.value = o.labels === undefined ? 'auto' : String(o.labels);
         }
+        syncHeadersText();
         if (pickerEl) {
             pickerEl.innerText = dlgRange.value;
         }
@@ -515,11 +541,29 @@ const pluginChart = (function(spreadsheet) {
     }
 
     const Panel = function() {
-        const fieldOptions = function(selected) {
-            return dlgFields.value.map(function(f) {
-                return html`<option value="${f.index}" selected="${f.index === selected}">${f.label}</option>`;
+        // grouped chart-type list for the Dropdown (v5 optgroup look)
+        const typeItems = TYPEGROUPS.flatMap(function(g) {
+            return g[1].map(function(t) {
+                return { value: t[0], text: T(t[1]), group: T(g[0]) };
             });
-        }
+        });
+        const orientationItems = [
+            { value: '1', text: T('Vertical') },
+            { value: '0', text: T('Horizontal') },
+        ];
+        const legendPositionItems = [
+            { value: '', text: T('Automatic') },
+            { value: 'top', text: T('Top') },
+            { value: 'bottom', text: T('Bottom') },
+            { value: 'left', text: T('Left') },
+            { value: 'right', text: T('Right') },
+        ];
+        const paletteItems = [
+            { value: 'lemonade', text: T('Lemonade') },
+            { value: 'tableau', text: T('Tableau') },
+            { value: 'category10', text: T('Classic') },
+        ];
+        const removeIcon = () => html`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12" /></svg>`;
 
         return html`<${Modal} bind="${dlgOpen}" title="${dlgHeading}" position="right" closable="${true}" width="${380}" focus="${false}" onclose="${() => closePanel(true)}">
             <div class="jss_charts_panel">
@@ -529,89 +573,72 @@ const pluginChart = (function(spreadsheet) {
                 </div>
 
                 <div style="${() => dlgTab.value === 0 ? '' : 'display: none'}">
-                    <label class="jss_charts_label">${T('Chart type')}</label>
-                    <select class="jss_charts_ctl_type" bind="${dlgType}" onchange="${changed}">
-                        ${TYPEGROUPS.map(function(g) {
-                            return html`<optgroup label="${T(g[0])}">
-                                ${g[1].map(function(t) {
-                                    return html`<option value="${t[0]}">${T(t[1])}</option>`;
-                                })}
-                            </optgroup>`;
-                        })}
-                    </select>
+                    <div class="jss_charts_cols">
+                        <div>
+                            <label class="jss_charts_label">${T('Chart type')}</label>
+                            <${Dropdown} data="${typeItems}" bind="${dlgType}" onchange="${changed}" />
+                        </div>
+                        <div>
+                            <label class="jss_charts_label">${T('Data orientation')}</label>
+                            <${Dropdown} data="${orientationItems}" bind="${dlgOrientation}"
+                                onchange="${() => { syncHeadersText(); loadFields(false); changed(); }}" />
+                        </div>
+                    </div>
 
                     <label class="jss_charts_label">${T('Data range')}</label>
                     <div class="jss_charts_picker" ref="${createPicker}"></div>
 
-                    <label class="jss_charts_label">${T('Data orientation')}</label>
-                    <select class="jss_charts_ctl_orientation" bind="${dlgOrientation}" onchange="${() => { loadFields(false); changed(); }}">
-                        <option value="1">${T('Vertical')}</option>
-                        <option value="0">${T('Horizontal')}</option>
-                    </select>
-
                     <label class="jss_charts_label">${T('Labels')}</label>
-                    <select class="jss_charts_ctl_labels" bind="${dlgLabels}" onchange="${changed}">
-                        <option value="auto">${T('Automatic')}</option>
-                        <option value="none">${T('None')}</option>
-                        ${() => dlgFields.value.map(function(f) {
-                            return html`<option value="${String(f.index)}">${f.label}</option>`;
-                        })}
-                    </select>
+                    <${Dropdown} data="${dlgLabelItems}" bind="${dlgLabels}" onchange="${changed}" />
 
                     <label class="jss_charts_label">${T('Series')}</label>
                     <div class="jss_charts_series">
                         ${() => dlgDatasets.value.map(function(sel, i) {
                             return html`<div class="jss_charts_serie">
-                                <select onchange="${(e) => { const v = parseInt(e.target.value); if (isNaN(v)) { return; } const d = dlgDatasets.value.slice(); d[i] = v; dlgDatasets.value = d; changed(); }}">
-                                    ${fieldOptions(sel)}
-                                </select>
-                                <i class="material-icons" title="${T('Remove this series')}"
-                                    onclick="${() => { const d = dlgDatasets.value.slice(); d.splice(i, 1); dlgDatasets.value = d; changed(); }}">close</i>
+                                <${Dropdown} data="${dlgFieldItems}" bind="${String(sel)}"
+                                    onchange="${(v) => { const n = parseInt(v); if (isNaN(n)) { return; } const d = dlgDatasets.value.slice(); d[i] = n; dlgDatasets.value = d; changed(); }}" />
+                                <button type="button" class="jss_charts_remove" title="${T('Remove this series')}"
+                                    onclick="${() => { const d = dlgDatasets.value.slice(); d.splice(i, 1); dlgDatasets.value = d; changed(); }}">${removeIcon()}</button>
                             </div>`;
                         })}
                     </div>
                     <div>
-                        <input type="button" value="${T('Add new series')}" class="jss_charts_add" onclick="${addSeries}" />
+                        <button type="button" class="jss_charts_add" onclick="${addSeries}">${T('Add new series')}</button>
                     </div>
 
-                    <label class="jss_charts_check" style="margin-top: 12px">
-                        <input type="checkbox" bind="${dlgHeaders}" onchange="${() => { loadFields(false); changed(); }}" />
-                        ${() => T(dlgOrientation.value === '0' ? 'Use the first column as headers' : 'Use the first row as headers')}
-                    </label>
+                    <div class="jss_charts_switch">
+                        <${Switch} label="${dlgHeadersText}" bind="${dlgHeaders}"
+                            onchange="${() => { loadFields(false); changed(); }}" />
+                    </div>
                 </div>
 
                 <div style="${() => dlgTab.value === 1 ? '' : 'display: none'}">
                     <label class="jss_charts_label">${T('Chart title')}</label>
-                    <input type="text" class="jss_charts_ctl_title" bind="${dlgTitle}" onchange="${changed}" oninput="${changed}" />
+                    <input type="text" class="jss_charts_input jss_charts_ctl_title" bind="${dlgTitle}" onchange="${changed}" oninput="${changed}" />
 
                     <label class="jss_charts_label">${T('Chart subtitle')}</label>
-                    <input type="text" class="jss_charts_ctl_subtitle" bind="${dlgSubtitle}" onchange="${changed}" oninput="${changed}" />
+                    <input type="text" class="jss_charts_input jss_charts_ctl_subtitle" bind="${dlgSubtitle}" onchange="${changed}" oninput="${changed}" />
 
-                    <label class="jss_charts_label">${T('Legend position')}</label>
-                    <select class="jss_charts_ctl_legendposition" bind="${dlgLegendPosition}" onchange="${changed}">
-                        <option value="">${T('Automatic')}</option>
-                        <option value="top">${T('Top')}</option>
-                        <option value="bottom">${T('Bottom')}</option>
-                        <option value="left">${T('Left')}</option>
-                        <option value="right">${T('Right')}</option>
-                    </select>
-
-                    <label class="jss_charts_label">${T('Color palette')}</label>
-                    <select class="jss_charts_ctl_palette" bind="${dlgPalette}" onchange="${changed}">
-                        <option value="lemonade">${T('Lemonade')}</option>
-                        <option value="tableau">${T('Tableau')}</option>
-                        <option value="category10">${T('Classic')}</option>
-                    </select>
+                    <div class="jss_charts_cols">
+                        <div>
+                            <label class="jss_charts_label">${T('Legend position')}</label>
+                            <${Dropdown} data="${legendPositionItems}" bind="${dlgLegendPosition}" onchange="${changed}" />
+                        </div>
+                        <div>
+                            <label class="jss_charts_label">${T('Color palette')}</label>
+                            <${Dropdown} data="${paletteItems}" bind="${dlgPalette}" onchange="${changed}" />
+                        </div>
+                    </div>
 
                     <div class="jss_charts_row">
-                        <label class="jss_charts_check"><input type="checkbox" bind="${dlgLegend}" onchange="${changed}" /> ${T('Show legend')}</label>
-                        <label class="jss_charts_check"><input type="checkbox" bind="${dlgGridlines}" onchange="${changed}" /> ${T('Gridlines')}</label>
+                        <div class="jss_charts_switch"><${Switch} label="${T('Show legend')}" bind="${dlgLegend}" onchange="${changed}" /></div>
+                        <div class="jss_charts_switch"><${Switch} label="${T('Gridlines')}" bind="${dlgGridlines}" onchange="${changed}" /></div>
                     </div>
                 </div>
 
                 <div class="jss_charts_buttons">
-                    <input type="button" value="${T('Save')}" class="jss_style_button" onclick="${save}" />
-                    <input type="button" value="${T('Cancel')}" class="jss_style_button" onclick="${() => closePanel(true)}" />
+                    <button type="button" class="jss_charts_btn jss_charts_btn_primary" onclick="${save}">${T('Save')}</button>
+                    <button type="button" class="jss_charts_btn" onclick="${() => closePanel(true)}">${T('Cancel')}</button>
                 </div>
             </div>
         </${Modal}>`;

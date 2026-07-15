@@ -127,17 +127,32 @@ export const arcChart = (m: Model, ctx: RenderCtx): View => {
     const N = nodes.length;
     if (!N) return html`<div class="lm-chart-flow"></div>`;
 
-    // nodes sit evenly on a baseline in first-appearance order; radius ∝
-    // sqrt of the node's total flow (area encodes weight, like bubbles)
-    const BASE = 76; // baseline y (viewBox units); labels hang below in HTML
+    // Two stacked rows: the arc PLOT (flex:1 — arcs own the full height,
+    // baseline at its bottom edge) and a LABEL row sized to the longest
+    // name, so labels never collide with the arcs or clip mid-word.
     const xOf = (i: number): number => (N === 1 ? 50 : 4 + (i / (N - 1)) * 92);
     const peak = nodes.reduce((mx, n) => Math.max(mx, n.in + n.out), 0) || 1;
     // node dots are HTML (px-sized) so they stay ROUND in the stretched svg
     const rPx = (i: number): number => 4 + Math.sqrt((nodes[i].in + nodes[i].out) / peak) * 14;
 
-    // arcs: a semi-ellipse from source to target, height capped by the box;
-    // stroke = source colour, width ∝ link value
+    // arcs: thin ellipse strokes (hairline px widths via non-scaling-stroke,
+    // slightly thicker for heavier links). Heights follow the Highcharts
+    // arc-diagram rule — PER ARC, radius = min(half-span, room above the
+    // baseline) in PIXELS: true semicircles while they fit, flattened only
+    // when a wide span would hit the top. The stretched viewBox needs the
+    // real plot aspect for that: measured ONCE when the plot attaches
+    // (ctx.arcAspect; 2:1 assumed until known — one extra render, no
+    // resize observer, resizing keeps the usual stretched-svg behavior).
     const vmax = links.reduce((mx, e) => Math.max(mx, e.p.value), 0) || 1;
+    const BASE = 99.5; // svg baseline (plot bottom, dots straddle it)
+    const aspect = ctx.arcAspect.value || 2;
+    const measure = (el: HTMLElement): void => {
+        const w = el.clientWidth;
+        const h = el.clientHeight;
+        if (w > 0 && h > 0 && Math.abs(w / h - (ctx.arcAspect.peek() || 0)) > 0.05) {
+            ctx.arcAspect.value = w / h;
+        }
+    };
     const hover = ctx.hover.value;
     const arcs = links.map((e) => {
         const a = index.get(e.p.from) as number;
@@ -145,13 +160,14 @@ export const arcChart = (m: Model, ctx: RenderCtx): View => {
         const xa = xOf(Math.min(a, b));
         const xb = xOf(Math.max(a, b));
         const rx = (xb - xa) / 2;
-        const ry = Math.min(BASE - 8, rx);
+        // semicircle in px: ry(viewBox units) = rx · plotW/plotH
+        const ry = Math.min(95, rx * aspect);
         const dim = hover && hover !== e.p.from && hover !== e.p.to ? 'true' : false;
         const tip = (ev: MouseEvent): void => ctx.showTip(ev, e.p.from + ' → ' + e.p.to,
             [{ name: '', value: ctx.fmt(e.p.value), color: nodes[a].color }]);
-        return html`<path class="lm-chart-arc-link"
+        return html`<path class="lm-chart-arc-link" vector-effect="non-scaling-stroke"
             d="M ${f2(xa)} ${f2(BASE)} A ${f2(rx)} ${f2(ry)} 0 0 1 ${f2(xb)} ${f2(BASE)}"
-            style="${css({ stroke: nodes[a].color, strokeWidth: 0.35 + (e.p.value / vmax) * 1.8 })}"
+            style="${css({ stroke: nodes[a].color, strokeWidth: (1 + (e.p.value / vmax) * 2.2).toFixed(1) + 'px' })}"
             data-dim="${dim}"
             onmousemove="${tip}" ontouchstart="${tip}" onmouseleave="${ctx.hideTip}"
             onclick="${() => ctx.fire(e.p, 0, e.i)}" />`;
@@ -165,20 +181,26 @@ export const arcChart = (m: Model, ctx: RenderCtx): View => {
         };
         const d = rPx(i) * 2;
         return html`<span class="lm-chart-arc-node"
-            style="${css({ left: xOf(i) + '%', top: BASE + '%', width: d, height: d, background: n.color })}"
+            style="${css({ left: xOf(i) + '%', top: '100%', width: d, height: d, background: n.color })}"
             data-dim="${hover && hover !== n.name ? 'true' : false}"
             onmousemove="${tip}" ontouchstart="${tip}"
             onmouseleave="${() => { ctx.hideTip(); if (ctx.hover.value === n.name) ctx.hover.value = null; }}"></span>`;
     });
 
-    // vertical labels below the baseline (rotated, anchored at the node)
+    // vertical labels in their own row: each starts just under its dot
+    const maxLen = nodes.reduce((mx, n) => Math.max(mx, n.name.length), 0);
+    const maxR = nodes.reduce((mx, _, i) => Math.max(mx, rPx(i)), 0);
+    const rowH = m.labels ? Math.round(Math.min(110, maxR + 10 + maxLen * 6.2)) : Math.ceil(maxR + 2);
     const labels = m.labels ? nodes.map((n, i) => html`<span class="lm-chart-arc-label"
-        style="${css({ left: xOf(i) + '%', top: (BASE + 4) + '%' })}"
+        style="${css({ left: xOf(i) + '%', top: (rPx(i) + 4) + 'px', maxHeight: (rowH - rPx(i) - 6) + 'px' })}"
         data-on="${hover === n.name ? 'true' : false}">${n.name}</span>`) : [];
 
-    return html`<div class="lm-chart-flow">
-        <svg class="lm-chart-flowsvg" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">${arcs}</svg>
-        ${dots}${labels}
+    return html`<div class="lm-chart-flow lm-chart-arcflow">
+        <div class="lm-chart-arc-plot" ref="${measure}">
+            <svg class="lm-chart-flowsvg" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">${arcs}</svg>
+            ${dots}
+        </div>
+        <div class="lm-chart-arc-labels" style="${css({ height: rowH + 'px' })}">${labels}</div>
     </div>`;
 };
 

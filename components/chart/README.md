@@ -76,7 +76,7 @@ state for a two-way live wire. Attribute strings are coerced to the declared typ
 
 | Prop | Type | Default | Description |
 |---|---|---|---|
-| `type` | string | `"bar"` | bar | stackedbar | line | stackedarea | streamgraph | pie | scatter | bubble | radar | radialbar | polararea | gauge | funnel | pyramid | waterfall | bullet | lollipop | dumbbell | histogram | heatmap | candlestick | ohlc | boxplot | arearange | columnrange | treemap | sunburst | icicle | sankey | chord | arcdiagram | packedbubble | pareto | wordcloud |
+| `type` | string | `"bar"` | bar | stackedbar | line | stackedarea | streamgraph | pie | scatter | bubble | radar | radialbar | polararea | gauge | funnel | pyramid | waterfall | bullet | lollipop | dumbbell | histogram | heatmap | candlestick | ohlc | boxplot | arearange | columnrange | treemap | sunburst | icicle | sankey | chord | arcdiagram | packedbubble | pareto | wordcloud | pictogram (aka pictorial / isotype) | waffle (a palette-partitioned square grid; one grid per series, side by side) |
 | `series` | array | — | [{ name, data, color? }]; pie uses the first series |
 | `categories` | array | — | x-axis labels (bar/stacked) / slice names (pie) |
 | `title` | string | `''` | optional heading above the plot |
@@ -119,6 +119,10 @@ state for a two-way live wire. Attribute strings are coerced to the declared typ
 | `palette` | string | `"lemonade"` | built-in palette: lemonade | tableau | category10 | material |
 | `colors` | array | — | custom palette (overrides `palette`) |
 | `height` | number | `0` | plot height in px (width is always fluid); default 320 |
+| `icon` | string | `''` | pictogram/waffle: preset (`person`\|`square`\|`circle`\|`capsule`\|`star`\|`heart`) or a raw SVG path `d`-string |
+| `columns` | number | `10` | pictogram/waffle: glyphs across one row |
+| `iconcount` | number | — | pictogram: total glyphs per row (unset = one row of `columns`); waffle: cells per grid (default 100) |
+| `total` | number | `100` | pictogram/waffle: the full-scale value (default 100 = values read as percentages) |
 | `valueformat` | function | — | (n) => string; override the default compact formatter |
 | `compact` | boolean | `true` | compact numbers (1.2k/3.4M); false = full numbers |
 | `thousands` | boolean | `false` | group full numbers with separators (1,234) when not compact |

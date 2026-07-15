@@ -32,8 +32,7 @@
 .jss_charts_panel {
     display: flex;
     flex-direction: column;
-    gap: 6px;
-    padding: 14px 16px;
+    padding: 4px 2px 8px;
     width: 100%;
     box-sizing: border-box;
     font: 13px system-ui, sans-serif;
@@ -41,22 +40,48 @@
 }
 
 .jss_charts_label {
-    margin-top: 10px;
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    color: var(--lm-font-grayout, #6b7280);
+    display: block;
+    margin: 14px 0 5px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--lm-font-color, #3f3f46);
 }
 
-.jss_charts_panel select,
-.jss_charts_panel input[type="text"] {
-    padding: 6px 8px;
+/* the first label of each tab body sits right under the tab strip */
+.jss_charts_cols .jss_charts_label:first-child,
+.jss_charts_tabs + div > .jss_charts_label:first-child,
+.jss_charts_cols:first-child .jss_charts_label {
+    margin-top: 0;
+}
+
+/* two side-by-side fields (chart type | orientation, legend | palette) */
+.jss_charts_cols {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr;
+    gap: 12px;
+    margin-top: 14px;
+}
+
+.jss_charts_cols:first-child {
+    margin-top: 4px;
+}
+
+.jss_charts_panel .lm-dropdown {
+    width: 100%;
+    display: block;
+}
+
+.jss_charts_input {
+    padding: 7px 9px;
     border: 1px solid var(--lm-border-color, #d4d4d8);
     border-radius: 6px;
     font: inherit;
     box-sizing: border-box;
     width: 100%;
+    margin: 0;
+    appearance: none;
     background: var(--lm-background-color, #fff);
+    color: var(--lm-font-color, #18181b);
 }
 
 /* Configuration | Styling tabs */
@@ -88,10 +113,10 @@
 
 /* The range picker element (JSS.picker turns it into a live control) */
 .jss_charts_picker {
-    padding: 6px 8px;
+    padding: 7px 9px;
     border: 1px solid var(--lm-border-color, #d4d4d8);
     border-radius: 6px;
-    min-height: 17px;
+    min-height: 18px;
     cursor: text;
     background: var(--lm-background-color, #fff);
 }
@@ -100,35 +125,57 @@
 .jss_charts_series {
     display: flex;
     flex-direction: column;
-    gap: 4px;
-    margin-bottom: 6px;
+    gap: 8px;
 }
 
 .jss_charts_serie {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
 }
 
-.jss_charts_serie select {
+.jss_charts_serie .lm-dropdown {
     flex: 1;
+    min-width: 0;
 }
 
-.jss_charts_serie .material-icons {
-    font-size: 16px;
+.jss_charts_remove {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
     color: var(--lm-font-grayout, #6b7280);
     cursor: pointer;
+    flex: 0 0 auto;
 }
 
-.jss_charts_serie .material-icons:hover {
+.jss_charts_remove:hover {
+    background: var(--lm-background-color-highlight, #f4f4f5);
     color: var(--lm-color-danger, #dc2626);
 }
 
+.jss_charts_remove svg {
+    width: 14px;
+    height: 14px;
+    display: block;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+}
+
 .jss_charts_add {
-    padding: 5px 10px;
+    margin-top: 8px;
+    padding: 6px 12px;
     border: 1px solid var(--lm-border-color, #d4d4d8);
     border-radius: 6px;
     background: var(--lm-background-color, #fff);
+    color: var(--lm-font-color, #18181b);
     font: inherit;
     cursor: pointer;
 }
@@ -139,25 +186,48 @@
 
 .jss_charts_row {
     display: flex;
-    gap: 16px;
-    margin-top: 6px;
-}
-
-.jss_charts_check {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    cursor: pointer;
-    user-select: none;
-}
-
-.jss_charts_buttons {
-    display: flex;
-    gap: 8px;
-    justify-content: flex-end;
+    gap: 20px;
     margin-top: 16px;
 }
 
-.jss_charts_buttons .jss_style_button {
-    width: 90px;
+.jss_charts_switch {
+    margin-top: 16px;
+}
+
+.jss_charts_row .jss_charts_switch {
+    margin-top: 0;
+}
+
+/* Save (accent) + Cancel (quiet), side by side */
+.jss_charts_buttons {
+    display: flex;
+    gap: 8px;
+    margin-top: 22px;
+}
+
+.jss_charts_btn {
+    flex: 1;
+    padding: 8px 0;
+    border: 1px solid var(--lm-border-color, #d4d4d8);
+    border-radius: 6px;
+    background: var(--lm-background-color, #fff);
+    color: var(--lm-font-color, #18181b);
+    font: inherit;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.jss_charts_btn:hover {
+    background: var(--lm-background-color-highlight, #f4f4f5);
+}
+
+.jss_charts_btn_primary {
+    background: var(--lm-main-color, #2563eb);
+    border-color: var(--lm-main-color, #2563eb);
+    color: #fff;
+}
+
+.jss_charts_btn_primary:hover {
+    background: var(--lm-main-color-hover, #1d4ed8);
+    border-color: var(--lm-main-color-hover, #1d4ed8);
 }

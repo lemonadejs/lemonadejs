@@ -40,8 +40,10 @@ export interface ChartSeries {
     data: Array<number | number[] | ChartPoint | null>;
     /** Series colour; defaults to the palette slot. */
     color?: string;
-    /** Per-series render type for combo charts (overrides the chart `type`). */
-    type?: 'bar' | 'line' | 'area';
+    /** Per-series render type for combo charts (overrides the chart `type`).
+     *  `'scatter'` (points only) and `'line'` combine in a scatter base chart
+     *  for a line+scatter overlay on the shared numeric x/y axes. */
+    type?: 'bar' | 'line' | 'area' | 'scatter';
     /** Which y-axis this series uses. Default 'left'. */
     axis?: 'left' | 'right' | 'x';
     /** Fill the area under a line series. */
@@ -95,6 +97,14 @@ export interface ChartOptions {
     palette?: string;
     colors?: string[];
     height?: number;
+    /** pictogram: glyph preset key ('person'|'square'|'circle'|'capsule'|'star'|'heart') or a raw SVG path `d`-string. */
+    icon?: string;
+    /** pictogram: glyphs across one row. */
+    columns?: number;
+    /** pictogram: total glyphs per data row (0 = one row of `columns`; e.g. 100 + columns 10 = a waffle grid). */
+    iconcount?: number;
+    /** pictogram: the value that fills every glyph (default 100 → values read as percentages). */
+    total?: number;
 }
 
 /** A reference line drawn across the plot at a value on the y-axis. */
@@ -203,7 +213,7 @@ export interface NormSeries {
     name: string;
     color: string;
     points: NormPoint[];
-    type: 'bar' | 'line' | 'area';
+    type: 'bar' | 'line' | 'area' | 'scatter';
     axis: 'left' | 'right';
     smooth: boolean;
     step: '' | 'before' | 'mid';
@@ -215,7 +225,7 @@ export interface Model {
         | 'radar' | 'gauge' | 'funnel' | 'pyramid' | 'waterfall' | 'bullet'
         | 'heatmap' | 'candlestick' | 'ohlc' | 'boxplot' | 'arearange' | 'columnrange' | 'dumbbell'
         | 'lollipop' | 'histogram' | 'radialbar' | 'polararea' | 'treemap' | 'pie'
-        | 'sankey' | 'chord' | 'arcdiagram' | 'sunburst' | 'icicle' | 'packedbubble' | 'pareto' | 'wordcloud';
+        | 'sankey' | 'chord' | 'arcdiagram' | 'sunburst' | 'icicle' | 'packedbubble' | 'pareto' | 'wordcloud' | 'pictogram';
     title: string;
     subtitle: string;
     xtype: '' | 'datetime' | 'linear';
@@ -251,6 +261,13 @@ export interface Model {
     series: NormSeries[];
     /** the resolved colour palette (node colouring in sankey/chord) */
     palette: string[];
+    /** pictogram: glyph, grid width, glyphs-per-row, and the full-value scale */
+    icon: string;
+    columns: number;
+    iconcount: number;
+    total: number;
+    /** waffle mode: one palette-partitioned grid per series (type="waffle") */
+    waffle: boolean;
 }
 
 /** Collapse the loose props into a strict internal model. */
@@ -259,13 +276,16 @@ export const normalize = (def: ChartOptions): Model => {
     let categories = Array.isArray(def.categories) ? def.categories.map(String) : [];
     let rawSeries = Array.isArray(def.series) ? def.series : [];
 
-    const alias: Record<string, string> = { lines: 'line', rose: 'polararea', dependencywheel: 'chord', tagcloud: 'wordcloud' };
+    // `waffle` = a pictogram of squares in a filled grid; capture it BEFORE
+    // aliasing so it can pick the square glyph + 100-cell grid defaults below
+    const isWaffle = def.type === 'waffle';
+    const alias: Record<string, string> = { lines: 'line', rose: 'polararea', dependencywheel: 'chord', tagcloud: 'wordcloud', pictorial: 'pictogram', isotype: 'pictogram', waffle: 'pictogram' };
     const rawType = def.type != null && alias[def.type] ? alias[def.type] : def.type;
     const known = ['stackedbar', 'line', 'stackedarea', 'streamgraph', 'scatter', 'bubble',
         'radar', 'gauge', 'funnel', 'pyramid', 'waterfall', 'bullet',
         'heatmap', 'candlestick', 'ohlc', 'boxplot', 'arearange', 'columnrange', 'dumbbell',
         'lollipop', 'histogram', 'radialbar', 'polararea', 'treemap', 'pie',
-        'sankey', 'chord', 'arcdiagram', 'sunburst', 'icicle', 'packedbubble', 'pareto', 'wordcloud'];
+        'sankey', 'chord', 'arcdiagram', 'sunburst', 'icicle', 'packedbubble', 'pareto', 'wordcloud', 'pictogram'];
     const chartType = (known.includes(rawType as string) ? rawType : 'bar') as Model['type'];
 
     // Histogram: the first series carries raw SAMPLES; bin them here so the
@@ -307,9 +327,13 @@ export const normalize = (def: ChartOptions): Model => {
     }
 
     // Resolve each series' render type for combo charts (per-series wins)
-    const resolveType = (s: ChartSeries): 'bar' | 'line' | 'area' => {
+    const resolveType = (s: ChartSeries): 'bar' | 'line' | 'area' | 'scatter' => {
         if (chartType === 'stackedarea' || chartType === 'streamgraph') return 'area';
-        let t: 'bar' | 'line' | 'area' = s.type || (chartType === 'line' ? 'line' : 'bar');
+        // scatter/bubble base: 'line' connects, everything else stays points
+        if (chartType === 'scatter' || chartType === 'bubble') return s.type === 'line' ? 'line' : 'scatter';
+        // 'scatter' has no meaning on a cartesian (bar/line) base → treat as a line
+        const st = s.type === 'scatter' ? 'line' : s.type;
+        let t: 'bar' | 'line' | 'area' = st || (chartType === 'line' ? 'line' : 'bar');
         if (t === 'line' && (s.area || (chartType === 'line' && def.area))) t = 'area';
         return t;
     };
@@ -385,6 +409,12 @@ export const normalize = (def: ChartOptions): Model => {
         categories,
         series,
         palette,
+        // pictogram config (ignored by every other type)
+        icon: def.icon != null && String(def.icon) !== '' ? String(def.icon) : (isWaffle ? 'square' : 'person'),
+        columns: Number(def.columns) > 0 ? Math.round(Number(def.columns)) : 10,
+        iconcount: Number(def.iconcount) > 0 ? Math.round(Number(def.iconcount)) : (isWaffle ? 100 : 0),
+        total: Number(def.total) > 0 ? Number(def.total) : 100,
+        waffle: isWaffle,
     };
 };
 /* ------------------------------------------------------------------ *
@@ -425,6 +455,10 @@ export interface RenderCtx {
     navDrag: State<{ mode: 'l' | 'r' | 'm'; a: number; b: number; f0: number } | null>;
     /** heatmap row/col cross-highlight */
     heatHover: State<{ r: number; c: number } | null>;
+    /** arc diagram: plot W/H measured once at attach (null until known) —
+     *  lets arcs be true pixel semicircles like Highcharts; NOT a resize
+     *  observer, resizing keeps the usual stretched-svg behavior */
+    arcAspect: State<number | null>;
     /** live prop reads (called at render time so bindings subscribe) */
     zoom: () => boolean;
     navigator: () => boolean;

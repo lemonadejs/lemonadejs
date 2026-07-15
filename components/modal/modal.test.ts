@@ -134,7 +134,8 @@ describe('components/modal — behaviors', () => {
         expect(a.el.className).toContain('lm-modal-minimized');
         expect(a.el.style.left).toBe('10px'); // first dock slot
         expect(parseInt(a.el.style.top)).toBe(window.innerHeight - 55);
-        expect(minBtn.textContent).toBe('□'); // restore affordance
+        expect(minBtn.getAttribute('title')).toBe('Restore'); // restore affordance
+        expect(minBtn.querySelector('rect')).toBeTruthy();    // restore icon (square)
 
         minBtn.click(); // restore
         expect(a.el.className).not.toContain('lm-modal-minimized');

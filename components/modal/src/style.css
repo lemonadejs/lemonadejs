@@ -1,4 +1,17 @@
-/* <Modal /> — default styling, lm-modal-* convention */
+/* <Modal /> — default styling, lm-modal-* convention.
+ *
+ * COEXISTENCE: rules are guarded with :where(.lm-modal-root) — v6 markup
+ * always wraps the panel in the root, v5 (and jspreadsheet's embedded v5
+ * widgets) never does, so v6 styles can no longer clobber a v5 modal on
+ * the same page (unscoped .lm-modal rules pulled jss's context menu into
+ * the layout flow). :where() adds ZERO specificity, so consumer overrides
+ * (.lm-contextmenu .lm-modal, .lm-dropdown .lm-modal-content, ...) keep
+ * their existing cascade weight. Against v5 leakage on SHARED class names
+ * (.lm-modal-title header-bar styles, .lm-modal min-height/transition)
+ * the panel/title rules reset those properties explicitly and win by
+ * load order (v6 css links come after the jspreadsheet/jsuites css); the
+ * one v5 selector that outguns that (`.lm-modal > div:last-child`) is
+ * beaten by a dedicated higher-specificity content reset below. */
 .lm-modal-root {
     position: fixed;
     inset: 0;
@@ -30,6 +43,10 @@
     align-items: flex-end;
 }
 
+.lm-modal-root[data-position='bottom'] .lm-modal:not(.lm-modal-minimized) {
+    border-radius: 8px 8px 0 0;
+}
+
 /* absolute: CSS-anchored panel — the HOST's positioned ancestor places it
    (a dropdown panel under its input) and scrolling follows natively */
 .lm-modal-root[data-position='absolute'] {
@@ -38,29 +55,34 @@
     display: block;
 }
 
-.lm-modal-backdrop {
+:where(.lm-modal-root) .lm-modal-backdrop {
     position: absolute;
     inset: 0;
-    background: rgba(0, 0, 0, 0.5);
-    backdrop-filter: blur(3px);
-    -webkit-backdrop-filter: blur(3px);
+    width: auto;
+    height: auto;
+    background: rgba(0, 0, 0, 0.35);
     pointer-events: auto;
     animation: lm-modal-backdrop-in 0.2s ease;
 }
 
-.lm-modal {
+:where(.lm-modal-root) .lm-modal {
     position: relative;
     pointer-events: auto;
     background: var(--lm-background-color, #fff);
-    border-radius: 12px;
-    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.22), 0 4px 12px rgba(0, 0, 0, 0.12);
+    border: 0; /* explicit: v5/jsuites css puts a 1px #ccc border on this class */
+    border-radius: 8px;
+    box-shadow: 0 10px 32px rgba(0, 0, 0, 0.14);
+    box-sizing: border-box;
     min-width: 280px;
+    min-height: 0;
     max-width: calc(100vw - 32px);
     max-height: calc(100vh - 32px);
+    margin: 0;
     display: flex;
     flex-direction: column;
     outline: none;
     font: 14px/1.5 system-ui, sans-serif;
+    transition: none;
     animation: lm-modal-in 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
@@ -85,13 +107,13 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .lm-modal,
-    .lm-modal-backdrop {
+    :where(.lm-modal-root) .lm-modal,
+    :where(.lm-modal-root) .lm-modal-backdrop {
         animation: none;
     }
 }
 
-.lm-modal-header {
+:where(.lm-modal-root) .lm-modal-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -101,48 +123,85 @@
     user-select: none;
 }
 
-.lm-modal-title {
+/* explicit width/padding/border resets: v5's .lm-modal-title styles the
+   whole HEADER BAR (full width, bottom border) on this same class name */
+:where(.lm-modal-root) .lm-modal-title {
+    display: inline-block;
+    width: auto;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    font-size: 15px;
     font-weight: 600;
+    line-height: 1.4;
 }
 
-.lm-modal-controls {
+:where(.lm-modal-root) .lm-modal-controls {
     display: flex;
     align-items: center;
     gap: 4px;
 }
 
-.lm-modal-controls button {
+/* classed selectors, not `button` — a host page's element resets must not
+   find our controls through a bare tag, and vice versa */
+:where(.lm-modal-root) .lm-modal-close,
+:where(.lm-modal-root) .lm-modal-minimize {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     border: 0;
+    appearance: none;
     background: transparent;
-    font-size: 18px;
-    line-height: 1;
     width: 30px;
     height: 30px;
     padding: 0;
+    margin: 0;
     border-radius: var(--lm-radius, 6px);
     cursor: pointer;
     color: var(--lm-font-grayout, #52525b);
+    font: inherit;
 }
 
-.lm-modal-controls button:hover {
-    background: var(--lm-border-color, #e4e4e7);
+/* the chip background is the HOVER highlight only — not a rest state */
+:where(.lm-modal-root) .lm-modal-close:hover,
+:where(.lm-modal-root) .lm-modal-minimize:hover {
+    background: var(--lm-background-color-highlight, #f4f4f5);
     color: var(--lm-font-color, #18181b);
 }
 
-.lm-modal-content {
+/* inline SVG icons (no icon-font dependency): crisp 2px strokes */
+:where(.lm-modal-root) .lm-modal-close svg,
+:where(.lm-modal-root) .lm-modal-minimize svg {
+    width: 16px;
+    height: 16px;
+    display: block;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+:where(.lm-modal-root) .lm-modal-content {
     padding: 16px;
     flex: 1;
 }
 
-.lm-modal-overflow .lm-modal-content {
+/* v5 defense, deliberately ABOVE consumer weight for these three props
+   only: v5's `.lm-modal > div:last-child` (0-2-1) forces width/height
+   100% onto the content box and nothing lighter can undo it */
+.lm-modal-root .lm-modal > .lm-modal-content {
+    width: auto;
+    height: auto;
+    box-sizing: border-box;
+}
+
+:where(.lm-modal-root) .lm-modal-overflow .lm-modal-content {
     overflow: auto;
 }
 
 /* Minimized: docked to the bottom taskbar row (positions set by the dock) */
-.lm-modal-minimized {
+:where(.lm-modal-root) .lm-modal-minimized {
     width: 195px !important;
     height: 40px !important;
     min-width: 0;
@@ -150,11 +209,11 @@
     overflow: hidden;
 }
 
-.lm-modal-minimized .lm-modal-content {
+:where(.lm-modal-root) .lm-modal-minimized .lm-modal-content {
     display: none;
 }
 
-.lm-modal-minimized .lm-modal-header {
+:where(.lm-modal-root) .lm-modal-minimized .lm-modal-header {
     border-bottom: 0;
     cursor: pointer;
     box-sizing: border-box;
@@ -162,31 +221,32 @@
     padding: 0 6px 0 14px;
 }
 
-.lm-modal-minimized .lm-modal-title {
+:where(.lm-modal-root) .lm-modal-minimized .lm-modal-title {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
-.lm-modal-minimized:hover {
+:where(.lm-modal-root) .lm-modal-minimized:hover {
     box-shadow: 0 6px 24px rgba(0, 0, 0, 0.35);
 }
 
-.lm-modal-minimized:hover .lm-modal-header {
+:where(.lm-modal-root) .lm-modal-minimized:hover .lm-modal-header {
     background: var(--lm-background-color-highlight, #f4f4f5);
 }
 
 /* During drag/resize: no transitions, no accidental selection */
-.lm-modal-action {
+:where(.lm-modal-root) .lm-modal-action {
     transition: none !important;
     user-select: none;
 }
 
-.lm-modal-focus {
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25), 0 0 0 2px rgba(37, 99, 235, 0.35);
+/* front/focused modal: slightly elevated shadow only — NO ring/outline */
+:where(.lm-modal-root) .lm-modal-focus {
+    box-shadow: 0 14px 40px rgba(0, 0, 0, 0.2);
 }
 
-.lm-modal-fullscreen {
+:where(.lm-modal-root) .lm-modal-fullscreen {
     position: fixed !important;
     inset: 0;
     width: 100% !important;

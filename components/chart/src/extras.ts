@@ -47,7 +47,32 @@ export const scatterChart = (m: Model, ctx: RenderCtx): View => {
     const shapeOf = (s: NormSeries): string =>
         bubble ? 'circle' : s.marker || CYCLE[m.series.indexOf(s) % CYCLE.length];
 
-    const markers = all.map(({ p, s }) => {
+    // line-type series (combo overlay): a connected path in the same x/y
+    // space, drawn in a preserveAspectRatio-none viewBox so it stretches to
+    // the plot. Its own points draw no markers (Chart.js pointRadius:0), but
+    // still counted in the extent above so the line stays inside the frame.
+    const linePaths = vis.filter((s) => s.type === 'line').flatMap((s) => {
+        const dim = ctx.hover.value && ctx.hover.value !== s.name ? 'true' : false;
+        // break the line on gaps (null points), connecting in data order
+        const segs: Array<Array<[number, number]>> = [];
+        let cur: Array<[number, number]> = [];
+        for (const p of s.points) {
+            if (p.gap) { if (cur.length) { segs.push(cur); cur = []; } continue; }
+            cur.push([xf(p.x) * 100, (1 - yf(p.value)) * 100]);
+        }
+        if (cur.length) segs.push(cur);
+        return segs.map((seg) => html`<path class="lm-chart-line"
+            d="${s.smooth ? smoothPath(seg) : polyPath(seg)}"
+            style="${css({ stroke: s.color })}" data-dim="${dim}"
+            data-dashed="${s.dashed ? 'true' : false}" />`);
+    });
+    const lineOverlay = linePaths.length
+        ? html`<div class="lm-chart-lineoverlay">
+            <svg class="lm-chart-linesvg" viewBox="0 0 100 100" preserveAspectRatio="none">${linePaths}</svg>
+        </div>`
+        : false;
+
+    const markers = all.filter(({ s }) => s.type !== 'line').map(({ p, s }) => {
         const tipVal = ctx.fmt(p.x) + ', ' + ctx.fmt(p.value) + (bubble ? ' · ' + ctx.fmt(p.z) : '');
         const shape = shapeOf(s);
         const r = rOf(p.z);
@@ -97,6 +122,7 @@ export const scatterChart = (m: Model, ctx: RenderCtx): View => {
                     <div class="lm-chart-grid" data-orient="h" data-off="${m.gridlines ? false : 'true'}">${xs.ticks.map(
                         () => html`<div class="lm-chart-gridline"></div>`,
                     )}</div>
+                    ${lineOverlay}
                     <svg class="lm-chart-scatter" width="100%" height="100%">${markers}</svg>
                     ${bubbleNames}
                     ${sizeLegend}
@@ -112,6 +138,142 @@ export const scatterChart = (m: Model, ctx: RenderCtx): View => {
     </div>`;
 };
 
+
+/* ----- pictogram / isotype (repeated glyphs filled by value; waffle = a
+        square-glyph grid). Each series[0] point is one row; the row fills
+        `value / total` of its glyphs — whole glyphs plus a bottom-clipped
+        fractional one. Pure HTML grid + inline SVG glyphs: no redraw. ----- */
+const GLYPHS: Record<string, string> = {
+    person: 'M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z',
+    circle: 'M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z',
+    square: 'M3 3h18v18H3z',
+    capsule: 'M12 1a5 5 0 0 1 5 5v12a5 5 0 0 1-10 0V6a5 5 0 0 1 5-5z',
+    star: 'M12 2l2.9 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l7.1-1.01z',
+    heart: 'M12 21s-7.5-4.9-10-9.5C.5 8 2.5 4 6 4c2 0 3.3 1.2 4 2.3C10.7 5.2 12 4 14 4c3.5 0 5.5 4 4 7.5C19.5 16.1 12 21 12 21z',
+};
+
+/** Resolve the glyph path: a preset key, else a raw SVG path, else a fallback. */
+const glyphPath = (raw: string, fallback: string): string =>
+    GLYPHS[raw] || (raw.trim().charAt(0).toUpperCase() === 'M' ? raw.trim() : fallback);
+
+/** One glyph cell: muted base + a bottom-clipped colour fill (0..1). */
+const glyphCell = (path: string, fill: number, color: string): View => html`<span class="lm-chart-picto">
+    <svg class="lm-chart-picto-svg" viewBox="0 0 24 24"><path d="${path}" /></svg>
+    ${fill > 0 ? html`<span class="lm-chart-picto-fill" style="${css({ height: (fill * 100).toFixed(1) + '%' })}">
+        <svg class="lm-chart-picto-svg" viewBox="0 0 24 24"><path d="${path}" style="${css({ fill: color })}" /></svg>
+    </span>` : false}
+</span>`;
+
+export const pictogramChart = (m: Model, ctx: RenderCtx): View => {
+    // one glyph row per data point; MULTIPLE series each become one row
+    // (name/colour from the series, value = the series total) so datasets
+    // compare side by side and keep walking the palette
+    const multi = m.series.length > 1;
+    const rows0 = multi
+        ? m.series.map((s, si) => {
+            const pts = s.points.filter((p) => !p.gap);
+            const value = pts.reduce((t, p) => t + p.value, 0);
+            return { name: s.name, value, color: s.color, point: { ...(pts[0] || s.points[0]), name: s.name, value }, si, pi: 0 };
+        })
+        : (m.series[0] ? m.series[0].points : []).filter((p) => !p.gap)
+            .map((p, pi) => ({ name: p.name, value: p.value, color: p.color, point: p, si: 0, pi }));
+    const rows = rows0.filter((r) => !ctx.isHidden(r.name || '#' + (multi ? r.si : r.pi)));
+    const path = glyphPath(m.icon || 'person', GLYPHS.person);
+    const cols = Math.max(1, m.columns || 10);
+    const perRow = Math.min(400, Math.max(cols, m.iconcount || cols));
+    const full = m.total > 0 ? m.total : 100;
+    // cap the glyph size so a tall grid fits the plot height instead of
+    // overflowing into the title: fit `gridRows` into the space left after
+    // the header, then clamp to a sensible 34px maximum
+    const gridRows = rows.length * Math.ceil(perRow / cols);
+    const headroom = m.title || m.subtitle ? 56 : 16;
+    const avail = Math.max(90, (m.height || 320) - headroom - 20);
+    const cell = Math.max(6, Math.min(34, (avail - gridRows * 5) / Math.max(1, gridRows)));
+    const gridW = Math.round(cols * cell);
+
+    const row = (r: typeof rows[number]): View => {
+        const f = Math.max(0, Math.min(1, r.value / full));
+        const filled = f * perRow; // glyph-units filled across the row
+        const color = r.color;
+        const tip = (e: MouseEvent): void => ctx.showTip(e, r.name || '', [{ name: '', value: ctx.fmt(r.value), color }]);
+        const glyphs = Array.from({ length: perRow }, (_, g) => glyphCell(path, Math.max(0, Math.min(1, filled - g)), color));
+        return html`<div class="lm-chart-picto-row"
+            onmousemove="${tip}" ontouchstart="${tip}" onmouseleave="${ctx.hideTip}"
+            onclick="${() => ctx.fire({ ...r.point, color }, r.si, r.pi)}">
+            ${m.labels ? html`<div class="lm-chart-picto-meta">
+                <span class="lm-chart-picto-value" style="${css({ color })}">${full === 100 ? Math.round(f * 100) + '%' : ctx.fmt(r.value)}</span>
+                ${r.name ? html`<span class="lm-chart-picto-name">${r.name}</span>` : false}
+            </div>` : false}
+            <div class="lm-chart-picto-grid"
+                style="${css({ gridTemplateColumns: 'repeat(' + cols + ', 1fr)', width: gridW + 'px' })}">${glyphs}</div>
+        </div>`;
+    };
+
+    // the inner wrapper is what centres the block: rows stretch to the
+    // widest one inside it, so the grids stay left-aligned to each other
+    return html`<div class="lm-chart-plotblock lm-chart-picto-block">
+        <div class="lm-chart-picto-inner">${rows.map((r) => row(r))}</div>
+    </div>`;
+};
+
+/* ----- waffle (type="waffle"): one square grid PER SERIES, its cells
+        partitioned sequentially (bottom-left up) across the series' points
+        in palette order — the classic 10×10 percentage waffle. Multiple
+        series render side by side for dataset comparison. ----- */
+export const waffleChart = (m: Model, ctx: RenderCtx): View => {
+    const path = glyphPath(m.icon || 'square', GLYPHS.square);
+    const cols = Math.max(1, m.columns || 10);
+    const cells = Math.min(400, Math.max(cols, m.iconcount || 100));
+    const gridRows = Math.ceil(cells / cols);
+    // glyph size fitted to the plot height (same scheme as the pictogram),
+    // with room below for the per-series name
+    const headroom = m.title || m.subtitle ? 56 : 16;
+    const avail = Math.max(90, (m.height || 320) - headroom - 44);
+    const cellPx = Math.max(6, Math.min(28, (avail - gridRows * 4) / gridRows));
+    const gapPx = Math.max(2, Math.round(cellPx * 0.14));
+    const gridW = Math.round(cols * cellPx + (cols - 1) * gapPx);
+
+    const grid = (s: Model['series'][number], si: number): View => {
+        const pts = s.points.filter((p, i) => !p.gap && p.value > 0 && !ctx.isHidden(p.name || '#' + i));
+        const sum = pts.reduce((t, p) => t + p.value, 0);
+        const denom = Math.max(m.total > 0 ? m.total : 100, sum) || 1;
+        // cumulative category boundaries in cell units; cell k belongs to
+        // the first category whose boundary exceeds it (fractional last cell)
+        const bounds = [] as number[];
+        let acc = 0;
+        for (const p of pts) { acc += p.value; bounds.push((acc / denom) * cells); }
+        const cellView = (k: number): View => {
+            let ci = 0;
+            while (ci < bounds.length && bounds[ci] <= k) ci++;
+            if (ci >= pts.length) return glyphCell(path, 0, '');
+            const p = pts[ci];
+            const fill = Math.max(0, Math.min(1, bounds[ci] - k));
+            const pct = Math.round((p.value / denom) * 100);
+            const tip = (e: MouseEvent): void => ctx.showTip(e, (m.series.length > 1 && s.name ? s.name + ' · ' : '') + (p.name || ''),
+                [{ name: '', value: ctx.fmt(p.value) + ' (' + pct + '%)', color: p.color }]);
+            return html`<span class="lm-chart-waffle-cell"
+                onmousemove="${tip}" ontouchstart="${tip}" onmouseleave="${ctx.hideTip}"
+                onclick="${() => ctx.fire(p, si, s.points.indexOf(p))}">${glyphCell(path, fill, p.color)}</span>`;
+        };
+        // fill runs bottom-left upward; the DOM renders rows top-down, so
+        // row r (from the top) hosts cells [(gridRows-1-r)*cols ...)
+        const views: View[] = [];
+        for (let r = 0; r < gridRows; r++) {
+            for (let c = 0; c < cols; c++) {
+                const k = (gridRows - 1 - r) * cols + c;
+                if (k < cells) views.push(cellView(k));
+            }
+        }
+        return html`<div class="lm-chart-waffle">
+            <div class="lm-chart-picto-grid"
+                style="${css({ gridTemplateColumns: 'repeat(' + cols + ', 1fr)', width: gridW + 'px', gap: gapPx + 'px' })}">${views}</div>
+            ${s.name && (m.series.length > 1 || m.labels) ? html`<div class="lm-chart-waffle-name">${s.name}</div>` : false}
+        </div>`;
+    };
+
+    return html`<div class="lm-chart-plotblock lm-chart-picto-block lm-chart-waffle-block">${
+        m.series.map((s, si) => grid(s, si))}</div>`;
+};
 
 /* ----- bullet (KPI: measure bar over qualitative bands + target) ----- */
 export const bulletChart = (m: Model, ctx: RenderCtx): View => {
@@ -304,7 +466,8 @@ export const wordcloudChart = (m: Model, ctx: RenderCtx): View => {
         placed.push(i);
     }
     // recentre + scale the cloud to fill the 200×100 scene (capped so a
-    // lone short word does not blow up to the full box height)
+    // lone short word does not blow up to the full box height); the cap
+    // is generous — a small cloud should still spread into the container
     let x0 = Infinity;
     let x1 = -Infinity;
     let y0 = Infinity;
@@ -313,7 +476,7 @@ export const wordcloudChart = (m: Model, ctx: RenderCtx): View => {
         x0 = Math.min(x0, cx[i] - bw[i] / 2); x1 = Math.max(x1, cx[i] + bw[i] / 2);
         y0 = Math.min(y0, cy[i] - bh[i] / 2); y1 = Math.max(y1, cy[i] + bh[i] / 2);
     }
-    const fit = Math.min(2, 196 / (x1 - x0 || 1), 94 / (y1 - y0 || 1));
+    const fit = Math.min(3, 196 / (x1 - x0 || 1), 94 / (y1 - y0 || 1));
     const mx = (x0 + x1) / 2;
     const my = (y0 + y1) / 2;
 

@@ -682,10 +682,13 @@ export const Modal = component('modal', {
                                         } else {
                                             minimize();
                                         }
-                                    }}">${() => (minimized.value ? '□' : '–')}</button>`}
+                                    }}">${() => (minimized.value
+                                        ? html`<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="1.5" /></svg>`
+                                        : html`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14" /></svg>`)}</button>`}
                             ${() =>
                                 props.closable.value &&
-                                html`<button class="lm-modal-close" onclick="${() => doClose('button')}">×</button>`}
+                                html`<button class="lm-modal-close" title="Close" aria-label="Close"
+                                    onclick="${() => doClose('button')}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12" /></svg></button>`}
                         </span>
                     </header>`}
                 <div class="lm-modal-content">${props.children}${() =>

@@ -11,13 +11,17 @@
     "imports": {
         "lemonadejs": "../../dist/lemonade.mjs",
         "@lemonadejs/modal": "../../components/modal/dist/index.mjs",
-        "@lemonadejs/chart": "../../components/chart/dist/index.mjs"
+        "@lemonadejs/chart": "../../components/chart/dist/index.mjs",
+        "@lemonadejs/dropdown": "../../components/dropdown/dist/index.mjs",
+        "@lemonadejs/switch": "../../components/switch/dist/index.mjs"
     }
 }
 </script>
 
 <link rel="stylesheet" href="../../components/modal/dist/style.css" type="text/css"/>
 <link rel="stylesheet" href="../../components/chart/dist/style.css" type="text/css"/>
+<link rel="stylesheet" href="../../components/dropdown/dist/style.css" type="text/css"/>
+<link rel="stylesheet" href="../../components/switch/dist/style.css" type="text/css"/>
 <link rel="stylesheet" href="./charts/charts.css" type="text/css"/>
 
 <div id='spreadsheet'></div>
@@ -28,7 +32,13 @@ import charts from './charts/charts.js';
 // You can use the following license for quick testing on localhost, StackBlitz, or CodeSandbox.
 // The license is valid for one day, after which the spreadsheet will become read-only.
 // For a longer trial period, you can create a free account and generate a demo license with an extended expiration date.
-jspreadsheet.license = 'MjhjNzFkMGFjZjQ2YTY2MjcxZDAxNDJkNTAwMDJlZjE0NGJjOGI0N2EwMTAyNzM5YTk5YTgyZTVjMGJjMjUyNGQ0MDMyMzc4M2VkZTY5YjY4MGUzY2NiZTM2NzRjZDUzMzVhNDZkYTBhZDQyNDA5ZDEwZWVjNzU0Y2JjMzJkYTYsZXlKamJHbGxiblJKWkNJNklpSXNJbTVoYldVaU9pSktjM0J5WldGa2MyaGxaWFFpTENKa1lYUmxJam94Tnpnek1UVTJNakl6TENKa2IyMWhhVzRpT2xzaWFuTndjbVZoWkhOb1pXVjBMbU52YlNJc0ltTnZaR1Z6WVc1a1ltOTRMbWx2SWl3aWFuTm9aV3hzTG01bGRDSXNJbU56WWk1aGNIQWlMQ0p6ZEdGamEySnNhWFI2TG1sdklpd2lkMlZpWTI5dWRHRnBibVZ5TG1sdklpd2liRzlqWVd4b2IzTjBJbDBzSW5Cc1lXNGlPaUl6TkNJc0luTmpiM0JsSWpwYkluWTNJaXdpZGpnaUxDSjJPU0lzSW5ZeE1DSXNJbll4TVNJc0luWXhNaUlzSW1Ob1lYSjBjeUlzSW1admNtMXpJaXdpWm05eWJYVnNZU0lzSW5CaGNuTmxjaUlzSW5KbGJtUmxjaUlzSW1OdmJXMWxiblJ6SWl3aWFXMXdiM0owWlhJaUxDSmlZWElpTENKMllXeHBaR0YwYVc5dWN5SXNJbk5sWVhKamFDSXNJbkJ5YVc1MElpd2ljMmhsWlhSeklpd2lZMnhwWlc1MElpd2ljMlZ5ZG1WeUlpd2ljMmhoY0dWeklpd2labTl5YldGMElpd2ljR2wyYjNRaVhTd2laR1Z0YnlJNmRISjFaWDA9';
+// You can use the following license for quick testing on localhost, StackBlitz, or CodeSandbox.
+// The license is valid for one day, after which the spreadsheet will become read-only.
+// For a longer trial period, you can create a free account and generate a demo license with an extended expiration date.
+jspreadsheet.setLicense('YWQ1ZWIwZGVhNzlhMDJmZDVhYjI4ZGI2MWU0ZDllYTQxYTI3MDZiZDhmY2U4MTA2YjVkNTQ4ZjZmMjUyMjJmMDVmNjFlZDllMGU1ZDM3N2MwZDk3YWNmYThmMDc1ZjlhMjNkY2RiZjRiODNkYzcxZWFkMmNhY2FjZjhkZWUwMjYsZXlKamJHbGxiblJKWkNJNklqTTFObUV4T1RKaU56a3hNMkl3TkdNMU5EVTNOR1F4T0dNeU9HUTBObVUyTXprMU5ESTRZV0lpTENKdVlXMWxJam9pVUdGMWJDQkliMlJsYkNJc0ltUmhkR1VpT2pFNE1UUTVNVFE0TURBc0ltUnZiV0ZwYmlJNld5SnFjMmhsYkd3dWJtVjBJaXdpWTNOaUxtRndjQ0lzSW1wemNISmxZV1J6YUdWbGRDNWpiMjBpTENKalpIQnVMbWx2SWl3aWFXNTBjbUZ6YUdWbGRITXVZMjl0SWl3aWMzUmhZMnRpYkdsMGVpNWpiMjBpTENKM1pXSmpiMjUwWVdsdVpYSXVhVzhpTENKM1pXSmpiMjUwWVdsdVpYSXVhVzhpTENKemRHRmphMkpzYVhSNkxtbHZJaXdpYzJaamIyUmxZbTkwTG1OdmJTSXNJbU5zWVhWa1pXMWpjR052Ym5SbGJuUXVZMjl0SWl3aWRXVXVZMjl0TG1KeUlpd2liM0puWm1GeWJTMDFNbUptWXpNeVlqSmpMV1JsZGkxbFpDNWtaWFpsYkc5d0xteHBaMmgwYm1sdVp5NW1iM0pqWlM1amIyMGlMQ0prWlhabGJHOXdMbXhwWjJoMGJtbHVaeTVtYjNKalpTNWpiMjBpTENKMFlXSjFiR0Z5Y0hKdkxtTnZiU0lzSW1SbGJXOHViRzlqWVd4b2IzTjBJaXdpWlhOamIyeGhNVEV1Ykc5allXeG9iM04wSWl3aWJHVjJiM0p6YzJVdWJHOWpZV3hvYjNOMElpd2liRzlqWVd4b2IzTjBJbDBzSW5Cc1lXNGlPaUl6TkNJc0luTmpiM0JsSWpwYkluWTNJaXdpZGpnaUxDSjJPU0lzSW5ZeE1DSXNJbll4TVNJc0luWXhNaUlzSW1admNtMTFiR0VpTENKbWIzSnRjeUlzSW5KbGJtUmxjaUlzSW5CaGNuTmxjaUlzSW1sdGNHOXlkR1Z5SWl3aWMyVmhjbU5vSWl3aVkyOXRiV1Z1ZEhNaUxDSjJZV3hwWkdGMGFXOXVjeUlzSW1Ob1lYSjBjeUlzSW5CeWFXNTBJaXdpWW1GeUlpd2ljMmhsWlhSeklpd2ljMmhoY0dWeklpd2ljMlZ5ZG1WeUlpd2labTl5YldGMElpd2lkRzl3YldWdWRTSXNJbkJwZG05MElpd2lhVzUwY21GemFHVmxkSE1pWFgwPQ==');
+
+
+
 
 // Charts on the @lemonadejs/chart block
 jspreadsheet.setExtensions({ charts });

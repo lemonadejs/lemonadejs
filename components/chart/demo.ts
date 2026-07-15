@@ -131,6 +131,9 @@ interface Cfg {
     valuesuffix?: string;
     annotations?: unknown[];
     drilldown?: Record<string, unknown>;
+    icon?: string;
+    xtitle?: string;
+    ytitle?: string;
 }
 
 const base = {
@@ -209,7 +212,22 @@ const presets = (): Cfg[] => [
         { name: 'Male', data: pyr(1.4) }, { name: 'Female', data: pyr(1.4) },
     ], ...base, horizontal: true, mirror: true, valuesuffix: '%' },
     { title: 'Scatter', type: 'scatter', categories: [], series: scatterData, ...base },
+    { title: 'Scatter + trend line', type: 'scatter', categories: [], series: [
+        { name: 'Measured', type: 'scatter', data: [
+            [1.2, 11], [2.1, 14], [2.8, 13], [3.9, 17], [5.1, 16], [6.2, 21], [7.0, 19] ] },
+        { name: 'Trend', type: 'line', smooth: true, data: [
+            [1, 10], [2, 13], [3, 14], [4, 16], [5, 17], [6, 20], [7, 20] ] },
+    ] as unknown as ChartSeries[], ...base, xtitle: 'Epoch', ytitle: 'Cost' },
     { title: 'Bubble', type: 'bubble', categories: [], series: bubbleData, ...base },
+    { title: 'Pictogram (isotype)', type: 'pictogram', icon: 'person', categories: [], series: [{ data: [
+        { name: 'Satisfied', value: rnd(60, 85) },
+        { name: 'Neutral', value: rnd(30, 55) },
+        { name: 'Unhappy', value: rnd(10, 35) },
+    ] }] as unknown as ChartSeries[], ...base, labels: true },
+    { title: 'Waffle', type: 'waffle', categories: [], series: [
+        { name: '2023', data: [{ name: 'Chrome', value: 52 }, { name: 'Safari', value: 28 }, { name: 'Other', value: 20 }] },
+        { name: '2024', data: [{ name: 'Chrome', value: rnd(40, 50) }, { name: 'Safari', value: rnd(25, 35) }, { name: 'Other', value: 22 }] },
+    ] as unknown as ChartSeries[], ...base, labels: true },
     { title: 'Radar', type: 'radar', categories: radarCats, series: radarData, ...base },
     { title: 'Heatmap', type: 'heatmap', categories: weekCats, series: [
         { name: 'Morning', data: [12, 18, 22, 15, 9] },
@@ -371,7 +389,8 @@ const App: Component = (_props, { state }) => {
                     innerradius="${c.innerradius}" ymin="${c.ymin}" ymax="${c.ymax}"
                     plotbands="${c.plotbands}" plotlines="${c.plotlines}"
                     mirror="${c.mirror}" borderradius="${c.borderradius}" xtype="${c.xtype}"
-                    valuesuffix="${c.valuesuffix}" annotations="${c.annotations}" drilldown="${c.drilldown}" />
+                    valuesuffix="${c.valuesuffix}" annotations="${c.annotations}" drilldown="${c.drilldown}"
+                    icon="${c.icon}" xtitle="${c.xtitle}" ytitle="${c.ytitle}" />
             </div>`)}
         </div>
     </div>`;

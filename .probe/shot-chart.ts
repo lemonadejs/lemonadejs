@@ -149,6 +149,25 @@ const App: Component = () => html`<div style="padding:24px;display:flex;flex-dir
             { name: 'Webchat', value: 6 },
             { name: 'Other', value: 3 },
         ] }]}" /></div>
+    <div id="s-picto" style="height:280px"><${Chart} type="pictogram" icon="person" animate="${false}"
+        title="How satisfied are our customers?"
+        series="${[{ data: [
+            { name: 'Satisfied', value: 78 },
+            { name: 'Neutral', value: 46 },
+            { name: 'Unhappy', value: 21 },
+        ] }]}" /></div>
+    <div id="s-picto-cap" style="height:300px"><${Chart} type="pictogram" icon="capsule" animate="${false}"
+        title="Adoption by segment"
+        colors="${['#bd7f40', '#45889c', '#6342a1', '#c0554a']}"
+        series="${[{ data: [
+            { name: 'Enterprise', value: 20 },
+            { name: 'Mid-market', value: 50 },
+            { name: 'SMB', value: 40 },
+            { name: 'Consumer', value: 80 },
+        ] }]}" /></div>
+    <div id="s-waffle" style="height:340px"><${Chart} type="waffle" animate="${false}"
+        title="Test coverage" colors="${['#578163']}"
+        series="${[{ data: [{ name: 'Covered', value: 63 }] }]}" /></div>
     <div id="s-pie2" style="height:400px"><${Chart} type="pie" animate="${false}"
         title="Traffic share" subtitle="Default categorical palette"
         series="${[{ data: [

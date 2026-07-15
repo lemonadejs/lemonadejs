@@ -393,6 +393,17 @@
     margin-top: 6px;
 }
 
+/* secondary (right) axis: the plot widens its right gutter to 40px for the
+   tick labels — the category/time row below must mirror it, or the label
+   slots run wider than the column slots and drift right (pareto, combo) */
+.lm-chart-plot[data-right='true'] + .lm-chart-xaxis {
+    padding-right: 40px;
+}
+
+.lm-chart-plot[data-right='true'] + .lm-chart-xtime {
+    margin-right: 40px;
+}
+
 .lm-chart-cat {
     flex: 1 1 0;
     min-width: 0;
@@ -596,6 +607,19 @@
     inset: 0 var(--lm-chart-pad-r) 0 0;
     flex-direction: row;
     justify-content: space-between;
+}
+
+/* scatter/bubble: the plot keeps the y-tick gutter, so the numeric x grid
+   and the x labels must share it — otherwise the first tick (x=0) and its
+   gridline land left of the y axis, at the container edge */
+.lm-chart[data-type='scatter'] .lm-chart-grid[data-orient='h'],
+.lm-chart[data-type='bubble'] .lm-chart-grid[data-orient='h'] {
+    inset: 0 var(--lm-chart-pad-r) 0 var(--lm-chart-gutter);
+}
+
+.lm-chart[data-type='scatter'] .lm-chart-xvalues,
+.lm-chart[data-type='bubble'] .lm-chart-xvalues {
+    padding-left: var(--lm-chart-gutter);
 }
 
 .lm-chart-grid[data-orient='h'] .lm-chart-gridline {
@@ -1761,6 +1785,17 @@ button.lm-chart-crumb:hover {
     overflow: visible; /* let leaders + outside labels spill past the circle */
 }
 
+/* sunburst labels live INSIDE the rings — no external-label padding, and
+   the disc tracks the container height instead of the 320px pie cap */
+.lm-chart[data-type='sunburst'] .lm-chart-pie-core {
+    padding: 8px 12px;
+}
+
+.lm-chart[data-type='sunburst'] .lm-chart-pie-area {
+    max-height: none;
+    max-width: 100%;
+}
+
 /* thin leader line from a small slice to its external label */
 .lm-chart-leader {
     fill: none;
@@ -2151,10 +2186,17 @@ button.lm-chart-crumb:hover {
 }
 
 /* category name at each ring's start (12 o'clock, anchored to the left) */
+/* thin leader connecting each category label to its ring start */
+.lm-chart-radial-lead {
+    stroke: var(--lm-chart-grid);
+    stroke-width: 0.4;
+}
+
 .lm-chart-radial-cat {
     position: absolute;
     transform: translate(-100%, -50%);
-    padding-right: 6px;
+    padding-right: 4px;
+    background: var(--lm-chart-surface);
     font-size: 0.7em;
     font-weight: bold;
     color: var(--lm-chart-text);
@@ -2240,10 +2282,28 @@ button.lm-chart-crumb:hover {
 
 /* ---- arc diagram (nodes on a baseline, arcs between) ---- */
 
+/* two stacked rows: the arc plot (flex:1) and a label row below it */
+.lm-chart-arcflow {
+    display: flex;
+    flex-direction: column;
+}
+
+.lm-chart-arc-plot {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+}
+
+.lm-chart-arc-labels {
+    position: relative;
+    flex: 0 0 auto;
+}
+
 .lm-chart-arc-link {
     fill: none;
     stroke-linecap: round;
-    opacity: 0.4;
+    vector-effect: non-scaling-stroke; /* hairline px strokes, not scaled ribbons */
+    opacity: 0.5;
     transition: opacity 0.12s ease;
     cursor: default;
 }
@@ -2271,15 +2331,13 @@ button.lm-chart-crumb:hover {
     opacity: 0.25;
 }
 
-/* rotated node labels hanging below the baseline */
+/* rotated node labels in the label row (max-height set inline per node) */
 .lm-chart-arc-label {
     position: absolute;
     transform: translateX(-50%);
     writing-mode: vertical-rl;
     font-size: 0.7em;
-    font-weight: bold;
     color: var(--lm-chart-text);
-    max-height: 20%;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -2495,13 +2553,119 @@ button.lm-chart-crumb:hover {
     animation: lm-chart-appear 0.5s ease-out;
 }
 
+/* ----- pictogram / isotype / waffle ----- */
+.lm-chart-picto-block {
+    /* the muted (unfilled) glyph colour; the filled copy is inline per row */
+    --lm-chart-picto-muted: var(--lm-border-color-light, #d7dbe0);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center; /* centre the block in the plot area */
+    height: 100%;
+    padding: 0.4em 0;
+    box-sizing: border-box;
+}
+/* rows live in a fit-content wrapper so the BLOCK centres as one unit
+   while the rows stay left-aligned to each other inside it */
+.lm-chart-picto-inner {
+    display: flex;
+    flex-direction: column;
+    gap: 0.9em;
+    max-width: 100%;
+}
+.lm-chart-picto-row {
+    display: flex;
+    align-items: center;
+    gap: 1em;
+    cursor: default;
+}
+.lm-chart-picto-meta {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-width: 3.4em;
+    line-height: 1.1;
+}
+.lm-chart-picto-value {
+    font-size: 1.7em;
+    font-weight: 700;
+}
+.lm-chart-picto-name {
+    font-size: 0.8em;
+    color: var(--lm-chart-muted);
+}
+.lm-chart-picto-grid {
+    display: grid;
+    gap: 0.28em;
+    max-width: 100%;
+}
+
+/* waffle: one palette-partitioned grid per series, side by side */
+.lm-chart-waffle-block {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-content: center;
+    gap: 1.4em 2.4em;
+}
+.lm-chart-waffle {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.7em;
+    min-width: 0;
+}
+.lm-chart-waffle-cell {
+    display: block;
+    cursor: default;
+}
+.lm-chart-waffle-name {
+    font-size: 0.85em;
+    font-weight: 600;
+    color: var(--lm-chart-text);
+}
+.lm-chart-picto {
+    display: block; /* grid items blockify, but the waffle wraps cells */
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1;
+}
+.lm-chart-picto-svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+.lm-chart-picto-svg path {
+    fill: var(--lm-chart-picto-muted);
+}
+/* the filled copy: a bottom-anchored clip window (height = fill fraction)
+   over a full-size glyph, so the colour rises from the bottom like liquid */
+.lm-chart-picto-fill {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    overflow: hidden;
+}
+.lm-chart-picto-fill .lm-chart-picto-svg {
+    inset: auto auto 0 0;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1;
+}
+.lm-chart[data-animate='true'] .lm-chart-picto-fill {
+    animation: lm-chart-appear 0.5s ease-out;
+}
+
 @media (prefers-reduced-motion: reduce) {
     .lm-chart-bar,
     .lm-chart-pie,
     .lm-chart-lineoverlay,
     .lm-chart-scatter,
     .lm-chart-pack,
-    .lm-chart-cloud-svg {
+    .lm-chart-cloud-svg,
+    .lm-chart-picto-fill {
         animation: none !important;
         transition: filter 0.12s ease !important;
     }
