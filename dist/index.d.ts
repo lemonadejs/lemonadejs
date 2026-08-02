@@ -25,6 +25,8 @@ export { createWebComponent } from './webcomponents';
 export { explain } from './errors';
 export { trace } from './trace';
 export type { TraceEvent } from './trace';
+export { form } from './forms';
+export type { Form, DeepPartial } from './forms';
 /**
  * Build an inline style string from an object — typed keys, automatic
  * units, conditional values:
@@ -61,6 +63,7 @@ declare const lemonade: {
     createWebComponent: typeof createWebComponent;
     explain: (code: string) => string;
     trace: (arg?: number | false) => import("./trace").TraceEvent[];
+    form: <T extends Record<string, unknown>>(initial: T) => import("./forms").Form<T>;
     version: number;
 };
 export default lemonade;

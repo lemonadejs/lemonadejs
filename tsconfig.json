@@ -18,7 +18,6 @@
         "paths": {
             "lemonadejs": ["src/index.ts"],
             "lemonadejs/test": ["src/test.ts"],
-            "lemonadejs/forms": ["src/forms.ts"],
             "lemonadejs/react": ["src/react.ts"],
             "@lemonadejs/*": ["components/*/src/index.ts"]
         }

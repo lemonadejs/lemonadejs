@@ -23,6 +23,7 @@ import { batch } from './reactivity';
 import { component, contract, use } from './contract';
 import { createWebComponent } from './webcomponents';
 import { trace } from './trace';
+import { form } from './forms';
 
 export type { Bindable, Bound, Component, Handle, Props, Ref, Resource, SlotValue, State, Template, Tools, View } from './types';
 export { isDisposing, mount, inspect, ref, setComponents, unsafe } from './runtime';
@@ -34,6 +35,8 @@ export { createWebComponent } from './webcomponents';
 export { explain } from './errors';
 export { trace } from './trace';
 export type { TraceEvent } from './trace';
+export { form } from './forms';
+export type { Form, DeepPartial } from './forms';
 
 /** Properties whose numeric values are unitless (everything else gets px) */
 const UNITLESS =
@@ -98,6 +101,7 @@ const lemonade = {
     createWebComponent,
     explain,
     trace,
+    form,
     version: 6,
 };
 

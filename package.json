@@ -80,11 +80,6 @@
    "import": "./dist/test.mjs",
    "default": "./dist/test.js"
   },
-  "./forms": {
-   "types": "./dist/forms.d.ts",
-   "import": "./dist/forms.mjs",
-   "default": "./dist/forms.js"
-  },
   "./react": {
    "types": "./dist/react.d.ts",
    "import": "./dist/react.mjs",

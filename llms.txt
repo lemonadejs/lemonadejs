@@ -428,9 +428,9 @@ focusout must check:
     // attributes at connect time arrive as string props; el.props = {...} for rich values
     // for composition INSIDE lemonade, use <Card /> or <${Card} /> instead
 
-## Forms (lemonadejs/forms)
+## Forms
 
-    import { form } from 'lemonadejs/forms';
+    import { form } from 'lemonadejs';
     const f = form({ name: '', address: { city: '' } });   // states mirroring the shape
     html`<input bind="${f.name}" /><input bind="${f.address.city}" />`
     f.$get()                        // plain data object, nested
@@ -518,7 +518,7 @@ code eliminated — production pays zero.
     lemonade.set/get/dispatch (Sugar)    store() + exported action functions in a module
     lemonade.set(k, fn, true) persist    store(initial, 'storage-key')
     setComponents({ Card }) + <Card/>    same — or embed by value: <${Card} />
-    lm-path / setPath forms              form() from lemonadejs/forms ($get/$set)
+    lm-path / setPath forms              form() from lemonadejs ($get/$set)
     HTML strings in slots                escaped by default; unsafe(html) for trusted markup
     self.refresh('prop') / refresh()     state.touch() after in-place mutation; assignment otherwise
 

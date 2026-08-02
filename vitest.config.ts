@@ -7,7 +7,6 @@ export default defineConfig({
             // Block sources import by PACKAGE NAME (what a consumer writes);
             // the monorepo maps the names onto the local sources
             { find: 'lemonadejs/test', replacement: path.resolve(__dirname, 'src/test.ts') },
-            { find: 'lemonadejs/forms', replacement: path.resolve(__dirname, 'src/forms.ts') },
             { find: 'lemonadejs/react', replacement: path.resolve(__dirname, 'src/react.ts') },
             { find: 'lemonadejs', replacement: path.resolve(__dirname, 'src/index.ts') },
             {

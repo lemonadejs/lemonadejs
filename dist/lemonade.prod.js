@@ -27,6 +27,7 @@ __export(index_exports, {
   css: () => css,
   default: () => index_default,
   explain: () => explain,
+  form: () => form,
   html: () => html,
   inspect: () => inspect,
   isDisposing: () => isDisposing,
@@ -2162,6 +2163,55 @@ function createWebComponent(a, b, c) {
   return tag;
 }
 
+// src/forms.ts
+var isPlainObject = function(v) {
+  if (!v || typeof v !== "object" || Array.isArray(v)) {
+    return false;
+  }
+  const proto = Object.getPrototypeOf(v);
+  return proto === Object.prototype || proto === null;
+};
+var form = function(initial) {
+  const fields = {};
+  for (const key of Object.keys(initial)) {
+    const v = initial[key];
+    fields[key] = isPlainObject(v) ? form(v) : store(v);
+  }
+  const isGroup = function(field) {
+    return typeof field.$get === "function";
+  };
+  Object.defineProperty(fields, "$get", {
+    value: function() {
+      const out = {};
+      for (const key of Object.keys(fields)) {
+        const field = fields[key];
+        out[key] = isGroup(field) ? field.$get() : field.peek();
+      }
+      return out;
+    }
+  });
+  Object.defineProperty(fields, "$set", {
+    value: function(values) {
+      if (!values || typeof values !== "object") {
+        return;
+      }
+      for (const key of Object.keys(values)) {
+        const field = fields[key];
+        if (field === void 0) {
+          continue;
+        }
+        const v = values[key];
+        if (isGroup(field)) {
+          field.$set(v);
+        } else {
+          field.value = v;
+        }
+      }
+    }
+  });
+  return fields;
+};
+
 // src/index.ts
 var UNITLESS = /^(opacity|z-index|zoom|order|flex|flex-grow|flex-shrink|font-weight|line-height|scale|aspect-ratio|grid-(area|row|column)(-start|-end)?|column-count|columns|orphans|widows|tab-size|animation-iteration-count|--.*)$/;
 var css = function(styles) {
@@ -2200,6 +2250,7 @@ var lemonade = {
   createWebComponent,
   explain,
   trace,
+  form,
   version: 6
 };
 var index_default = lemonade;

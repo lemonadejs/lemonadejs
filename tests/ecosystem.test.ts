@@ -1,11 +1,10 @@
 /**
  * The restored v5 capabilities in v6 idiom: store() shared state,
  * unsafe() trusted HTML, createWebComponent() interop, and the
- * lemonadejs/forms companion.
+ * form() helper.
  */
 import { describe, it, expect, afterEach } from 'vitest';
-import { html, store, unsafe, createWebComponent, type Component, type State } from '../src/index';
-import { form } from '../src/forms';
+import { html, store, unsafe, createWebComponent, form, type Component, type State } from '../src/index';
 import { render as t } from '../src/test';
 
 let handle: ReturnType<typeof t> | null = null;
@@ -134,7 +133,7 @@ describe('createWebComponent() — interop boundary', () => {
     });
 });
 
-describe('lemonadejs/forms — form() companion', () => {
+describe('form() helper', () => {
     it('creates states mirroring the data shape, nested included', () => {
         const f = form({ name: 'Ana', address: { city: 'Porto' }, age: 30 });
         expect(f.name.value).toBe('Ana');

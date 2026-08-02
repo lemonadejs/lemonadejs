@@ -29,8 +29,6 @@ const targets = [
     { entry: 'src/index.ts', format: 'iife', outfile: 'lemonade.min.js', minify: true, globalName: 'lemonade', dev: false },
     { entry: 'src/test.ts', format: 'esm', outfile: 'test.mjs', dev: true, satellite: './lemonade.mjs' },
     { entry: 'src/test.ts', format: 'cjs', outfile: 'test.js', dev: true, satellite: './lemonade.js' },
-    { entry: 'src/forms.ts', format: 'esm', outfile: 'forms.mjs', dev: true, satellite: './lemonade.mjs' },
-    { entry: 'src/forms.ts', format: 'cjs', outfile: 'forms.js', dev: true, satellite: './lemonade.js' },
     { entry: 'src/react.ts', format: 'esm', outfile: 'react.mjs', dev: true, satellite: './lemonade.mjs' },
     { entry: 'src/react.ts', format: 'cjs', outfile: 'react.js', dev: true, satellite: './lemonade.js' },
 ];

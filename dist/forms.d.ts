@@ -1,10 +1,10 @@
 /**
- * LemonadeJS v6 — forms companion (lemonadejs/forms)
+ * LemonadeJS v6 — form helper
  *
  * Successor of v5's lm-path/setPath: a typed object of states mirroring a
  * data shape, ready for bind, with whole-form get/set.
  *
- *   import { form } from 'lemonadejs/forms';
+ *   import { form } from 'lemonadejs';
  *
  *   const f = form({ name: '', address: { city: '' }, age: 0 });
  *   html`<input bind="${f.name}" /><input bind="${f.address.city}" />`;
