@@ -807,6 +807,8 @@ export const boxplotChart = (m: Model, ctx: RenderCtx): View => {
     const range = sc.hi - sc.lo || 1;
     const yf = (v: number): number => (1 - (v - sc.lo) / range) * 100;
     const color = (m.series[0] && m.series[0].color) || PALETTES.lemonade[0];
+    // lerpColor needs hex; non-hex custom colours fall back to the default
+    const fillBase = /^#/.test(color) ? color : PALETTES.lemonade[0];
     const colMark = (i: number): View | false => {
         const p = pts[i];
         if (!p || p.gap || p.extra.length < 5) return false;
@@ -817,7 +819,7 @@ export const boxplotChart = (m: Model, ctx: RenderCtx): View => {
             <div class="lm-chart-box-whisker" style="${css({ top: yf(mx) + '%', height: (yf(mn) - yf(mx)) + '%' })}"></div>
             <div class="lm-chart-box-cap" style="${css({ top: yf(mx) + '%' })}"></div>
             <div class="lm-chart-box-cap" style="${css({ top: yf(mn) + '%' })}"></div>
-            <div class="lm-chart-box-rect" style="${css({ top: yf(q3) + '%', height: (yf(q1) - yf(q3)) + '%', borderColor: color, background: lerpColor('#ffffff', '#2196f3', 0.12) })}"></div>
+            <div class="lm-chart-box-rect" style="${css({ top: yf(q3) + '%', height: (yf(q1) - yf(q3)) + '%', borderColor: color, background: lerpColor('#ffffff', fillBase, 0.12) })}"></div>
             <div class="lm-chart-box-median" style="${css({ top: yf(md) + '%', background: color })}"></div>
             ${m.labels ? html`<span class="lm-chart-box-val" data-pos="hi" style="${css({ top: yf(mx) + '%' })}">${ctx.fmt(mx)}</span>
                 <span class="lm-chart-box-val" data-pos="md" style="${css({ top: yf(md) + '%' })}">${ctx.fmt(md)}</span>

@@ -144,8 +144,8 @@ export interface Annotation {
  *   - lemonade   : the catalog default — mirrors the shared --lm-series-*
  *                  template tokens so charts match every other data block
  *                  (gantt, kanban, schedule...) out of the box
- *   - tableau    : Tableau 10 — calm, balanced BI palette
- *   - category10 : D3 schemeCategory10 — the classic web palette
+ *   - classic    : calm, balanced BI palette (the classic 10-color scheme)
+ *   - category10 : D3 schemeCategory10 — the familiar web palette
  *   - material   : Material Design 500s — bright, high-saturation
  *   - focus      : hero + neutrals (the Highcharts pie-demo scheme): the
  *                  first slot is the series blue, the rest a cool-gray
@@ -161,7 +161,7 @@ export interface Annotation {
 export const PALETTES: Record<string, string[]> = {
     lemonade: ['#4b81de', '#6342a1', '#c0554a', '#bd7f40', '#578163',
         '#45889c', '#b05a7e', '#75808f', '#a3a442', '#8b6a52'],
-    tableau: ['#4e79a7', '#f28e2b', '#e15759', '#76b7b2', '#59a14f',
+    classic: ['#4e79a7', '#f28e2b', '#e15759', '#76b7b2', '#59a14f',
         '#edc948', '#b07aa1', '#ff9da7', '#9c755f', '#bab0ac'],
     category10: ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd',
         '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf'],

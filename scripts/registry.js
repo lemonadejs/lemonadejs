@@ -1,5 +1,5 @@
 /**
- * npm run registry — the COLLABORATE.md phase-1 generator and gate
+ * npm run registry — the docs/COLLABORATE.md phase-1 generator and gate
  *
  * For every components/<name>/<name>.ts:
  *   - extracts the contract → components/<name>/contract.json

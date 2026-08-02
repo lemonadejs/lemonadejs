@@ -71,25 +71,25 @@ state for a two-way live wire. Attribute strings are coerced to the declared typ
 
 | Prop | Type | Default | Description |
 |---|---|---|---|
-| `bind` | boolean | — | Two-way bound value. `.set()` fires `onchange`; plain assignment is silent.  |
+| `bind` | boolean | — | Two-way bound value. `.set()` fires `onchange`; plain assignment is silent. open state (v5: closed, inverted) |
 | `title` | string | `''` |  |
 | `width` | number | `0` |  |
 | `height` | number | `0` |  |
 | `top` | number | `0` |  |
 | `left` | number | `0` |  |
-| `position` | string | `''` |  |
+| `position` | string | `''` | center | left | right | bottom | fixed (explicit viewport |
 | `backdrop` | boolean | `false` |  |
 | `closable` | boolean | `false` |  |
 | `draggable` | boolean | `false` |  |
 | `resizable` | boolean | `false` |  |
 | `minimizable` | boolean | `false` |  |
 | `minimized` | boolean | `false` |  |
-| `fullscreen` | boolean | `false` |  |
-| `header` | boolean | `true` |  |
-| `role` | string | `''` |  |
-| `autoclose` | boolean | `false` |  |
-| `autoadjust` | boolean | `false` |  |
-| `flip` | number | `0` |  |
+| `fullscreen` | boolean | `false` | cover the whole viewport |
+| `header` | boolean | `true` | false: headerless floating panel (menus, chips) |
+| `role` | string | `''` | ARIA role: '' = auto (backdrop → dialog, else none) |
+| `autoclose` | boolean | `false` | v5: auto-close |
+| `autoadjust` | boolean | `false` | v5: auto-adjust |
+| `flip` | number | `0` | anchored panels: at the bottom edge, flip ABOVE the natural top, |
 | `focus` | boolean | `true` |  |
 | `overflow` | boolean | `false` |  |
 | `responsive` | boolean | `true` |  |

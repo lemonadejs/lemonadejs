@@ -351,6 +351,38 @@
             "pass": true
         },
         {
+            "name": "prop icon",
+            "pass": true
+        },
+        {
+            "name": "prop icon (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop columns",
+            "pass": true
+        },
+        {
+            "name": "prop columns (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop iconcount",
+            "pass": true
+        },
+        {
+            "name": "prop iconcount (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop total",
+            "pass": true
+        },
+        {
+            "name": "prop total (live state)",
+            "pass": true
+        },
+        {
             "name": "prop valueformat",
             "pass": true
         },

@@ -560,8 +560,8 @@ const pluginChart = (function(spreadsheet) {
         ];
         const paletteItems = [
             { value: 'lemonade', text: T('Lemonade') },
-            { value: 'tableau', text: T('Tableau') },
-            { value: 'category10', text: T('Classic') },
+            { value: 'classic', text: T('Classic') },
+            { value: 'category10', text: T('Category 10') },
         ];
         const removeIcon = () => html`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12" /></svg>`;
 

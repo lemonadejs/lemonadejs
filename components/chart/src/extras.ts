@@ -308,7 +308,7 @@ export const heatmapChart = (m: Model, ctx: RenderCtx): View => {
     for (const s of rows) for (const p of s.points) { if (p.gap) continue; lo = Math.min(lo, p.value); hi = Math.max(hi, p.value); }
     if (!Number.isFinite(lo)) { lo = 0; hi = 1; }
     const base = (m.series[0] && m.series[0].color) || PALETTES.lemonade[0];
-    const baseHex = /^#/.test(base) ? base : '#2196f3';
+    const baseHex = /^#/.test(base) ? base : PALETTES.lemonade[0];
     const cellColor = (v: number): string => lerpColor('#eef2f7', baseHex, hi > lo ? (v - lo) / (hi - lo) : 0.5);
     // dark text on light cells, white text on dark cells (contrast)
     const cellText = (rgb: string): string => {
@@ -396,7 +396,7 @@ export const sparkline = (m: Model, ctx: RenderCtx): View => {
                 const top = Math.min(yf(v), zero);
                 const h = Math.abs(yf(v) - zero);
                 return html`<span class="lm-chart-spark-slot"><span class="lm-chart-spark-bar" data-neg="${v < 0 ? 'true' : false}"
-                    style="${css({ top: top + '%', height: Math.max(h, 1) + '%', background: (s && s.color) || '#2196f3' })}"></span></span>`;
+                    style="${css({ top: top + '%', height: Math.max(h, 1) + '%', background: (s && s.color) || PALETTES.lemonade[0] })}"></span></span>`;
             })}</div>
             ${m.labels && s ? html`<span class="lm-chart-spark-val">${ctx.fmt(s.points.length ? s.points[s.points.length - 1].value : 0)}</span>` : false}
         </div>`;

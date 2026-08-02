@@ -443,7 +443,7 @@
         "name": "chart",
         "path": "components/chart",
         "verified": true,
-        "checks": 103,
+        "checks": 111,
         "contract": {
             "name": "chart",
             "props": {
@@ -606,6 +606,19 @@
                 "height": {
                     "type": "number",
                     "default": 0
+                },
+                "icon": {
+                    "type": "string",
+                    "default": ""
+                },
+                "columns": {
+                    "type": "number"
+                },
+                "iconcount": {
+                    "type": "number"
+                },
+                "total": {
+                    "type": "number"
                 },
                 "valueformat": {
                     "type": "function"

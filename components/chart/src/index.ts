@@ -91,7 +91,7 @@ export const Chart = component('chart', {
     plotlines: Array,        // reference lines [{ value, color?, label?, dashed?, axis? }]
     plotbands: Array,        // reference bands [{ from, to, color?, label?, axis? }]
     annotations: Array,      // callouts [{ x, y, text, color? }] pinned to data points
-    palette: 'lemonade',     // built-in palette: lemonade | tableau | category10 | material
+    palette: 'lemonade',     // built-in palette: lemonade | classic | category10 | material
     colors: Array,           // custom palette (overrides `palette`)
     height: 0,               // plot height in px (width is always fluid); default 320
     icon: '',                // pictogram: preset ('person'|'square'|'circle'|'capsule'|'star'|'heart') or an SVG path

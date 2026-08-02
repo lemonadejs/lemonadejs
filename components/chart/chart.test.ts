@@ -995,8 +995,8 @@ describe('components/chart', () => {
     });
 
     it('palette: named built-in colours the bars; custom colors override it', () => {
-        // tableau[0] = #4e79a7 → rgb(78,121,167)
-        handle = t(Chart, { type: 'bar', categories: ['A'], palette: 'tableau', series: [{ data: [1] }] });
+        // classic[0] = #4e79a7 → rgb(78,121,167)
+        handle = t(Chart, { type: 'bar', categories: ['A'], palette: 'classic', series: [{ data: [1] }] });
         expect(styleN(handle.query('.lm-chart-bar')!)).toContain('background:rgb(78, 121, 167)');
         handle.unmount();
         // category10[0] = #1f77b4 → rgb(31,119,180)
@@ -1005,7 +1005,7 @@ describe('components/chart', () => {
         handle.unmount();
         // custom colors win over the named palette
         handle = t(Chart, {
-            type: 'bar', categories: ['A'], palette: 'tableau',
+            type: 'bar', categories: ['A'], palette: 'classic',
             colors: ['#000000'], series: [{ data: [1] }],
         });
         expect(styleN(handle.query('.lm-chart-bar')!)).toContain('background:rgb(0, 0, 0)');

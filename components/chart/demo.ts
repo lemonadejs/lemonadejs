@@ -330,7 +330,7 @@ const App: Component = (_props, { state }) => {
             <h4>Palette (all charts)</h4>
             <select onchange="${(e: Event) => (palette.value = (e.target as HTMLSelectElement).value)}">
                 <option value="lemonade">lemonade</option>
-                <option value="tableau">tableau</option>
+                <option value="classic">classic</option>
                 <option value="category10">category10</option>
                 <option value="material">material</option>
                 <option value="focus">focus</option>

@@ -161,6 +161,19 @@
             "type": "number",
             "default": 0
         },
+        "icon": {
+            "type": "string",
+            "default": ""
+        },
+        "columns": {
+            "type": "number"
+        },
+        "iconcount": {
+            "type": "number"
+        },
+        "total": {
+            "type": "number"
+        },
         "valueformat": {
             "type": "function"
         },
