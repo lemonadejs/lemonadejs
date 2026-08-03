@@ -154,6 +154,7 @@
     justify-content: center;
     width: 22px;
     height: 22px;
+    margin: 0; /* host pages often style bare <button> with margins */
     padding: 0;
     border: 1px solid var(--lm-border-color-highlight, #c4c4c8);
     border-radius: 50%;
@@ -227,6 +228,7 @@
     justify-content: center;
     width: 40px;
     height: 40px;
+    margin: 0; /* host pages often style bare <button> with margins */
     padding: 0;
     border: none;
     background: var(--lm-background-color, #fff);
