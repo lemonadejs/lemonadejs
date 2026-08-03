@@ -71,7 +71,7 @@
 }
 
 .lm-timeline-edit .lm-timeline-icon {
-    color: gray;
+    color: var(--lm-font-grayout, #666666);
 }
 
 /** Empty feed (v5 used :empty::before — v6 renders a real element) */
@@ -108,16 +108,18 @@
     border-radius: 16px;
     border-width: 3px;
     border-style: solid;
-    border-color: var(--lm-main-color-deep, #1f64e1);
+    /* The single-series accent: the shared palette's first color, same
+       source as the gantt bar — one token recolors every data block */
+    border-color: var(--lm-series-1, #4b81de);
     display: inline-block;
     box-sizing: border-box;
-    background-color: #fff;
+    background-color: var(--lm-background-color, #ffffff);
     margin: 1px;
     position: absolute;
 }
 
 .lm-timeline-subtitle {
-    color: #aaa;
+    color: var(--lm-font-grayout, #aaaaaa);
     font-size: 0.8em;
 }
 
@@ -244,9 +246,9 @@
     padding: 4px 10px;
     font-size: 0.75em;
     font-weight: 500;
-    border-radius: 12px;
-    background-color: #e5e7eb;
-    color: #374151;
+    border-radius: var(--lm-timeline-tag-radius, 2px);
+    background-color: var(--lm-background-color-highlight, #e5e7eb);
+    color: var(--lm-font-color, #374151);
     white-space: nowrap;
 }
 

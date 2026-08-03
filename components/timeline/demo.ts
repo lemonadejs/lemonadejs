@@ -13,7 +13,7 @@ const project: TimelineItem[] = [
         subtitle: 'Project started',
         description: 'Scope agreed, repository created.',
         date: '2026-06-02T09:00:00',
-        tags: [{ title: 'milestone', color: '#bfdbfe' }],
+        tags: [{ title: 'milestone', color: '#bfdbfe' }, { title: 'default' }],
     },
     {
         title: 'First prototype',
