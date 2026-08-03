@@ -5,7 +5,7 @@
  * and height apply to every chart at once.
  */
 import { html, mount, store, type Component } from 'lemonadejs';
-import Chart, { type ChartSeries } from '@lemonadejs/chart';
+import Chart, { type ChartSeries } from '@lemonadejs/charts';
 
 /* ---- shared data sets (randomised per load — refresh for new data) ---- */
 const rnd = (lo: number, hi: number): number => Math.round(lo + Math.random() * (hi - lo));

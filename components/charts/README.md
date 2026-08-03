@@ -1,12 +1,12 @@
-# `<Chart />` — @lemonadejs/chart
+# `<Charts />` — @lemonadejs/charts
 
-LemonadeJS chart block — one unified data definition, bar/stacked/pie, responsive with no JS layout.
+LemonadeJS charts block — one unified data definition, bar/stacked/pie, responsive with no JS layout.
 
 **✓ verified** — 111 contract checks · framework-agnostic · zero dependencies
 
 ## Overview
 
-<Chart /> — LemonadeJS v6 block
+<Charts /> — LemonadeJS v6 block
 
 One block, two dozen chart types selected by `type` (bar, line, pie,
 radar, radialbar, polararea, lollipop, dumbbell, histogram, streamgraph,
@@ -18,7 +18,7 @@ Presentation is flat, typed, verifiable props; only the data itself —
       { name: 'Product A', data: [3, 5, 2] },
       { name: 'Product B', data: [1, 2, 4] },
   ];
-  <${Chart} type="bar" categories="${cats}" series="${series}" legend labels />
+  <${Charts} type="bar" categories="${cats}" series="${series}" legend labels />
 
 THE DESIGN, AND WHY IT IS NOT HIGHCHARTS:
   - bar / stackedbar render in PLAIN HTML + CSS (flex columns, % heights —
@@ -41,12 +41,12 @@ dependent bindings rebuild. There is no imperative chart object to sync.
 ## Install
 
 ```bash
-npm install @lemonadejs/chart
+npm install @lemonadejs/charts
 ```
 
 ```js
-import Chart from '@lemonadejs/chart';
-import '@lemonadejs/chart/style.css';
+import Charts from '@lemonadejs/charts';
+import '@lemonadejs/charts/style.css';
 ```
 
 ## Usage
@@ -55,7 +55,7 @@ import '@lemonadejs/chart/style.css';
 import { html, mount } from 'lemonadejs';
 
 const App = () => html`<div>
-    <${Chart} />
+    <${Charts} />
 </div>`;
 
 mount(App, document.getElementById('root'));
@@ -64,9 +64,9 @@ mount(App, document.getElementById('root'));
 Three deployment forms, one component:
 
 ```js
-html`<${Chart} />`                       // by value (no registration)
-setComponents({ Chart });               // then <Chart /> by name anywhere
-createWebComponent(Chart);              // <lm-chart> in plain HTML/any framework
+html`<${Charts} />`                       // by value (no registration)
+setComponents({ Charts });               // then <Charts /> by name anywhere
+createWebComponent(Charts);              // <lm-charts> in plain HTML/any framework
 ```
 
 ## Props
@@ -141,7 +141,7 @@ All event names are lowercase (the platform convention — LJS-305 warns otherwi
 
 ## Styling
 
-All classes follow the `lm-chart-*` convention; visual variants are `data-*`
+All classes follow the `lm-charts-*` convention; visual variants are `data-*`
 attributes on the root. Override freely — there is no styling engine to fight.
 
 ## Contract
@@ -149,7 +149,7 @@ attributes on the root. Override freely — there is no styling engine to fight.
 The machine-readable schema ships with the package:
 
 ```js
-import contract from '@lemonadejs/chart/contract.json';
+import contract from '@lemonadejs/charts/contract.json';
 ```
 
-`verify.json` carries the conformance proof produced by `verify(Chart)`.
+`verify.json` carries the conformance proof produced by `verify(Charts)`.

@@ -1,5 +1,5 @@
 /**
- * <Chart /> — LemonadeJS v6 block
+ * <Charts /> — LemonadeJS v6 block
  *
  * One block, two dozen chart types selected by `type` (bar, line, pie,
  * radar, radialbar, polararea, lollipop, dumbbell, histogram, streamgraph,
@@ -11,7 +11,7 @@
  *       { name: 'Product A', data: [3, 5, 2] },
  *       { name: 'Product B', data: [1, 2, 4] },
  *   ];
- *   <${Chart} type="bar" categories="${cats}" series="${series}" legend labels />
+ *   <${Charts} type="bar" categories="${cats}" series="${series}" legend labels />
  *
  * THE DESIGN, AND WHY IT IS NOT HIGHCHARTS:
  *   - bar / stackedbar render in PLAIN HTML + CSS (flex columns, % heights —
@@ -50,7 +50,7 @@ export type { ChartPoint, ChartSeries, PlotBand, PlotLine, Annotation } from './
  *  The component                                                      *
  * ------------------------------------------------------------------ */
 
-export const Chart = component('chart', {
+export const Charts = component('charts', {
     type: 'bar',             // bar | stackedbar | line | stackedarea | streamgraph | pie | scatter | bubble | radar | radialbar | polararea | gauge | funnel | pyramid | waterfall | bullet | lollipop | dumbbell | histogram | heatmap | candlestick | ohlc | boxplot | arearange | columnrange | treemap | sunburst | icicle | sankey | chord | arcdiagram | packedbubble | pareto | wordcloud | pictogram (aka pictorial/isotype/waffle)
     series: Array,           // [{ name, data, color? }]; pie uses the first series
     categories: Array,       // x-axis labels (bar/stacked) / slice names (pie)
@@ -565,4 +565,4 @@ export const Chart = component('chart', {
     }}${tooltip}</div>`;
 });
 
-export default Chart;
+export default Charts;

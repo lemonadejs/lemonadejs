@@ -8,7 +8,7 @@
 import { describe, it, expect, afterEach } from 'vitest';
 import { store } from 'lemonadejs';
 import { render as t, verify } from 'lemonadejs/test';
-import Chart, { type ChartSeries } from '@lemonadejs/chart';
+import Chart, { type ChartSeries } from '@lemonadejs/charts';
 
 let handle: ReturnType<typeof t> | null = null;
 afterEach(() => {
@@ -20,7 +20,7 @@ afterEach(() => {
 const styleN = (el: Element) =>
     (el.getAttribute('style') || '').replace(/:\s+/g, ':').replace(/;\s+/g, ';').replace(/;$/, '');
 
-describe('components/chart', () => {
+describe('components/charts', () => {
     it('passes verify() — the registry gate', () => {
         expect(verify(Chart).pass).toBe(true);
     });

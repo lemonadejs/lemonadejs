@@ -1,12 +1,12 @@
 {
-    "name": "@lemonadejs/chart",
+    "name": "@lemonadejs/charts",
     "version": "6.0.0-beta.0",
-    "description": "LemonadeJS chart block — one unified data definition, bar/stacked/pie, responsive with no JS layout.",
+    "description": "LemonadeJS charts block — one unified data definition, bar/stacked/pie, responsive with no JS layout.",
     "license": "MIT",
     "repository": {
         "type": "git",
         "url": "https://github.com/lemonadejs/lemonadejs.git",
-        "directory": "components/chart"
+        "directory": "components/charts"
     },
     "main": "dist/index.js",
     "module": "dist/index.mjs",

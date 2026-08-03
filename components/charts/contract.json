@@ -1,5 +1,5 @@
 {
-    "name": "chart",
+    "name": "charts",
     "props": {
         "type": {
             "type": "string",
