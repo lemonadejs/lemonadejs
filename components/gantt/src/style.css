@@ -17,6 +17,7 @@
     --lm-gantt-bar: var(--lm-series-1, #4b81de);
     --lm-gantt-milestone: var(--lm-series-2, #6342a1);
     --lm-gantt-today: var(--lm-series-4, #bd7f40);
+    --lm-gantt-bar-radius: 2px;
     font-family: var(--lm-gantt-font);
     font-size: var(--lm-gantt-font-size);
     line-height: 1.4;
@@ -127,7 +128,7 @@
     min-width: 6px;
     /* flat series colour, like the chart bars (no gloss gradient) */
     background: var(--lm-gantt-bar);
-    border-radius: var(--lm-radius, 6px);
+    border-radius: var(--lm-gantt-bar-radius, 2px);
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
     display: flex;
     align-items: center;
@@ -310,6 +311,15 @@
 
 /* During any drag: keep the grabbing cursor everywhere */
 .lm-gantt[data-editable='true']:active {
+    user-select: none;
+}
+
+/* Disabled: dimmed, inert — the guards in TS back this up for
+   programmatic events; readonly needs no visual change (it just
+   looks like a non-editable chart) */
+.lm-gantt[data-disabled='true'] {
+    opacity: 0.55;
+    pointer-events: none;
     user-select: none;
 }
 

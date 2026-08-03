@@ -2,7 +2,7 @@
 
 LemonadeJS gantt block — %-positioned bars that align across embedded instances; contract-verified, framework-agnostic.
 
-**✓ verified** — 26 contract checks · framework-agnostic · zero dependencies
+**✓ verified** — 30 contract checks · framework-agnostic · zero dependencies
 
 ## Overview
 
@@ -19,7 +19,8 @@ Standalone mode adds the timeline header (months + days), weekend
 shading and the today line — same engine, same percentages.
 
   - tasks { label, start, end, color, progress, type, readonly }
-  - milestones: type 'milestone' (or start === end) render a diamond
+  - milestones: type 'milestone' renders a diamond (explicit only — a
+    task collapsed to one day stays a narrow, still-resizable bar)
   - editable: drag the bar to move, drag the edges to resize — day
     snapping, live preview, Escape cancels mid-drag, onchange(task,
     start, end) fires ONLY on commit and mutates YOUR task object
@@ -81,6 +82,8 @@ state for a two-way live wire. Attribute strings are coerced to the declared typ
 | `rowheight` | number | `36` |  |
 | `today` | boolean | `true` | the today line |
 | `editable` | boolean | `false` | drag to move, edges to resize |
+| `readonly` | boolean | `false` | host override: view-only regardless of `editable` (clicks/pan still work) |
+| `disabled` | boolean | `false` | blocks ALL interaction (clicks, pan, edits) and dims the chart |
 | `snap` | number | `1` | drag snapping, in days |
 | `table` | string | `''` | CSS selector: inject lanes into that table's rows |
 

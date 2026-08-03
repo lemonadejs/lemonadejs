@@ -12,7 +12,8 @@
  * shading and the today line — same engine, same percentages.
  *
  *   - tasks { label, start, end, color, progress, type, readonly }
- *   - milestones: type 'milestone' (or start === end) render a diamond
+ *   - milestones: type 'milestone' renders a diamond (explicit only — a
+ *     task collapsed to one day stays a narrow, still-resizable bar)
  *   - editable: drag the bar to move, drag the edges to resize — day
  *     snapping, live preview, Escape cancels mid-drag, onchange(task,
  *     start, end) fires ONLY on commit and mutates YOUR task object
@@ -71,6 +72,8 @@ export const Gantt = component('gantt', {
     rowheight: 36,
     today: true,                  // the today line
     editable: false,              // drag to move, edges to resize
+    readonly: false,              // host override: view-only regardless of `editable` (clicks/pan still work)
+    disabled: false,              // blocks ALL interaction (clicks, pan, edits) and dims the chart
     snap: 1,                      // drag snapping, in days
     table: '',                    // CSS selector: inject lanes into that table's rows
     onchange: Function,           // (task, start, end) on drag commit
@@ -80,6 +83,13 @@ export const Gantt = component('gantt', {
     api: { getRange: Function, setRange: Function },
 }, (props, { state, onMount, onUnmount, listen }) => {
     const tasks = () => (props.data.peek() as GanttTask[]) || [];
+
+    // The edit gate: `editable` opts in, `readonly`/`disabled` override the
+    // host's opt-in (e.g. a jss worksheet flipped to readonly). Tracked and
+    // peek flavors — templates need the reads tracked, gestures do not.
+    const canEdit = () => props.editable.value && !props.readonly.value && !props.disabled.value;
+    const canEditPeek = () => (props.editable.peek() as boolean) && !props.readonly.peek() && !props.disabled.peek();
+    const interactive = () => !props.disabled.peek();
 
     // ---- the range: explicit props win; otherwise fit the data
     const range = state<{ from: number; to: number }>({ from: 0, to: 1 });
@@ -116,9 +126,31 @@ export const Gantt = component('gantt', {
     // (touch() and assignment both re-run it), and computeRange always
     // ASSIGNS range a fresh object — so every refresh notifies the range
     // subscribers (the table lanes) even when the bounds are unchanged
+    //
+    // Internal edits (drag commit, link/unlink) must NOT re-fit the
+    // viewport: the user is looking at the spot they just edited, and a
+    // drop that shifts the whole timeline reads as a scroll jump. The
+    // flag makes the next notification keep the current bounds — still
+    // assigned fresh, so the lanes pipeline flows as always.
+    let keepViewport = false;
     const refresh = () => {
-        computeRange();
+        // A data change mid-gesture cancels the drag: its captured geometry
+        // (origin, ms-per-px, task) is stale. No-op after our own commits —
+        // the gesture has already been released by then.
+        releaseGesture?.();
+        if (keepViewport) {
+            keepViewport = false;
+            range.value = { ...range.value };
+        } else {
+            computeRange();
+        }
         preview.value = null;
+    };
+
+    /** touch() for edits made BY this component: viewport stays put */
+    const touchKeepingViewport = () => {
+        keepViewport = true;
+        props.data.touch();
     };
 
     onMount(() => props.data.subscribe(refresh));
@@ -137,6 +169,36 @@ export const Gantt = component('gantt', {
         ((toMs_ - fromMs + DAY) / (range.value.to - range.value.from + DAY)) * 100;
 
     const round2 = (n: number) => Math.round(n * 1000) / 1000;
+
+    /**
+     * Readable label color over a custom bar background (same luminance
+     * rule as the chart's textOn). Returns '' for the default bars — the
+     * stylesheet's white-on-series-color already contrasts — and for
+     * unparseable colors (named colors, gradients), where white + shadow
+     * stays the best guess. A LIGHT custom color (white, yellow...) flips
+     * the label dark and drops the shadow.
+     */
+    const labelStyle = (bg?: string): string => {
+        if (!bg) {
+            return '';
+        }
+        let c: number[] | null = null;
+        const hex = bg.match(/^#([0-9a-f]{3}|[0-9a-f]{6})\b/i);
+        if (hex) {
+            const s = hex[1].length === 3 ? hex[1].split('').map((ch) => ch + ch).join('') : hex[1];
+            c = [0, 2, 4].map((i) => parseInt(s.slice(i, i + 2), 16));
+        } else {
+            const m = bg.match(/^rgba?\(([^)]+)\)/i);
+            if (m) {
+                c = m[1].split(',').slice(0, 3).map(Number);
+            }
+        }
+        if (!c || c.some((n) => !Number.isFinite(n))) {
+            return '';
+        }
+        const lum = 0.299 * c[0] + 0.587 * c[1] + 0.114 * c[2];
+        return lum > 150 ? 'color:#2b2f36;text-shadow:none' : '';
+    };
 
     /**
      * Dependency links — finish→start connectors. For each task carrying
@@ -178,13 +240,28 @@ export const Gantt = component('gantt', {
                 const aEndX = pct(as.from) + widthPct(as.from, as.to);
                 const ay = ia * rh + rh / 2;
                 const stub = 1.5; // % horizontal run out of the predecessor
-                const turn = Math.max(aEndX + stub, bx - stub);
-                // out of A → vertical to B's row → into B's start
-                const d =
-                    'M ' + round2(aEndX) + ' ' + ay +
-                    ' H ' + round2(turn) +
-                    ' V ' + by +
-                    ' H ' + round2(bx);
+                let d: string;
+                if (bx - stub >= aEndX + stub) {
+                    // forward link: out of A → one vertical → into B's start
+                    d =
+                        'M ' + round2(aEndX) + ' ' + ay +
+                        ' H ' + round2(bx - stub) +
+                        ' V ' + by +
+                        ' H ' + round2(bx);
+                } else {
+                    // BACK-link (B starts before A ends): a drop at A's edge
+                    // would run behind B's bar. Route the horizontal leg
+                    // through the GAP between the rows, then approach B's
+                    // start from the left.
+                    const gapY = ib > ia ? ib * rh : (ib + 1) * rh;
+                    d =
+                        'M ' + round2(aEndX) + ' ' + ay +
+                        ' H ' + round2(aEndX + stub) +
+                        ' V ' + gapY +
+                        ' H ' + round2(bx - stub) +
+                        ' V ' + by +
+                        ' H ' + round2(bx);
+                }
                 out.push({ d, ax: round2(bx), ay: by, ti: ib, sid: depId });
             });
         });
@@ -218,7 +295,7 @@ export const Gantt = component('gantt', {
     };
 
     const startDrag = (e: MouseEvent, index: number, task: GanttTask, el: HTMLElement) => {
-        if (!props.editable.value || task.readonly) {
+        if (!canEditPeek() || task.readonly) {
             return;
         }
         e.preventDefault();
@@ -228,14 +305,23 @@ export const Gantt = component('gantt', {
         const snapMs = Math.max(1, (props.snap.value as number) || 1) * DAY;
         const msPerPx = (range.value.to - range.value.from + DAY) / (areaRect.width || 1);
 
+        // Only explicit milestones are move-only. A one-day BAR keeps its
+        // resize affordance — otherwise shrinking a bar to a single day
+        // would trap it (no edge to grab to widen it back). On a bar too
+        // narrow for three zones, the right edge wins (the natural
+        // "widen it again" gesture) and the rest moves.
         const mode: 'move' | 'left' | 'right' =
-            task.type === 'milestone' || toMs(task.start) === toMs(task.end || task.start)
+            task.type === 'milestone'
                 ? 'move'
-                : e.clientX - barRect.left < EDGE
-                  ? 'left'
-                  : barRect.right - e.clientX < EDGE
-                    ? 'right'
-                    : 'move';
+                : barRect.width < EDGE * 3
+                  ? barRect.right - e.clientX < EDGE
+                      ? 'right'
+                      : 'move'
+                  : e.clientX - barRect.left < EDGE
+                    ? 'left'
+                    : barRect.right - e.clientX < EDGE
+                      ? 'right'
+                      : 'move';
 
         const origin = e.clientX;
         const from0 = toMs(task.start);
@@ -264,7 +350,7 @@ export const Gantt = component('gantt', {
                 }
                 task.start = toIso(p.from);
                 task.end = toIso(p.to);
-                props.data.touch();
+                touchKeepingViewport();
                 props.onchange?.(
                     task,
                     task.start,
@@ -280,7 +366,7 @@ export const Gantt = component('gantt', {
      * target is whatever bar the mouse is over on release.
      */
     const startLink = (e: MouseEvent, index: number, el: HTMLElement) => {
-        if (!props.editable.value) {
+        if (!canEditPeek()) {
             return;
         }
         const src = tasks()[index];
@@ -329,7 +415,7 @@ export const Gantt = component('gantt', {
                     return;
                 }
                 target.dependencies = [...deps, src.id!];
-                props.data.touch();
+                touchKeepingViewport();
                 props.onlink?.(src, target);
             }
         );
@@ -341,6 +427,9 @@ export const Gantt = component('gantt', {
      * range drives every % binding, so the bars/grid/today all follow.
      */
     const panStart = (e: MouseEvent) => {
+        if (!interactive()) {
+            return;
+        }
         const header = e.currentTarget as HTMLElement;
         const width = header.getBoundingClientRect().width || 1;
         const msPerPx = (range.value.to - range.value.from + DAY) / width;
@@ -360,7 +449,7 @@ export const Gantt = component('gantt', {
 
     /** Remove dependency `sourceId` from the task at `targetIndex`. */
     const removeLink = (targetIndex: number, sourceId: string | number) => {
-        if (!props.editable.value) {
+        if (!canEditPeek()) {
             return;
         }
         const target = tasks()[targetIndex];
@@ -369,7 +458,7 @@ export const Gantt = component('gantt', {
         }
         const src = tasks().find((t) => t.id === sourceId);
         target.dependencies = target.dependencies.filter((d) => d !== sourceId);
-        props.data.touch();
+        touchKeepingViewport();
         props.onunlink?.(src, target);
     };
 
@@ -426,7 +515,7 @@ export const Gantt = component('gantt', {
                 listen<MouseEvent>(lane, 'click', (e) => {
                     const bar = (e.target as Element).closest('.lm-gantt-bar, .lm-gantt-milestone');
                     const task = tasks()[index];
-                    if (bar && task) {
+                    if (bar && task && interactive()) {
                         props.onclick?.(task, e);
                     }
                 });
@@ -445,7 +534,7 @@ export const Gantt = component('gantt', {
         const dragging = p && p.index === index;
         const from = dragging ? p!.from : toMs(task.start);
         const to = dragging ? p!.to : toMs(task.end || task.start);
-        const milestone = task.type === 'milestone' || from === to;
+        const milestone = task.type === 'milestone';
         const el = document.createElement('div');
         if (milestone) {
             el.className = 'lm-gantt-milestone' + (dragging ? ' lm-gantt-dragging' : '');
@@ -453,7 +542,7 @@ export const Gantt = component('gantt', {
         } else {
             el.className =
                 'lm-gantt-bar' +
-                (props.editable.peek() && !task.readonly ? ' lm-gantt-editable' : '') +
+                (canEditPeek() && !task.readonly ? ' lm-gantt-editable' : '') +
                 (dragging ? ' lm-gantt-dragging' : '');
             el.style.left = round2(pct(from)) + '%';
             el.style.width = round2(widthPct(from, to)) + '%';
@@ -466,6 +555,10 @@ export const Gantt = component('gantt', {
             const label = document.createElement('span');
             label.className = 'lm-gantt-label';
             label.textContent = task.label || '';
+            const contrast = labelStyle(task.color);
+            if (contrast) {
+                label.style.cssText = contrast;
+            }
             el.appendChild(label);
         }
         if (task.color) {
@@ -483,9 +576,16 @@ export const Gantt = component('gantt', {
             // data/start/end — assigns it) and the live drag preview
             const stopRange = range.subscribe(renderLanes);
             const stopPreview = preview.subscribe(renderLanes);
+            // A live editable/readonly/disabled flip re-tags the lane bars
+            const stopEdit = props.editable.subscribe(renderLanes);
+            const stopRo = props.readonly.subscribe(renderLanes);
+            const stopDis = props.disabled.subscribe(renderLanes);
             return () => {
                 stopRange();
                 stopPreview();
+                stopEdit();
+                stopRo();
+                stopDis();
                 for (const cell of injectedCells) {
                     cell.remove();
                 }
@@ -543,7 +643,9 @@ export const Gantt = component('gantt', {
         const dragging = p && p.index === index;
         const from = dragging ? p!.from : toMs(task.start);
         const to = dragging ? p!.to : toMs(task.end || task.start);
-        const milestone = task.type === 'milestone' || from === to;
+        // Diamonds are EXPLICIT (type: 'milestone') — a task collapsed to
+        // one day stays a narrow bar, so it can be resized back out
+        const milestone = task.type === 'milestone';
 
         if (milestone) {
             return html`<div class="lm-gantt-milestone ${dragging ? 'lm-gantt-dragging' : ''}"
@@ -552,12 +654,12 @@ export const Gantt = component('gantt', {
                 title="${(task.label || '') + ' · ' + toIso(from)}"
                 onmousedown="${(e: MouseEvent) => startDrag(e, index, task, (e.currentTarget || e.target) as HTMLElement)}"
                 onclick="${(e: MouseEvent) =>
-                    props.onclick?.(task, e)}"></div>`;
+                    interactive() && props.onclick?.(task, e)}"></div>`;
         }
 
-        const linkable = props.editable.value && !task.readonly && task.id != null;
+        const linkable = canEdit() && !task.readonly && task.id != null;
         return html`<div class="lm-gantt-bar ${dragging ? 'lm-gantt-dragging' : ''} ${
-            props.editable.value && !task.readonly ? 'lm-gantt-editable' : ''
+            canEdit() && !task.readonly ? 'lm-gantt-editable' : ''
         }"
             data-index="${index}"
             style="left:${round2(pct(from))}%;width:${round2(widthPct(from, to))}%;${
@@ -566,12 +668,12 @@ export const Gantt = component('gantt', {
             title="${(task.label || '') + ' · ' + toIso(from) + ' → ' + toIso(to)}"
             onmousedown="${(e: MouseEvent) => startDrag(e, index, task, (e.currentTarget || e.target) as HTMLElement)}"
             onclick="${(e: MouseEvent) =>
-                props.onclick?.(task, e)}">
+                interactive() && props.onclick?.(task, e)}">
             ${() =>
                 typeof task.progress === 'number'
                     ? html`<div class="lm-gantt-progress" style="width:${Math.min(100, Math.max(0, task.progress))}%"></div>`
                     : ''}
-            <span class="lm-gantt-label">${task.label || ''}</span>
+            <span class="lm-gantt-label" style="${labelStyle(task.color) || false}">${task.label || ''}</span>
             ${linkable
                 ? html`<div class="lm-gantt-link-handle" title="Drag to a task to link"
                       onmousedown="${(e: MouseEvent) =>
@@ -580,7 +682,9 @@ export const Gantt = component('gantt', {
         </div>`;
     };
 
-    return html`<div class="lm-gantt" data-editable="${() => (props.editable.value ? 'true' : false)}">
+    return html`<div class="lm-gantt" data-editable="${() => (canEdit() ? 'true' : false)}"
+        data-readonly="${() => (props.readonly.value ? 'true' : false)}"
+        data-disabled="${() => (props.disabled.value ? 'true' : false)}">
         ${() =>
             props.header.value &&
             html`<div class="lm-gantt-header" title="Drag to pan the timeline"
@@ -628,7 +732,7 @@ export const Gantt = component('gantt', {
                           if (!ls.length && !lk) {
                               return '';
                           }
-                          const editable = props.editable.value;
+                          const editable = canEdit();
                           const h = (((props.data.value as GanttTask[]) || []).length) * props.rowheight.value;
                           // ONE wrapper root so the whole overlay is replaced as
                           // a unit each re-run — loose arrowhead siblings would

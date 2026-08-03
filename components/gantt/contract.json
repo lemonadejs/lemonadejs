@@ -32,6 +32,14 @@
             "type": "boolean",
             "default": false
         },
+        "readonly": {
+            "type": "boolean",
+            "default": false
+        },
+        "disabled": {
+            "type": "boolean",
+            "default": false
+        },
         "snap": {
             "type": "number",
             "default": 1

@@ -71,6 +71,22 @@
             "pass": true
         },
         {
+            "name": "prop readonly",
+            "pass": true
+        },
+        {
+            "name": "prop readonly (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop disabled",
+            "pass": true
+        },
+        {
+            "name": "prop disabled (live state)",
+            "pass": true
+        },
+        {
             "name": "prop snap",
             "pass": true
         },

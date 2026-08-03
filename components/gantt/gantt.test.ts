@@ -145,6 +145,83 @@ describe('components/gantt — %-positioned, table-embeddable', () => {
         expect(data[0].end).toBe('2026-06-07');
     });
 
+    it('drag commit keeps the viewport: no timeline jump on drop (auto-fit range)', () => {
+        const data = tasks();
+        let api: Api | null = null;
+        // NO start/end: the range auto-fits the data — the jump-prone mode
+        handle = t(Gantt, { data, editable: true, ref: (a: Api) => (api = a) });
+        const before = api!.getRange();
+
+        const area = handle!.query('.lm-gantt-rows') as HTMLElement;
+        area.getBoundingClientRect = () =>
+            ({ left: 0, top: 0, width: 1000, height: 100, right: 1000, bottom: 100, x: 0, y: 0, toJSON: () => '' }) as DOMRect;
+        const bar = bars()[0];
+        bar.getBoundingClientRect = () =>
+            ({ left: 0, top: 0, width: 250, height: 20, right: 250, bottom: 20, x: 0, y: 0, toJSON: () => '' }) as DOMRect;
+
+        // Design (June 1-5) is the earliest task: moving it later shrinks the
+        // data envelope, which used to re-fit the range on drop
+        bar.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, clientX: 100, clientY: 10 }));
+        document.dispatchEvent(new MouseEvent('mousemove', { bubbles: true, clientX: 205, clientY: 10 }));
+        document.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, clientX: 205, clientY: 10 }));
+
+        expect(data[0].start).toBe('2026-06-03'); // the edit committed
+        expect(api!.getRange()).toEqual(before);  // the viewport did NOT move
+        // external changes still re-fit (the documented contract)
+    });
+
+    it('a bar collapsed to one day stays a bar and can be widened again', () => {
+        const data: GanttTask[] = [{ label: 'One', start: '2026-06-03', end: '2026-06-03' }];
+        open({ data, editable: true });
+
+        // NOT a diamond: one-day tasks only render as milestones when explicit
+        expect(handle!.query('.lm-gantt-milestone')).toBeNull();
+        const bar = bars()[0];
+        expect(bar).toBeTruthy();
+
+        const area = handle!.query('.lm-gantt-rows') as HTMLElement;
+        area.getBoundingClientRect = () =>
+            ({ left: 0, top: 0, width: 1000, height: 100, right: 1000, bottom: 100, x: 0, y: 0, toJSON: () => '' }) as DOMRect;
+        // one day of the 20-day range = 50px
+        bar.getBoundingClientRect = () =>
+            ({ left: 100, top: 0, width: 50, height: 20, right: 150, bottom: 20, x: 100, y: 0, toJSON: () => '' }) as DOMRect;
+
+        // grab the RIGHT edge and pull +2 days — the trapped gesture before the fix
+        bar.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, clientX: 146, clientY: 10 }));
+        document.dispatchEvent(new MouseEvent('mousemove', { bubbles: true, clientX: 246, clientY: 10 }));
+        document.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, clientX: 246, clientY: 10 }));
+        expect(data[0].start).toBe('2026-06-03'); // start untouched
+        expect(data[0].end).toBe('2026-06-05');   // widened again
+    });
+
+    it('a VERY narrow one-day bar still resizes from its right edge', () => {
+        const data: GanttTask[] = [{ label: 'Tiny', start: '2026-06-03', end: '2026-06-03' }];
+        open({ data, editable: true });
+        const bar = bars()[0];
+        const area = handle!.query('.lm-gantt-rows') as HTMLElement;
+        area.getBoundingClientRect = () =>
+            ({ left: 0, top: 0, width: 300, height: 100, right: 300, bottom: 100, x: 0, y: 0, toJSON: () => '' }) as DOMRect;
+        // 300px / 20 days = 15px per day: narrower than three EDGE zones
+        bar.getBoundingClientRect = () =>
+            ({ left: 30, top: 0, width: 15, height: 20, right: 45, bottom: 20, x: 30, y: 0, toJSON: () => '' }) as DOMRect;
+
+        // right-edge zone wins on a narrow bar (the "widen it back" gesture)
+        bar.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, clientX: 43, clientY: 10 }));
+        document.dispatchEvent(new MouseEvent('mousemove', { bubbles: true, clientX: 73, clientY: 10 })); // +2 days
+        document.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, clientX: 73, clientY: 10 }));
+        expect(data[0].end).toBe('2026-06-05');
+        // the commit re-rendered the row: re-grab the new (now 3-day) bar
+        // and MOVE it from the center — not trapped in resize either
+        const widened = bars()[0];
+        widened.getBoundingClientRect = () =>
+            ({ left: 30, top: 0, width: 45, height: 20, right: 75, bottom: 20, x: 30, y: 0, toJSON: () => '' }) as DOMRect;
+        widened.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, clientX: 52, clientY: 10 }));
+        document.dispatchEvent(new MouseEvent('mousemove', { bubbles: true, clientX: 82, clientY: 10 })); // +2 days
+        document.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, clientX: 82, clientY: 10 }));
+        expect(data[0].start).toBe('2026-06-05');
+        expect(data[0].end).toBe('2026-06-07');
+    });
+
     it('Escape cancels a drag without committing', () => {
         const data = tasks();
         open({ data, editable: true });
@@ -160,6 +237,47 @@ describe('components/gantt — %-positioned, table-embeddable', () => {
         document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
         expect(data[0].start).toBe('2026-06-01'); // untouched
         expect(styleOf(bars()[0])).toContain('left:0%'); // preview reverted
+    });
+
+    it('readonly overrides editable: view-only, but clicks still work', () => {
+        const clicks: unknown[] = [];
+        const data = tasks();
+        open({ data, editable: true, readonly: true, onclick: (task: GanttTask) => clicks.push(task) });
+        // no edit affordances
+        expect(handle!.query('.lm-gantt-editable')).toBeNull();
+        expect(handle!.query('.lm-gantt-link-handle')).toBeNull();
+        // drag is inert
+        bars()[0].dispatchEvent(new MouseEvent('mousedown', { bubbles: true, clientX: 100, clientY: 10 }));
+        document.dispatchEvent(new MouseEvent('mousemove', { bubbles: true, clientX: 300, clientY: 10 }));
+        document.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
+        expect(data[0].start).toBe('2026-06-01');
+        // but the chart is still interactive
+        bars()[0].dispatchEvent(new MouseEvent('click', { bubbles: true }));
+        expect(clicks).toHaveLength(1);
+        expect(handle!.query('.lm-gantt')!.getAttribute('data-readonly')).toBe('true');
+    });
+
+    it('disabled blocks everything, including clicks, and marks the root', () => {
+        const clicks: unknown[] = [];
+        const data = tasks();
+        open({ data, editable: true, disabled: true, onclick: (task: GanttTask) => clicks.push(task) });
+        bars()[0].dispatchEvent(new MouseEvent('mousedown', { bubbles: true, clientX: 100, clientY: 10 }));
+        document.dispatchEvent(new MouseEvent('mousemove', { bubbles: true, clientX: 300, clientY: 10 }));
+        document.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
+        bars()[0].dispatchEvent(new MouseEvent('click', { bubbles: true }));
+        expect(data[0].start).toBe('2026-06-01');
+        expect(clicks).toHaveLength(0);
+        expect(handle!.query('.lm-gantt')!.getAttribute('data-disabled')).toBe('true');
+    });
+
+    it('light custom bar colors flip the label dark for contrast', () => {
+        open({ data: [
+            { label: 'Light', start: '2026-06-01', end: '2026-06-05', color: '#ffffff' },
+            { label: 'Dark', start: '2026-06-06', end: '2026-06-10', color: '#1f2937' },
+        ] });
+        const labels = handle!.queryAll('.lm-gantt-label');
+        expect(styleOf(labels[0])).toContain('color:rgb(43, 47, 54)'); // white bar → dark text
+        expect(styleOf(labels[1])).not.toContain('color:rgb(43, 47, 54)'); // dark bar → default white
     });
 
     it('readonly tasks and non-editable charts ignore drags', () => {
@@ -187,6 +305,24 @@ describe('components/gantt — %-positioned, table-embeddable', () => {
         data.value = [{ label: 'Solo', start: '2026-07-01', end: '2026-07-04' }];
         expect(api.getRange()).toEqual({ start: '2026-06-29', end: '2026-07-06' });
         expect(bars()).toHaveLength(1);
+    });
+
+    it('dependency links: forward takes one drop; overlapping routes through the row gap', () => {
+        open({ data: [
+            // forward: A ends before B starts
+            { id: 'a', label: 'A', start: '2026-06-01', end: '2026-06-03' },
+            { id: 'b', label: 'B', start: '2026-06-06', end: '2026-06-09', dependencies: ['a'] },
+            // back-link: D starts BEFORE C ends (the overlap from the report)
+            { id: 'c', label: 'C', start: '2026-06-10', end: '2026-06-15' },
+            { id: 'd', label: 'D', start: '2026-06-12', end: '2026-06-17', dependencies: ['c'] },
+        ] });
+        const paths = handle!.queryAll('path.lm-gantt-link');
+        expect(paths).toHaveLength(2);
+        const segments = (p: Element) => (p.getAttribute('d') || '').match(/[HV]/g)!.join('');
+        expect(segments(paths[0])).toBe('HVH');   // forward: single drop
+        expect(segments(paths[1])).toBe('HVHVH'); // overlap: through the row gap
+        // the gap leg runs on the boundary between rows 2 and 3 (3 × 36px)
+        expect(paths[1].getAttribute('d')).toContain('V 108');
     });
 
     it('api.setRange re-scales every bar', () => {
