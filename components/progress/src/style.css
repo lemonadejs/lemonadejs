@@ -1,8 +1,15 @@
-/* <Progress /> — default styling, lm-progress-* convention */
+/* <Progress /> — default styling, lm-progress-* convention.
+ *
+ * One custom prop (--lm-progress-color) drives everything: the bar/arc
+ * takes it solid, the track derives from it via color-mix at low opacity —
+ * so every color variant (and any theme accent) gets a matching soft
+ * track automatically, in light AND dark mode. The data-color rules only
+ * swap that one prop. */
 .lm-progress {
+    --lm-progress-color: var(--lm-main-color, #2563eb);
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
     width: 100%;
 }
 
@@ -11,14 +18,15 @@
     width: auto;
 }
 
-/* Linear: track + bar */
+/* Linear: pill track + bar */
 .lm-progress .lm-progress-track {
     position: relative;
     overflow: hidden;
     flex: 1;
-    height: 4px;
-    border-radius: var(--lm-radius, 6px);
-    background: #bfdbfe;
+    height: 6px;
+    border-radius: 999px;
+    background: var(--lm-background-color-highlight, #e5e7eb);
+    background: color-mix(in srgb, var(--lm-progress-color) 16%, transparent);
 }
 
 .lm-progress .lm-progress-bar {
@@ -28,14 +36,14 @@
     bottom: 0;
     width: 0;
     border-radius: inherit;
-    background: var(--lm-main-color, #2563eb);
-    transition: width 0.2s ease;
+    background: var(--lm-progress-color);
+    transition: width 0.3s var(--lm-ease, cubic-bezier(0.4, 0, 0.2, 1));
 }
 
 .lm-progress[data-indeterminate='true'] .lm-progress-bar {
     width: 40%;
     transition: none;
-    animation: lm-progress-linear-sweep 1.5s ease-in-out infinite;
+    animation: lm-progress-linear-sweep 1.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }
 
 @keyframes lm-progress-linear-sweep {
@@ -62,13 +70,14 @@
 }
 
 .lm-progress .lm-progress-circle-track {
-    stroke: var(--lm-background-color-highlight, #dbeafe);
+    stroke: var(--lm-background-color-highlight, #e5e7eb);
+    stroke: color-mix(in srgb, var(--lm-progress-color) 16%, transparent);
 }
 
 .lm-progress .lm-progress-circle-bar {
-    stroke: var(--lm-main-color, #2563eb);
+    stroke: var(--lm-progress-color);
     stroke-linecap: round;
-    transition: stroke-dashoffset 0.2s ease;
+    transition: stroke-dashoffset 0.3s var(--lm-ease, cubic-bezier(0.4, 0, 0.2, 1));
 }
 
 .lm-progress[data-indeterminate='true'] .lm-progress-svg {
@@ -84,9 +93,12 @@
     }
 }
 
-/* Label: beside the linear track, centered inside the circular ring */
+/* Label: beside the linear track, centered inside the circular ring;
+   tabular numerals so a running percentage does not jitter */
 .lm-progress .lm-progress-label {
     font: 12px/1 system-ui, sans-serif;
+    font-variant-numeric: tabular-nums;
+    font-weight: 500;
     color: var(--lm-font-color, #3f3f46);
 }
 
@@ -98,67 +110,19 @@
     justify-content: center;
 }
 
-/* Colors */
-.lm-progress[data-color='green'] .lm-progress-bar {
-    background: var(--lm-color-success, #16a34a);
+/* Colors — swap the single driving prop */
+.lm-progress[data-color='green'] {
+    --lm-progress-color: var(--lm-color-success, #16a34a);
 }
 
-.lm-progress[data-color='green'] .lm-progress-track {
-    background: #bbf7d0;
+.lm-progress[data-color='orange'] {
+    --lm-progress-color: var(--lm-color-warning, #ea580c);
 }
 
-.lm-progress[data-color='green'] .lm-progress-circle-bar {
-    stroke: var(--lm-color-success, #16a34a);
+.lm-progress[data-color='red'] {
+    --lm-progress-color: var(--lm-color-danger, #dc2626);
 }
 
-.lm-progress[data-color='green'] .lm-progress-circle-track {
-    stroke: #bbf7d0;
-}
-
-.lm-progress[data-color='orange'] .lm-progress-bar {
-    background: var(--lm-color-warning, #ea580c);
-}
-
-.lm-progress[data-color='orange'] .lm-progress-track {
-    background: #fed7aa;
-}
-
-.lm-progress[data-color='orange'] .lm-progress-circle-bar {
-    stroke: var(--lm-color-warning, #ea580c);
-}
-
-.lm-progress[data-color='orange'] .lm-progress-circle-track {
-    stroke: #fed7aa;
-}
-
-.lm-progress[data-color='red'] .lm-progress-bar {
-    background: var(--lm-color-danger, #dc2626);
-}
-
-.lm-progress[data-color='red'] .lm-progress-track {
-    background: #fecaca;
-}
-
-.lm-progress[data-color='red'] .lm-progress-circle-bar {
-    stroke: var(--lm-color-danger, #dc2626);
-}
-
-.lm-progress[data-color='red'] .lm-progress-circle-track {
-    stroke: #fecaca;
-}
-
-.lm-progress[data-color='purple'] .lm-progress-bar {
-    background: var(--lm-color-purple, #9333ea);
-}
-
-.lm-progress[data-color='purple'] .lm-progress-track {
-    background: #e9d5ff;
-}
-
-.lm-progress[data-color='purple'] .lm-progress-circle-bar {
-    stroke: var(--lm-color-purple, #9333ea);
-}
-
-.lm-progress[data-color='purple'] .lm-progress-circle-track {
-    stroke: #e9d5ff;
+.lm-progress[data-color='purple'] {
+    --lm-progress-color: var(--lm-color-purple, #9333ea);
 }

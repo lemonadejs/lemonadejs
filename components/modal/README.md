@@ -2,7 +2,7 @@
 
 LemonadeJS modal block — contract-verified, framework-agnostic.
 
-**✓ verified** — 53 contract checks · framework-agnostic · zero dependencies
+**✓ verified** — 59 contract checks · framework-agnostic · zero dependencies
 
 ## Overview
 
@@ -90,7 +90,10 @@ state for a two-way live wire. Attribute strings are coerced to the declared typ
 | `autoclose` | boolean | `false` | v5: auto-close |
 | `autoadjust` | boolean | `false` | v5: auto-adjust |
 | `flip` | number | `0` | anchored panels: at the bottom edge, flip ABOVE the natural top, |
+| `icon` | string | `''` | material icon name, shown before the title |
+| `radius` | boolean | `true` | rounded corners (false: square — anchored panels) |
 | `focus` | boolean | `true` |  |
+| `outline` | boolean | `false` | paint the catalog focus ring on the panel itself |
 | `overflow` | boolean | `false` |  |
 | `responsive` | boolean | `true` |  |
 | `layers` | boolean | `false` |  |

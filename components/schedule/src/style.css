@@ -1,7 +1,12 @@
 /* <Schedule /> — ported from the v5 plugin stylesheet (lm-schedule-*) */
 
 .lm-schedule {
+    /* Own surface + text color: the grid must not depend on the host
+       page's colors, or dark mode leaves a light page showing through */
+    background-color: var(--lm-background-color, #fff);
+    color: var(--lm-font-color, #313131);
     overflow-y: auto;
+    overflow-x: auto;
     scrollbar-width: thin;
     scrollbar-color: var(--lm-border-color-highlight, #aaa) var(--lm-border-color-light, #e9e9e9);
     width: 100%;
@@ -25,6 +30,39 @@
     width: 100%;
 }
 
+/* Narrow screens: 7 day columns cannot compress forever — below ~640px
+   the grid keeps a usable column width and pans horizontally instead
+   (no effect on wider hosts, where 100% already exceeds the minimum) */
+.lm-schedule[data-type="week"] table,
+.lm-schedule[data-type="weekdays"] table {
+    min-width: 640px;
+}
+
+/* While panning, the hour rail stays pinned left (headers already pin
+   top). EVERY row's first cell is rail — only hour-boundary rows carry
+   .lm-schedule-hour, so selecting via that class left the sub-rows
+   unpinned and events showed through. Layering: items 1 < selected 3 <
+   rail 4 < hour rail 5 < thead 6 < corner 7. The hour-boundary cell sits
+   ABOVE plain rail cells because its time label overflows downward into
+   the next row's (opaque) cell, which is later in the DOM and would
+   otherwise paint over the label. */
+.lm-schedule table tbody td:first-child {
+    position: sticky;
+    left: 0;
+    background-color: var(--lm-background-color, #fff);
+    z-index: 4;
+}
+
+.lm-schedule tbody .lm-schedule-hour > td:first-child {
+    z-index: 5;
+}
+
+.lm-schedule thead td:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 7;
+}
+
 .lm-schedule thead td {
     background-color: var(--lm-background-color, #fff);
     padding-top: 20px;
@@ -33,7 +71,7 @@
     text-align: center;
     position: sticky;
     top: 0;
-    z-index: 4;
+    z-index: 6;
 }
 
 .lm-schedule thead td:first-child {
@@ -77,8 +115,17 @@
     width: 50px;
 }
 
+/* Today (Outlook-style): accent header with a 2px underline, and the
+   whole column body gets a faint accent wash */
 .lm-schedule thead td[data-selected='true'] {
     background-color: var(--lm-background-color-header, #ececec);
+    color: var(--lm-main-color, #2563eb);
+}
+
+/* a slight neutral wash — mixed from the font color so it grays correctly
+   in dark mode too (a fixed light gray would glow on a dark surface) */
+.lm-schedule tbody td[data-today='true'] {
+    background-color: color-mix(in srgb, var(--lm-font-color, #000) 4%, transparent);
 }
 
 .lm-schedule thead td:before {
@@ -99,7 +146,7 @@
 }
 
 .lm-schedule thead td[data-selected='true']:after {
-    border-bottom: 1px solid var(--lm-border-outline, #000);
+    border-bottom: 2px solid var(--lm-main-color, #2563eb);
 }
 
 .lm-schedule table tbody td:first-child {
@@ -135,9 +182,20 @@
     opacity: var(--entries-opacity, 1);
 }
 
+/* Warning flag: ring sits OUTSIDE the item with a 1px gap (the grid shows
+   through), so it still reads when the item itself is red; the ⚠ glyph
+   inherits the contrast-aware text color as a second, color-proof signal */
 .lm-schedule-item[data-warning="true"] {
-    outline: 2px solid red;
-    outline-offset: -3px;
+    outline: 2px solid var(--lm-color-danger, #dc2626);
+    outline-offset: 1px;
+}
+
+.lm-schedule-item[data-warning="true"]:before {
+    content: '\26A0\FE0E  ' attr(data-title);
+}
+
+.lm-schedule-item[data-warning="true"][data-description]:not([data-description=""]):before {
+    content: '\26A0\FE0E  ' attr(data-title) '\A' attr(data-description);
 }
 
 .lm-schedule-item[data-visible="false"] {
@@ -204,9 +262,11 @@
     z-index: 3;
 }
 
+/* The "now" line — red like Outlook/Google, deliberately NOT the accent:
+   today's column is accent-tinted, so an accent line would sink into it */
 .lm-schedule-pointer {
     position: absolute;
-    background-color: var(--lm-main-color-deep, #66b244);
+    background-color: var(--lm-color-danger, #dc2626);
     height: 2px;
     width: 100%;
     left: 0;
@@ -217,9 +277,9 @@
 .lm-schedule-pointer:before {
     content: '';
     position: absolute;
-    background-color: var(--lm-main-color-deep, #66b244);
+    background-color: var(--lm-color-danger, #dc2626);
     border-radius: var(--lm-radius, 6px);
-    border: 1px solid #fff;
+    border: 1px solid var(--lm-background-color, #fff);
     width: 10px;
     height: 10px;
     margin: -5px;
@@ -236,7 +296,7 @@
 }
 
 .lm-schedule-disabled.lm-schedule-hour {
-    color: #aaa;
+    color: var(--lm-font-grayout, #aaa);
 }
 
 .lm-schedule-selected {
@@ -253,11 +313,11 @@
 }
 
 .lm-schedule::-webkit-scrollbar-track {
-    background: #eee;
+    background: var(--lm-background-color-highlight, #eee);
 }
 
 .lm-schedule::-webkit-scrollbar-thumb {
-    background: #888;
+    background: var(--lm-border-color-highlight, #888);
 }
 
 /* ---- the built-in event editor (v5 dist/event.js form) ---- */
@@ -274,8 +334,10 @@
 .lm-schedule-form input[type="date"],
 .lm-schedule-form select {
     padding: 8px;
-    border: 1px solid var(--lm-border-color, #e4e4e7);
+    border: 1px solid var(--lm-border-input, var(--lm-border-color, #e4e4e7));
     border-radius: var(--lm-radius, 6px);
+    background-color: var(--lm-background-color-input, #fff);
+    color: var(--lm-font-color, inherit);
     font: inherit;
     box-sizing: border-box;
     width: 100%;

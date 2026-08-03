@@ -17,6 +17,8 @@ type Api = {
     addCard(columnId: string | number, card: KanbanCard): void;
     removeCard(cardId: string | number): void;
     moveCard(cardId: string | number, columnId: string | number, index: number): void;
+    undo(): void;
+    redo(): void;
 };
 
 let handle: ReturnType<typeof t> | null = null;
@@ -61,8 +63,8 @@ const colOf = (el: Element) => el.closest('.lm-kanban-column')?.getAttribute('da
 const orderOf = (el: Element) => Number((styleOf(el).match(/order:\s*(-?\d+)/) || [])[1]);
 /** A card's slot index in its stack (card order = idx × 2) */
 const idxOf = (el: Element) => orderOf(el) / 2;
-const indicator = () => handle!.query('.lm-kanban-indicator');
-const indicatorCol = () => indicator()!.closest('.lm-kanban-column')!.getAttribute('data-column');
+const ghost = () => handle!.query('.lm-kanban-ghost');
+const ghostCol = () => ghost()!.closest('.lm-kanban-column')!.getAttribute('data-column');
 
 const COLS = ['todo', 'doing', 'done'];
 /** Stub board geometry: columns 200px wide at x = ci*210, cards 80px tall */
@@ -226,6 +228,142 @@ describe('components/kanban — api + events', () => {
         card('c3').click();
         expect(clicks).toEqual([data[0].cards[2]]);
     });
+
+    it('oncarddblclick reports the card object on a double-click', () => {
+        const dbl: unknown[] = [];
+        const data = makeData();
+        open({ data, oncarddblclick: (c: unknown) => dbl.push(c) });
+        card('c1').dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+        expect(dbl).toEqual([data[0].cards[0]]);
+    });
+});
+
+describe('components/kanban — card menu (▾)', () => {
+    const menuButton = (id: string) => card(id).querySelector('.lm-kanban-card-menu') as HTMLElement | null;
+
+    it('renders the ▾ button ONLY when oncardmenu is handled', () => {
+        open();
+        expect(menuButton('c1')).toBeNull();
+        handle!.unmount();
+        open({ oncardmenu: () => undefined });
+        expect(menuButton('c1')).not.toBeNull();
+        expect(menuButton('c1')!.getAttribute('aria-haspopup')).toBe('menu');
+    });
+
+    it('clicking the button fires oncardmenu(card, event) and NOT oncardclick', () => {
+        const menus: unknown[][] = [];
+        const clicks: unknown[] = [];
+        const data = makeData();
+        open({
+            data,
+            oncardmenu: (...a: unknown[]) => menus.push(a),
+            oncardclick: (c: unknown) => clicks.push(c),
+        });
+        menuButton('c2')!.click();
+        expect(menus).toHaveLength(1);
+        expect(menus[0][0]).toBe(data[0].cards[1]);
+        expect(menus[0][1]).toBeInstanceOf(MouseEvent);
+        expect(clicks).toEqual([]);
+    });
+
+    it('a mousedown on the button never arms a drag', () => {
+        const moves: unknown[] = [];
+        open({ oncardmenu: () => undefined, oncardmove: (...a: unknown[]) => moves.push(a) });
+        layout();
+        mouse('mousedown', 100, 50, menuButton('c1')!);
+        mouse('mousemove', 320, 60);
+        expect(handle!.query('.lm-kanban-card-dragging')).toBeNull();
+        expect(ghost()).toBeNull();
+        mouse('mouseup', 320, 60);
+        expect(moves).toEqual([]);
+    });
+});
+
+describe('components/kanban — undo/redo', () => {
+    it('undo inverts a move (events fire) and redo replays it', () => {
+        const moves: unknown[][] = [];
+        const data = makeData();
+        const api = open({ data, oncardmove: (...a: unknown[]) => moves.push(a) });
+        api.moveCard('c1', 'doing', 1);
+        expect(data[1].cards.map((c) => c.id)).toEqual(['c4', 'c1']);
+        api.undo();
+        expect(data[0].cards.map((c) => c.id)).toEqual(['c1', 'c2', 'c3']);
+        expect(data[1].cards.map((c) => c.id)).toEqual(['c4']);
+        expect(moves).toEqual([
+            ['c1', 'todo', 'doing', 1],
+            ['c1', 'doing', 'todo', 0],
+        ]);
+        api.redo();
+        expect(data[1].cards.map((c) => c.id)).toEqual(['c4', 'c1']);
+        expect(colOf(card('c1'))).toBe('doing');
+    });
+
+    it('undo restores a within-column reorder to the original slot', () => {
+        const data = makeData();
+        const api = open({ data });
+        api.moveCard('c3', 'todo', 0);
+        expect(data[0].cards.map((c) => c.id)).toEqual(['c3', 'c1', 'c2']);
+        api.undo();
+        expect(data[0].cards.map((c) => c.id)).toEqual(['c1', 'c2', 'c3']);
+    });
+
+    it('undo of addCard removes the card; redo brings it back', () => {
+        const data = makeData();
+        const api = open({ data });
+        api.addCard('doing', { id: 'c7', title: 'New work' });
+        api.undo();
+        expect(data[1].cards.map((c) => c.id)).toEqual(['c4']);
+        expect(card('c7')).toBeNull();
+        api.redo();
+        expect(data[1].cards.map((c) => c.id)).toEqual(['c4', 'c7']);
+        expect(colOf(card('c7'))).toBe('doing');
+    });
+
+    it('undo of removeCard restores the SAME object at its original index', () => {
+        const data = makeData();
+        const gone = data[0].cards[1];
+        const api = open({ data });
+        api.removeCard('c2');
+        api.undo();
+        expect(data[0].cards.map((c) => c.id)).toEqual(['c1', 'c2', 'c3']);
+        expect(data[0].cards[1]).toBe(gone);
+        api.redo();
+        expect(data[0].cards.map((c) => c.id)).toEqual(['c1', 'c3']);
+    });
+
+    it('a drag commit is undoable too', () => {
+        const data = makeData();
+        const api = open({ data });
+        layout();
+        mouse('mousedown', 100, 80, card('c1'));
+        mouse('mousemove', 320, 60);
+        mouse('mouseup', 320, 60);
+        expect(data[1].cards.map((c) => c.id)).toEqual(['c1', 'c4']);
+        api.undo();
+        expect(data[0].cards.map((c) => c.id)).toEqual(['c1', 'c2', 'c3']);
+        expect(data[1].cards.map((c) => c.id)).toEqual(['c4']);
+    });
+
+    it('a fresh change forks history: the redo tail dies', () => {
+        const data = makeData();
+        const api = open({ data });
+        api.moveCard('c1', 'done', 0);
+        api.undo();
+        api.addCard('doing', { id: 'c8', title: 'Fork' }); // clears redo
+        api.redo(); // nothing to replay
+        expect(data[2].cards).toEqual([]);
+        expect(data[1].cards.map((c) => c.id)).toEqual(['c4', 'c8']);
+    });
+
+    it('undo/redo on empty history is a silent no-op', () => {
+        const changes: unknown[] = [];
+        const data = makeData();
+        const api = open({ data, onchange: (d: unknown) => changes.push(d) });
+        api.undo();
+        api.redo();
+        expect(changes).toEqual([]);
+        expect(data[0].cards.map((c) => c.id)).toEqual(['c1', 'c2', 'c3']);
+    });
 });
 
 describe('components/kanban — drag and drop', () => {
@@ -240,9 +378,9 @@ describe('components/kanban — drag and drop', () => {
         mouse('mousedown', 100, 80, el);
         mouse('mousemove', 320, 60); // over 'doing', above c4's midpoint
         expect(moves).toHaveLength(0); // preview only
-        expect(indicator()).not.toBeNull();
-        expect(indicatorCol()).toBe('doing');
-        expect(orderOf(indicator()!)).toBe(-1); // slot 0 of doing
+        expect(ghost()).not.toBeNull();
+        expect(ghostCol()).toBe('doing');
+        expect(orderOf(ghost()!)).toBe(-1); // slot 0 of doing
         expect(el.className).toContain('lm-kanban-card-dragging');
         expect(styleOf(el)).toContain('transform:translate(220px,-20px)'); // follows the mouse
 
@@ -251,7 +389,7 @@ describe('components/kanban — drag and drop', () => {
         expect(data[0].cards.map((c) => c.id)).toEqual(['c2', 'c3']);
         expect(moves).toEqual([['c1', 'todo', 'doing', 0]]);
         expect(changes).toHaveLength(1);
-        expect(indicator()).toBeNull(); // gone after the drop
+        expect(ghost()).toBeNull(); // gone after the drop
         expect(colOf(card('c1'))).toBe('doing'); // re-parented into the new column
         expect(el.isConnected).toBe(false);
     });
@@ -262,10 +400,27 @@ describe('components/kanban — drag and drop', () => {
         layout();
         mouse('mousedown', 100, 80, card('c1'));
         mouse('mousemove', 100, 320); // below c3's midpoint
-        expect(indicatorCol()).toBe('todo');
-        expect(orderOf(indicator()!)).toBe(3); // the end slot (index 2 → 2*2-1)
+        expect(ghostCol()).toBe('todo');
+        expect(orderOf(ghost()!)).toBe(6); // the end slot: after every data-ordered card
         mouse('mouseup', 100, 320);
         expect(data[0].cards.map((c) => c.id)).toEqual(['c2', 'c3', 'c1']);
+    });
+
+    it('dragging the FIRST card down previews the true landing slot (card out of flow, card-sized ghost)', () => {
+        const data = makeData();
+        open({ data });
+        layout();
+        const el = card('c1');
+        mouse('mousedown', 100, 80, el);
+        mouse('mousemove', 100, 200); // between c2's and c3's midpoints
+        expect(styleOf(el)).toContain('position:fixed'); // lifted out of the flow
+        expect(styleOf(el)).toContain('width:180px'); // keeps its size while floating
+        expect(ghostCol()).toBe('todo');
+        expect(orderOf(ghost()!)).toBe(3); // between c2 (order 2) and c3 (order 4) — the REAL landing slot
+        expect(styleOf(ghost()!)).toContain('height:80px'); // card-sized preview
+        mouse('mouseup', 100, 200);
+        expect(data[0].cards.map((c) => c.id)).toEqual(['c2', 'c1', 'c3']);
+        expect(styleOf(card('c1'))).not.toContain('position:fixed'); // back in the flow
     });
 
     it('a drop into an EMPTY column lands at index 0', () => {
@@ -276,7 +431,7 @@ describe('components/kanban — drag and drop', () => {
         const el = card('c4');
         mouse('mousedown', 320, 80, el);
         mouse('mousemove', 500, 300); // over 'done' (x 420..620)
-        expect(indicatorCol()).toBe('done');
+        expect(ghostCol()).toBe('done');
         mouse('mouseup', 500, 300);
         expect(data[2].cards.map((c) => c.id)).toEqual(['c4']);
         expect(data[1].cards).toEqual([]);
@@ -293,9 +448,9 @@ describe('components/kanban — drag and drop', () => {
         const el = card('c1');
         mouse('mousedown', 100, 80, el);
         mouse('mousemove', 320, 60);
-        expect(indicator()).not.toBeNull();
+        expect(ghost()).not.toBeNull();
         document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
-        expect(indicator()).toBeNull();
+        expect(ghost()).toBeNull();
         expect(styleOf(el)).not.toContain('transform'); // snapped back
         expect(data[0].cards.map((c) => c.id)).toEqual(['c1', 'c2', 'c3']);
         expect(moves).toEqual([]);
@@ -312,7 +467,7 @@ describe('components/kanban — drag and drop', () => {
         layout();
         mouse('mousedown', 100, 80, card('c1'));
         mouse('mousemove', 2000, 80); // off the board
-        expect(indicator()).toBeNull();
+        expect(ghost()).toBeNull();
         mouse('mouseup', 2000, 80);
         expect(moves).toEqual([]);
         expect(data[0].cards).toHaveLength(3);
@@ -343,6 +498,38 @@ describe('components/kanban — drag and drop', () => {
         mouse('mouseup', 101, 80);
         expect(moves).toEqual([]);
         expect(data[0].cards.map((c) => c.id)).toEqual(['c1', 'c2', 'c3']);
+    });
+
+    it('ROUND-TRIP regression: a card moved out and back is still a drop target at slot 0', () => {
+        // review → in progress → review, then drop another card ABOVE it.
+        // Geometry must come from the live DOM: the keyed differ may reuse
+        // a node when a card returns to a column, so a ref-fed registry
+        // goes stale and hit-testing skips the card entirely.
+        const data = makeData();
+        const api = open({ data });
+        api.moveCard('c4', 'done', 0);
+        api.moveCard('c4', 'doing', 0); // back home — possibly a REUSED node
+        layout();
+        mouse('mousedown', 100, 80, card('c1'));
+        mouse('mousemove', 320, 50); // above c4's midpoint
+        expect(ghostCol()).toBe('doing');
+        expect(orderOf(ghost()!)).toBe(-1); // BEFORE c4 — the first slot
+        mouse('mouseup', 320, 50);
+        expect(data[1].cards.map((c) => c.id)).toEqual(['c1', 'c4']);
+    });
+
+    it('ROUND-TRIP regression: dragging the returned card pins it at ITS rect, not a zero rect', () => {
+        const data = makeData();
+        const api = open({ data });
+        api.moveCard('c4', 'done', 0);
+        api.moveCard('c4', 'doing', 0);
+        layout();
+        const el = card('c4');
+        mouse('mousedown', 320, 80, el);
+        mouse('mousemove', 330, 90);
+        expect(styleOf(el)).toContain('width:180px'); // its real size, not the corner
+        expect(styleOf(el)).toContain('left:220px');
+        mouse('mouseup', 330, 90);
     });
 
     it('gestures never accumulate document listeners — even unmounting MID-DRAG', () => {

@@ -556,8 +556,8 @@ export const Datagrid = component('datagrid', {
                     data-sortable="${col.sortable !== false}"
                     onclick="${() => sort(col.name)}">
                     <span>${headerContent(col)}</span>
-                    <span class="lm-datagrid-arrow">${() =>
-                        sortBy.value && sortBy.value.name === col.name ? (sortBy.value.dir === 1 ? '▲' : '▼') : ''}</span>
+                    <span class="lm-datagrid-arrow" data-dir="${() =>
+                        sortBy.value && sortBy.value.name === col.name ? (sortBy.value.dir === 1 ? 'asc' : 'desc') : false}"></span>
                     <span class="lm-datagrid-resize"
                         onmousedown="${(e: MouseEvent) => startResize(e, col)}"
                         onclick="${(e: MouseEvent) => e.stopPropagation()}"></span>

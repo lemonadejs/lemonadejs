@@ -4,7 +4,7 @@
  * no PASS/FAIL, just pixels for eyeballing default styling changes.
  */
 import { html, mount, type Component } from 'lemonadejs';
-import Chart from '@lemonadejs/chart';
+import Chart from '@lemonadejs/charts';
 
 const App: Component = () => html`<div style="padding:24px;display:flex;flex-direction:column;gap:48px;max-width:760px;background:#fff">
     <div id="s-single" style="height:360px"><${Chart} type="bar" animate="${false}"

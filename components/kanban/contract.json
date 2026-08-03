@@ -9,11 +9,15 @@
     "events": [
         "oncardmove",
         "onchange",
-        "oncardclick"
+        "oncardclick",
+        "oncarddblclick",
+        "oncardmenu"
     ],
     "api": [
         "addCard",
         "removeCard",
-        "moveCard"
+        "moveCard",
+        "undo",
+        "redo"
     ]
 }

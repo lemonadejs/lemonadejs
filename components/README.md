@@ -15,7 +15,7 @@ three deployment forms (by value, by name, custom element).
 | [Calendar](./calendar/README.md) | `@lemonadejs/calendar` | 41 | LemonadeJS calendar block — date, datetime and range picker on the Modal primitive; contract-verified, framework-agnostic. |
 | [Card](./card/README.md) | `@lemonadejs/card` | 20 | LemonadeJS card block — contract-verified, framework-agnostic. |
 | [Carousel](./carousel/README.md) | `@lemonadejs/carousel` | 14 | LemonadeJS carousel block — single-file (styles ship inside the component), contract-verified, framework-agnostic. |
-| [Chart](./chart/README.md) | `@lemonadejs/chart` | 111 | LemonadeJS chart block — one unified data definition, bar/stacked/pie, responsive with no JS layout. |
+| [Charts](./charts/README.md) | `@lemonadejs/charts` | 111 | LemonadeJS charts block — one unified data definition, bar/stacked/pie, responsive with no JS layout. |
 | [Color](./color/README.md) | `@lemonadejs/color` | 16 | LemonadeJS color block — contract-verified, framework-agnostic. |
 | [Contextmenu](./contextmenu/README.md) | `@lemonadejs/contextmenu` | 6 | LemonadeJS contextmenu block — contract-verified, framework-agnostic. |
 | [Cropper](./cropper/README.md) | `@lemonadejs/cropper` | 31 | LemonadeJS cropper block — contract-verified, framework-agnostic. |
@@ -25,12 +25,12 @@ three deployment forms (by value, by name, custom element).
 | [Dropdown](./dropdown/README.md) | `@lemonadejs/dropdown` | 39 | LemonadeJS dropdown block — select, autocomplete and picker on the Modal primitive; contract-verified, framework-agnostic. |
 | [Editor](./editor/README.md) | `@lemonadejs/editor` | 19 | LemonadeJS editor block — rich text on the Toolbar block, CKEditor-style tables with resize handles, local print/PDF and Word export; contract-verified, framework-agnostic. |
 | [Formify](./formify/README.md) | `@lemonadejs/formify` | 8 | LemonadeJS formify block — smart HTML forms: your markup in, one data object out (get/set/load/save, two-way bind). Contract-verified, framework-agnostic. |
-| [Gantt](./gantt/README.md) | `@lemonadejs/gantt` | 26 | LemonadeJS gantt block — %-positioned bars that align across embedded instances; contract-verified, framework-agnostic. |
+| [Gantt](./gantt/README.md) | `@lemonadejs/gantt` | 30 | LemonadeJS gantt block — %-positioned bars that align across embedded instances; contract-verified, framework-agnostic. |
 | [Imagelist](./imagelist/README.md) | `@lemonadejs/imagelist` | 14 | LemonadeJS imagelist block — contract-verified, framework-agnostic. |
-| [Kanban](./kanban/README.md) | `@lemonadejs/kanban` | 7 | LemonadeJS kanban block — drag-and-drop board whose card DOM identity survives cross-column moves (one flat keyed list, CSS grid placement); contract-verified, framework-agnostic. |
+| [Kanban](./kanban/README.md) | `@lemonadejs/kanban` | 9 | LemonadeJS kanban block — drag-and-drop board whose card DOM identity survives cross-column moves (one flat keyed list, CSS grid placement); contract-verified, framework-agnostic. |
 | [List](./list/README.md) | `@lemonadejs/list` | 26 | LemonadeJS list block — search, pagination, remote mode and MUI-style items, contract-verified, framework-agnostic. |
 | [Login](./login/README.md) | `@lemonadejs/login` | 36 | LemonadeJS login block — multi-screen authentication (login, register, forgot password, code confirmation, password reset), contract-verified. |
-| [Modal](./modal/README.md) | `@lemonadejs/modal` | 53 | LemonadeJS modal block — contract-verified, framework-agnostic. |
+| [Modal](./modal/README.md) | `@lemonadejs/modal` | 59 | LemonadeJS modal block — contract-verified, framework-agnostic. |
 | [Navbar](./navbar/README.md) | `@lemonadejs/navbar` | 13 | LemonadeJS navbar block — contract-verified, framework-agnostic. |
 | [Organogram](./organogram/README.md) | `@lemonadejs/organogram` | 43 | LemonadeJS organogram block — an org chart / hierarchy diagram from a flat adjacency list, with Google-Maps pan & zoom, quick-search fly-to and collapsible branches. |
 | [Progress](./progress/README.md) | `@lemonadejs/progress` | 15 | LemonadeJS progress block — contract-verified, framework-agnostic. |

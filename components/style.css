@@ -113,6 +113,8 @@
     --lm-series-6: #45889c;
     --lm-series-7: #b05a7e;
     --lm-series-8: #75808f;
+    --lm-series-9: #a3a442;
+    --lm-series-10: #8b6a52;
 
     --lm-safe-area-top: 0;
     --lm-safe-area-bottom: 0;
@@ -151,6 +153,8 @@
     --lm-series-6: #45889c;
     --lm-series-7: #b05a7e;
     --lm-series-8: #75808f;
+    --lm-series-9: #a3a442;
+    --lm-series-10: #8b6a52;
 }
 
 /* Minimal — dense + crisp: near-mono slate accent, 3px radius, tight pad */
@@ -174,6 +178,8 @@
     --lm-series-6: #0369a1;
     --lm-series-7: #a21caf;
     --lm-series-8: #64748b;
+    --lm-series-9: #4d7c0f;
+    --lm-series-10: #78716c;
 }
 
 /* Soft — friendly + rounded: indigo accent, 12px radius, roomy pad, pastel */
@@ -198,6 +204,8 @@
     --lm-series-6: #38bdf8;
     --lm-series-7: #f472b6;
     --lm-series-8: #94a3b8;
+    --lm-series-9: #a3e635;
+    --lm-series-10: #d4a373;
 }
 
 /* Accent-only example themes (override just the main colour) */
@@ -218,6 +226,9 @@
    Token values are shared by the OS-driven and the forced (class) paths;
    CSS can't share a block, so the same overrides live in both rules. */
 .lm-dark-mode {
+    /* Native controls (selects, date inputs, scrollbars) must follow */
+    color-scheme: dark;
+
     /* Dark neutral ramp (Radix-slate-dark) — same view model as light */
     --lm-neutral-1: #111111;
     --lm-neutral-2: #191919;
@@ -264,11 +275,15 @@
     --lm-series-6: #3bc9db;
     --lm-series-7: #f783ac;
     --lm-series-8: #adb5bd;
+    --lm-series-9: #a9e34b;
+    --lm-series-10: #d9a66c;
 }
 
 /* Follow the OS unless the app forced light with .lm-light-mode */
 @media (prefers-color-scheme: dark) {
     :root:not(.lm-light-mode) {
+        color-scheme: dark;
+
         --lm-neutral-1: #111111;
         --lm-neutral-2: #191919;
         --lm-neutral-3: #222222;
@@ -314,6 +329,8 @@
         --lm-series-6: #3bc9db;
         --lm-series-7: #f783ac;
         --lm-series-8: #adb5bd;
+        --lm-series-9: #a9e34b;
+        --lm-series-10: #d9a66c;
     }
 }
 

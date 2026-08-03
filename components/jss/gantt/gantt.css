@@ -9,6 +9,26 @@ th.lm-gantt-header-cell {
     background-color: var(--jss-background-color, #fff);
     text-align: left;
     font-weight: normal;
+    /* anchors the resize grip */
+    position: relative;
+}
+
+/* Drag the lane's RIGHT border to resize the timeline viewport — the
+   left border already resizes via jss (the previous column's handle);
+   the right edge is the table edge, which jss cannot grab */
+.jss-gantt-resize {
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 5px;
+    cursor: col-resize;
+    z-index: 5;
+}
+
+.jss-gantt-resize:hover {
+    background: var(--lm-main-color, #2563eb);
+    opacity: 0.4;
 }
 
 /* jss data rows are ~24px; the block's standalone lane floor is 32px */
@@ -22,12 +42,16 @@ th.lm-gantt-header-cell {
    jss chrome (headers z4+, corner z6, editor z7) stays above both. */
 .jss-gantt-link-layer {
     z-index: 0;
+    /* clipped to the lane column — geometry measured from bars outside
+       the date viewport must not paint over the data columns */
+    overflow: hidden;
 }
 
 /* The connect handles and the drag preview line stay above the bars
    (z1) but below the jss chrome (z4+) */
 .jss-gantt-handle-layer {
     z-index: 2;
+    overflow: hidden;
 }
 
 /* Drag onto another task's row to write its predecessors cell */

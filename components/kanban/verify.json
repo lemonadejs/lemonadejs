@@ -27,6 +27,14 @@
             "pass": true
         },
         {
+            "name": "event oncarddblclick",
+            "pass": true
+        },
+        {
+            "name": "event oncardmenu",
+            "pass": true
+        },
+        {
             "name": "api via ref",
             "pass": true
         }

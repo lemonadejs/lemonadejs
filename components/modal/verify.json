@@ -151,11 +151,35 @@
             "pass": true
         },
         {
+            "name": "prop icon",
+            "pass": true
+        },
+        {
+            "name": "prop icon (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop radius",
+            "pass": true
+        },
+        {
+            "name": "prop radius (live state)",
+            "pass": true
+        },
+        {
             "name": "prop focus",
             "pass": true
         },
         {
             "name": "prop focus (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop outline",
+            "pass": true
+        },
+        {
+            "name": "prop outline (live state)",
             "pass": true
         },
         {

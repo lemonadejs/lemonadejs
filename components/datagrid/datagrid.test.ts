@@ -448,7 +448,7 @@ describe('components/datagrid — column resize + customization', () => {
         expect(thAt(0).textContent).toContain('#id');
         expect(thAt(1).querySelector('.hdr-btn')).not.toBeNull(); // a live view in the header
         thAt(0).click(); // custom content does not break sorting
-        expect(thAt(0).querySelector('.lm-datagrid-arrow')!.textContent).toBe('▲');
+        expect(thAt(0).querySelector('.lm-datagrid-arrow')!.getAttribute('data-dir')).toBe('asc');
     });
 
     it('column.class lands on body cells of that column only', () => {

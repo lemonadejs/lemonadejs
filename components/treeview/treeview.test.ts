@@ -9,7 +9,7 @@
  */
 import { describe, it, expect, afterEach, vi } from 'vitest';
 import { store } from 'lemonadejs';
-import { render as t, verify } from 'lemonadejs/test';
+import { render as t, verify, setRect } from 'lemonadejs/test';
 import TreeView, { type TreeNode, type TreeNodeId } from '@lemonadejs/treeview';
 
 let handle: ReturnType<typeof t> | null = null;
@@ -352,5 +352,174 @@ describe('components/treeview', () => {
         for (let i = 0; i < targets.length; i++) {
             expect(adds[i].mock.calls.length).toBe(removes[i].mock.calls.length);
         }
+    });
+});
+
+describe('components/treeview — drag and drop', () => {
+    /** Pointer-gesture DnD (kanban pattern): mousedown on a row, document
+     *  mousemove past the threshold, document mouseup commits, Escape
+     *  cancels. setRect gives target rows y-bands for the drop hit-test;
+     *  rows without a band have zero height and are skipped. */
+    const mouse = (type: string, x: number, y: number, target: Element | Document = document) =>
+        target.dispatchEvent(new MouseEvent(type, { bubbles: true, cancelable: true, clientX: x, clientY: y }));
+    const band = (id: string, top: number, height = 30) =>
+        setRect(row(id), { left: 0, top, width: 200, height });
+    const styleOf = (el: Element) => (el.getAttribute('style') || '').replace(/:\s+/g, ':').replace(/;\s+/g, ';');
+    const drag = (src: string, targetY: number, commit = true) => {
+        mouse('mousedown', 10, 500, row(src)); // 500: far from every band
+        mouse('mousemove', 10, targetY);
+        if (commit) {
+            mouse('mouseup', 10, targetY);
+        }
+    };
+
+    it('top of a row drops BEFORE: siblings reorder, onmove reports parent + index', () => {
+        const moves: unknown[][] = [];
+        const tree = data();
+        handle = t(TreeView, { data: tree, draggable: true, onmove: (...a: unknown[]) => moves.push(a) });
+        band('index', 0);
+        drag('style', 5); // top band of index.ts
+        expect(tree[0].children!.map((n) => n.id)).toEqual(['style', 'index', 'utils']);
+        expect(moves).toEqual([['style', 'src', 0]]);
+    });
+
+    it('middle of a CONTAINER drops INSIDE and opens it', () => {
+        const moves: unknown[][] = [];
+        const tree = data();
+        handle = t(TreeView, { data: tree, draggable: true, onmove: (...a: unknown[]) => moves.push(a) });
+        band('docs', 60);
+        drag('pkg', 75); // dead center of the docs folder
+        expect(tree.map((n) => n.id)).toEqual(['src', 'docs']); // pkg left the root
+        expect(tree[1].children!.map((n) => n.id)).toEqual(['readme', 'pkg']);
+        expect(moves).toEqual([['pkg', 'docs', 1]]);
+        expect(li('docs').getAttribute('aria-expanded')).toBe('true'); // opened by the drop
+    });
+
+    it('a LEAF never accepts a drop inside — its middle means AFTER (no file inside a file)', () => {
+        const moves: unknown[][] = [];
+        const tree = data();
+        handle = t(TreeView, { data: tree, draggable: true, onmove: (...a: unknown[]) => moves.push(a) });
+        band('pkg', 90);
+        drag('index', 105, false); // dead center of package.json — preview only
+        expect(li('pkg').className).toContain('lm-treeview-drop-after');
+        expect(li('pkg').className).not.toContain('lm-treeview-drop-inside');
+        mouse('mouseup', 10, 105);
+        expect(tree.map((n) => n.id)).toEqual(['src', 'docs', 'pkg', 'index']); // sibling, not child
+        expect((tree[2] as TreeNode).children).toBeUndefined(); // pkg is STILL a leaf
+        expect(li('pkg').hasAttribute('aria-expanded')).toBe(false);
+        expect(moves).toEqual([['index', null, 3]]);
+    });
+
+    it('an empty children array IS a container: drops land inside the empty folder', () => {
+        const moves: unknown[][] = [];
+        const tree: TreeNode[] = [
+            { id: 'a', label: 'a.ts' },
+            { id: 'empty', label: 'empty', children: [] },
+        ];
+        handle = t(TreeView, { data: tree, draggable: true, onmove: (...a: unknown[]) => moves.push(a) });
+        band('empty', 0);
+        drag('a', 15);
+        expect(tree[0].children!.map((n) => n.id)).toEqual(['a']);
+        expect(moves).toEqual([['a', 'empty', 0]]);
+    });
+
+    it('never drops onto itself or into its own subtree', () => {
+        const tree = data();
+        handle = t(TreeView, { data: tree, draggable: true });
+        band('utils', 30);
+        drag('src', 45, false); // utils lives INSIDE src — refused
+        expect(li('utils').className).not.toContain('lm-treeview-drop');
+        mouse('mouseup', 10, 45);
+        expect(tree.map((n) => n.id)).toEqual(['src', 'docs', 'pkg']); // unchanged
+        expect(tree[0].children!.map((n) => n.id)).toEqual(['index', 'style', 'utils']);
+    });
+
+    it('ZERO layout shift: the origin row stays in the flow (dimmed); a chip rides the cursor', () => {
+        handle = t(TreeView, { data: data(), draggable: true });
+        band('pkg', 90);
+        mouse('mousedown', 10, 95, row('pkg'));
+        mouse('mousemove', 40, 140);
+        expect(styleOf(li('pkg'))).toBe(''); // NOT lifted — no inline geometry at all
+        expect(li('pkg').className).toContain('lm-treeview-dragging'); // dimmed in place
+        const chip = handle.query('.lm-treeview-drag-chip')!;
+        expect(chip).not.toBeNull();
+        expect(chip.textContent!.trim()).toBe('package.json');
+        expect(styleOf(chip)).toContain('left:52px'); // cursor x + 12
+        expect(styleOf(chip)).toContain('top:148px'); // cursor y + 8
+        mouse('mouseup', 40, 140);
+        expect(handle.query('.lm-treeview-drag-chip')).toBeNull(); // gone after the drop
+        expect(li('pkg').className).not.toContain('lm-treeview-dragging');
+    });
+
+    it('a dead zone the ghost opened KEEPS the slot (no flicker loop); leaving the tree clears it', () => {
+        const tree = data();
+        handle = t(TreeView, { data: tree, draggable: true });
+        setRect(handle.query('.lm-treeview')!, { left: 0, top: 0, width: 240, height: 200 });
+        band('index', 0);
+        drag('style', 5, false); // before index — the gap opens, pushing rows down
+        expect(li('index').className).toContain('lm-treeview-drop-before');
+        mouse('mousemove', 10, 45); // into the gap: over the tree, over NO row
+        expect(li('index').className).toContain('lm-treeview-drop-before'); // slot KEPT
+        mouse('mousemove', 10, 1000); // far off the tree
+        expect(li('index').className).not.toContain('lm-treeview-drop-before'); // cleared
+        mouse('mouseup', 10, 1000); // and a drop out there commits nothing
+        expect(tree[0].children!.map((n) => n.id)).toEqual(['index', 'style', 'utils']);
+    });
+
+    it('Escape cancels mid-drag: no mutation, affordances cleared, later mouseup inert', () => {
+        const moves: unknown[] = [];
+        const tree = data();
+        handle = t(TreeView, { data: tree, draggable: true, onmove: (...a: unknown[]) => moves.push(a) });
+        band('index', 0);
+        drag('style', 5, false);
+        expect(li('style').className).toContain('lm-treeview-dragging');
+        expect(li('index').className).toContain('lm-treeview-drop-before');
+        document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+        expect(li('style').className).not.toContain('lm-treeview-dragging');
+        expect(li('index').className).not.toContain('lm-treeview-drop-before');
+        mouse('mouseup', 10, 5);
+        expect(tree[0].children!.map((n) => n.id)).toEqual(['index', 'style', 'utils']);
+        expect(moves).toEqual([]);
+    });
+
+    it('a drag never selects; a plain click still does', () => {
+        const changes: unknown[] = [];
+        handle = t(TreeView, { data: data(), draggable: true, onchange: (id: unknown) => changes.push(id) });
+        band('index', 0);
+        drag('style', 5);
+        row('style').click(); // the click a browser synthesizes after mouseup
+        expect(changes).toEqual([]);
+        row('style').click(); // a genuine later click
+        expect(changes).toEqual(['style']);
+    });
+
+    it('without draggable, the gesture is inert and clicking selects normally', () => {
+        const moves: unknown[] = [];
+        const tree = data();
+        handle = t(TreeView, { data: tree, draggable: false, onmove: (...a: unknown[]) => moves.push(a) });
+        band('index', 0);
+        drag('style', 5);
+        expect(li('style').className).not.toContain('lm-treeview-dragging');
+        expect(tree[0].children!.map((n) => n.id)).toEqual(['index', 'style', 'utils']);
+        expect(moves).toEqual([]);
+        row('style').click();
+        expect(selectedRows()).toHaveLength(1); // no suppression without a drag
+    });
+
+    it('gesture document listeners balance — even unmounting MID-DRAG', () => {
+        const adds = vi.spyOn(document, 'addEventListener');
+        const removes = vi.spyOn(document, 'removeEventListener');
+        const armed = (spy: { mock: { calls: unknown[][] } }) =>
+            spy.mock.calls.filter(([type]) => type === 'mousemove' || type === 'mouseup' || type === 'keydown').length;
+        handle = t(TreeView, { data: data(), draggable: true });
+        band('index', 0);
+        drag('style', 5); // full gesture: armed 3, released 3
+        expect(armed(adds)).toBe(3);
+        expect(armed(removes)).toBe(3);
+        mouse('mousedown', 10, 500, row('pkg')); // left in flight
+        expect(armed(adds)).toBe(6);
+        handle.unmount();
+        handle = null;
+        expect(armed(removes)).toBe(6); // balanced — nothing leaked
     });
 });

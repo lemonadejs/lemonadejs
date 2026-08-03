@@ -100,6 +100,11 @@
     font-size: 0.9em;
     white-space: nowrap;
     color: var(--lm-secondary-color, #303030);
+    /* fixed-width headers (item.width) clip long labels cleanly */
+    box-sizing: border-box;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: left;
 }
 
 .lm-toolbar-picker-header:hover,

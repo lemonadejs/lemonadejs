@@ -47,6 +47,14 @@
     border-radius: 8px 8px 0 0;
 }
 
+/* radius=false: square panel (anchored panels — a dropdown under a
+   4px-radius input reads wrong with 8px corners). The second selector
+   outweighs the position variants above; minimized chips keep theirs. */
+:where(.lm-modal-root) .lm-modal[data-radius='false'],
+.lm-modal-root[data-position] .lm-modal[data-radius='false']:not(.lm-modal-minimized) {
+    border-radius: 0;
+}
+
 /* absolute: CSS-anchored panel — the HOST's positioned ancestor places it
    (a dropdown panel under its input) and scrolling follows natively */
 .lm-modal-root[data-position='absolute'] {
@@ -66,12 +74,17 @@
 }
 
 :where(.lm-modal-root) .lm-modal {
+    /* Elevation lives in a custom prop so the focus/dark variants swap the
+       VALUE and every rule that must repaint the shadow reads one source */
+    --lm-modal-shadow: 0 8px 24px rgba(0, 0, 0, 0.11);
     position: relative;
     pointer-events: auto;
     background: var(--lm-background-color, #fff);
-    border: 0; /* explicit: v5/jsuites css puts a 1px #ccc border on this class */
+    /* hairline carries the edge definition (shadow stays subtle); also
+       explicitly overrides v5/jsuites' 1px #ccc border on this class */
+    border: 1px solid var(--lm-border-color, #e4e4e7);
     border-radius: 8px;
-    box-shadow: 0 10px 32px rgba(0, 0, 0, 0.14);
+    box-shadow: var(--lm-modal-shadow);
     box-sizing: border-box;
     min-width: 280px;
     min-height: 0;
@@ -126,7 +139,9 @@
 /* explicit width/padding/border resets: v5's .lm-modal-title styles the
    whole HEADER BAR (full width, bottom border) on this same class name */
 :where(.lm-modal-root) .lm-modal-title {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
     width: auto;
     padding: 0;
     border: 0;
@@ -136,10 +151,20 @@
     line-height: 1.4;
 }
 
+/* optional leading icon (`icon` prop — material icon name) */
+:where(.lm-modal-root) .lm-modal-icon {
+    font-size: 20px;
+    line-height: 1;
+    color: var(--lm-icon-color, #5f6368);
+}
+
 :where(.lm-modal-root) .lm-modal-controls {
     display: flex;
     align-items: center;
     gap: 4px;
+    /* header pads 12px top / 16px right — pull the buttons 4px right so
+       the close button sits at the same distance from top and right */
+    margin-right: -4px;
 }
 
 /* classed selectors, not `button` — a host page's element resets must not
@@ -152,8 +177,8 @@
     border: 0;
     appearance: none;
     background: transparent;
-    width: 30px;
-    height: 30px;
+    width: 32px;
+    height: 32px;
     padding: 0;
     margin: 0;
     border-radius: var(--lm-radius, 6px);
@@ -172,8 +197,8 @@
 /* inline SVG icons (no icon-font dependency): crisp 2px strokes */
 :where(.lm-modal-root) .lm-modal-close svg,
 :where(.lm-modal-root) .lm-modal-minimize svg {
-    width: 16px;
-    height: 16px;
+    width: 20px;
+    height: 20px;
     display: block;
     fill: none;
     stroke: currentColor;
@@ -241,9 +266,30 @@
     user-select: none;
 }
 
-/* front/focused modal: slightly elevated shadow only — NO ring/outline */
-:where(.lm-modal-root) .lm-modal-focus {
-    box-shadow: 0 14px 40px rgba(0, 0, 0, 0.2);
+/* front/focused modal: same elevation as at rest — deliberately NO shadow
+   bump and NO ring/outline (an extra shadow on focus read as flicker);
+   the class stays as a marker for the layering logic */
+
+/* Dark mode: a black shadow barely reads on a dark page, so deepen the
+   alpha AND add a hairline for separation. Forced-class and OS-driven
+   paths share the values (CSS can't share the block). */
+.lm-dark-mode :where(.lm-modal-root) .lm-modal {
+    --lm-modal-shadow: 0 6px 18px rgba(0, 0, 0, 0.55);
+}
+
+@media (prefers-color-scheme: dark) {
+    :root:not(.lm-light-mode) :where(.lm-modal-root) .lm-modal {
+        --lm-modal-shadow: 0 6px 18px rgba(0, 0, 0, 0.55);
+    }
+}
+
+/* The catalog paints its 2px focus ring on every focusable lm-* element —
+   including this panel (tabindex=-1, focused on open), where a ring around
+   the whole dialog reads as noise. Opt back in with the `outline` prop.
+   Specificity is deliberately above the catalog's 0-2-0 rule. */
+.lm-modal-root .lm-modal:not([data-outline="true"]):focus-visible {
+    outline: none;
+    box-shadow: var(--lm-modal-shadow);
 }
 
 :where(.lm-modal-root) .lm-modal-fullscreen {

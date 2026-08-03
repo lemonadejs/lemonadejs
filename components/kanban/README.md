@@ -2,7 +2,7 @@
 
 LemonadeJS kanban block — drag-and-drop board whose card DOM identity survives cross-column moves (one flat keyed list, CSS grid placement); contract-verified, framework-agnostic.
 
-**✓ verified** — 7 contract checks · framework-agnostic · zero dependencies
+**✓ verified** — 9 contract checks · framework-agnostic · zero dependencies
 
 ## Overview
 
@@ -21,13 +21,20 @@ kept); a cross-column move re-parents the card.
   - data: [{ id, title, cards: [{ id, title, description?, color?,
     tags? }] }] BY REFERENCE — the board mutates IN PLACE and calls
     touch(); your objects stay yours
-  - drag a card with the mouse: a drop indicator marks the insertion
-    slot, Escape cancels mid-drag, events fire ONLY on commit
+  - drag a card with the mouse: the card lifts OUT of the flow (the
+    others close ranks) and a ghost slot the card's size previews the
+    exact landing position; Escape cancels mid-drag, events fire ONLY
+    on commit
   - oncardmove(cardId, fromColumnId, toColumnId, index) on any move
     (drag or api.moveCard); onchange(data) on any data change;
-    oncardclick(card) on click (never after a drag)
+    oncardclick(card) on click (never after a drag);
+    oncarddblclick(card) on double-click
+  - oncardmenu(card, event): passing a handler renders a ▾ menu button
+    on every card — open anything from it (e.g. a <Contextmenu /> with
+    your own options); without a handler the button does not exist
   - api: addCard(columnId, card), removeCard(cardId),
-    moveCard(cardId, columnId, index)
+    moveCard(cardId, columnId, index), undo(), redo() — every
+    board-initiated change (drag or api) is undoable
 
 Styling: lm-kanban-* classes, themable via CSS custom properties
 (--lm-kanban-column-width, --lm-kanban-header-height, --lm-kanban-*).
@@ -79,6 +86,8 @@ All event names are lowercase (the platform convention — LJS-305 warns otherwi
 - `oncardmove` — (cardId, fromColumnId, toColumnId, index)
 - `onchange` — (data) — after any board-initiated change
 - `oncardclick` — (card) — clicks, never drag commits
+- `oncarddblclick` — (card) — double-clicks on a card
+- `oncardmenu` — (card, event) — the card ⋮ button (rendered only with a handler)
 
 ## API (via `ref`)
 
@@ -86,12 +95,14 @@ All event names are lowercase (the platform convention — LJS-305 warns otherwi
 import { ref } from 'lemonadejs';
 const kanban = ref();
 html`<${Kanban} ref="${kanban}" />`;
-// kanban.current.addCard(...)  ·  kanban.current.removeCard(...)  ·  kanban.current.moveCard(...)
+// kanban.current.addCard(...)  ·  kanban.current.removeCard(...)  ·  kanban.current.moveCard(...)  ·  kanban.current.undo(...)  ·  kanban.current.redo(...)
 ```
 
 - `addCard()`
 - `removeCard()`
 - `moveCard()`
+- `undo()`
+- `redo()`
 
 ## Styling
 

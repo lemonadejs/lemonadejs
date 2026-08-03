@@ -205,7 +205,7 @@ describe('components/cropper', () => {
         document.dispatchEvent(new MouseEvent('mouseup'));
     });
 
-    it('zooms on wheel: ×1.1/×0.9 clamped, range synced, default prevented', () => {
+    it('zooms on wheel: delta-proportional (a ±100 notch ≈ ±10%), range synced, default prevented', () => {
         const api = mount();
 
         // No image: the wheel scrolls the page normally
@@ -217,11 +217,21 @@ describe('components/cropper', () => {
         const e = new WheelEvent('wheel', { deltaY: -100, bubbles: true, cancelable: true });
         editor().dispatchEvent(e);
         expect(e.defaultPrevented).toBe(true);
-        expect(main().scale).toHaveBeenLastCalledWith(1.1, 1.1);
-        expect(ranges()[0].value).toBe('1.1'); // zoom range follows
+        // full notch up: e^0.1 → 1.105 (3 decimals)
+        expect(main().scale).toHaveBeenLastCalledWith(1.105, 1.105);
+        expect(ranges()[0].value).toBe('1.105'); // zoom range follows
 
+        // full notch back down returns to ~1 (1.105 × e^-0.1)
         editor().dispatchEvent(new WheelEvent('wheel', { deltaY: 100, bubbles: true, cancelable: true }));
-        expect(ranges()[0].value).toBe('0.99');
+        expect(ranges()[0].value).toBe('1');
+
+        // a trackpad-sized delta barely moves the scale — that is the point
+        editor().dispatchEvent(new WheelEvent('wheel', { deltaY: -4, bubbles: true, cancelable: true }));
+        expect(ranges()[0].value).toBe('1.004');
+
+        // trackpad PINCH (ctrlKey + wheel, small deltas) gets the ×10 factor
+        editor().dispatchEvent(new WheelEvent('wheel', { deltaY: -10, ctrlKey: true, bubbles: true, cancelable: true }));
+        expect(ranges()[0].value).toBe('1.11'); // 1.004 × e^0.1
     });
 
     it('moves the crop box by drag, clamped to the area (v5 rules)', () => {

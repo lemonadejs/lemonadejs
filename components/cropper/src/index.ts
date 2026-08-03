@@ -461,22 +461,23 @@ export const Cropper = component('cropper', {
         }
     };
 
-    /** v5 wheel: ×0.9 / ×1.1 clamped, anchored when over a painted pixel */
+    /** Wheel zoom, PROPORTIONAL to the delta (v5 applied a fixed ×0.9/×1.1
+     *  per event — one notch per event on a mouse, but trackpads fire dozens
+     *  of small-delta events per gesture, which made zooming far too fast).
+     *  A full mouse notch (±100) still lands at ≈ ±10%; anchored when over
+     *  a painted pixel. */
     const onWheel = (e: WheelEvent) => {
         if (!hasImage.value) {
             return;
         }
-        let s = view.scale;
-        if (e.deltaY > 0) {
-            if (s > 0.1) {
-                s *= 0.9;
-            }
-        } else {
-            if (s < 5) {
-                s *= 1.1;
-            }
-        }
-        s = parseFloat(s.toFixed(2));
+        // deltaMode 1 = lines (Firefox + real wheel): ~3 lines per notch
+        const dy = e.deltaMode === 1 ? e.deltaY * 33 : e.deltaY;
+        // trackpad PINCH arrives as ctrlKey+wheel with tiny deltas (~1-10
+        // per event) — it needs a much hotter factor than scroll-to-zoom
+        let s = view.scale * Math.exp(-dy * (e.ctrlKey ? 0.01 : 0.001));
+        s = Math.min(5, Math.max(0.1, s));
+        // 3 decimals: 2 swallowed sub-notch steps at higher zoom levels
+        s = parseFloat(s.toFixed(3));
         if (editor && ctx) {
             const rect = editor.getBoundingClientRect();
             const x = e.clientX - rect.left;
@@ -784,16 +785,16 @@ export const Cropper = component('cropper', {
                 <div class="lm-cropper-tools">
                     <button type="button" class="lm-cropper-transform" title="Rotate left"
                         disabled="${() => !hasImage.value}"
-                        onclick="${() => { view.quarter = (view.quarter + 3) % 4; redraw(); }}">⟲</button>
+                        onclick="${() => { view.quarter = (view.quarter + 3) % 4; redraw(); }}"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="1.5 4 1.5 10 7.5 10" /><path d="M3.8 15a9 9 0 1 0 2.2-9.3L1.5 10" /></svg></button>
                     <button type="button" class="lm-cropper-transform" title="Rotate right"
                         disabled="${() => !hasImage.value}"
-                        onclick="${() => { view.quarter = (view.quarter + 1) % 4; redraw(); }}">⟳</button>
+                        onclick="${() => { view.quarter = (view.quarter + 1) % 4; redraw(); }}"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="22.5 4 22.5 10 16.5 10" /><path d="M20.2 15a9 9 0 1 1-2.2-9.3l4.5 4.3" /></svg></button>
                     <button type="button" class="lm-cropper-transform" title="Flip horizontal"
                         disabled="${() => !hasImage.value}"
-                        onclick="${() => { view.flipH = !view.flipH; redraw(); }}">⇆</button>
+                        onclick="${() => { view.flipH = !view.flipH; redraw(); }}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18" stroke-dasharray="2.5 2.5" /><path d="M8 8l-4 4 4 4" /><path d="M16 8l4 4-4 4" /></svg></button>
                     <button type="button" class="lm-cropper-transform" title="Flip vertical"
                         disabled="${() => !hasImage.value}"
-                        onclick="${() => { view.flipV = !view.flipV; redraw(); }}">⇅</button>
+                        onclick="${() => { view.flipV = !view.flipV; redraw(); }}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h18" stroke-dasharray="2.5 2.5" /><path d="M8 8l4-4 4 4" /><path d="M8 16l4 4 4-4" /></svg></button>
                     <button type="button" class="lm-cropper-filter ${() => (grayLevel.value ? 'lm-active' : '')}"
                         disabled="${() => !hasImage.value}"
                         onclick="${() => toggle(grayLevel)}">B&W</button>

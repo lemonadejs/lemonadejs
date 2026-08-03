@@ -14,13 +14,20 @@
  *   - data: [{ id, title, cards: [{ id, title, description?, color?,
  *     tags? }] }] BY REFERENCE — the board mutates IN PLACE and calls
  *     touch(); your objects stay yours
- *   - drag a card with the mouse: a drop indicator marks the insertion
- *     slot, Escape cancels mid-drag, events fire ONLY on commit
+ *   - drag a card with the mouse: the card lifts OUT of the flow (the
+ *     others close ranks) and a ghost slot the card's size previews the
+ *     exact landing position; Escape cancels mid-drag, events fire ONLY
+ *     on commit
  *   - oncardmove(cardId, fromColumnId, toColumnId, index) on any move
  *     (drag or api.moveCard); onchange(data) on any data change;
- *     oncardclick(card) on click (never after a drag)
+ *     oncardclick(card) on click (never after a drag);
+ *     oncarddblclick(card) on double-click
+ *   - oncardmenu(card, event): passing a handler renders a ▾ menu button
+ *     on every card — open anything from it (e.g. a <Contextmenu /> with
+ *     your own options); without a handler the button does not exist
  *   - api: addCard(columnId, card), removeCard(cardId),
- *     moveCard(cardId, columnId, index)
+ *     moveCard(cardId, columnId, index), undo(), redo() — every
+ *     board-initiated change (drag or api) is undoable
  *
  * Styling: lm-kanban-* classes, themable via CSS custom properties
  * (--lm-kanban-column-width, --lm-kanban-header-height, --lm-kanban-*).
@@ -53,7 +60,9 @@ export const Kanban = component('kanban', {
     oncardmove: Function,         // (cardId, fromColumnId, toColumnId, index)
     onchange: Function,           // (data) — after any board-initiated change
     oncardclick: Function,        // (card) — clicks, never drag commits
-    api: { addCard: Function, removeCard: Function, moveCard: Function },
+    oncarddblclick: Function,     // (card) — double-clicks on a card
+    oncardmenu: Function,         // (card, event) — the card ⋮ button (rendered only with a handler)
+    api: { addCard: Function, removeCard: Function, moveCard: Function, undo: Function, redo: Function },
 }, (props, { state, onUnmount, listen }) => {
     // Tracked read: every render expression flows from here, so a
     // mutate-in-place + touch() re-runs exactly the bindings that read it
@@ -62,17 +71,37 @@ export const Kanban = component('kanban', {
     const peekColumns = () => (props.data.peek() as KanbanColumn[]) || [];
     const cardsOf = (col: KanbanColumn): KanbanCard[] => col.cards || [];
 
-    // ---- live gesture state
-    const drag = state<{ id: string | number; dx: number; dy: number } | null>(null);
+    // ---- live gesture state; the dragged card's mousedown rect rides
+    // along: it turns position:fixed at that spot (leaving the flow so
+    // the other cards close ranks) and the ghost inherits its height
+    const drag = state<{
+        id: string | number;
+        dx: number;
+        dy: number;
+        left: number;
+        top: number;
+        width: number;
+        height: number;
+    } | null>(null);
     const drop = state<{ col: string | number; index: number } | null>(null);
 
-    // ---- element registries for drop hit-testing (refs re-fire when a
-    // keyed entry is rebuilt; stale nodes are skipped via isConnected)
-    const shellEls = new Map<string | number, HTMLElement>();
-    const cardEls = new Map<string | number, HTMLElement>();
-    const liveEl = (map: Map<string | number, HTMLElement>, id: string | number) => {
-        const el = map.get(id);
-        return el && el.isConnected ? el : null;
+    // ---- geometry comes from the LIVE DOM, never from a registry.
+    // (An earlier design cached elements via refs; refs fire only when a
+    // node is BUILT, and the keyed differ can REUSE a node when a card
+    // returns to a column it left — the cache then pointed at the node
+    // disposed in the detour column, so hit-testing skipped the card and
+    // the drag pinned to a zero rect.)
+    let rootEl: HTMLElement | null = null;
+    const shellOf = (colId: string | number): HTMLElement | null =>
+        rootEl?.querySelector(
+            ':scope > .lm-kanban-column[data-column="' + String(colId) + '"] > .lm-kanban-column-cards'
+        ) || null;
+    const cardElsOf = (shell: HTMLElement): Map<string, HTMLElement> => {
+        const byId = new Map<string, HTMLElement>();
+        for (const el of shell.querySelectorAll(':scope > [data-card]')) {
+            byId.set(el.getAttribute('data-card')!, el as HTMLElement);
+        }
+        return byId;
     };
 
     // ---- data ops (mutate in place + touch(): the array you passed is
@@ -87,52 +116,126 @@ export const Kanban = component('kanban', {
         return null;
     };
 
-    /** Shared by drag commits and api.moveCard — one move semantic */
-    const performMove = (cardId: string | number, toColumnId: string | number, index: number): void => {
+    // ---- undo/redo: every board-initiated change funnels through the
+    // apply* helpers below, which return enough to INVERT the operation.
+    // The recording wrappers push the inverse recipe; undo/redo replay
+    // through the same helpers WITHOUT recording (so a replay never
+    // rewrites history) and fire the same events a live change fires.
+    type HistoryOp =
+        | { type: 'move'; cardId: string | number; from: string | number; fromIndex: number; to: string | number; toIndex: number }
+        | { type: 'add'; columnId: string | number; card: KanbanCard; index: number }
+        | { type: 'remove'; columnId: string | number; card: KanbanCard; index: number };
+    const past: HistoryOp[] = [];
+    const future: HistoryOp[] = [];
+    const record = (op: HistoryOp) => {
+        past.push(op);
+        future.length = 0; // a fresh change forks history: the redo tail dies
+    };
+
+    const applyMove = (cardId: string | number, toColumnId: string | number, index: number) => {
         const hit = findCard(cardId);
         const to = peekColumns().find((c) => c.id === toColumnId);
         if (!hit || !to) {
-            return;
+            return null;
         }
         const card = cardsOf(hit.col)[hit.index];
         hit.col.cards.splice(hit.index, 1);
         const at = Math.max(0, Math.min(index, cardsOf(to).length));
         to.cards.splice(at, 0, card);
         if (to === hit.col && at === hit.index) {
-            return; // splice round-trip: the array is back untouched — a no-op
+            return null; // splice round-trip: the array is back untouched — a no-op
         }
         props.data.touch();
         props.oncardmove?.(card.id, hit.col.id, to.id, at);
         props.onchange?.(peekColumns());
+        return { from: hit.col.id, fromIndex: hit.index, to: to.id, toIndex: at };
+    };
+
+    const applyAdd = (columnId: string | number, card: KanbanCard, index?: number) => {
+        const col = peekColumns().find((c) => c.id === columnId);
+        if (!col) {
+            return null;
+        }
+        const list = col.cards || (col.cards = []);
+        const at = index === undefined ? list.length : Math.max(0, Math.min(index, list.length));
+        list.splice(at, 0, card);
+        props.data.touch();
+        props.onchange?.(peekColumns());
+        return at;
+    };
+
+    const applyRemove = (cardId: string | number) => {
+        const hit = findCard(cardId);
+        if (!hit) {
+            return null;
+        }
+        const card = cardsOf(hit.col)[hit.index];
+        hit.col.cards.splice(hit.index, 1);
+        props.data.touch();
+        props.onchange?.(peekColumns());
+        return { columnId: hit.col.id, card, index: hit.index };
+    };
+
+    /** Shared by drag commits and api.moveCard — one move semantic */
+    const performMove = (cardId: string | number, toColumnId: string | number, index: number): void => {
+        const moved = applyMove(cardId, toColumnId, index);
+        if (moved) {
+            record({ type: 'move', cardId, ...moved });
+        }
     };
 
     props.ref?.({
         addCard: (columnId: string | number, card: KanbanCard) => {
-            const col = peekColumns().find((c) => c.id === columnId);
-            if (!col) {
-                return;
+            const at = applyAdd(columnId, card);
+            if (at !== null) {
+                record({ type: 'add', columnId, card, index: at });
             }
-            (col.cards || (col.cards = [])).push(card);
-            props.data.touch();
-            props.onchange?.(peekColumns());
         },
         removeCard: (cardId: string | number) => {
-            const hit = findCard(cardId);
-            if (!hit) {
-                return;
+            const removed = applyRemove(cardId);
+            if (removed) {
+                record({ type: 'remove', ...removed });
             }
-            hit.col.cards.splice(hit.index, 1);
-            props.data.touch();
-            props.onchange?.(peekColumns());
         },
         moveCard: performMove,
+        undo: () => {
+            const op = past.pop();
+            if (!op) {
+                return;
+            }
+            if (op.type === 'move') {
+                // removing from the landing slot re-creates the pre-move
+                // array, so the original index is valid again — same- and
+                // cross-column moves invert identically
+                applyMove(op.cardId, op.from, op.fromIndex);
+            } else if (op.type === 'add') {
+                applyRemove(op.card.id);
+            } else {
+                applyAdd(op.columnId, op.card, op.index);
+            }
+            future.push(op);
+        },
+        redo: () => {
+            const op = future.pop();
+            if (!op) {
+                return;
+            }
+            if (op.type === 'move') {
+                applyMove(op.cardId, op.to, op.toIndex);
+            } else if (op.type === 'add') {
+                applyAdd(op.columnId, op.card, op.index);
+            } else {
+                applyRemove(op.card.id);
+            }
+            past.push(op);
+        },
     });
 
     // ---- drop target: column by x over the card stacks, slot by y over the
     // card midpoints (the dragged card is invisible to the math)
     const computeDrop = (x: number, y: number, dragId: string | number) => {
         for (const col of peekColumns()) {
-            const shell = liveEl(shellEls, col.id);
+            const shell = shellOf(col.id);
             if (!shell) {
                 continue;
             }
@@ -140,10 +243,11 @@ export const Kanban = component('kanban', {
             if (x < r.left || x >= r.right) {
                 continue;
             }
+            const els = cardElsOf(shell);
             const others = cardsOf(col).filter((c) => c.id !== dragId);
             let index = others.length;
             for (let i = 0; i < others.length; i++) {
-                const el = liveEl(cardEls, others[i].id);
+                const el = els.get(String(others[i].id));
                 if (!el) {
                     continue;
                 }
@@ -173,6 +277,10 @@ export const Kanban = component('kanban', {
         suppressClick = false;
         const startX = e.clientX;
         const startY = e.clientY;
+        // captured NOW from the node the mouse is actually on: once the
+        // drag starts the card leaves the flow, pinned position:fixed at
+        // this rect (+ the live dx/dy)
+        const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
         let moved = false;
 
         const finish = (commit: boolean) => {
@@ -200,7 +308,15 @@ export const Kanban = component('kanban', {
             moved = true;
             // The hot path: two writes per mousemove — one update pass
             batch(() => {
-                drag.value = { id: card.id, dx: ev.clientX - startX, dy: ev.clientY - startY };
+                drag.value = {
+                    id: card.id,
+                    dx: ev.clientX - startX,
+                    dy: ev.clientY - startY,
+                    left: rect.left,
+                    top: rect.top,
+                    width: rect.width,
+                    height: rect.height,
+                };
                 drop.value = computeDrop(ev.clientX, ev.clientY, card.id);
             });
         });
@@ -222,13 +338,20 @@ export const Kanban = component('kanban', {
     };
 
     // ---- per-card style: order in the stack (data position, stable across
-    // a drag) plus the live drag transform (only the dragged card moves)
+    // a drag). The DRAGGED card is pinned position:fixed at its mousedown
+    // rect + the live dx/dy — out of the flow, so its column closes ranks
+    // and the ghost slot is the only preview of where it lands
     const cardStyle = (card: KanbanCard, ri: number) => {
         const d = drag.value;
         const dragging = d && d.id === card.id;
         return css({
             order: ri * 2,
             '--lm-kanban-accent': card.color || false,
+            position: dragging ? 'fixed' : false,
+            left: dragging ? d!.left + 'px' : false,
+            top: dragging ? d!.top + 'px' : false,
+            width: dragging ? d!.width + 'px' : false,
+            margin: dragging ? '0' : false,
             transform: dragging ? 'translate(' + d!.dx + 'px,' + d!.dy + 'px)' : false,
         });
     };
@@ -237,10 +360,20 @@ export const Kanban = component('kanban', {
         html`<article class="lm-kanban-card ${() =>
             drag.value?.id === card.id ? 'lm-kanban-card-dragging' : ''}"
             key="${card.id}" data-card="${card.id}"
-            ref="${(el: HTMLElement) => cardEls.set(card.id, el)}"
             style="${() => cardStyle(card, ri)}"
             onmousedown="${(e: MouseEvent) => armDrag(e, card)}"
-            onclick="${() => clickCard(card)}">
+            onclick="${() => clickCard(card)}"
+            ondblclick="${() => props.oncarddblclick?.(card)}">
+            ${props.oncardmenu
+                ? html`<button type="button" class="lm-kanban-card-menu"
+                      aria-label="Card menu" aria-haspopup="menu"
+                      onmousedown="${(e: MouseEvent) => e.stopPropagation()}"
+                      ondblclick="${(e: MouseEvent) => e.stopPropagation()}"
+                      onclick="${(e: MouseEvent) => {
+                          e.stopPropagation();
+                          props.oncardmenu?.(card, e);
+                      }}">▾</button>`
+                : ''}
             <div class="lm-kanban-card-title">${card.title}</div>
             ${card.description ? html`<div class="lm-kanban-card-description">${card.description}</div>` : ''}
             ${card.tags && card.tags.length
@@ -250,7 +383,7 @@ export const Kanban = component('kanban', {
                 : ''}
         </article>`;
 
-    return html`<div class="lm-kanban">
+    return html`<div class="lm-kanban" ref="${(el: HTMLElement) => (rootEl = el)}">
         ${() =>
             columns().map(
                 (col) => html`<div class="lm-kanban-column" key="${col.id}" data-column="${col.id}">
@@ -258,20 +391,34 @@ export const Kanban = component('kanban', {
                         <span class="lm-kanban-column-title">${col.title}</span>
                         <span class="lm-kanban-column-count">${cardsOf(col).length}</span>
                     </div>
-                    <div class="lm-kanban-column-cards"
-                        ref="${(el: HTMLElement) => shellEls.set(col.id, el)}">
+                    <div class="lm-kanban-column-cards">
                         ${() => cardsOf(col).map((card, ri) => cardView(card, ri))}
                         ${() => {
-                            // The drop indicator: rendered ONLY in the active
-                            // column, slotted between cards via flex order
-                            // (drop.index among the non-dragged cards). Its own
-                            // binding (reads drop) — a drag never rebuilds the
-                            // keyed card list (which reads columns()).
+                            // The ghost slot: a card-sized dashed box rendered
+                            // ONLY in the active column, slotted via flex order.
+                            // drop.index counts the NON-dragged cards, so map it
+                            // to the data index of the card it lands before —
+                            // the dragged card is out of the flow but keeps its
+                            // data-based order, and this keeps the ghost honest
+                            // for same-column drags too. Its own binding (reads
+                            // drag + drop) — a drag never rebuilds the keyed
+                            // card list (which reads columns()).
                             const t = drop.value;
-                            return t && t.col === col.id
-                                ? html`<div class="lm-kanban-indicator"
-                                      style="${css({ order: t.index * 2 - 1 })}"></div>`
-                                : '';
+                            const d = drag.value;
+                            if (!t || !d || t.col !== col.id) {
+                                return '';
+                            }
+                            const list = cardsOf(col);
+                            const before = list.filter((c) => c.id !== d.id)[t.index];
+                            const order = before ? list.indexOf(before) * 2 - 1 : list.length * 2;
+                            const hit = findCard(d.id);
+                            const color = hit && cardsOf(hit.col)[hit.index].color;
+                            return html`<div class="lm-kanban-ghost"
+                                style="${css({
+                                    order,
+                                    height: d.height + 'px',
+                                    '--lm-kanban-accent': color || false,
+                                })}"></div>`;
                         }}
                     </div>
                 </div>`

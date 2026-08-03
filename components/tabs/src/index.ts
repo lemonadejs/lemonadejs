@@ -37,7 +37,7 @@ import { component, html } from 'lemonadejs';
 export interface TabItem {
     /** Tab header text */
     title?: string;
-    /** Material icon keyword shown above the title */
+    /** Material icon keyword shown before the title */
     icon?: string;
     /** Trusted HTML for the panel (v5: set as innerHTML, once) */
     content?: string;

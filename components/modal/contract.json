@@ -73,9 +73,21 @@
             "type": "number",
             "default": 0
         },
+        "icon": {
+            "type": "string",
+            "default": ""
+        },
+        "radius": {
+            "type": "boolean",
+            "default": true
+        },
         "focus": {
             "type": "boolean",
             "default": true
+        },
+        "outline": {
+            "type": "boolean",
+            "default": false
         },
         "overflow": {
             "type": "boolean",

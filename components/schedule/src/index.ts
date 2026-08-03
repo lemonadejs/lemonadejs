@@ -1258,6 +1258,7 @@ export const Schedule = component('schedule', {
                 tds.push(
                     html`<td data-x="${c.x}" data-y="${j}"
                         data-date="${weekly() ? false : c.date}"
+                        data-today="${isTodayColumn ? 'true' : false}"
                         class="${disabled ? 'lm-schedule-disabled' : ''}">${items}</td>`
                 );
             }

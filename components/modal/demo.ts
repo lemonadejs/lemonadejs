@@ -61,6 +61,7 @@ const App: Component = (props, { state }) => {
     const log = state<string[]>([]);
     const note = (m: string) => (log.value = [...log.value, m]);
     let plain!: Api;
+    let iconed!: Api;
     let fancy!: Api;
     let full!: Api;
     let edge!: Api;
@@ -80,10 +81,12 @@ const App: Component = (props, { state }) => {
     const backdrop = state(false);
     const fullscreen = state(false);
     const header = state(true);
+    const radius = state(true);
 
     return html`<div>
         <h1>&lt;Modal /&gt;</h1>
         <button onclick="${() => plain.open()}">Open: backdrop + closable</button>
+        <button onclick="${() => iconed.open()}">Open: with icon</button>
         <button onclick="${() => fancy.open()}">Open: draggable + resizable + minimizable</button>
         <button onclick="${() => full.open()}">Open: fullscreen</button>
         <button onclick="${() => edge.open()}">Open: autoadjust (placed off the edge, nudged back)</button>
@@ -122,6 +125,7 @@ const App: Component = (props, { state }) => {
             <span></span><${Switch} label="Backdrop" bind="${backdrop}" />
             <span></span><${Switch} label="Fullscreen" bind="${fullscreen}" />
             <span></span><${Switch} label="Header" bind="${header}" />
+            <span></span><${Switch} label="Radius (rounded corners)" bind="${radius}" />
             <span></span><button onclick="${() => live.toggle()}">Toggle Modal</button>
         </div>
 
@@ -129,7 +133,7 @@ const App: Component = (props, { state }) => {
             draggable="${draggable}" resizable="${resizable}"
             closable="${closable}" minimizable="${minimizable}"
             autoclose="${autoclose}" backdrop="${backdrop}"
-            fullscreen="${fullscreen}" header="${header}"
+            fullscreen="${fullscreen}" header="${header}" radius="${radius}"
             width="380" height="220"
             onclose="${(origin: string) => note('reactive modal closed via ' + origin)}">
             <p>Quick example! Change anything on the panel — title, position and
@@ -146,6 +150,11 @@ const App: Component = (props, { state }) => {
             top="200" left="60" width="260" autoclose>
             <p style="margin:0">No header — the chrome for menus, chips, autocomplete.
             Click elsewhere to dismiss (autoclose).</p>
+        </${Modal}>
+
+        <${Modal} ref="${(a: Api) => (iconed = a)}" title="Settings" icon="settings"
+            backdrop closable draggable width="380" height="200">
+            <p>The <code>icon</code> prop puts a material icon before the title.</p>
         </${Modal}>
 
         <${Modal} ref="${(a: Api) => (plain = a)}" title="Hello" backdrop closable

@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>LemonadeJS — Schedule</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
     <link rel="stylesheet" href="../modal/src/style.css" />
@@ -10,12 +11,17 @@
     <link rel="stylesheet" href="../style.css" />
     <link rel="stylesheet" href="./src/style.css" />
     <style>
-        body { font-family: system-ui, sans-serif; margin: 40px; max-width: 1100px; }
+        body {
+            font-family: system-ui, sans-serif; margin: 40px; max-width: 1100px;
+            background: var(--lm-background-color, #fff);
+            color: var(--lm-font-color, #111);
+        }
         .demo h3 { margin-top: 28px; }
-        .toolbar { display: flex; gap: 6px; margin-bottom: 14px; align-items: center; }
-        .board { height: 560px; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; }
-        pre { background: #f1f5f9; padding: 12px; border-radius: 6px; min-height: 20px; }
+        .toolbar { display: flex; gap: 6px; margin-bottom: 14px; align-items: center; flex-wrap: wrap; }
+        .board { height: 560px; border: 1px solid var(--lm-border-color, #e5e7eb); border-radius: 8px; overflow: hidden; }
+        pre { background: var(--lm-background-color-highlight, #f1f5f9); padding: 12px; border-radius: 6px; min-height: 20px; }
         button, select { padding: 6px 10px; }
+        @media (max-width: 640px) { body { margin: 12px; } }
     </style>
 </head>
 <body class="lm-theme-modern">

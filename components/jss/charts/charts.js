@@ -1,7 +1,7 @@
 /**
  * Charts extension for the JSS data grid — LemonadeJS v6.
  *
- * @lemonadejs/chart renders the charts (zero dependencies, CSS/SVG — no
+ * @lemonadejs/charts renders the charts (zero dependencies, CSS/SVG — no
  * canvas, no redraw loop). Each chart media record owns a set of live
  * stores; sheet edits reassign them and only the dependent bindings
  * re-render.
@@ -25,7 +25,7 @@
  */
 import { html, mount, store } from 'lemonadejs';
 import Modal from '@lemonadejs/modal';
-import Chart from '@lemonadejs/chart';
+import Chart from '@lemonadejs/charts';
 import Dropdown from '@lemonadejs/dropdown';
 import Switch from '@lemonadejs/switch';
 

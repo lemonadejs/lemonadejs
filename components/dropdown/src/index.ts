@@ -752,7 +752,7 @@ export const Dropdown = component('dropdown', {
                 inline()
                     ? listView()
                     : html`<${Modal} ref="${(a: { open(): void; close(): void; adjust(): void }) => (modalApi = a)}"
-                          header="${false}" focus="${false}" responsive="${false}" autoadjust
+                          header="${false}" focus="${false}" responsive="${false}" radius="${false}" autoadjust
                           flip="${anchorHeight}" position="${panelPosition}" width="${panelWidth}">
                           ${listView()}
                       </${Modal}>`}

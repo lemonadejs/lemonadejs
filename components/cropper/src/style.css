@@ -89,10 +89,24 @@
 }
 
 .lm-cropper .lm-cropper-transform {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     width: 30px;
     height: 30px;
-    font-size: 15px;
     line-height: 1;
+}
+
+/* inline SVG icons (no icon-font dependency): crisp 2px strokes */
+.lm-cropper .lm-cropper-transform svg {
+    width: 16px;
+    height: 16px;
+    display: block;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
 }
 
 .lm-cropper .lm-cropper-filter {

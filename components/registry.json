@@ -440,12 +440,12 @@
         }
     },
     {
-        "name": "chart",
-        "path": "components/chart",
+        "name": "charts",
+        "path": "components/charts",
         "verified": true,
         "checks": 111,
         "contract": {
-            "name": "chart",
+            "name": "charts",
             "props": {
                 "type": {
                     "type": "string",
@@ -1149,7 +1149,7 @@
         "name": "gantt",
         "path": "components/gantt",
         "verified": true,
-        "checks": 26,
+        "checks": 30,
         "contract": {
             "name": "gantt",
             "props": {
@@ -1181,6 +1181,14 @@
                     "default": true
                 },
                 "editable": {
+                    "type": "boolean",
+                    "default": false
+                },
+                "readonly": {
+                    "type": "boolean",
+                    "default": false
+                },
+                "disabled": {
                     "type": "boolean",
                     "default": false
                 },
@@ -1249,7 +1257,7 @@
         "name": "kanban",
         "path": "components/kanban",
         "verified": true,
-        "checks": 7,
+        "checks": 9,
         "contract": {
             "name": "kanban",
             "props": {
@@ -1261,12 +1269,16 @@
             "events": [
                 "oncardmove",
                 "onchange",
-                "oncardclick"
+                "oncardclick",
+                "oncarddblclick",
+                "oncardmenu"
             ],
             "api": [
                 "addCard",
                 "removeCard",
-                "moveCard"
+                "moveCard",
+                "undo",
+                "redo"
             ]
         }
     },
@@ -1415,7 +1427,7 @@
         "name": "modal",
         "path": "components/modal",
         "verified": true,
-        "checks": 53,
+        "checks": 59,
         "contract": {
             "name": "modal",
             "props": {
@@ -1491,9 +1503,21 @@
                     "type": "number",
                     "default": 0
                 },
+                "icon": {
+                    "type": "string",
+                    "default": ""
+                },
+                "radius": {
+                    "type": "boolean",
+                    "default": true
+                },
                 "focus": {
                     "type": "boolean",
                     "default": true
+                },
+                "outline": {
+                    "type": "boolean",
+                    "default": false
                 },
                 "overflow": {
                     "type": "boolean",

@@ -100,7 +100,10 @@ export const Modal = component('modal', {
     autoadjust: false,            // v5: auto-adjust
     flip: 0,                      // anchored panels: at the bottom edge, flip ABOVE the natural top,
                                   // clearing this many px (the anchor height). 0 disables
+    icon: '',                     // material icon name, shown before the title
+    radius: true,                 // rounded corners (false: square — anchored panels)
     focus: true,
+    outline: false,               // paint the catalog focus ring on the panel itself
     overflow: false,
     responsive: true,
     layers: false,
@@ -648,6 +651,8 @@ export const Modal = component('modal', {
                 role="${() => props.role.value || (props.backdrop.value ? 'dialog' : false)}"
                 aria-modal="${() => ((props.role.value || (props.backdrop.value ? 'dialog' : '')) === 'dialog' ? 'true' : false)}"
                 aria-label="${() => props.title.value || false}"
+                data-outline="${() => (props.outline.value ? 'true' : false)}"
+                data-radius="${() => (props.radius.value === false ? 'false' : false)}"
                 tabindex="-1"
                 ref="${(el: HTMLElement) => onOpened(el)}"
                 onmousemove="${onHover}"
@@ -669,7 +674,10 @@ export const Modal = component('modal', {
                     props.header.value &&
                     html`<header class="lm-modal-header"
                         onclick="${() => minimized.value && restore()}">
-                        <span class="lm-modal-title">${props.title}</span>
+                        <span class="lm-modal-title">${() =>
+                            props.icon.value
+                                ? html`<i class="material-icons material-symbols-outlined lm-modal-icon">${props.icon}</i>`
+                                : ''}${props.title}</span>
                         <span class="lm-modal-controls">
                             ${() =>
                                 props.minimizable.value &&

@@ -54,6 +54,7 @@ export interface ToolbarItem {
     visible?: boolean; // false hides the item
     disabled?: boolean; // blocks activation
     gap?: boolean; // flexible spacer in the left rail (v5 data-gap)
+    width?: number; // 'select' pickers: FIXED header width in px — a changing label (Paragraph → Heading 1) must not reflow the toolbar
     options?: (string | ContextItem)[]; // 'select' dropdown entries
     value?: string; // 'color' items: the current color (swatch underline)
     onclick?: (e: Event, item: ToolbarItem) => void;
@@ -218,6 +219,7 @@ export const Toolbar = component('toolbar', {
                 data-visible="${live(() => (item.visible === undefined ? false : String(item.visible)))}"
                 data-disabled="${live(() => (item.disabled ? 'true' : false))}">
                 <div class="lm-toolbar-picker-header" role="button"
+                    style="${item.width ? 'width:' + item.width + 'px' : false}"
                     tabindex="${item.disabled ? false : '0'}"
                     title="${item.tooltip || false}"
                     aria-haspopup="true"

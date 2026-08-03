@@ -241,6 +241,9 @@ export const Carousel = component('carousel', {
                 display: flex; align-items: center; justify-content: center; }
             .lm-carousel-arrow:hover { background: #fff; }
             .lm-carousel-arrow[disabled] { opacity: 0.35; cursor: default; }
+            .lm-carousel-arrow svg { width: 18px; height: 18px; display: block;
+                fill: none; stroke: currentColor; stroke-width: 2.5;
+                stroke-linecap: round; stroke-linejoin: round; }
             .lm-carousel-prev { left: 10px; }
             .lm-carousel-next { right: 10px; }
             .lm-carousel-dots { position: absolute; left: 0; right: 0; bottom: 8px;
@@ -288,13 +291,13 @@ export const Carousel = component('carousel', {
             html`<button type="button" class="lm-carousel-arrow lm-carousel-prev"
                 aria-label="Previous slide"
                 disabled="${() => !props.loop.value && cur.value === 0}"
-                onclick="${prev}">&#8249;</button>`}
+                onclick="${prev}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6" /></svg></button>`}
         ${() =>
             props.arrows.value && count() > 1 &&
             html`<button type="button" class="lm-carousel-arrow lm-carousel-next"
                 aria-label="Next slide"
                 disabled="${() => !props.loop.value && cur.value === count() - 1}"
-                onclick="${next}">&#8250;</button>`}
+                onclick="${next}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg></button>`}
         ${() =>
             props.dots.value && count() > 1 &&
             html`<div class="lm-carousel-dots">

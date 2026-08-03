@@ -156,6 +156,7 @@
 .lm-list-pages button {
     min-width: 28px;
     height: 28px;
+    margin: 0; /* host pages often style bare <button> with margins */
     padding: 0 6px;
     border: 1px solid transparent;
     background: transparent;

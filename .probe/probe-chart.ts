@@ -6,7 +6,7 @@
  * scatter point placement. Results in #lm-probe for scripts/chrome-probe.mjs.
  */
 import { html, mount, type Component } from 'lemonadejs';
-import Chart from '@lemonadejs/chart';
+import Chart from '@lemonadejs/charts';
 
 const out: string[] = [];
 const log = (name: string, ok: boolean, detail: object = {}): void => {

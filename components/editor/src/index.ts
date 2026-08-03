@@ -286,6 +286,8 @@ export const Editor = component('editor', {
         type: 'select',
         title: 'Paragraph',
         tooltip: 'Block format',
+        width: 96, // fits 'Paragraph', the widest label — the toolbar must not reflow when the selection changes
+
         options: BLOCKS.map(([label, tag]) => ({
             title: label,
             onclick: () => exec('formatBlock', '<' + tag.toUpperCase() + '>'),

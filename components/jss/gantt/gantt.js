@@ -25,8 +25,16 @@ let config = {
     columns: { label: 0, start: 1, end: 2, progress: 3, color: 4 },
     width: 420,       // lane column width in px
     editable: true,   // drag bars to move, drag edges to resize
+    readonly: false,  // host override: view-only (a readonly worksheet) regardless of `editable`
     snap: 1,          // drag snapping, in days
+    daywidth: 16,     // FIXED px per day slot; the window = width/daywidth days (0 = fit the data)
+    resizable: true,  // grip on the lane's right border to resize the timeline viewport
 };
+
+/** The single edit gate: `editable` opts in, `readonly` overrides it */
+const canEdit = function() {
+    return config.editable !== false && config.readonly !== true;
+}
 
 let instances = 0;
 
@@ -103,6 +111,7 @@ const ganttChart = (function(spreadsheet, opt) {
     let headerCell = null;
     let linkLayer = null;
     let handleLayer = null;
+    let api = null;      // the block's getRange/setRange (captures pans)
     let observer = null;
     let queued = false;
     let redrawQueued = false;
@@ -166,7 +175,9 @@ const ganttChart = (function(spreadsheet, opt) {
         return { tasks, from: toIso(lo - 2 * DAY), to: toIso(hi + 2 * DAY) };
     }
 
-    /** Bar drag committed on the chart -> write the date cells back */
+    /** Bar drag committed on the chart -> write the date cells back.
+     *  The viewport NEVER moves on a drop — a bar dragged past the edge
+     *  clips out of view; the header pan or the resize grip brings it back. */
     const onBarChange = function(task, s, e) {
         const cols = config.columns;
         worksheet.setValue(worksheet.helpers.getCellNameFromCoords(cols.start, task._row), s);
@@ -292,16 +303,19 @@ const ganttChart = (function(spreadsheet, opt) {
 
         const tRect = table.getBoundingClientRect();
         const cRect = content.getBoundingClientRect();
+        const lanes = table.querySelectorAll(':scope > tbody > tr > td.lm-gantt-cell');
+        // Clip the overlays to the LANE COLUMN: bar rects ignore the lane
+        // cells' overflow clipping, so a bar outside the date viewport
+        // would otherwise paint connectors/handles over the data columns
+        const laneRect = lanes.length ? lanes[0].getBoundingClientRect() : tRect;
         [linkLayer, handleLayer].forEach(function(layer) {
-            layer.style.left = (tRect.left - cRect.left + content.scrollLeft) + 'px';
+            layer.style.left = (laneRect.left - cRect.left + content.scrollLeft) + 'px';
             layer.style.top = (tRect.top - cRect.top + content.scrollTop) + 'px';
-            layer.style.width = tRect.width + 'px';
+            layer.style.width = laneRect.width + 'px';
             layer.style.height = tRect.height + 'px';
         });
         linkLayer.textContent = '';
         handleLayer.textContent = '';
-
-        const lanes = table.querySelectorAll(':scope > tbody > tr > td.lm-gantt-cell');
         const barOf = function(y) {
             return lanes[y] && lanes[y].querySelector('.lm-gantt-bar, .lm-gantt-milestone');
         }
@@ -314,7 +328,7 @@ const ganttChart = (function(spreadsheet, opt) {
 
         // A connect handle on every bar: drag it onto another task's row
         // to write the dependency into the predecessors column
-        if (config.editable !== false) {
+        if (canEdit()) {
             data.value.forEach(function(task) {
                 if (! task) {
                     return;
@@ -324,7 +338,7 @@ const ganttChart = (function(spreadsheet, opt) {
                     return;
                 }
                 const rect = bar.getBoundingClientRect();
-                const hx = rect.right - tRect.left + 3;
+                const hx = rect.right - laneRect.left + 3;
                 const hy = rect.top + rect.height / 2 - tRect.top;
                 const handle = document.createElement('div');
                 handle.className = 'jss-gantt-link-handle';
@@ -348,7 +362,7 @@ const ganttChart = (function(spreadsheet, opt) {
                 return;
             }
             const toRect = toBar.getBoundingClientRect();
-            const x2 = toRect.left - tRect.left;
+            const x2 = toRect.left - laneRect.left;
             const y2 = toRect.top + toRect.height / 2 - tRect.top;
 
             task.dependencies.forEach(function(fromRow) {
@@ -357,18 +371,35 @@ const ganttChart = (function(spreadsheet, opt) {
                     return;
                 }
                 const fromRect = fromBar.getBoundingClientRect();
-                const x1 = fromRect.right - tRect.left;
+                const x1 = fromRect.right - laneRect.left;
                 const y1 = fromRect.top + fromRect.height / 2 - tRect.top;
-                // Same routing as the block: out of A, vertical, into B
-                const turn = Math.max(x1 + G, x2 - G);
-                const d = 'M ' + x1 + ' ' + y1 + ' H ' + turn + ' V ' + y2 + ' H ' + x2;
+                // Same routing as the block: forward links take one drop;
+                // BACK-links (B starts before A ends) run through the gap
+                // between the rows so the line never crosses B's bar
+                let d;
+                if (x2 - G >= x1 + G) {
+                    d = 'M ' + x1 + ' ' + y1 + ' H ' + (x2 - G) + ' V ' + y2 + ' H ' + x2;
+                } else {
+                    // The leg must sit in the MIDDLE of the visual gap
+                    // between the bars — ON a bar edge it hides behind the
+                    // bar (connectors render underneath). Adjacent rows:
+                    // midway between A's bottom and B's top edges; farther
+                    // apart: just clear of B's edge.
+                    // −3px: stroke width + air, so the leg sits visibly
+                    // clear of the bar edge
+                    const gapY = y2 > y1
+                        ? Math.max((fromRect.bottom + toRect.top) / 2, toRect.top - 3) - tRect.top - 3
+                        : Math.min((toRect.bottom + fromRect.top) / 2, toRect.bottom + 3) - tRect.top + 3;
+                    d = 'M ' + x1 + ' ' + y1 + ' H ' + (x1 + G) + ' V ' + gapY +
+                        ' H ' + (x2 - G) + ' V ' + y2 + ' H ' + x2;
+                }
 
                 const path = document.createElementNS(SVG, 'path');
                 path.setAttribute('class', 'lm-gantt-link');
                 path.setAttribute('d', d);
                 svg.appendChild(path);
 
-                if (config.editable !== false) {
+                if (canEdit()) {
                     const hit = document.createElementNS(SVG, 'path');
                     hit.setAttribute('class', 'lm-gantt-link-hit');
                     hit.setAttribute('d', d);
@@ -393,8 +424,42 @@ const ganttChart = (function(spreadsheet, opt) {
     const Chart = function() {
         return html`<${Gantt} data="${data}" start="${start}" end="${end}"
             table="${'.' + marker}"
-            editable="${config.editable !== false}" snap="${config.snap || 1}"
-            onchange="${onBarChange}" />`;
+            editable="${config.editable !== false}" readonly="${config.readonly === true}" snap="${config.snap || 1}"
+            onchange="${onBarChange}" ref="${(a) => { api = a; }}" />`;
+    }
+
+    /** Adopt the block's CURRENT window into the stores — the user may
+     *  have panned the header, which lives only inside the block. Every
+     *  rebuild recomputes the range from these props, so they must
+     *  describe what is on screen, or a drop after a pan snaps back. */
+    const adoptRange = function() {
+        if (api) {
+            const r = api.getRange();
+            start.value = r.start;
+            end.value = r.end;
+        }
+    }
+
+    /** Content-box calibration. Table chrome (cell borders/padding) makes
+     *  the lane's content box a little narrower than the <col> width, so
+     *  a day slot lands NEAR daywidth, not on it — and the deficit spread
+     *  over a varying day count nudges every bar on each resize step.
+     *  Measure the rendered lane and nudge the col until one slot is
+     *  daywidth px exactly. */
+    const calibrate = function() {
+        if (! (config.daywidth > 0) || ! laneCol || ! table || ! start.value || ! end.value) {
+            return;
+        }
+        const lane = table.querySelector('td.lm-gantt-cell > .lm-gantt-lane');
+        if (! lane) {
+            return;
+        }
+        const ticks = Math.round((toMs(end.value) - toMs(start.value)) / DAY) + 1;
+        const diff = Math.round(ticks * config.daywidth - lane.getBoundingClientRect().width);
+        if (diff) {
+            const applied = parseInt(laneCol.getAttribute('width'), 10) || config.width;
+            laneCol.setAttribute('width', applied + diff);
+        }
     }
 
     /** The injected chrome jss does not know about: marker class on the
@@ -448,6 +513,57 @@ const ganttChart = (function(spreadsheet, opt) {
                 headerCell = document.createElement('th');
                 headerCell.className = 'lm-gantt-header-cell';
                 headerRow.appendChild(headerCell);
+                // Resize grip on the lane's RIGHT border — the one jss
+                // cannot provide (its column resizing stops at the previous
+                // column; the lane's right edge is the table edge). Day
+                // width stays fixed: a wider lane shows more days, it does
+                // not stretch the slots.
+                if (config.resizable !== false) {
+                    const grip = document.createElement('div');
+                    grip.className = 'jss-gantt-resize';
+                    grip.title = 'Drag to resize the timeline';
+                    grip.addEventListener('mousedown', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        adoptRange(); // resize extends the CURRENT (possibly panned) window
+                        const x0 = e.clientX;
+                        const w0 = config.width;
+                        const move = function(ev) {
+                            const raw = Math.max(120, w0 + (ev.clientX - x0));
+                            // QUANTIZED to whole day slots with EXACT math:
+                            // width = ticks × daywidth and window = ticks
+                            // days keeps one slot at daywidth px precisely,
+                            // so existing bars keep their exact px position
+                            // through every step — no drift, no flicker
+                            const ticks = config.daywidth > 0 ? Math.max(8, Math.round(raw / config.daywidth)) : 0;
+                            const w = ticks ? ticks * config.daywidth : raw;
+                            if (w === config.width) {
+                                return;
+                            }
+                            config.width = w;
+                            if (laneCol) {
+                                laneCol.setAttribute('width', w);
+                            }
+                            if (ticks && start.value) {
+                                end.value = toIso(toMs(start.value) + (ticks - 1) * DAY);
+                            }
+                            calibrate();
+                            // SYNCHRONOUS redraw: the observer's rAF redraw
+                            // lands a frame after the bars move — connectors
+                            // and handles blink out for that frame. Same-frame
+                            // keeps them glued.
+                            redrawLinks();
+                        };
+                        const up = function() {
+                            document.removeEventListener('mousemove', move);
+                            document.removeEventListener('mouseup', up);
+                            sync();
+                        };
+                        document.addEventListener('mousemove', move);
+                        document.addEventListener('mouseup', up);
+                    });
+                    headerCell.appendChild(grip);
+                }
                 // Mounted ONCE: re-appending the same cell keeps the
                 // living chart when jss re-attaches the header row
                 mount(Chart, headerCell);
@@ -471,10 +587,34 @@ const ganttChart = (function(spreadsheet, opt) {
             }
             ensureCells();
             const built = buildTasks();
-            start.value = built.from;
-            end.value = built.to;
+            // The viewport is set ONCE and NEVER resized by edits: the day
+            // slot width stays fixed. With `daywidth` the window length is
+            // width/daywidth days (predictable at any data spread); 0 falls
+            // back to fitting the whole envelope. Bars dragged outside the
+            // window SHIFT it (see onBarChange) — a scroll, not a squeeze.
+            if (! start.value || ! end.value) {
+                start.value = built.from;
+                if (config.daywidth > 0) {
+                    // EXACT slots: width = ticks × daywidth and window =
+                    // ticks days, so one slot is daywidth px PRECISELY and
+                    // a bar at day k sits at exactly k × daywidth px —
+                    // independent of the window length. Anything less and
+                    // every resize step nudges every bar sub-pixel.
+                    const ticks = Math.max(8, Math.round(config.width / config.daywidth));
+                    config.width = ticks * config.daywidth;
+                    if (laneCol) {
+                        laneCol.setAttribute('width', config.width);
+                    }
+                    end.value = toIso(toMs(built.from) + (ticks - 1) * DAY);
+                } else {
+                    end.value = built.to;
+                }
+            } else {
+                adoptRange();
+            }
             data.value = built.tasks;
             // Lanes re-rendered synchronously above — geometry is fresh
+            calibrate();
             redrawLinks();
         });
     }
@@ -530,6 +670,15 @@ const P = (function(opt) {
         }
         if (typeof opt.editable === 'boolean') {
             config.editable = opt.editable;
+        }
+        if (typeof opt.readonly === 'boolean') {
+            config.readonly = opt.readonly;
+        }
+        if (typeof opt.daywidth === 'number') {
+            config.daywidth = opt.daywidth;
+        }
+        if (typeof opt.resizable === 'boolean') {
+            config.resizable = opt.resizable;
         }
         if (opt.snap) {
             config.snap = opt.snap;

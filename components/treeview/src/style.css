@@ -30,6 +30,7 @@
     border-radius: var(--lm-treeview-radius, 6px);
     cursor: pointer;
     line-height: 1.5;
+    user-select: none; /* rows are handles (click, keyboard, drag), not text */
 }
 
 .lm-treeview .lm-treeview-row:hover {
@@ -46,27 +47,61 @@
     color: var(--lm-treeview-selected-color, #1e3a8a);
 }
 
-/* Drag-and-drop live drop indicator (draggable). The JS adds
-   .lm-treeview-drop-<pos>, pos = before | after | inside:
-     before/after → an accent insertion line at the row's top/bottom edge
-     inside       → tint + dashed ring on the row it will nest under */
-.lm-treeview .lm-treeview-row.lm-treeview-drop-before {
-    box-shadow: inset 0 2px 0 0 var(--lm-treeview-drop, var(--lm-main-color, #2563eb));
+/* Drag-and-drop (draggable). ZERO LAYOUT SHIFT: every affordance is
+   pure decoration — the tree never moves during a drag.
+     .lm-treeview-dragging    → the origin node, dimmed in place
+     .lm-treeview-drop-before → insertion line ABOVE the row (absolute)
+     .lm-treeview-drop-after  → insertion line BELOW the subtree (absolute)
+     .lm-treeview-drop-inside → tint + ring on the container row
+     .lm-treeview-drag-chip   → the floating label riding the cursor */
+.lm-treeview .lm-treeview-node {
+    position: relative; /* anchors the absolute insertion lines */
 }
 
-.lm-treeview .lm-treeview-row.lm-treeview-drop-after {
-    box-shadow: inset 0 -2px 0 0 var(--lm-treeview-drop, var(--lm-main-color, #2563eb));
+.lm-treeview .lm-treeview-dragging > .lm-treeview-row {
+    opacity: 0.4;
 }
 
-.lm-treeview .lm-treeview-row.lm-treeview-drop-inside {
+.lm-treeview .lm-treeview-drop-before::before,
+.lm-treeview .lm-treeview-drop-after::after {
+    content: '';
+    position: absolute;
+    left: 2px;
+    right: 2px;
+    height: 2px;
+    border-radius: 1px;
+    background: var(--lm-treeview-drop, var(--lm-main-color, #2563eb));
+    pointer-events: none;
+    z-index: 1;
+}
+
+.lm-treeview .lm-treeview-drop-before::before {
+    top: -1px;
+}
+
+.lm-treeview .lm-treeview-drop-after::after {
+    bottom: -1px;
+}
+
+.lm-treeview .lm-treeview-drop-inside > .lm-treeview-row {
     background: var(--lm-treeview-drop-inside-bg, #dbeafe);
     outline: 1px dashed var(--lm-treeview-drop, var(--lm-main-color, #2563eb));
     outline-offset: -1px;
 }
 
-/* the row being dragged is dimmed while it's in flight */
-.lm-treeview .lm-treeview-row.lm-treeview-dragging {
-    opacity: 0.4;
+/* the chip: a small floating copy of the grabbed label under the cursor */
+.lm-treeview .lm-treeview-drag-chip {
+    position: fixed;
+    z-index: 100;
+    pointer-events: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 10px;
+    border-radius: var(--lm-treeview-radius, 6px);
+    background: var(--lm-background-color, #fff);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(0, 0, 0, 0.05);
+    font-size: var(--lm-treeview-font-size, 14px);
 }
 
 /* Chevron — rendered for parents only (they carry aria-expanded) */
@@ -81,14 +116,23 @@
 }
 
 .lm-treeview .lm-treeview-node[aria-expanded] > .lm-treeview-row > .lm-treeview-toggle::before {
-    content: '\25B8';
-    font-size: 12px;
-    line-height: 1;
+    /* Stroke-drawn chevron (a rotated two-border square), not a font
+       glyph: text triangles render at platform-dependent sizes/weights
+       and U+25B6 can even take the emoji presentation. Borders are
+       crisp at any DPI and follow currentColor. */
+    content: '';
+    width: var(--lm-treeview-chevron-size, 5px);
+    height: var(--lm-treeview-chevron-size, 5px);
+    border-right: 1.5px solid currentColor;
+    border-bottom: 1.5px solid currentColor;
+    /* -45deg points it right (›); the translate re-centers the optical
+       weight, which sits off-axis on a rotated square */
+    transform: translateX(-1px) rotate(-45deg);
     transition: transform 0.15s ease;
 }
 
 .lm-treeview .lm-treeview-node[aria-expanded="true"] > .lm-treeview-row > .lm-treeview-toggle::before {
-    transform: rotate(90deg);
+    transform: translateY(-1px) rotate(45deg); /* points down (⌄) */
 }
 
 .lm-treeview .lm-treeview-label {

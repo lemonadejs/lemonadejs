@@ -111,7 +111,6 @@ export const Signature = component('signature', {
     };
 
     const arm = () => {
-        release?.();
         const up = () => release?.();
         const offs = [
             listen(document, 'mouseup', up),
@@ -128,6 +127,9 @@ export const Signature = component('signature', {
         if (props.disabled.value || !ctx) {
             return;
         }
+        // A stroke still in flight (lost mouseup) commits BEFORE this one
+        // touches pending/last — releasing later would corrupt both strokes
+        release?.();
         pending = data().slice();
         last = locate(e);
         pending.push(last);

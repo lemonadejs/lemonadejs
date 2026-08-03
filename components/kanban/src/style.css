@@ -1,23 +1,27 @@
 /* <Kanban /> — default styling, lm-kanban-* convention.
    Each column is its own vertical flex stack: cards flow naturally, so
-   uneven card heights never leave gaps. Theme via custom properties. */
+   uneven card heights never leave gaps. Every color reads a shared
+   --lm-* theme token (same contract as charts/gantt) with the standalone
+   value as fallback — retheming --lm-main-color / the neutral ramp
+   re-tints the board like the rest of the catalog. */
 .lm-kanban {
     --lm-kanban-column-width: 280px;
     --lm-kanban-header-height: 44px;
-    --lm-kanban-column-bg: #f4f4f5;
+    --lm-kanban-column-bg: var(--lm-background-color-header, #f4f4f5);
     --lm-kanban-column-radius: 12px;
-    --lm-kanban-card-bg: #ffffff;
+    --lm-kanban-card-bg: var(--lm-background-color, #ffffff);
     --lm-kanban-card-radius: 8px;
-    --lm-kanban-card-shadow: 0 1px 2px rgba(0, 0, 0, 0.08), 0 1px 1px rgba(0, 0, 0, 0.04);
+    --lm-kanban-card-shadow: var(--lm-shadow, 0 1px 2px rgba(0, 0, 0, 0.08), 0 1px 1px rgba(0, 0, 0, 0.04));
     --lm-kanban-card-shadow-hover: 0 4px 12px rgba(0, 0, 0, 0.14);
-    --lm-kanban-accent: #2563eb;
+    --lm-kanban-accent: var(--lm-main-color, #2563eb);
+    --lm-kanban-tag-radius: 2px;
     --lm-kanban-gap: 12px;
 
     display: flex;
     align-items: flex-start;
     gap: var(--lm-kanban-gap);
     font: 13.5px/1.45 system-ui, sans-serif;
-    color: #18181b;
+    color: var(--lm-font-color, #18181b);
     overflow-x: auto;
     padding: 4px;
 }
@@ -47,7 +51,7 @@
 .lm-kanban-column-title {
     font-weight: 650;
     font-size: 13px;
-    color: #3f3f46;
+    color: var(--lm-font-color, #3f3f46);
     letter-spacing: 0.01em;
     white-space: nowrap;
     overflow: hidden;
@@ -62,8 +66,8 @@
     align-items: center;
     justify-content: center;
     border-radius: 10px;
-    background: rgba(0, 0, 0, 0.07);
-    color: #52525b;
+    background: var(--lm-background-color-highlight, rgba(0, 0, 0, 0.07));
+    color: var(--lm-secondary-color, #52525b);
     font-size: 11.5px;
     font-weight: 600;
     box-sizing: border-box;
@@ -107,13 +111,50 @@
 .lm-kanban-card-title {
     font-weight: 600;
     font-size: 13px;
-    color: #18181b;
+    color: var(--lm-font-color, #18181b);
+}
+
+/* ---- the card ▾ menu button: exists only when oncardmenu is handled,
+   fades in on card hover (and stays visible while keyboard-focused) */
+.lm-kanban-card-menu {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 22px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    border-radius: 6px;
+    padding: 0;
+    background: transparent;
+    color: var(--lm-icon-color, #71717a);
+    font-size: 14px;
+    line-height: 1;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.12s ease, background 0.12s ease;
+}
+
+.lm-kanban-card:hover .lm-kanban-card-menu,
+.lm-kanban-card-menu:focus-visible {
+    opacity: 1;
+}
+
+.lm-kanban-card-menu:hover {
+    background: var(--lm-background-color-highlight, rgba(0, 0, 0, 0.07));
+    color: var(--lm-font-color, #18181b);
+}
+
+.lm-kanban-card:has(.lm-kanban-card-menu) .lm-kanban-card-title {
+    padding-right: 22px;
 }
 
 .lm-kanban-card-description {
     margin-top: 4px;
     font-size: 12.5px;
-    color: #71717a;
+    color: var(--lm-secondary-color, #71717a);
 }
 
 .lm-kanban-card-tags {
@@ -125,20 +166,22 @@
 
 .lm-kanban-tag {
     padding: 1px 8px;
-    border-radius: 999px;
-    background: rgba(37, 99, 235, 0.09);
-    color: #3730a3;
+    border-radius: var(--lm-kanban-tag-radius);
+    background: var(--lm-main-color-tint, rgba(37, 99, 235, 0.09));
+    color: var(--lm-main-color-highlight, #3730a3);
     font-size: 10.5px;
     font-weight: 600;
     letter-spacing: 0.02em;
 }
 
-/* ---- the drop indicator: a slot line between cards (flex order) */
-.lm-kanban-indicator {
-    height: 3px;
-    margin: -5px 0;
-    border-radius: var(--lm-radius, 6px);
-    background: var(--lm-kanban-accent);
-    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.6);
+/* ---- the ghost slot: a card-sized drop preview between cards (flex
+   order); the dragged card is out of the flow, so this IS its landing
+   spot — the other cards shift around it */
+.lm-kanban-ghost {
+    border: 1.5px dashed var(--lm-kanban-accent);
+    border-radius: var(--lm-kanban-card-radius);
+    background: color-mix(in srgb, var(--lm-kanban-accent) 5%, transparent);
+    box-sizing: border-box;
+    flex: 0 0 auto;
     pointer-events: none;
 }

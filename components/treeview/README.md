@@ -36,12 +36,20 @@ Contract:
               new position (parentId is null at the root)
   api         { open(id), close(id), select(id), toggle(id) }
 
-Drag-and-drop (draggable only): native HTML5 DnD — no JS emulation.
-Hovering a row splits it in thirds: top → drop BEFORE (sibling), bottom
-→ drop AFTER (sibling), middle → drop INSIDE (becomes a child, opening
-the target). The tree array is mutated in place + data.touch(), so the
-keyed diff MOVES existing DOM instead of rebuilding it. A node can never
-drop onto itself or into its own subtree.
+Drag-and-drop (draggable only): a pointer gesture (3px threshold,
+Escape cancels, a drag never fires the click selection) with ZERO
+LAYOUT SHIFT — a dense list must not reflow under the cursor. The
+origin row stays in the flow, dimmed; a small chip with the node's
+label rides the cursor; the landing slot is an absolutely positioned
+insertion line (before/after) or a ring on the container row
+(inside). Hovering a CONTAINER row (a node with a children
+array — children: [] is an empty folder) splits it in thirds: top →
+drop BEFORE (sibling), bottom → drop AFTER (sibling), middle → drop
+INSIDE (becomes a child, opening the target). A LEAF row (no children
+key) splits in halves, before/after only — a leaf never becomes a
+parent via drop. The tree array is mutated in place + data.touch(),
+so the keyed diff MOVES existing DOM instead of rebuilding it. A node
+can never drop onto itself or into its own subtree.
 
 Keyboard (APG tree pattern, single select):
   ArrowRight  opens a closed parent; on an open parent moves to the

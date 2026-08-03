@@ -90,9 +90,43 @@
     color: var(--lm-font-color, #18181b);
 }
 
+/* Sort indicator: a CSS-drawn chevron (the old ▲/▼ text glyphs rendered
+   tiny and at the mercy of the platform font). It rotates between asc and
+   desc, and sortable-but-unsorted headers hint a faint one on hover. */
 .lm-datagrid-arrow {
-    font-size: 9px;
-    color: var(--lm-main-color, #2563eb);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    width: 14px;
+    height: 14px;
+    color: inherit; /* same color as the header text */
+}
+
+.lm-datagrid-arrow::before {
+    content: '';
+    width: 5px;
+    height: 5px;
+    border-right: 1.6px solid currentColor;
+    border-bottom: 1.6px solid currentColor;
+    opacity: 0;
+    transform: translateY(-1px) rotate(45deg); /* chevron pointing down */
+    transition:
+        transform var(--lm-duration, 0.15s) var(--lm-ease, ease),
+        opacity var(--lm-duration, 0.15s) var(--lm-ease, ease);
+}
+
+.lm-datagrid-arrow[data-dir]::before {
+    opacity: 1;
+}
+
+.lm-datagrid-arrow[data-dir='asc']::before {
+    transform: translateY(1px) rotate(-135deg); /* pointing up */
+}
+
+/* hover a sortable, unsorted column: faint hint that it sorts */
+.lm-datagrid-th[data-sortable='true']:hover .lm-datagrid-arrow:not([data-dir])::before {
+    opacity: 0.45;
 }
 
 .lm-datagrid-th[data-align='right'] {
@@ -218,6 +252,7 @@
 .lm-datagrid-pages button {
     min-width: 28px;
     height: 28px;
+    margin: 0; /* host pages often style bare <button> with margins */
     padding: 0 6px;
     border: 1px solid transparent;
     background: transparent;

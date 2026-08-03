@@ -185,9 +185,11 @@
     background-color: var(--lm-background-color-highlight, #f4f4f5);
 }
 
+/* selected: SOLID accent + white text, like the native <select> highlight
+   (was a pale tint — too quiet to read as "selected") */
 .lm-dropdown-item[data-selected='true'] {
-    background-color: rgba(37, 99, 235, 0.08);
-    color: var(--lm-main-color-highlight, #1d4ed8);
+    background-color: var(--lm-main-color, #2563eb);
+    color: #fff;
     font-weight: 500;
 }
 
@@ -197,11 +199,12 @@
     right: 12px;
     width: 14px;
     height: 14px;
-    background: url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2714%27 height=%2714%27 viewBox=%270 0 24 24%27 fill=%27none%27 stroke=%27%232563eb%27 stroke-width=%273%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27%3E%3Cpath d=%27M20 6L9 17l-5-5%27/%3E%3C/svg%3E") center no-repeat;
+    background: url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2714%27 height=%2714%27 viewBox=%270 0 24 24%27 fill=%27none%27 stroke=%27%23fff%27 stroke-width=%273%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27%3E%3Cpath d=%27M20 6L9 17l-5-5%27/%3E%3C/svg%3E") center no-repeat;
 }
 
+.lm-dropdown-item[data-selected='true']:hover,
 .lm-dropdown-item[data-cursor='true'][data-selected='true'] {
-    background-color: rgba(37, 99, 235, 0.14);
+    background-color: var(--lm-main-color-highlight, #1d4ed8);
 }
 
 .lm-dropdown-item[data-disabled='true'] {

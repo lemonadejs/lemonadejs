@@ -18,7 +18,7 @@ import Accordion, { type AccordionItem } from '@lemonadejs/accordion';
 import Tabs, { type TabItem } from '@lemonadejs/tabs';
 import Alert from '@lemonadejs/alert';
 import Card from '@lemonadejs/card';
-import Chart, { type ChartSeries } from '@lemonadejs/chart';
+import Chart, { type ChartSeries } from '@lemonadejs/charts';
 
 const countries: DropdownItem[] = [
     { value: 'br', text: 'Brazil', group: 'America' },

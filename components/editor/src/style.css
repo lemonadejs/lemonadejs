@@ -13,11 +13,6 @@
     overflow: visible;
 }
 
-.lm-editor:focus-within {
-    outline: 2px solid var(--lm-border-outline, #000);
-    outline-offset: 2px;
-}
-
 .lm-editor[data-fullscreen="true"] {
     position: fixed;
     inset: 0;
@@ -71,6 +66,40 @@
     outline: none;
     line-height: 1.55;
     overflow-wrap: break-word;
+}
+
+/* The typing surface opts out of the catalog focus ring — it would be a
+   permanent frame around the prose while writing */
+.lm-editor .lm-editor-area:focus,
+.lm-editor .lm-editor-area:focus-visible {
+    outline: none;
+}
+
+/* EDITOR-SCOPED focus style: the focused control's BORDER turns black,
+   keeping its normal radius exactly — no outline layered on top (outline
+   ignores border-radius in older Safari and reads as a square box).
+   Borderless chrome controls use an inset 1px ring instead: an inset
+   box-shadow follows border-radius in every browser.
+   Scoped here on purpose — the catalog keeps its own keyboard-only ring. */
+.lm-editor .lm-toolbar :focus,
+.lm-editor .lm-editor-link :focus {
+    outline: none;
+    box-shadow: inset 0 0 0 1px var(--lm-border-outline, #000);
+}
+
+/* Bordered controls (the link input): the border ITSELF goes black —
+   the exact same line and radius as the unfocused state */
+.lm-editor .lm-editor-link input:focus {
+    outline: none;
+    border-color: var(--lm-border-outline, #000);
+    box-shadow: none;
+}
+
+/* ... and the BLACK LINE is the focus signal: without this, the
+   toolbar's gray :focus fill (v5 parity) drowns it and the whole
+   control just reads gray. Hover keeps its gray. */
+.lm-editor .lm-toolbar-picker-header:focus {
+    background-color: transparent;
 }
 
 .lm-editor-area[data-empty="true"]::before {
@@ -218,10 +247,6 @@
     font-size: 0.9em;
 }
 
-.lm-editor-link input:focus {
-    outline: 2px solid var(--lm-border-outline, #000);
-    outline-offset: 1px;
-}
 
 .lm-editor-link button {
     display: inline-flex;

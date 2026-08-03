@@ -49,13 +49,16 @@
     align-items: center;
     justify-content: center;
     width: 28px;
+    margin: 0; /* host pages often style bare <button> with margins */
     padding: 0;
     border: 0;
     background: var(--lm-background-color, #fff);
     color: var(--lm-icon-color, #777);
     cursor: pointer;
     font-family: "Material Symbols Outlined", "Material Icons", "FontAwesome";
-    font-size: 22px;
+    font-size: 20px;
+    font-weight: 400; /* icon glyphs must not bold up */
+    font-variation-settings: 'wght' 400, 'opsz' 24;
     line-height: 1;
 }
 
@@ -71,7 +74,7 @@
 .lm-tabs .lm-tabs-tab {
     cursor: pointer;
     user-select: none;
-    padding: var(--lm-space-2, 8px) var(--lm-space-4, 16px);
+    padding: 10px var(--lm-space-4, 16px);
     border: 0;
     /* transparent underline reserves the space so selection doesn't shift */
     border-bottom: 2px solid transparent;
@@ -80,9 +83,11 @@
     color: var(--lm-font-grayout, #6b7280);
     font: 500 14px/1.45 system-ui, sans-serif;
     white-space: nowrap;
+    /* icon INLINE with the label (not stacked above), gap-spaced */
     display: flex;
-    flex-direction: column;
     align-items: center;
+    justify-content: center;
+    gap: 7px;
     transition:
         color var(--lm-duration, 0.15s) var(--lm-ease, ease),
         border-color var(--lm-duration, 0.15s) var(--lm-ease, ease),
@@ -92,6 +97,7 @@
 .lm-tabs .lm-tabs-tab:hover {
     color: var(--lm-font-color, #1f2937);
     background: color-mix(in srgb, var(--lm-main-color, #2563eb) 8%, transparent);
+    border-radius: var(--lm-radius, 6px) var(--lm-radius, 6px) 0 0;
 }
 
 .lm-tabs .lm-tabs-tab.lm-tabs-selected {
@@ -100,15 +106,20 @@
     background: transparent;
 }
 
+/* leading icon: sized proportional to the 14px label (not the old 22px
+   stacked block), optically centered, and pinned to weight 400 — the tab
+   label is 500 and a variable icon font would bold up with it */
 .lm-tabs .lm-tabs-tab[data-icon]:before {
     content: attr(data-icon);
     font-family: "Material Symbols Outlined", "Material Icons", "FontAwesome";
-    font-size: 22px;
-    width: 24px;
-    height: 24px;
+    font-size: 18px;
+    font-weight: 400;
+    font-variation-settings: 'wght' 400, 'opsz' 24;
+    width: 18px;
+    height: 18px;
+    line-height: 1;
     text-align: center;
     color: inherit;
-    margin-bottom: var(--lm-space-1, 4px);
 }
 
 /* Panels live in the DOM permanently — selection is just visibility */
@@ -121,15 +132,28 @@
     display: block;
 }
 
+/* "add" button: a quiet 28px hover chip with a text-proportional glyph
+   (was a bare 24px glyph — read as huge next to the 14px labels) */
 .lm-tabs .lm-tabs-insert-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
     margin-left: var(--lm-space-1, 4px);
+    align-self: center;
+    border-radius: var(--lm-radius, 6px);
     color: var(--lm-icon-color, #777);
     cursor: pointer;
     font-family: "Material Symbols Outlined", "Material Icons", "FontAwesome";
-    font-size: 24px;
-    width: 24px;
-    height: 24px;
-    text-align: center;
-    line-height: 24px;
-    align-self: center;
+    font-size: 18px;
+    font-weight: 400;
+    font-variation-settings: 'wght' 400, 'opsz' 24;
+    line-height: 1;
+    transition: background var(--lm-duration, 0.15s) var(--lm-ease, ease);
+}
+
+.lm-tabs .lm-tabs-insert-button:hover {
+    background: var(--lm-background-color-highlight, #ececec);
+    color: var(--lm-font-color, #1f2937);
 }

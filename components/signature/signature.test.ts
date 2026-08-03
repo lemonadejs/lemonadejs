@@ -270,6 +270,81 @@ describe('components/signature', () => {
         expect(api!.getValue()).toEqual([]);
     });
 
+    it('consecutive strokes accumulate in the v5 wire format', () => {
+        const changes: unknown[] = [];
+        handle = t(Signature, { onchange: (v: unknown) => changes.push(v) });
+        drag([1, 1], [2, 2]);
+        drag([3, 3], [4, 4]);
+        expect(changes).toEqual([
+            [[1, 1], [2, 2], '1'],
+            [[1, 1], [2, 2], '1', [3, 3], [4, 4], '1'],
+        ]);
+    });
+
+    it('a click-only stroke commits a single point + separator', () => {
+        const changes: unknown[] = [];
+        handle = t(Signature, { onchange: (v: unknown) => changes.push(v) });
+        canvas().dispatchEvent(mouse('mousedown', 5, 5));
+        document.dispatchEvent(new MouseEvent('mouseup'));
+        expect(changes).toEqual([[[5, 5], '1']]);
+    });
+
+    it('setValue coerces a non-array to the empty value', () => {
+        let api: Api | null = null;
+        handle = t(Signature, { ref: (a: Api) => (api = a) });
+        (api!.setValue as (v: unknown) => void)([[1, 1], '1']);
+        (api!.setValue as (v: unknown) => void)('garbage');
+        expect(api!.getValue()).toEqual([]);
+        (api!.setValue as (v: unknown) => void)(null);
+        expect(api!.getValue()).toEqual([]);
+    });
+
+    it('disabled is LIVE: toggling through a store blocks and unblocks drawing', () => {
+        const disabled = store(false);
+        const changes: unknown[] = [];
+        handle = t(Signature, { disabled, onchange: (v: unknown) => changes.push(v) });
+
+        drag([1, 1], [2, 2]);
+        expect(changes.length).toBe(1);
+        expect(root().className).not.toContain('lm-signature-disabled');
+
+        disabled.value = true;
+        expect(root().className).toContain('lm-signature-disabled');
+        drag([3, 3], [4, 4]);
+        expect(changes.length).toBe(1); // blocked
+
+        disabled.value = false;
+        drag([5, 5], [6, 6]);
+        expect(changes.length).toBe(2); // unblocked again
+    });
+
+    it('line and color are LIVE: the next stroke picks up store writes', () => {
+        const line = store(2);
+        const color = store('#111111');
+        handle = t(Signature, { line, color });
+
+        drag([1, 1], [2, 2]);
+        expect(ctx.lineWidth).toBe(2);
+        expect(ctx.strokeStyle).toBe('#111111');
+
+        line.value = 8;
+        color.value = '#dc2626';
+        drag([3, 3], [4, 4]);
+        expect(ctx.lineWidth).toBe(8);
+        expect(ctx.strokeStyle).toBe('#dc2626');
+    });
+
+    it('a second mousedown mid-stroke (lost mouseup) commits the first stroke', () => {
+        const changes: unknown[] = [];
+        handle = t(Signature, { onchange: (v: unknown) => changes.push(v) });
+        canvas().dispatchEvent(mouse('mousedown', 1, 1));
+        canvas().dispatchEvent(mouse('mousemove', 2, 2));
+        canvas().dispatchEvent(mouse('mousedown', 7, 7)); // re-arm releases + commits
+        expect(changes).toEqual([[[1, 1], [2, 2], '1']]);
+        document.dispatchEvent(new MouseEvent('mouseup'));
+        expect(changes.length).toBe(2); // the second stroke commits normally
+    });
+
     it('uses contract coercion: attribute-style strings work', () => {
         const App: Component = () =>
             html`<main><${Signature} width="400" height="120" line="5" disabled="true" /></main>`;

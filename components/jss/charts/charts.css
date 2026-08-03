@@ -1,5 +1,5 @@
 /* Charts extension for the JSS data grid — glue between the jss media
-   layer and the @lemonadejs/chart block (which carries its own CSS) */
+   layer and the @lemonadejs/charts block (which carries its own CSS) */
 
 .jss_charts {
     background-color: var(--jss-background-color, #fff);

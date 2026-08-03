@@ -1,6 +1,16 @@
 /* <Contextmenu /> — built on Modal; lm-contextmenu-* convention */
 .lm-contextmenu {
     outline: none;
+    /* a floating menu never inherits the host's alignment (e.g. the
+       toolbar centers its content; its embedded picker must not) */
+    text-align: left;
+}
+
+/* The panel takes focus PROGRAMMATICALLY (for keyboard nav) — no ring;
+   doubled class outguns the catalog's [class^="lm-"]:focus rule */
+.lm-contextmenu.lm-contextmenu:focus,
+.lm-contextmenu.lm-contextmenu:focus-visible {
+    outline: none;
 }
 
 /* Menu chrome scoped onto the Modal panels this component owns */
@@ -48,7 +58,12 @@
 .lm-contextmenu-icon {
     width: 18px;
     font-size: 16px;
-    text-align: center;
+    /* flex-centered box, not baseline: a 16px glyph inside the menu's
+       13px/1.5 line box otherwise sits visibly below the label */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
 }
 
 .lm-contextmenu-icon:empty {
