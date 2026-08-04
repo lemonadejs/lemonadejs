@@ -9,6 +9,14 @@ createWebComponent(Navbar);
 
 const App: Component = (props, { state }) => {
     const page = state(1);
+    // a STATE drives the live title — an inline () => arrow is not a prop
+    // value the engine resolves (it renders the function source as text)
+    const title = state('Page 1 of 5');
+    const go = (d: number) => {
+        const p = Math.min(5, Math.max(1, page.value + d));
+        page.value = p;
+        title.value = 'Page ' + p + ' of 5';
+    };
     const log = state<string[]>([]);
     const note = (m: string) => (log.value = [...log.value, m]);
 
@@ -17,10 +25,10 @@ const App: Component = (props, { state }) => {
 
         <h3>Driving state — onprev / onnext (new in v6)</h3>
         <div class="phone">
-            <${Navbar} title="${() => 'Page ' + page.value + ' of 5'}"
+            <${Navbar} title="${title}"
                 left="‹ Prev" right="Next ›"
-                onprev="${() => page.value > 1 && (page.value = page.value - 1)}"
-                onnext="${() => page.value < 5 && (page.value = page.value + 1)}" />
+                onprev="${() => go(-1)}"
+                onnext="${() => go(1)}" />
         </div>
 
         <h3>v5 style — plain links through prev / next hrefs</h3>

@@ -2,7 +2,7 @@
 
 LemonadeJS schedule block — contract-verified, framework-agnostic.
 
-**✓ verified** — 35 contract checks · framework-agnostic · zero dependencies beyond `@lemonadejs/modal`
+**✓ verified** — 37 contract checks · framework-agnostic · zero dependencies beyond `@lemonadejs/modal`
 
 ## Overview
 
@@ -30,9 +30,16 @@ exact model is preserved here:
     (v5's onedition moments) — disable with editor=false
 
 v5 → v6 mapping: validRange → validrange, readOnlyRange → readonlyrange,
-onchangeevent → onupdate(record, oldValue, newValue),
-onbeforechangeevent → onbeforedrag({ kind, record }), render() →
-api.refresh(); callbacks drop the leading `self` argument (pure
+render() → api.refresh(); onchangeevent(record, oldValue, newValue)
+keeps its v5 name — it fires after every committed event update
+(drag-move/resize commit, editor save, api.updateEvent), alongside
+onupdate (same payload); onbeforechangeevent(record, oldValue,
+newValue) is its cancellable pre-flight — return false and nothing
+mutates (the drag snaps back). v5 fired onbeforechangeevent at
+gesture START with the raw drag state; the v6 gesture-start veto is
+onbeforedrag({ kind, record }) — onbeforechangeevent now guards the
+concrete change at COMMIT, so it sees the real oldValue/newValue.
+Callbacks drop the leading `self` argument (pure
 components, no this); document.dictionary → weekdays prop; getEvent
 returns the RECORD (not a DOM node). Data is BY REFERENCE: mutate the
 array (or a record) and touch() — the grid re-renders once.
@@ -96,9 +103,11 @@ All event names are lowercase (the platform convention — LJS-305 warns otherwi
 - `oncreate` — (events) — events added
 - `onbeforecreate` — (events) — return false to cancel
 - `onbeforeinsert` — (event) — drag-create template; false cancels, object replaces
-- `onupdate` — (record, oldValue, newValue) (v5: onchangeevent)
+- `onupdate` — (record, oldValue, newValue) — alias of onchangeevent
+- `onchangeevent` — (record, oldValue, newValue) — v5 name, after a committed update
 - `onbeforechange` — ({ action, ... }) — return false to cancel
-- `onbeforedrag` — ({ kind, record }) — false cancels the gesture (v5: onbeforechangeevent)
+- `onbeforechangeevent` — (record, oldValue, newValue) — return false to cancel the update
+- `onbeforedrag` — ({ kind, record }) — false cancels the gesture at its start
 - `ondelete` — (record) — per removed event
 - `ondblclick` — (record)
 - `onedition` — (record) — editor moment (dblclick / after drag-create)

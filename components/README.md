@@ -12,14 +12,14 @@ three deployment forms (by value, by name, custom element).
 | [Backdrop](./backdrop/README.md) | `@lemonadejs/backdrop` | 13 | LemonadeJS backdrop block — contract-verified, framework-agnostic. |
 | [Button](./button/README.md) | `@lemonadejs/button` | 22 | LemonadeJS button block — contract-verified, framework-agnostic. |
 | [Buttongroup](./buttongroup/README.md) | `@lemonadejs/buttongroup` | 18 | LemonadeJS buttongroup block — contract-verified, framework-agnostic. |
-| [Calendar](./calendar/README.md) | `@lemonadejs/calendar` | 41 | LemonadeJS calendar block — date, datetime and range picker on the Modal primitive; contract-verified, framework-agnostic. |
+| [Calendar](./calendar/README.md) | `@lemonadejs/calendar` | 45 | LemonadeJS calendar block — date, datetime and range picker on the Modal primitive; contract-verified, framework-agnostic. |
 | [Card](./card/README.md) | `@lemonadejs/card` | 20 | LemonadeJS card block — contract-verified, framework-agnostic. |
 | [Carousel](./carousel/README.md) | `@lemonadejs/carousel` | 14 | LemonadeJS carousel block — single-file (styles ship inside the component), contract-verified, framework-agnostic. |
 | [Charts](./charts/README.md) | `@lemonadejs/charts` | 111 | LemonadeJS charts block — one unified data definition, bar/stacked/pie, responsive with no JS layout. |
 | [Color](./color/README.md) | `@lemonadejs/color` | 16 | LemonadeJS color block — contract-verified, framework-agnostic. |
 | [Contextmenu](./contextmenu/README.md) | `@lemonadejs/contextmenu` | 6 | LemonadeJS contextmenu block — contract-verified, framework-agnostic. |
 | [Cropper](./cropper/README.md) | `@lemonadejs/cropper` | 31 | LemonadeJS cropper block — contract-verified, framework-agnostic. |
-| [Datagrid](./datagrid/README.md) | `@lemonadejs/datagrid` | 23 | LemonadeJS datagrid block — virtualized big-data grid, contract-verified, framework-agnostic. |
+| [Datagrid](./datagrid/README.md) | `@lemonadejs/datagrid` | 33 | LemonadeJS datagrid block — virtualized big-data grid, contract-verified, framework-agnostic. |
 | [Dialog](./dialog/README.md) | `@lemonadejs/dialog` | 19 | LemonadeJS dialog block — contract-verified, framework-agnostic. |
 | [Drawer](./drawer/README.md) | `@lemonadejs/drawer` | 15 | LemonadeJS drawer block — anchored side panels and the bottom sheet on the Modal primitive; contract-verified, framework-agnostic. |
 | [Dropdown](./dropdown/README.md) | `@lemonadejs/dropdown` | 39 | LemonadeJS dropdown block — select, autocomplete and picker on the Modal primitive; contract-verified, framework-agnostic. |
@@ -37,7 +37,7 @@ three deployment forms (by value, by name, custom element).
 | [Quickmenu](./quickmenu/README.md) | `@lemonadejs/quickmenu` | 12 | LemonadeJS quickmenu block — contract-verified, framework-agnostic. |
 | [Rating](./rating/README.md) | `@lemonadejs/rating` | 20 | LemonadeJS rating block — contract-verified, framework-agnostic. |
 | [Router](./router/README.md) | `@lemonadejs/router` | 11 | LemonadeJS router block — contract-verified, framework-agnostic. |
-| [Schedule](./schedule/README.md) | `@lemonadejs/schedule` | 35 | LemonadeJS schedule block — contract-verified, framework-agnostic. |
+| [Schedule](./schedule/README.md) | `@lemonadejs/schedule` | 37 | LemonadeJS schedule block — contract-verified, framework-agnostic. |
 | [Signature](./signature/README.md) | `@lemonadejs/signature` | 21 | LemonadeJS signature block — contract-verified, framework-agnostic. |
 | [Slider](./slider/README.md) | `@lemonadejs/slider` | 20 | LemonadeJS slider block — contract-verified, framework-agnostic. |
 | [Speeddial](./speeddial/README.md) | `@lemonadejs/speeddial` | 18 | LemonadeJS speeddial block — contract-verified, framework-agnostic. |

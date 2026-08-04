@@ -96,6 +96,24 @@ describe('components/contextmenu — on the Modal primitive', () => {
         void api;
     });
 
+    it('a submenu aligns with its parent ITEM even with separators above it', async () => {
+        vi.useFakeTimers();
+        await openWithFakeTimers();
+        // distinct stubbed geometry per [data-item] row: Open=100, Blocked=130, Export=160, Delete=190
+        const dataItems = [...menus()[0].querySelectorAll('[data-item]')] as HTMLElement[];
+        dataItems.forEach((el, i) => {
+            const y = 100 + i * 30;
+            el.getBoundingClientRect = () =>
+                ({ x: 60, y, top: y, left: 60, width: 220, height: 28, right: 280, bottom: y + 28, toJSON: () => '' }) as DOMRect;
+        });
+        // Export is options[3] but only the THIRD [data-item] (the separator
+        // has none) — the regression measured the element after it
+        rows()[3].dispatchEvent(new MouseEvent('mouseenter', { bubbles: true }));
+        vi.advanceTimersByTime(250);
+        expect(menus()).toHaveLength(2);
+        expect((menus()[1] as HTMLElement).style.top).toBe('160px'); // Export's y — not Delete's 190
+    });
+
     it('keyboard: ArrowDown skips disabled and separators, wrapping', async () => {
         await open();
         key('ArrowDown');

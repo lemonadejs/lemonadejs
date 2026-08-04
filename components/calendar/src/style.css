@@ -44,11 +44,15 @@
     box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
 }
 
-/* The panel is a Modal: flush, calendar-ready */
+/* The panel is a Modal: flush, calendar-ready. height:auto overrides the
+   inline height Modal pins from its first-open measurement (the DAYS
+   view) — months/years are shorter and must shrink the panel with them
+   (v5 was content-sized in every view) */
 .lm-calendar .lm-modal {
     padding: 0;
     min-width: 0;
     min-height: 5px;
+    height: auto !important;
     border: 1px solid #d4d4d8;
     border-radius: var(--lm-radius, 6px);
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
@@ -108,6 +112,14 @@
     color: var(--lm-font-color, inherit);
 }
 
+/* the house focus ring on the header controls — black in light mode,
+   white in dark (the token flips), matching the rest of the catalog */
+.lm-calendar-label:focus-visible,
+.lm-calendar-icon:focus-visible {
+    outline: 2px solid var(--lm-border-outline, #000);
+    outline-offset: -1px;
+}
+
 .lm-calendar-navigation {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -165,6 +177,11 @@
     padding: 8px;
     font-size: 0.8em;
     outline: none;
+    /* stacking root: the range band pseudos live at z-index -1 so they
+       paint UNDER every cell background (the endpoint circles included) —
+       without this root they would escape and vanish under the panel */
+    position: relative;
+    z-index: 0;
 }
 
 /* keyboard nav highlights the focused DAY (see :focus > [data-selected]
@@ -194,12 +211,6 @@
     border-radius: 100px;
     background-origin: padding-box;
     min-width: 38px;
-}
-
-.lm-calendar-container[data-view='months'] .lm-calendar-content > div,
-.lm-calendar-container[data-view='years'] .lm-calendar-content > div {
-    aspect-ratio: initial;
-    min-height: 48px;
 }
 
 .lm-calendar-content > div[data-disabled='true'] {
@@ -245,10 +256,13 @@
     position: relative;
 }
 
+/* Range endpoints match the dropdown's selected item (same token chain,
+   same dodger blue) with WHITE text — the connecting band between them
+   stays the transparent tint, so its cells keep the default text color */
 .lm-calendar-content > div[data-start='true'],
 .lm-calendar-content > div[data-end='true'] {
-    background-color: var(--lm-main-color, #2196f3);
-    color: initial;
+    background-color: var(--lm-calendar-selected, var(--lm-dropdown-selected, #1e90ff));
+    color: #fff;
 }
 
 /* Keyboard range: the moving cursor IS the preview end, so it lands inside the
@@ -257,8 +271,8 @@
    grey hole at the end of the band. Scoped to selected+range, so MOUSE preview
    (which never moves the cursor) is unaffected. */
 .lm-calendar-content > div[data-selected='true'][data-range='true'] {
-    background-color: var(--lm-main-color, #2196f3);
-    color: initial;
+    background-color: var(--lm-calendar-selected, var(--lm-dropdown-selected, #1e90ff));
+    color: #fff;
 }
 
 .lm-calendar-content > div[data-range='true']::before {
@@ -268,20 +282,25 @@
     right: 0;
     top: calc(25%);
     height: 50%;
-    background-color: var(--lm-main-color-alpha, #2196f388);
+    /* SAME color as the endpoint circles, just transparent — derived from
+       the selected token so band and circles can never drift apart */
+    background-color: color-mix(
+        in srgb,
+        var(--lm-calendar-selected, var(--lm-dropdown-selected, #1e90ff)) 40%,
+        transparent
+    );
+    z-index: -1; /* the band runs BEHIND the cells — never over a circle */
 }
 
+/* endpoints: the band reaches only to the circle's centre and hides
+   underneath it — the circle caps the band instead of wearing it */
 .lm-calendar-content > div[data-start='true']::before {
-    left: 5px;
-    border-top-left-radius: 20%;
-    border-bottom-left-radius: 20%;
+    left: 50%;
 }
 
 .lm-calendar-content > div[data-end='true']::before,
 .lm-calendar-content > div[data-last='true']::before {
-    right: 5px;
-    border-top-right-radius: 20%;
-    border-bottom-right-radius: 20%;
+    right: 50%;
 }
 
 .lm-calendar-footer {
@@ -349,27 +368,31 @@
     line-height: 60px;
 }
 
-/* Calendar with grid lines */
+/* Calendar with grid lines — INTERIOR lines only, single-painted:
+   every cell draws top+left, first column drops its left line, and the
+   grid draws NO outer frame (phantom transparent borders and an own
+   frame both read as DOUBLE lines — against the neighbor's line and
+   against whatever border the host draws around the calendar) */
 .lm-calendar[data-grid='true'] .lm-calendar-weekdays {
     padding: 0;
 }
 
 .lm-calendar[data-grid='true'] .lm-calendar-content {
-    border-top: 1px solid transparent;
-    border-left: 1px solid transparent;
-    border-right: 1px solid #ccc;
-    border-bottom: 1px solid #ccc;
     padding: 0;
 }
 
 .lm-calendar[data-grid='true'] .lm-calendar-content > div {
-    border-top: 1px solid #ccc;
-    border-left: 1px solid #ccc;
-    border-right: 1px solid transparent;
-    border-bottom: 1px solid transparent;
+    border-top: 1px solid var(--lm-border-color-light, #ccc);
+    border-left: 1px solid var(--lm-border-color-light, #ccc);
     border-radius: 0;
     justify-content: start;
     align-items: end;
+}
+
+.lm-calendar[data-grid='true'] [data-view='days'] .lm-calendar-content > div:nth-child(7n + 1),
+.lm-calendar[data-grid='true'] [data-view='months'] .lm-calendar-content > div:nth-child(4n + 1),
+.lm-calendar[data-grid='true'] [data-view='years'] .lm-calendar-content > div:nth-child(4n + 1) {
+    border-left: 0;
 }
 
 /* Ripple (v5 lm-ripple, namespaced) */

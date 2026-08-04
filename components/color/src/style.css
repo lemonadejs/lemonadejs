@@ -42,25 +42,50 @@
     display: none;
 }
 
-/* Grid / Spectrum tab strip (v5 used @lemonadejs/tabs) */
+/* Grid / Spectrum tab strip (v5 used @lemonadejs/tabs) — SEGMENTED
+   control, mirroring the Tabs block's 'segmented' variant (same well +
+   raised-card recipe) without taking the Tabs dependency back */
 .lm-color-tabs {
     display: flex;
     justify-content: center;
-    gap: 4px;
-    margin-top: 10px;
+    gap: 2px;
+    margin: 10px auto 0;
+    background: var(--lm-background-color-highlight, #f0f0f1);
+    border-radius: var(--lm-radius-lg, 10px);
+    padding: 3px;
+    width: fit-content;
+    max-width: 100%;
 }
 
 .lm-color-tab {
     border: 0;
+    margin: 0; /* host pages often style bare <button> with margins */
     background-color: transparent;
     cursor: pointer;
-    padding: 8px 16px;
-    border-bottom: 2px solid transparent;
+    padding: 6px 14px;
+    border-radius: calc(var(--lm-radius-lg, 10px) - 3px);
+    color: var(--lm-font-grayout, #646464);
 }
 
+/* selected: the raised white card */
 .lm-color-tab[data-active] {
-    border-bottom-color: var(--lm-color-accent, #2196f3);
-    font-weight: bold;
+    background: var(--lm-background-color, #fff);
+    color: var(--lm-font-color, #111827);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.06);
+    font-weight: 550;
+}
+
+/* dark: the white card would sink into the well — lift it a step above */
+.lm-dark-mode .lm-color-tab[data-active] {
+    background: var(--lm-neutral-6, #3a3a3a);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+@media (prefers-color-scheme: dark) {
+    :root:not(.lm-light-mode) .lm-color-tab[data-active] {
+        background: var(--lm-neutral-6, #3a3a3a);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+    }
 }
 
 .lm-color-content {

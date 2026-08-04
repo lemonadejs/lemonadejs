@@ -358,16 +358,13 @@
     -webkit-font-smoothing: antialiased;
 }
 
-/* Central focus ring — every lm-* control gets the same outline, themeable
-   through --lm-border-outline (black in light, white in dark). Components
-   must NOT define their own focus colors; they inherit this. */
-.lm-application :focus-visible,
-[class^="lm-"]:focus-visible,
-[class*=" lm-"]:focus-visible {
-    outline: 2px solid var(--lm-border-outline);
-    outline-offset: -1px;
-    box-shadow: 0 0 0 3px var(--lm-focus-ring);
-}
+/* Focus rings are NOT set globally (a catalog-wide [class^="lm-"] rule
+   ringed things it should not — dialog panels, custom-focus grids — and
+   its box-shadow clobbered component elevation). Components that want
+   the house ring declare it on their own controls:
+       outline: 2px solid var(--lm-border-outline);
+       outline-offset: -1px;
+   Everything else keeps the browser native focus-visible ring. */
 
 /* Reduced motion — honor the OS preference catalog-wide. Components author
    their transitions/animations normally; this neutralizes them in one place

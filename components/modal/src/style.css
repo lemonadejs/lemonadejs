@@ -283,13 +283,12 @@
     }
 }
 
-/* The catalog paints its 2px focus ring on every focusable lm-* element —
-   including this panel (tabindex=-1, focused on open), where a ring around
-   the whole dialog reads as noise. Opt back in with the `outline` prop.
-   Specificity is deliberately above the catalog's 0-2-0 rule. */
-.lm-modal-root .lm-modal:not([data-outline="true"]):focus-visible {
-    outline: none;
-    box-shadow: var(--lm-modal-shadow);
+/* No ring on the panel by default (the base rule's outline:none holds —
+   a ring around a whole dialog reads as noise). The `outline` prop opts
+   back into the house ring. */
+.lm-modal-root .lm-modal[data-outline='true']:focus-visible {
+    outline: 2px solid var(--lm-border-outline, #000);
+    outline-offset: -1px;
 }
 
 :where(.lm-modal-root) .lm-modal-fullscreen {

@@ -55,7 +55,7 @@ export const Tabs = component('tabs', {
     bind: Number,                 // two-way selected index (v5: selected)
     selected: 0,                  // initial index when unbound
     position: '',                 // center | bottom (v5 data-position)
-    variant: '',                  // '' | basic (v5 look) | modern (underline style)
+    variant: '',                  // '' | basic | modern (underline) | segmented (inset pill)
     round: false,                 // round borders on the first/last header
     allowcreate: false,           // v5: allowCreate — shows the "add" button
     onchange: Function,           // (index, oldIndex) on user-initiated changes
@@ -214,8 +214,40 @@ export const Tabs = component('tabs', {
     };
 
     // ---- v5 drag sorting (reorder on drop; opacity imperatively like v5
-    // because the class attribute is engine-owned)
+    // because the class attribute is engine-owned). The drop model is an
+    // insertion SLOT 0..n: the left half of a tab inserts BEFORE it, the
+    // right half AFTER — which is what makes "last position" reachable
+    // (right half of the final tab = slot n).
     let drag: { from: number; el: HTMLElement } | null = null;
+    const dropAt = state<number | null>(null); // live insertion slot
+
+    // Auto-scroll the strip while dragging near its edges — native DnD
+    // never scrolls an overflow container, so tabs beyond the fold were
+    // unreachable mid-drag. rAF loop; speed ramps toward the edge.
+    let dragX = 0;
+    let dragRaf = 0;
+    const dragScroll = () => {
+        dragRaf = requestAnimationFrame(dragScroll);
+        if (!ul || ul.scrollWidth <= ul.clientWidth) {
+            return;
+        }
+        const r = ul.getBoundingClientRect();
+        const zone = 40;
+        const d = dragX < r.left + zone
+            ? -Math.ceil((r.left + zone - dragX) / 5)
+            : dragX > r.right - zone
+                ? Math.ceil((dragX - (r.right - zone)) / 5)
+                : 0;
+        if (d) {
+            ul.scrollLeft += d;
+        }
+    };
+    const stopDragScroll = () => {
+        if (dragRaf) {
+            cancelAnimationFrame(dragRaf);
+            dragRaf = 0;
+        }
+    };
 
     const onDragstart = (e: DragEvent) => {
         const index = headerIndex(e.target);
@@ -223,8 +255,43 @@ export const Tabs = component('tabs', {
             const el = ul!.children[index] as HTMLElement;
             drag = { from: index, el };
             el.style.opacity = '0.25';
-            e.dataTransfer?.setDragImage?.(el, 0, 0);
+            if (e.dataTransfer) {
+                // 'move', not the default-allowed 'copy' — without this the
+                // browser badges the cursor with a nonsensical green +
+                e.dataTransfer.effectAllowed = 'move';
+                e.dataTransfer.setDragImage?.(el, 0, 0);
+            }
+            dragX = e.clientX;
+            dragScroll();
         }
+    };
+
+    /** cursor → insertion slot (0..n); over strip padding = the end */
+    const slotOf = (e: DragEvent): number => {
+        if (!ul) {
+            return -1;
+        }
+        const li = (e.target as Element | null)?.closest?.('li');
+        if (li && li.parentElement === ul) {
+            const i = Array.prototype.indexOf.call(ul.children, li);
+            const r = li.getBoundingClientRect();
+            return e.clientX < r.left + r.width / 2 ? i : i + 1;
+        }
+        return ul.children.length;
+    };
+
+    const onDragover = (e: DragEvent) => {
+        e.preventDefault();
+        if (!drag) {
+            return;
+        }
+        if (e.dataTransfer) {
+            e.dataTransfer.dropEffect = 'move';
+        }
+        dragX = e.clientX;
+        const s = slotOf(e);
+        // the two slots hugging the dragged tab are no-ops — no indicator
+        dropAt.value = s === drag.from || s === drag.from + 1 ? null : s;
     };
 
     const onDrop = (e: DragEvent) => {
@@ -232,18 +299,21 @@ export const Tabs = component('tabs', {
         if (!drag) {
             return;
         }
-        const to = headerIndex(e.target);
-        if (to >= 0 && to !== drag.from) {
+        const s = slotOf(e);
+        if (s >= 0 && s !== drag.from && s !== drag.from + 1) {
             const list = [...items.value];
             const [moved] = list.splice(drag.from, 1);
-            list.splice(to, 0, moved);
+            const at = s > drag.from ? s - 1 : s;
+            list.splice(at, 0, moved);
             items.value = list;
             // v5: the moved tab is selected at its new position
-            doSelect(to);
-            props.onchangeposition?.(drag.from, to);
+            doSelect(at);
+            props.onchangeposition?.(drag.from, at);
         }
         drag.el.style.opacity = '';
         drag = null;
+        dropAt.value = null;
+        stopDragScroll();
     };
 
     const onDragend = () => {
@@ -251,6 +321,8 @@ export const Tabs = component('tabs', {
             drag.el.style.opacity = '';
             drag = null;
         }
+        dropAt.value = null;
+        stopDragScroll();
     };
 
     // ---- overflow scroll: the header row hides its scrollbar and exposes
@@ -310,7 +382,7 @@ export const Tabs = component('tabs', {
                 onkeydown="${onKeydown}"
                 onscroll="${measure}"
                 ondragstart="${onDragstart}"
-                ondragover="${(e: DragEvent) => e.preventDefault()}"
+                ondragover="${onDragover}"
                 ondrop="${onDrop}"
                 ondragend="${onDragend}">${() =>
                 items.value.map(
@@ -319,7 +391,8 @@ export const Tabs = component('tabs', {
                         // cloned once and stable): drag sorting and
                         // create-at-position MOVE the header <li> instead of
                         // rewriting every header right of the change
-                        html`<li key="${item}" class="lm-tabs-tab ${() => (selected.value === i ? 'lm-tabs-selected' : '')}"
+                        html`<li key="${item}" class="lm-tabs-tab ${() => (selected.value === i ? 'lm-tabs-selected' : '')} ${() => (dropAt.value === i ? 'lm-tabs-drop' : '')} ${() =>
+                            dropAt.value !== null && dropAt.value === items.value.length && i === items.value.length - 1 ? 'lm-tabs-drop-end' : ''}"
                             tabindex="${() => (selected.value === i ? '0' : '-1')}" role="tab" draggable="true"
                             aria-selected="${() => (selected.value === i ? 'true' : 'false')}"
                             data-icon="${item.icon || false}">${item.title || ''}</li>`

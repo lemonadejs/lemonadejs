@@ -63,6 +63,13 @@
             "type": "string",
             "default": ""
         },
+        "input": {
+            "type": "any"
+        },
+        "initinput": {
+            "type": "boolean",
+            "default": true
+        },
         "width": {
             "type": "number",
             "default": 300

@@ -39,6 +39,17 @@
     pointer-events: none;
 }
 
+/* Fixed bottom bar (no data-position — the default): every item takes an
+   EQUAL track (content-sized items made the space-evenly gaps depend on
+   the label widths — nothing lined up). Scoped off the left rail, whose
+   full-height column would stretch flex:1 items vertically. */
+.lm-toolbar:not([data-position]) .lm-toolbar-item {
+    flex: 1 1 0;
+    min-width: 0;
+    display: flex;
+    justify-content: center;
+}
+
 .lm-toolbar-item a {
     text-decoration: none;
     color: var(--lm-secondary-color, #303030);
@@ -46,8 +57,17 @@
     flex-direction: column;
     align-items: center;
     flex: 1;
+    min-width: 0;
     font-size: 0.9em;
     cursor: pointer;
+}
+
+/* labels never widen their track — clip, keep the icon on the grid */
+.lm-toolbar-item a span {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .lm-toolbar img {
@@ -112,6 +132,25 @@
     background-color: var(--lm-background-color-highlight, #ebebeb);
 }
 
+.lm-toolbar-picker-label {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* invisible zero-height stack of ALL the option titles: the header takes
+   the width of the longest one, so a label change never moves the bar */
+.lm-toolbar-picker-sizer {
+    display: block;
+    height: 0;
+    overflow: hidden;
+    visibility: hidden;
+}
+
+.lm-toolbar-picker-sizer span {
+    display: block;
+}
+
 .lm-toolbar[data-position="static"] {
     position: unset;
     justify-content: flex-start;
@@ -169,6 +208,8 @@
 
 .lm-toolbar[data-position="left"] .lm-toolbar-item a {
     display: block;
+    /* rail labels ride under a 24px icon — 0.9em read oversized there */
+    font-size: 11px;
 }
 
 .lm-toolbar[data-position="left"] .lm-toolbar-item i {

@@ -30,6 +30,22 @@
         "pagination": {
             "type": "number",
             "default": 0
+        },
+        "url": {
+            "type": "string",
+            "default": ""
+        },
+        "remote": {
+            "type": "boolean",
+            "default": false
+        },
+        "zebra": {
+            "type": "boolean",
+            "default": false
+        },
+        "resizable": {
+            "type": "boolean",
+            "default": true
         }
     },
     "bind": null,
@@ -38,7 +54,9 @@
         "onselect",
         "onsort",
         "onrowclick",
-        "oncolumnresize"
+        "oncolumnresize",
+        "onchangepage",
+        "onsearch"
     ],
     "api": [
         "getSelected",
@@ -46,6 +64,7 @@
         "sort",
         "page",
         "refresh",
-        "setColumn"
+        "setColumn",
+        "setValue"
     ]
 }

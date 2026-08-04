@@ -6,11 +6,13 @@
     text-align: left;
 }
 
-/* The panel takes focus PROGRAMMATICALLY (for keyboard nav) — no ring;
-   doubled class outguns the catalog's [class^="lm-"]:focus rule */
+/* The panel takes focus PROGRAMMATICALLY (for keyboard nav) — no ring
+   and no halo; the panel has its own elevation shadow. Doubled class
+   outguns the catalog's focus rule. */
 .lm-contextmenu.lm-contextmenu:focus,
 .lm-contextmenu.lm-contextmenu:focus-visible {
     outline: none;
+    box-shadow: none;
 }
 
 /* Menu chrome scoped onto the Modal panels this component owns */

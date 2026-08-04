@@ -2,7 +2,7 @@
 
 LemonadeJS calendar block — date, datetime and range picker on the Modal primitive; contract-verified, framework-agnostic.
 
-**✓ verified** — 41 contract checks · framework-agnostic · zero dependencies beyond `@lemonadejs/modal`
+**✓ verified** — 45 contract checks · framework-agnostic · zero dependencies beyond `@lemonadejs/modal`
 
 ## Overview
 
@@ -25,6 +25,19 @@ v5 parity, the full nuance set:
     format (inlined jSuites date tokens) and steers the view live —
     commit happens on Enter/click/Done only; the popup is a Modal
     anchored beneath the input (anchor measured at open)
+  - input adoption: `input` accepts an EXISTING HTMLInputElement (v5
+    `input`; v5's 'auto' is simply v6's default internal input) — the
+    calendar renders no internal input and drives the host's element
+    instead: value kept formatted per `format` (an initial input value
+    seeds an empty calendar), open on focus/click, masked typing
+    steers the view, keyboard, and a bubbling `change` event on every
+    commit; every listener goes through listen() so unmount removes
+    them all
+  - initinput=false (v5 initInput): the interactive listeners are NOT
+    wired on the input (adopted or internal — v5 applied it to
+    whichever input the option configured): no open-on-focus/click,
+    no type-to-update, no input keyboard; the input text still tracks
+    the committed value
   - types: default (anchored panel) | picker (bottom sheet) | inline
     (no modal, always visible) | auto (viewport width at open)
   - keyboard: closed Enter/arrows open; input arrows focus the grid;
@@ -96,6 +109,8 @@ state for a two-way live wire. Attribute strings are coerced to the declared typ
 | `footer` | boolean | `true` | Update button / time row |
 | `wheel` | boolean | `true` | mouse wheel month navigation |
 | `placeholder` | string | `''` | input placeholder |
+| `input` | any | — | 'any': an existing HTMLInputElement to adopt |
+| `initinput` | boolean | `true` | wire the interactive input listeners: open on |
 | `width` | number | `300` | popup panel width (v5 modal width) |
 
 ## Events

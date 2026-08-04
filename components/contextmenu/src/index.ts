@@ -182,7 +182,10 @@ export const Contextmenu = component('contextmenu', {
             return;
         }
         const parentEl = modalEl(level);
-        const itemEl = parentEl?.querySelectorAll('[data-item]')[index] as HTMLElement | undefined;
+        // `index` counts ALL options; separators render without [data-item],
+        // so the DOM list is shorter — count the non-line entries before it
+        const domIndex = current.options.slice(0, index).filter((o) => o.type !== 'line').length;
+        const itemEl = parentEl?.querySelectorAll('[data-item]')[domIndex] as HTMLElement | undefined;
         // measure parent + item with the parent's entrance animation settled
         const measured = parentEl
             ? withSettled(parentEl, () => ({

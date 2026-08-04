@@ -3,7 +3,7 @@
  * bottom is the sheet mode). Behavior tests: api + the silent two-way
  * bind, anchor → Modal position mapping (live while open), the close
  * origins (backdrop/escape/button/api), the optional title header with
- * its × button, children rendering and the width passthrough.
+ * Modal's close button, children rendering and the width passthrough.
  *
  * Modal defers per-open setup one microtask — every open awaits flush().
  */
@@ -27,8 +27,8 @@ const wrapper = () => handle!.query('.lm-drawer')!;
 const modal = () => handle!.query('.lm-modal') as HTMLElement | null;
 const modalRoot = () => handle!.query('.lm-modal-root');
 const backdrop = () => handle!.query('.lm-modal-backdrop') as HTMLElement | null;
-const header = () => handle!.query('.lm-drawer-header');
-const closeButton = () => handle!.query('.lm-drawer-close') as HTMLElement | null;
+const header = () => handle!.query('.lm-modal-header');
+const closeButton = () => handle!.query('.lm-modal-close') as HTMLElement | null;
 
 const openDrawer = async (props: Record<string, unknown> = {}) => {
     let api: Api | null = null;
@@ -167,12 +167,12 @@ describe('components/drawer — on the Modal primitive', () => {
         expect(backdrop()).toBeNull();
     });
 
-    it('title renders the drawer-owned header (Modal stays headerless); × closes with origin button', async () => {
+    it("title renders MODAL's header (one chrome for the catalog); its x closes with origin button", async () => {
         const origins: string[] = [];
         await openDrawer({ title: 'Navigation', onclose: (o: string) => origins.push(o) });
-        expect(modal()!.querySelector('.lm-modal-header')).toBeNull(); // header="${false}"
-        expect(header()).not.toBeNull();
-        expect(handle!.query('.lm-drawer-title')!.textContent).toBe('Navigation');
+        expect(header()).not.toBeNull(); // Modal's own header, not drawer chrome
+        expect(handle!.query('.lm-drawer-header')).toBeNull(); // no drawer-owned duplicate
+        expect(handle!.query('.lm-modal-title')!.textContent).toBe('Navigation');
 
         closeButton()!.click();
         expect(modal()).toBeNull();

@@ -18,6 +18,19 @@
  *     format (inlined jSuites date tokens) and steers the view live —
  *     commit happens on Enter/click/Done only; the popup is a Modal
  *     anchored beneath the input (anchor measured at open)
+ *   - input adoption: `input` accepts an EXISTING HTMLInputElement (v5
+ *     `input`; v5's 'auto' is simply v6's default internal input) — the
+ *     calendar renders no internal input and drives the host's element
+ *     instead: value kept formatted per `format` (an initial input value
+ *     seeds an empty calendar), open on focus/click, masked typing
+ *     steers the view, keyboard, and a bubbling `change` event on every
+ *     commit; every listener goes through listen() so unmount removes
+ *     them all
+ *   - initinput=false (v5 initInput): the interactive listeners are NOT
+ *     wired on the input (adopted or internal — v5 applied it to
+ *     whichever input the option configured): no open-on-focus/click,
+ *     no type-to-update, no input keyboard; the input text still tracks
+ *     the committed value
  *   - types: default (anchored panel) | picker (bottom sheet) | inline
  *     (no modal, always visible) | auto (viewport width at open)
  *   - keyboard: closed Enter/arrows open; input arrows focus the grid;
@@ -427,6 +440,11 @@ export const Calendar = component('calendar', {
     footer: true,                 // Update button / time row
     wheel: true,                  // mouse wheel month navigation
     placeholder: '',              // input placeholder
+    input: null,                  // 'any': an existing HTMLInputElement to adopt
+                                  // instead of rendering the internal input (v5 input)
+    initinput: true,              // wire the interactive input listeners: open on
+                                  // focus/click, type-to-update, keyboard (v5 initInput);
+                                  // false keeps only the value sync
     width: 300,                   // popup panel width (v5 modal width)
     onchange: Function,           // (value) on commit
     onupdate: Function,           // (cursorIso) on every cursor move
@@ -437,8 +455,23 @@ export const Calendar = component('calendar', {
         getValue: Function, setValue: Function, update: Function, reset: Function,
         next: Function, prev: Function, setView: Function,
     },
-}, (props, { bind, state, onMount }) => {
+}, (props, { bind, state, onMount, listen }) => {
     const picked = bind(props, '');
+
+    // ---- adopted external input (v5 `input`): an existing element replaces
+    // the internal input entirely; `{ current }` refs unwrap (v5 getInput)
+    const adopted: HTMLInputElement | null = (() => {
+        let v = props.input.peek() as unknown;
+        if (v && typeof v === 'object' && 'current' in (v as Record<string, unknown>)) {
+            v = (v as { current: unknown }).current;
+        }
+        return v && typeof v === 'object' && (v as Node).nodeType === 1 && typeof (v as Element).tagName === 'string'
+            ? (v as HTMLInputElement)
+            : null;
+    })();
+
+    /** v5 initInput !== false: are the interactive input listeners wired? */
+    const wired = () => props.initinput.peek() !== false;
 
     const boot = new Date();
     const cells = state<CalendarCell[]>([]);
@@ -672,6 +705,9 @@ export const Calendar = component('calendar', {
             // form-associated: a user value change notifies the enclosing <form>
             // exactly like a native input would (Formify listens for bubbling input)
             root?.dispatchEvent(new Event('input', { bubbles: true }));
+            // v5 dispatched change on the configured input on every value
+            // change — the host's own form logic keeps hearing its element
+            adopted?.dispatchEvent(new Event('change', { bubbles: true }));
         }
     };
 
@@ -816,7 +852,7 @@ export const Calendar = component('calendar', {
             panelWidth.value = 0; // CSS pins the sheet to 100%
         } else {
             panelWidth.value = (props.width.peek() as number) || 300;
-            const input = root?.querySelector('.lm-calendar-input');
+            const input = adopted || root?.querySelector('.lm-calendar-input');
             if (input) {
                 const rect = input.getBoundingClientRect();
                 anchorTop.value = rect.bottom + 1;
@@ -893,6 +929,9 @@ export const Calendar = component('calendar', {
             return; // the time selects keep their native arrows
         }
         const isInput = !!(target && target.classList && target.classList.contains('lm-calendar-input'));
+        if (isInput && !wired()) {
+            return; // initinput=false: the input carries no keyboard behavior (v5)
+        }
         const handled = () => {
             e.preventDefault();
             e.stopImmediatePropagation();
@@ -937,19 +976,51 @@ export const Calendar = component('calendar', {
         }
     };
 
+    // Wheel month navigation. v5 stepped a month per EVENT — right for a
+    // mouse (one event per notch) but a trackpad fires dozens of tiny-delta
+    // events per swipe and months flew past. Small deltas ACCUMULATE to a
+    // notch (±100) before stepping; a cooldown + discard keeps macOS
+    // momentum scroll from paging on after the fingers lift.
+    let wheelAcc = 0;
+    let wheelLast = 0;
+    let wheelStepAt = 0;
     const onWheel = (e: WheelEvent) => {
         if (props.wheel.peek() === false) {
             return;
         }
         e.preventDefault();
-        move(e.deltaY < 0 ? -1 : 1);
+        const now = Date.now();
+        const dy = e.deltaMode === 1 ? e.deltaY * 33 : e.deltaY; // lines → px
+        if (Math.abs(dy) >= 100) {
+            // a real mouse notch: always exactly one step
+            move(dy < 0 ? -1 : 1);
+            wheelAcc = 0;
+            wheelStepAt = now;
+            return;
+        }
+        if (now - wheelLast > 250 || (wheelAcc && Math.sign(dy) !== Math.sign(wheelAcc))) {
+            wheelAcc = 0; // a new gesture / direction flip: stale remainder gone
+        }
+        wheelLast = now;
+        wheelAcc += dy;
+        if (Math.abs(wheelAcc) >= 100) {
+            if (now - wheelStepAt > 150) {
+                move(wheelAcc < 0 ? -1 : 1);
+                wheelStepAt = now;
+            }
+            // reached-but-cooling counts for nothing: the momentum tail
+            // must re-earn a full notch to step again
+            wheelAcc = 0;
+        }
     };
 
     const onFocusOut = (e: FocusEvent) => {
         if (isDisposing() || inline() || !opened.peek() || !root) {
             return;
         }
-        if (e.relatedTarget && root.contains(e.relatedTarget as Node)) {
+        // Focus travelling between the panel and the adopted external input
+        // stays inside the widget (v5: relatedTarget !== input)
+        if (e.relatedTarget && (root.contains(e.relatedTarget as Node) || e.relatedTarget === adopted)) {
             return;
         }
         closePanel('focusout');
@@ -987,6 +1058,48 @@ export const Calendar = component('calendar', {
     );
     onMount(() => {
         syncFromValue(picked.peek());
+    });
+
+    // ---- adopted external input plumbing (v5 onload input block).
+    // Runs AFTER the syncFromValue mount above so `display` already holds
+    // the rendered text. Interactive listeners only when initinput (v5
+    // initInput !== false); everything goes through listen() so unmount
+    // removes every handler from the host's element.
+    onMount(() => {
+        if (!adopted) {
+            return;
+        }
+        if (wired()) {
+            // The class is what onKey keys `isInput` off (v5 added it too)
+            adopted.classList.add('lm-calendar-input');
+            const ph = props.placeholder.peek() as string;
+            if (ph && !adopted.getAttribute('placeholder')) {
+                adopted.setAttribute('placeholder', ph);
+            }
+            listen(adopted, 'click', open);
+            listen(adopted, 'focusin', open);
+            listen(adopted, 'input', onType);
+            listen(adopted, 'keydown', onKey as (e: Event) => void);
+            listen(adopted, 'focusout', onFocusOut as (e: Event) => void);
+            // v5: no calendar value + a pre-filled input — the input seeds
+            // the value (silent assignment: adoption is not a user commit;
+            // v5 kept this inside the initInput block, so unwired skips it)
+            if (!picked.peek() && adopted.value) {
+                const seeded = canonical(adopted.value);
+                if (seeded !== '') {
+                    picked.value = seeded as never; // re-syncs the view via subscribe
+                }
+            }
+        }
+        // The element mirrors `display` for its whole life: commit, api
+        // setValue, escape revert and open all land here formatted
+        const off = display.subscribe(() => {
+            if (adopted.value !== display.peek()) {
+                adopted.value = display.peek();
+            }
+        });
+        adopted.value = display.peek();
+        return off;
     });
 
     // ---- form-associated: the root reflects a native `value` property wired
@@ -1031,9 +1144,9 @@ export const Calendar = component('calendar', {
         <div class="lm-calendar-header">
             <div>
                 <div class="lm-calendar-labels">
-                    <button type="button" onclick="${() => (view.value = 'months')}">${() =>
+                    <button type="button" class="lm-calendar-label" onclick="${() => (view.value = 'months')}">${() =>
                         translate(MONTHS[page.value.m])}</button>
-                    <button type="button" onclick="${() => (view.value = 'years')}">${() =>
+                    <button type="button" class="lm-calendar-label" onclick="${() => (view.value = 'years')}">${() =>
                         String(page.value.y)}</button>
                 </div>
                 <div class="lm-calendar-navigation">
@@ -1084,13 +1197,13 @@ export const Calendar = component('calendar', {
         onkeydown="${onKey}"
         onfocusout="${onFocusOut}">
         ${() =>
-            inline()
-                ? ''
+            inline() || adopted
+                ? '' // adopted: the host's element IS the input
                 : html`<input type="text" class="lm-calendar-input" bind="${display}"
                       placeholder="${() => (props.placeholder.value as string) || false}"
-                      onclick="${open}"
-                      onfocusin="${open}"
-                      oninput="${onType}" />`}
+                      onclick="${() => wired() && open()}"
+                      onfocusin="${() => wired() && open()}"
+                      oninput="${(e: Event) => wired() && onType(e)}" />`}
         ${() =>
             inline()
                 ? panelView()

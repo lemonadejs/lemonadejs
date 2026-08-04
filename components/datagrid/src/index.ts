@@ -18,6 +18,21 @@
  *     px, oncolumnresize on release), column.hidden + api.setColumn for
  *     runtime changes, headerrender for custom header content,
  *     column.class on body cells
+ *   - remote data (v5 parity): `url` fetches the rows on mount when
+ *     data is empty; with `remote` the SERVER owns search/sort/paging —
+ *     every page change, search and sort re-fetches with
+ *     ?pagination=&page=&orderBy=&asc=&term= and the response's
+ *     { result, total } feeds the window and the pager (caller-owned
+ *     totals), a bare array works too
+ *   - zebra striping (`zebra`), themable via --lm-* tokens
+ *   - `resizable` gates the header drag handles. v5 defaulted to OFF;
+ *     v6 keeps its always-on behavior as the default (true) so existing
+ *     v6 users are unaffected — pass resizable="false" for v5's default
+ *   - api.setValue(x, y, value): x is the column index OR name, y the
+ *     row index (v5 argument order). v5 fired onupdate; v6 funnels it
+ *     into onchange with the (row, columnName, value, oldValue) shape
+ *   - onchangepage(page) + onsearch(query, total): v5 passed the
+ *     instance — v6 events are data-only
  *
  * Not a spreadsheet: no formulas, no merged cells — that is jspreadsheet.
  */
@@ -63,18 +78,31 @@ export const Datagrid = component('datagrid', {
     editable: false,              // grid default; column.editable overrides
     search: false,                // built-in search box
     pagination: 0,                // rows per page; 0 = virtual scroll
+    url: '',                      // fetch rows on mount when data is empty (v5: url)
+    remote: false,                // with url: server-side search/sort/pagination (v5: remote)
+    zebra: false,                 // stripe every second row
+    resizable: true,              // header drag-resize handles (v5 default: false)
     onchange: Function,           // (row, columnName, value, oldValue)
     onselect: Function,           // (selectedRows)
     onsort: Function,             // (columnName, direction | null)
     onrowclick: Function,         // (row, event)
     oncolumnresize: Function,     // (columnName, widthPx) on handle release
-    api: { getSelected: Function, setSearch: Function, sort: Function, page: Function, refresh: Function, setColumn: Function },
+    onchangepage: Function,       // (page) — zero-based, after the page actually moves
+    onsearch: Function,           // (query, total) — total after the filter/fetch settles
+    api: { getSelected: Function, setSearch: Function, sort: Function, page: Function, refresh: Function, setColumn: Function, setValue: Function },
 }, (props, { state, onMount, onUnmount, listen }) => {
+    // ---- remote mode (v5 parity): the server owns search/sort/paging.
+    // remoteRows is the CURRENT PAGE as the server returned it;
+    // remoteTotal (a state: the pager bindings track it) is the
+    // caller-owned total that drives pageCount
+    const isRemote = () => !!(props.url.peek() && props.remote.peek());
+    let remoteRows: Row[] = [];
+
     // peek, not value: render bindings must NOT track data directly —
     // every data change (assignment or touch) flows through the refresh
     // subscription into `view`, so the window re-renders exactly once,
     // always with indices that match the current data
-    const rows = () => (props.data.peek() as Row[]) || [];
+    const rows = () => (isRemote() ? remoteRows : (props.data.peek() as Row[]) || []);
     // Same peek discipline as data: imperative paths and row builds must
     // not track the columns prop — column changes flow through the
     // refresh subscription (rows) and the tracked header bindings below
@@ -97,6 +125,7 @@ export const Datagrid = component('datagrid', {
     // Drag-resized columns: name → px. Overrides column.width in
     // gridTemplate() — once resized, a column leaves fr-land for good
     const widths = state<Record<string, number>>({});
+    const remoteTotal = state(0);
 
     let scroller: HTMLElement | null = null;
     let rootEl: HTMLElement | null = null;
@@ -104,7 +133,7 @@ export const Datagrid = component('datagrid', {
     const refresh = () => {
         const data = rows();
         let indices: number[] = [];
-        const q = query.value.trim().toLowerCase();
+        const q = isRemote() ? '' : query.value.trim().toLowerCase();
         if (q) {
             const names = columns().map((c) => c.name);
             for (let i = 0; i < data.length; i++) {
@@ -118,7 +147,8 @@ export const Datagrid = component('datagrid', {
         } else {
             indices = Array.from({ length: data.length }, (_, i) => i);
         }
-        const s = sortBy.value;
+        // Remote rows arrive pre-filtered/sorted/paged — never re-sort them
+        const s = isRemote() ? null : sortBy.value;
         if (s) {
             const col = columns().find((c) => c.name === s.name);
             const numeric = col?.type === 'number';
@@ -150,6 +180,61 @@ export const Datagrid = component('datagrid', {
     // Column changes (setColumn api or an external touch) take the same
     // path: refresh rebuilds the window with the current column set
     onMount(() => props.columns.subscribe(refresh));
+
+    // ---- remote fetch (v5 fetchRemote): plain GET; in remote mode the
+    // query string carries the full server delegation. `done` runs only
+    // after a SUCCESSFUL response is applied
+    let alive = true;
+    onUnmount(() => (alive = false));
+
+    const fetchRemote = (done?: () => void) => {
+        let url = props.url.peek() as string;
+        if (props.remote.peek()) {
+            const s = sortBy.value;
+            url +=
+                (url.includes('?') ? '&' : '?') +
+                'pagination=' + ((props.pagination.peek() as number) || 0) +
+                '&page=' + (page.value || 0);
+            if (s) {
+                url += '&orderBy=' + s.name + '&asc=' + (s.dir === 1);
+            }
+            if (query.value) {
+                url += '&term=' + encodeURIComponent(query.value);
+            }
+        }
+        return fetch(url, { headers: { 'Content-Type': 'text/json' } })
+            .then((r) => (r.ok ? r.json() : Promise.reject(new Error('Status code: ' + r.status))))
+            .then((res) => {
+                if (!alive) {
+                    return; // the grid unmounted while the request flew
+                }
+                // v5 accepts { result, total } or a bare array
+                const result: Row[] = Array.isArray(res?.result) ? res.result : Array.isArray(res) ? res : [];
+                if (isRemote()) {
+                    remoteRows = result;
+                    remoteTotal.value = typeof res?.total === 'number' ? res.total : result.length;
+                    refresh();
+                } else {
+                    // url without remote: the fetched rows BECOME the data
+                    // and the LOCAL pipeline applies (v5: self.data = result)
+                    props.data.value = result; // subscription runs refresh
+                }
+                done?.();
+            })
+            .catch((e: Error) => {
+                if (alive) {
+                    console.error('Failed to fetch data. ' + (e?.message || e));
+                }
+            });
+    };
+
+    // v5 onload: with a url and NO local rows, fetch on mount — remote
+    // or not. Rows supplied up front suppress the initial request
+    onMount(() => {
+        if (props.url.peek() && !rows().length) {
+            fetchRemote();
+        }
+    });
 
     // ---- drag gesture: document listeners armed per drag via listen()
     // (off() is idempotent and self-pruning, so arming per drag never
@@ -222,12 +307,53 @@ export const Datagrid = component('datagrid', {
         first.value = Math.min(Math.max(0, start), max);
     };
 
-    const pageCount = () => Math.max(1, Math.ceil(view.value.length / ((props.pagination.value as number) || 1)));
+    // In remote mode the view only holds the CURRENT page — the pager
+    // and the row count run off the server's total instead
+    const totalRows = () => (isRemote() ? remoteTotal.value : view.value.length);
+
+    const pageCount = () => Math.max(1, Math.ceil(totalRows() / ((props.pagination.value as number) || 1)));
+
+    /** Clamp + move + notify: EVERY page change (buttons, api.page, the
+     *  search reset) funnels through here, so onchangepage fires exactly
+     *  when the page actually moves — and remote mode re-fetches */
+    const setPage = (p: number) => {
+        const next = Math.min(Math.max(0, p), pageCount() - 1);
+        if (next === page.value) {
+            return;
+        }
+        page.value = next;
+        if (isRemote()) {
+            fetchRemote();
+        }
+        props.onchangepage?.(next);
+    };
+
+    /** One path for the search box AND api.setSearch: query + page reset
+     *  + refresh (or the remote round-trip), then the events — onsearch
+     *  first (with the settled total), onchangepage if the reset moved */
+    const runSearch = (q: string) => {
+        const moved = page.value !== 0;
+        batch(() => {
+            query.value = String(q ?? '');
+            page.value = 0;
+            if (!isRemote()) {
+                refresh();
+            }
+        });
+        if (isRemote()) {
+            fetchRemote(() => props.onsearch?.(query.value, remoteTotal.value));
+        } else {
+            props.onsearch?.(query.value, view.value.length);
+        }
+        if (moved) {
+            props.onchangepage?.(0);
+        }
+    };
 
     /** "21–40 of 45 rows" */
     const pageInfo = () => {
         const size = props.pagination.value as number;
-        const total = view.value.length;
+        const total = totalRows();
         if (!total) {
             return '0 rows';
         }
@@ -258,7 +384,12 @@ export const Datagrid = component('datagrid', {
     refresh();
 
     const windowIndices = () => {
-        const start = props.pagination.value ? page.value * (props.pagination.value as number) : first.value;
+        // Remote pages arrive pre-sliced: the window starts at 0
+        const start = props.pagination.value
+            ? isRemote()
+                ? 0
+                : page.value * (props.pagination.value as number)
+            : first.value;
         return view.value.slice(start, start + visibleCount()).map((dataIndex, i) => ({
             dataIndex,
             viewIndex: start + i,
@@ -282,8 +413,14 @@ export const Datagrid = component('datagrid', {
                     : null;
         batch(() => {
             sortBy.value = next || null;
-            refresh();
+            if (!isRemote()) {
+                refresh();
+            }
         });
+        if (isRemote()) {
+            // v5: remote sort delegates — re-fetch with orderBy/asc
+            fetchRemote();
+        }
         props.onsort?.(name, next ? next.dir : null);
     };
 
@@ -395,17 +532,24 @@ export const Datagrid = component('datagrid', {
 
     props.ref?.({
         getSelected: () => [...selected.value],
-        setSearch: (q: string) =>
-            batch(() => {
-                query.value = String(q ?? '');
-                page.value = 0;
-                refresh();
-            }),
+        setSearch: runSearch,
         sort,
-        page: (p: number) => {
-            page.value = Math.min(Math.max(0, p), pageCount() - 1);
-        },
+        page: setPage,
         refresh,
+        /** v5 argument order: x = column index or name, y = row index.
+         *  v5 fired onupdate — v6 funnels into onchange (always, like
+         *  v5: a programmatic write is deliberate even if equal) */
+        setValue: (x: number | string, y: number, value: unknown) => {
+            const name = typeof x === 'number' ? columns()[x]?.name : x;
+            const row = rows()[y];
+            if (!name || !row) {
+                return;
+            }
+            const oldValue = row[name];
+            row[name] = value;
+            props.data.touch();
+            props.onchange?.(row, name, value, oldValue);
+        },
         setColumn: (name: string, options: { hidden?: boolean; width?: string; title?: string } = {}) => {
             const col = columns().find((c) => c.name === name);
             if (!col) {
@@ -517,7 +661,11 @@ export const Datagrid = component('datagrid', {
         // selection Set uses): a scroll keeps the overlapping window rows,
         // a sort/filter MOVES surviving rows (and any component a cell
         // render() mounted, with its state) instead of rebuilding them
-        return html`<div key="${row}" class="lm-datagrid-row ${() => (selected.value.has(row) ? 'lm-datagrid-selected' : '')}"
+        // Zebra follows the VIEW index parity: stripes stay put across
+        // virtual scrolling, sorting, filtering and pagination
+        return html`<div key="${row}" class="lm-datagrid-row ${() =>
+            (selected.value.has(row) ? 'lm-datagrid-selected' : '') +
+            (props.zebra.value && entry.viewIndex % 2 ? ' lm-datagrid-zebra' : '')}"
             role="row"
             aria-rowindex="${entry.dataIndex + 2}"
             style="${() => 'height:' + rowHeight() + 'px;grid-template-columns:' + gridTemplate()}"
@@ -558,9 +706,12 @@ export const Datagrid = component('datagrid', {
                     <span>${headerContent(col)}</span>
                     <span class="lm-datagrid-arrow" data-dir="${() =>
                         sortBy.value && sortBy.value.name === col.name ? (sortBy.value.dir === 1 ? 'asc' : 'desc') : false}"></span>
-                    <span class="lm-datagrid-resize"
-                        onmousedown="${(e: MouseEvent) => startResize(e, col)}"
-                        onclick="${(e: MouseEvent) => e.stopPropagation()}"></span>
+                    ${() =>
+                        props.resizable.value
+                            ? html`<span class="lm-datagrid-resize"
+                                  onmousedown="${(e: MouseEvent) => startResize(e, col)}"
+                                  onclick="${(e: MouseEvent) => e.stopPropagation()}"></span>`
+                            : ''}
                 </div>`
             )}
     </div>`;
@@ -574,13 +725,8 @@ export const Datagrid = component('datagrid', {
             html`<div class="lm-datagrid-toolbar">
                 <input class="lm-datagrid-search" type="search" placeholder="Search..."
                     aria-label="Search"
-                    oninput="${(e: Event) =>
-                        batch(() => {
-                            query.value = (e.target as HTMLInputElement).value;
-                            page.value = 0;
-                            refresh();
-                        })}" />
-                <span class="lm-datagrid-count">${() => view.value.length} rows</span>
+                    oninput="${(e: Event) => runSearch((e.target as HTMLInputElement).value)}" />
+                <span class="lm-datagrid-count">${() => totalRows()} rows</span>
             </div>`}
         ${headerView()}
         <div class="lm-datagrid-body"
@@ -608,16 +754,16 @@ export const Datagrid = component('datagrid', {
                 ? html`<div class="lm-datagrid-footer">
                       <span class="lm-datagrid-pageinfo">${() => pageInfo()}</span>
                       <nav class="lm-datagrid-pages" aria-label="Pagination">
-                          <button onclick="${() => (page.value = Math.max(0, page.value - 1))}"
+                          <button onclick="${() => setPage(page.value - 1)}"
                               disabled="${() => page.value === 0}" aria-label="Previous page">‹</button>
                           ${() =>
                               pageItems().map((item) =>
                                   item < 0
                                       ? html`<span class="lm-datagrid-gap">…</span>`
                                       : html`<button data-current="${() => (page.value === item ? 'true' : false)}"
-                                            onclick="${() => (page.value = item)}">${item + 1}</button>`
+                                            onclick="${() => setPage(item)}">${item + 1}</button>`
                               )}
-                          <button onclick="${() => (page.value = Math.min(pageCount() - 1, page.value + 1))}"
+                          <button onclick="${() => setPage(page.value + 1)}"
                               disabled="${() => page.value >= pageCount() - 1}" aria-label="Next page">›</button>
                       </nav>
                   </div>`

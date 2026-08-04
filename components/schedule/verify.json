@@ -115,7 +115,15 @@
             "pass": true
         },
         {
+            "name": "event onchangeevent",
+            "pass": true
+        },
+        {
             "name": "event onbeforechange",
+            "pass": true
+        },
+        {
+            "name": "event onbeforechangeevent",
             "pass": true
         },
         {

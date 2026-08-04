@@ -135,6 +135,22 @@
             "pass": true
         },
         {
+            "name": "prop input",
+            "pass": true
+        },
+        {
+            "name": "prop input (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop initinput",
+            "pass": true
+        },
+        {
+            "name": "prop initinput (live state)",
+            "pass": true
+        },
+        {
             "name": "prop width",
             "pass": true
         },

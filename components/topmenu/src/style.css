@@ -28,7 +28,8 @@
     pointer-events: none;
 }
 
+/* The open title: the gray fill alone marks it (the standard menubar
+   look) — no outline; the dropdown right below is indication enough */
 .lm-topmenu-title[data-selected="true"] {
     background-color: var(--lm-background-color-highlight, #ebebeb);
-    outline: 2px solid var(--lm-border-outline, #000);
 }

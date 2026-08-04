@@ -19,6 +19,37 @@ const VOID_TAGS = new Set([
     'area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'source', 'track', 'wbr',
 ]);
 
+/**
+ * HTML character references in STATIC template text/attributes decode at
+ * parse time — templates write &lt; for a literal "<" (raw < starts a
+ * tag), exactly like HTML, and the renderer sets text via textContent
+ * which would otherwise show the reference verbatim. Only author-written
+ * statics decode; dynamic ${...} values never pass through here, so
+ * interpolated content stays injection-safe. Named set: the references
+ * authors actually type; numeric forms cover everything else.
+ */
+const NAMED_REFS: Record<string, string> = {
+    lt: '<', gt: '>', amp: '&', quot: '"', apos: "'", nbsp: ' ',
+    copy: '©', reg: '®', trade: '™', hellip: '…',
+    middot: '·', bull: '•', ndash: '–', mdash: '—',
+    larr: '←', rarr: '→', uarr: '↑', darr: '↓', times: '×',
+};
+
+const decodeRefs = function (s: string): string {
+    if (s.indexOf('&') < 0) {
+        return s;
+    }
+    return s.replace(/&(?:#x([0-9a-fA-F]+)|#(\d+)|([a-zA-Z]+));/g, function (m, hex, dec, name) {
+        if (hex) {
+            return String.fromCodePoint(parseInt(hex, 16));
+        }
+        if (dec) {
+            return String.fromCodePoint(parseInt(dec, 10));
+        }
+        return NAMED_REFS[name.toLowerCase()] ?? m; // unknown name: keep verbatim
+    });
+};
+
 const enum Mode {
     Text,
     Tag,
@@ -75,7 +106,7 @@ export const parse = function (strings: readonly string[]): Template {
             t = /\n/.test(text) ? '' : text;
         }
         if (t) {
-            children(parent()).push({ type: '#text', text: t });
+            children(parent()).push({ type: '#text', text: decodeRefs(t) });
         }
         text = '';
     };
@@ -83,7 +114,7 @@ export const parse = function (strings: readonly string[]): Template {
     const commitAttr = function (): void {
         if (attrName) {
             if (valBuf) {
-                parts.push(valBuf);
+                parts.push(decodeRefs(valBuf));
             }
             // Boolean attributes (<input disabled />) keep empty parts
             if (!tag!.props) {

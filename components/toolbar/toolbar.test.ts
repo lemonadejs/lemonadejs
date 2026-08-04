@@ -141,7 +141,7 @@ describe('components/toolbar — an action bar with Contextmenu pickers', () => 
     it('renders select items as picker headers, closed by default', () => {
         mountBar({ options: [{ type: 'select', title: 'Font', options: ['Verdana'] }] as ToolbarItem[] });
         expect(headers()).toHaveLength(1);
-        expect(headers()[0].textContent).toBe('Font');
+        expect(headers()[0].querySelector('.lm-toolbar-picker-label')!.textContent).toBe('Font');
         expect(headers()[0].getAttribute('aria-haspopup')).toBe('true');
         expect(headers()[0].getAttribute('aria-expanded')).toBe('false');
         expect(headers()[0].getAttribute('tabindex')).toBe('0');
@@ -198,14 +198,17 @@ describe('components/toolbar — an action bar with Contextmenu pickers', () => 
         down(headers()[0]);
         await flush();
         pick(1);
+        // onchange sees the PREVIOUS title; then the header mirrors the pick
         expect(log).toEqual(['option:Arial', 'change:Font:Arial']);
         expect(menus()).toHaveLength(0);
         expect(headers()[0].getAttribute('aria-expanded')).toBe('false');
+        expect(headers()[0].querySelector('.lm-toolbar-picker-label')!.textContent).toBe('Arial');
 
         down(headers()[0]); // reopens after a pick
         await flush();
         pick(0); // plain string option: only the toolbar onchange
-        expect(log).toEqual(['option:Arial', 'change:Font:Arial', 'change:Font:Verdana']);
+        expect(log).toEqual(['option:Arial', 'change:Font:Arial', 'change:Arial:Verdana']);
+        expect(headers()[0].querySelector('.lm-toolbar-picker-label')!.textContent).toBe('Verdana');
     });
 
     it('outside mousedown closes the dropdown', async () => {
@@ -221,7 +224,7 @@ describe('components/toolbar — an action bar with Contextmenu pickers', () => 
         mountBar({
             options: [{ type: 'select', title: 'Font', disabled: true, options: ['Verdana'] }] as ToolbarItem[],
         });
-        expect(headers()[0].hasAttribute('tabindex')).toBe(false);
+        expect(headers()[0].getAttribute('tabindex')).toBe('-1'); // disabled: never a tab stop
         down(headers()[0]);
         over(headers()[0]);
         await flush();
@@ -263,7 +266,7 @@ describe('components/toolbar — an action bar with Contextmenu pickers', () => 
         heading.title = 'Heading 1';
         api!.refresh(); // ...and one refresh patches the bar in place
         expect(items()[0].getAttribute('data-selected')).toBe('true');
-        expect(headers()[0].textContent).toBe('Heading 1');
+        expect(headers()[0].querySelector('.lm-toolbar-picker-label')!.textContent).toBe('Heading 1');
 
         bold.selected = false;
         api!.refresh();
@@ -314,6 +317,73 @@ describe('components/toolbar — an action bar with Contextmenu pickers', () => 
         document.body.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
         expect(handle!.query('.lm-toolbar-color-pop')).toBeNull();
         expect(color.value).toBeUndefined();
+    });
+
+    it('keyboard: roving tabindex — one tab stop, arrows walk enabled items, Home/End jump', () => {
+        mountBar({
+            options: [
+                { icon: 'undo', title: 'Undo' },
+                { type: 'divider' },
+                { icon: 'redo', title: 'Redo', disabled: true }, // skipped
+                { type: 'select', title: 'Font', options: ['Arial'] },
+                { icon: 'save', title: 'Save' },
+            ] as ToolbarItem[],
+        });
+        const stops = () => [...anchor(0).closest('.lm-toolbar')!.querySelectorAll('.lm-toolbar-item > a, .lm-toolbar-picker-header')];
+        // exactly ONE tab stop, on the first enabled item
+        expect(stops().map((el) => el.getAttribute('tabindex'))).toEqual(['0', '-1', '-1', '-1']);
+
+        const key = (k: string) => root().dispatchEvent(new KeyboardEvent('keydown', { key: k, bubbles: true }));
+        key('ArrowRight'); // skips the disabled redo, lands on the picker
+        expect(document.activeElement).toBe(headers()[0]);
+        expect(stops().map((el) => el.getAttribute('tabindex'))).toEqual(['-1', '-1', '0', '-1']);
+
+        key('ArrowRight');
+        expect(document.activeElement).toBe(stops()[3]); // Save
+        key('ArrowRight'); // wraps back to Undo
+        expect(document.activeElement).toBe(stops()[0]);
+        key('End');
+        expect(document.activeElement).toBe(stops()[3]);
+        key('Home');
+        expect(document.activeElement).toBe(stops()[0]);
+    });
+
+    it('keyboard: Enter/Space activate an item; Space/ArrowDown open a picker', async () => {
+        const log: string[] = [];
+        mountBar({
+            options: [
+                { icon: 'undo', onclick: () => log.push('undo') },
+                { type: 'select', title: 'Font', options: ['Arial'] },
+            ] as ToolbarItem[],
+            onitemclick: () => log.push('bar'),
+        });
+        const a = anchor(0);
+        a.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+        a.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', bubbles: true }));
+        expect(log).toEqual(['undo', 'bar', 'undo', 'bar']);
+
+        headers()[0].dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+        await flush();
+        expect(menus()).toHaveLength(1);
+        expect(headers()[0].getAttribute('aria-expanded')).toBe('true');
+    });
+
+    it('exposes button semantics: role, aria-pressed for toggles, aria-disabled', () => {
+        mountBar({
+            options: [
+                { icon: 'bold', selected: true },
+                { icon: 'italic', selected: false },
+                { icon: 'undo' },                     // no selected flag: not a toggle
+                { icon: 'redo', disabled: true },
+                { title: 'Docs', route: '#docs' },    // a real link keeps link semantics
+            ] as ToolbarItem[],
+        });
+        expect(anchor(0).getAttribute('role')).toBe('button');
+        expect(anchor(0).getAttribute('aria-pressed')).toBe('true');
+        expect(anchor(1).getAttribute('aria-pressed')).toBe('false');
+        expect(anchor(2).hasAttribute('aria-pressed')).toBe(false);
+        expect(anchor(3).getAttribute('aria-disabled')).toBe('true');
+        expect(anchor(4).hasAttribute('role')).toBe(false);
     });
 
     it('options is live: replacing it re-renders the bar', () => {

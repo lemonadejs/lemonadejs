@@ -16,6 +16,7 @@ type Api = {
     page(p: number): void;
     refresh(): void;
     setColumn(name: string, options: { hidden?: boolean; width?: string; title?: string }): void;
+    setValue(x: number | string, y: number, value: unknown): void;
 };
 
 let handle: ReturnType<typeof t> | null = null;
@@ -473,5 +474,225 @@ describe('components/datagrid — column resize + customization', () => {
         expect(clicks).toHaveLength(1);
         expect(clicks[0][0].id).toBe(1); // MY row object, not a copy
         expect(clicks[0][1]).toBeInstanceOf(MouseEvent);
+    });
+});
+
+// ---- v5 parity: zebra, resizable, setValue, page/search events, remote --
+
+/** The fetch chain hops several microtasks — a macrotask flushes it */
+const flush = () => new Promise((r) => setTimeout(r, 0));
+
+/** Stub fetch with a body factory keyed on the requested url */
+const stubFetch = (body: (url: string) => unknown) => {
+    const mock = vi.fn(async (url: string) => ({ ok: true, json: async () => body(url) }) as unknown as Response);
+    vi.stubGlobal('fetch', mock);
+    return mock;
+};
+
+describe('components/datagrid — v5 parity surface', () => {
+    afterEach(() => {
+        vi.unstubAllGlobals();
+    });
+
+    it('zebra: every second window row carries the stripe class', () => {
+        open({ data: makeRows(5), zebra: true });
+        const striped = renderedRows().map((r) => r.className.includes('lm-datagrid-zebra'));
+        expect(striped).toEqual([false, true, false, true, false]);
+    });
+
+    it('zebra off (the default): no stripe classes anywhere', () => {
+        open({ data: makeRows(5) });
+        expect(handle!.queryAll('.lm-datagrid-zebra')).toHaveLength(0);
+    });
+
+    it('zebra stripes follow the VIEW index across virtual scrolling', () => {
+        open({ zebra: true });
+        scrollTo(3600); // window starts at view index 96 (even) — stripe stays on odd
+        const striped = renderedRows().map((r) => r.className.includes('lm-datagrid-zebra'));
+        expect(striped[0]).toBe(false); // view index 96
+        expect(striped[1]).toBe(true); // view index 97
+    });
+
+    it('resizable: true by default (v6 behavior kept), false hides the handles', () => {
+        open({ data: makeRows(3) });
+        expect(handle!.queryAll('.lm-datagrid-resize')).toHaveLength(4);
+        handle!.unmount();
+        handle = null;
+        open({ data: makeRows(3), resizable: false });
+        expect(handle!.queryAll('.lm-datagrid-resize')).toHaveLength(0);
+    });
+
+    it('resizable toggles LIVE through a state', () => {
+        const resizable = store(true);
+        open({ data: makeRows(3), resizable });
+        expect(handle!.queryAll('.lm-datagrid-resize')).toHaveLength(4);
+        resizable.value = false;
+        expect(handle!.queryAll('.lm-datagrid-resize')).toHaveLength(0);
+        resizable.value = true;
+        expect(handle!.queryAll('.lm-datagrid-resize')).toHaveLength(4);
+    });
+
+    it('api.setValue(x, y, value): column INDEX, updates the cell + fires onchange', () => {
+        const changes: unknown[][] = [];
+        const data = makeRows(5);
+        const api = open({ data, onchange: (...args: unknown[]) => changes.push(args) });
+        api.setValue(2, 0, 500); // column 2 = amount, row 0
+        expect(data[0].amount).toBe(500); // the CALLER's object was mutated
+        expect(changes).toEqual([[data[0], 'amount', 500, 1]]);
+        expect(cellTexts(renderedRows()[0])[2]).toBe('500'); // window re-rendered
+    });
+
+    it('api.setValue accepts the column NAME too (v5)', () => {
+        const changes: unknown[][] = [];
+        const data = makeRows(5);
+        const api = open({ data, onchange: (...args: unknown[]) => changes.push(args) });
+        api.setValue('name', 1, 'Renamed');
+        expect(data[1].name).toBe('Renamed');
+        expect(changes).toEqual([[data[1], 'name', 'Renamed', 'Person 2']]);
+        expect(cellTexts(renderedRows()[1])[1]).toBe('Renamed');
+    });
+
+    it('api.setValue out of range is a no-op', () => {
+        const changes: unknown[][] = [];
+        const data = makeRows(2);
+        const api = open({ data, onchange: (...args: unknown[]) => changes.push(args) });
+        api.setValue(99, 0, 'x');
+        api.setValue(0, 99, 'x');
+        expect(changes).toEqual([]);
+    });
+
+    it('onchangepage fires on button clicks and api.page — only when the page MOVES', () => {
+        const pages: number[] = [];
+        const api = open({ data: makeRows(45), pagination: 20, onchangepage: (p: number) => pages.push(p) });
+        const buttons = () => handle!.queryAll('.lm-datagrid-pages button');
+        buttons()[2].click(); // page "2" → index 1
+        buttons()[buttons().length - 1].click(); // next → index 2
+        buttons()[buttons().length - 1].click(); // next again: clamped, no move
+        api.page(0);
+        api.page(0); // already there: silent
+        expect(pages).toEqual([1, 2, 0]);
+    });
+
+    it('onsearch fires with (query, total) from the box and api.setSearch', () => {
+        const searches: [string, number][] = [];
+        const api = open({ search: true, onsearch: (q: string, n: number) => searches.push([q, n]) });
+        const input = handle!.query('.lm-datagrid-search') as HTMLInputElement;
+        input.value = 'Person 99';
+        input.dispatchEvent(new Event('input'));
+        api.setSearch('');
+        expect(searches).toEqual([
+            ['Person 99', 11], // 'Person 99' + 990..999
+            ['', 1000],
+        ]);
+    });
+
+    it('a search resets the page and reports it through onchangepage', () => {
+        const pages: number[] = [];
+        const api = open({ data: makeRows(45), pagination: 20, onchangepage: (p: number) => pages.push(p) });
+        api.page(2);
+        api.setSearch('Person'); // matches everything, but page snaps back
+        api.setSearch('Person'); // page already 0: no page event
+        expect(pages).toEqual([2, 0]);
+    });
+
+    it('url (no remote): fetches ONCE on mount when data is empty, rows become local data', async () => {
+        const mock = stubFetch(() => makeRows(3));
+        open({ data: [], url: '/data' });
+        await flush();
+        expect(mock).toHaveBeenCalledTimes(1);
+        expect(mock.mock.calls[0][0]).toBe('/data'); // no query params without remote
+        expect(renderedRows()).toHaveLength(3);
+        expect(firstName()).toBe('Person 1');
+    });
+
+    it('url: a { result } envelope unwraps like v5', async () => {
+        stubFetch(() => ({ result: makeRows(2), total: 2 }));
+        open({ data: [], url: '/data' });
+        await flush();
+        expect(renderedRows()).toHaveLength(2);
+    });
+
+    it('url: rows supplied up front suppress the mount fetch (v5 onload)', async () => {
+        const mock = stubFetch(() => makeRows(3));
+        open({ data: makeRows(5), url: '/data' });
+        await flush();
+        expect(mock).not.toHaveBeenCalled();
+        expect(renderedRows()).toHaveLength(5);
+    });
+
+    it('REMOTE: the server owns paging — ?pagination=&page=, res.total drives the pager', async () => {
+        const all = makeRows(45);
+        const mock = stubFetch((url) => {
+            const p = Number(new URLSearchParams(url.split('?')[1]).get('page'));
+            return { result: all.slice(p * 20, p * 20 + 20), total: 45 };
+        });
+        const pages: number[] = [];
+        open({ data: [], url: '/api', remote: true, pagination: 20, onchangepage: (p: number) => pages.push(p) });
+        await flush();
+        expect(mock.mock.calls[0][0]).toBe('/api?pagination=20&page=0');
+        expect(renderedRows()).toHaveLength(20);
+        expect(firstName()).toBe('Person 1');
+        // Caller-owned total: 45 rows the client never saw
+        expect(handle!.query('.lm-datagrid-pageinfo')!.textContent).toBe('1–20 of 45 rows');
+        const buttons = () => handle!.queryAll('.lm-datagrid-pages button');
+        expect(buttons().map((b) => b.textContent)).toEqual(['‹', '1', '2', '3', '›']);
+
+        buttons()[2].click(); // page 2 → re-fetch, not a local slice
+        await flush();
+        expect(mock.mock.calls[1][0]).toBe('/api?pagination=20&page=1');
+        expect(firstName()).toBe('Person 21');
+        expect(handle!.query('.lm-datagrid-pageinfo')!.textContent).toBe('21–40 of 45 rows');
+        expect(pages).toEqual([1]);
+    });
+
+    it('REMOTE: search delegates with &term= and fires onsearch with the server total', async () => {
+        const mock = stubFetch((url) => {
+            const term = new URLSearchParams(url.split('?')[1]).get('term');
+            return term ? { result: makeRows(2), total: 2 } : { result: makeRows(20), total: 45 };
+        });
+        const searches: [string, number][] = [];
+        const api = open({
+            data: [],
+            url: '/api',
+            remote: true,
+            pagination: 20,
+            search: true,
+            onsearch: (q: string, n: number) => searches.push([q, n]),
+        });
+        await flush();
+        api.setSearch('bob');
+        await flush();
+        expect(mock.mock.calls[1][0]).toBe('/api?pagination=20&page=0&term=bob');
+        expect(renderedRows()).toHaveLength(2);
+        expect(searches).toEqual([['bob', 2]]); // AFTER the response settled
+        expect(handle!.query('.lm-datagrid-count')!.textContent).toContain('2 rows');
+    });
+
+    it('REMOTE: sort delegates with &orderBy=&asc= instead of sorting locally', async () => {
+        const mock = stubFetch(() => ({ result: makeRows(20), total: 45 }));
+        open({ data: [], url: '/api', remote: true, pagination: 20 });
+        await flush();
+        handle!.queryAll('.lm-datagrid-th')[1].click(); // sort name asc
+        await flush();
+        expect(mock.mock.calls[1][0]).toBe('/api?pagination=20&page=0&orderBy=name&asc=true');
+        handle!.queryAll('.lm-datagrid-th')[1].click(); // desc
+        await flush();
+        expect(mock.mock.calls[2][0]).toBe('/api?pagination=20&page=0&orderBy=name&asc=false');
+    });
+
+    it('REMOTE: a failed request logs and keeps the grid alive', async () => {
+        const errors = vi.spyOn(console, 'error').mockImplementation(() => {});
+        try {
+            vi.stubGlobal(
+                'fetch',
+                vi.fn(async () => ({ ok: false, status: 500, json: async () => ({}) }) as unknown as Response)
+            );
+            open({ data: [], url: '/api', remote: true, pagination: 20 });
+            await flush();
+            expect(errors).toHaveBeenCalled();
+            expect(handle!.query('.lm-datagrid-empty')).not.toBeNull();
+        } finally {
+            errors.mockRestore();
+        }
     });
 });

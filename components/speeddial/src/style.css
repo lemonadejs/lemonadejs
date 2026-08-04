@@ -156,6 +156,13 @@
     opacity: 1;
 }
 
+/* near the left viewport edge the tooltip flips to the RIGHT of the
+   button (data-labels is measured on open — more room wins) */
+.lm-speeddial[data-labels='right'] .lm-speeddial-action-label {
+    right: auto;
+    left: calc(100% + 10px);
+}
+
 /* horizontal fans: the label sits above the button instead of beside it */
 .lm-speeddial[data-direction='left'] .lm-speeddial-action-label,
 .lm-speeddial[data-direction='right'] .lm-speeddial-action-label {

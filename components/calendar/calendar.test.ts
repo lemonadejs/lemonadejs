@@ -6,7 +6,7 @@
  * system, input mode open/escape-cancel/focusout, typing mask + live
  * view steering, inline mode, api surface, live prop updates.
  */
-import { describe, it, expect, afterEach } from 'vitest';
+import { describe, it, expect, afterEach, vi } from 'vitest';
 import { store } from 'lemonadejs';
 import { render as t, verify } from 'lemonadejs/test';
 import Calendar from '@lemonadejs/calendar';
@@ -355,6 +355,21 @@ describe('components/calendar — the date picker on the Modal primitive', () =>
         expect(monthLabel().textContent).toBe('June');
     });
 
+    it('wheel: trackpad-sized deltas accumulate to ONE step; the burst tail is discarded', () => {
+        make({ type: 'inline', bind: '2026-06-15' });
+        const spin = (n: number) => {
+            for (let i = 0; i < n; i++) {
+                grid().dispatchEvent(new WheelEvent('wheel', { deltaY: 8, bubbles: true, cancelable: true }));
+            }
+        };
+        spin(12); // 96px — still under one notch (100)
+        expect(monthLabel().textContent).toBe('June');
+        spin(1); // 104px accumulated: exactly one step
+        expect(monthLabel().textContent).toBe('July');
+        spin(30); // the same-burst tail (cooldown) must NOT keep paging
+        expect(monthLabel().textContent).toBe('July');
+    });
+
     it('disabled blocks selection and marks the block', () => {
         const changes: unknown[] = [];
         const api = make({ type: 'inline', bind: '2026-06-15', disabled: true, onchange: (v: unknown) => changes.push(v) });
@@ -478,5 +493,112 @@ describe('components/calendar — the date picker on the Modal primitive', () =>
         api.open();
         await flush();
         expect(opens).toEqual([1]);
+    });
+
+    it('input: adopts an external element — no internal input, focus opens, commits land formatted', async () => {
+        const ext = document.createElement('input');
+        document.body.appendChild(ext);
+        try {
+            const changes: unknown[] = [];
+            const api = make({
+                bind: '2026-06-15', format: 'DD/MM/YYYY', input: ext,
+                onchange: (v: unknown) => changes.push(v),
+            });
+            expect(handle!.query('input')).toBeNull(); // the internal input never renders
+            expect(ext.value).toBe('15/06/2026'); // adopted element shows the formatted value
+            ext.dispatchEvent(new FocusEvent('focusin')); // open-on-focus (v5)
+            expect(api.isClosed()).toBe(false);
+            await flush();
+            cell('20').click(); // commit closes and lands formatted in the host's element
+            expect(api.isClosed()).toBe(true);
+            expect(changes).toEqual(['2026-06-20']);
+            expect(ext.value).toBe('20/06/2026');
+            api.setValue('2026-06-25'); // api commits sync it too
+            expect(ext.value).toBe('25/06/2026');
+        } finally {
+            ext.remove();
+        }
+    });
+
+    it('input: typing into the adopted element steers the view; Enter commits (type-to-update)', async () => {
+        const ext = document.createElement('input');
+        document.body.appendChild(ext);
+        try {
+            const api = make({ bind: '2026-06-15', input: ext });
+            ext.dispatchEvent(new MouseEvent('click')); // click opens too
+            expect(api.isClosed()).toBe(false);
+            await flush();
+            ext.value = '2026-07-20';
+            ext.dispatchEvent(new Event('input'));
+            expect(monthLabel().textContent).toBe('July'); // view follows, no commit
+            expect(api.getValue()).toBe('2026-06-15');
+            key(ext, 'Enter');
+            expect(api.getValue()).toBe('2026-07-20');
+            expect(api.isClosed()).toBe(true);
+            expect(ext.value).toBe('2026-07-20');
+        } finally {
+            ext.remove();
+        }
+    });
+
+    it('input: a pre-filled adopted element seeds an empty calendar (v5 extract, silent)', () => {
+        const ext = document.createElement('input');
+        ext.value = '15/06/2026';
+        document.body.appendChild(ext);
+        try {
+            const changes: unknown[] = [];
+            const api = make({ bind: '', format: 'DD/MM/YYYY', input: ext, onchange: (v: unknown) => changes.push(v) });
+            expect(api.getValue()).toBe('2026-06-15');
+            expect(changes).toEqual([]); // adoption is not a user commit
+            expect(ext.value).toBe('15/06/2026');
+        } finally {
+            ext.remove();
+        }
+    });
+
+    it('initinput=false: no open-on-focus/typing wiring, the value still syncs', async () => {
+        const ext = document.createElement('input');
+        document.body.appendChild(ext);
+        try {
+            const api = make({ bind: '2026-06-15', input: ext, initinput: false });
+            expect(ext.value).toBe('2026-06-15'); // sync is alive
+            ext.dispatchEvent(new FocusEvent('focusin'));
+            ext.dispatchEvent(new MouseEvent('click'));
+            key(ext, 'Enter');
+            expect(api.isClosed()).toBe(true); // nothing opens
+            api.setValue('2026-06-20');
+            expect(ext.value).toBe('2026-06-20'); // ... but the value keeps landing
+            handle!.unmount();
+            handle = null;
+
+            // the internal input honors it the same way (v5 scope: the configured input)
+            const api2 = make({ bind: '2026-06-15', initinput: false });
+            expect(input().value).toBe('2026-06-15');
+            input().dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
+            key(input(), 'Enter');
+            expect(api2.isClosed()).toBe(true);
+            api2.setValue('2026-06-20');
+            expect(input().value).toBe('2026-06-20');
+        } finally {
+            ext.remove();
+        }
+    });
+
+    it('input: unmount removes every listener added to the adopted element', () => {
+        const ext = document.createElement('input');
+        document.body.appendChild(ext);
+        const adds = vi.spyOn(ext, 'addEventListener');
+        const removes = vi.spyOn(ext, 'removeEventListener');
+        try {
+            make({ bind: '2026-06-15', input: ext });
+            expect(adds.mock.calls.length).toBeGreaterThan(0); // it did wire
+            handle!.unmount();
+            handle = null;
+            expect(removes.mock.calls.length).toBe(adds.mock.calls.length);
+        } finally {
+            adds.mockRestore();
+            removes.mockRestore();
+            ext.remove();
+        }
     });
 });

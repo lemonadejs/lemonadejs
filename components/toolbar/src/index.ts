@@ -116,7 +116,14 @@ export const Toolbar = component('toolbar', {
             const inner = option.onclick;
             option.onclick = (e: Event, picked: ContextItem) => {
                 inner?.(e, picked);
-                props.onchange?.(e, item, picked);
+                props.onchange?.(e, item, picked); // sees the PREVIOUS title
+                // then the header MIRRORS the pick (Paragraph → Heading 1 —
+                // the fixed item.width exists exactly so this doesn't
+                // reflow); version bump re-evaluates the live bindings
+                if (picked.title) {
+                    item.title = picked.title;
+                    version.value = version.value + 1;
+                }
             };
             return option;
         });
@@ -207,6 +214,74 @@ export const Toolbar = component('toolbar', {
         }
     });
 
+    // ---- keyboard navigation (APG toolbar pattern): ONE tab stop for the
+    // whole bar (roving tabindex), Arrow keys walk the enabled controls
+    // (Left/Right horizontal, Up/Down on the vertical rail), Home/End jump,
+    // Enter/Space activate. Focus syncs the rover, so Tab returns to the
+    // last-used control.
+    const interactive = (it: ToolbarItem | undefined): boolean =>
+        !!it && it.type !== 'divisor' && it.type !== 'divider' && !it.disabled && it.visible !== false;
+
+    const firstOk = () => {
+        const list = items();
+        for (let i = 0; i < list.length; i++) {
+            if (interactive(list[i])) {
+                return i;
+            }
+        }
+        return 0;
+    };
+    const rov = state(firstOk());
+
+    /** items index → position among the bar's focusable controls (dividers
+     *  render no control, so DOM order matches this count) */
+    const ordinal = (index: number): number => {
+        const list = items();
+        let n = 0;
+        for (let i = 0; i < index; i++) {
+            const t = list[i]?.type;
+            if (t !== 'divisor' && t !== 'divider') {
+                n++;
+            }
+        }
+        return n;
+    };
+
+    const focusItem = (index: number) => {
+        rov.value = index;
+        const el = root?.querySelectorAll<HTMLElement>(
+            '.lm-toolbar-item > a, .lm-toolbar-picker-header'
+        )[ordinal(index)];
+        el?.focus();
+    };
+
+    const onBarKey = (e: KeyboardEvent) => {
+        const vertical = props.position.value === 'left';
+        const forward = vertical ? 'ArrowDown' : 'ArrowRight';
+        const backward = vertical ? 'ArrowUp' : 'ArrowLeft';
+        if (e.key !== forward && e.key !== backward && e.key !== 'Home' && e.key !== 'End') {
+            return;
+        }
+        const idxs = items().map((it, i) => (interactive(it) ? i : -1)).filter((i) => i >= 0);
+        if (!idxs.length) {
+            return;
+        }
+        e.preventDefault();
+        const cur = idxs.indexOf(rov.value);
+        const at = e.key === 'Home'
+            ? 0
+            : e.key === 'End'
+                ? idxs.length - 1
+                : cur < 0
+                    ? 0
+                    : (cur + (e.key === forward ? 1 : -1) + idxs.length) % idxs.length; // wraps
+        focusItem(idxs[at]);
+    };
+
+    /** the roving stop: '0' only on the rover; disabled/hidden always -1 */
+    const roving = (index: number) =>
+        live(() => (interactive(items()[index]) && rov.value === index ? '0' : '-1'));
+
     // Items are keyed by identity: inserting/removing/reordering options
     // moves the existing DOM instead of rewriting every item after it
     const itemView = (item: ToolbarItem, index: number) => {
@@ -220,18 +295,30 @@ export const Toolbar = component('toolbar', {
                 data-disabled="${live(() => (item.disabled ? 'true' : false))}">
                 <div class="lm-toolbar-picker-header" role="button"
                     style="${item.width ? 'width:' + item.width + 'px' : false}"
-                    tabindex="${item.disabled ? false : '0'}"
+                    tabindex="${roving(index)}"
                     title="${item.tooltip || false}"
                     aria-haspopup="true"
+                    aria-disabled="${live(() => (item.disabled ? 'true' : false))}"
                     aria-expanded="${() => (expanded.value === index ? 'true' : 'false')}"
+                    onfocus="${() => (rov.value = index)}"
                     onmousedown="${(e: MouseEvent) => press(e, index)}"
                     onmouseover="${(e: MouseEvent) => press(e, index)}"
                     oncontextmenu="${(e: MouseEvent) => press(e, index)}"
                     onkeydown="${(e: KeyboardEvent) => {
-                        if (e.key === 'Enter') {
+                        if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowDown') {
                             press(e, index);
                         }
-                    }}">${live(() => item.title || '')}</div>
+                    }}"><span class="lm-toolbar-picker-label">${live(() => item.title || '')}</span>${
+                        // No explicit width: an invisible zero-height stack
+                        // of every option title sizes the header to the
+                        // LONGEST one, so mirroring a pick into the label
+                        // never reflows the rest of the toolbar
+                        !item.width
+                            ? html`<span class="lm-toolbar-picker-sizer" aria-hidden="true">${(item.options || []).map(
+                                  (o) => html`<span>${typeof o === 'string' ? o : o.title || ''}</span>`
+                              )}</span>`
+                            : ''
+                    }</div>
             </div>`;
         }
         if (item.type === 'color') {
@@ -240,12 +327,21 @@ export const Toolbar = component('toolbar', {
                 data-visible="${live(() => (item.visible === undefined ? false : String(item.visible)))}"
                 data-disabled="${live(() => (item.disabled ? 'true' : false))}">
                 <a title="${item.tooltip || item.title || false}" role="button"
+                    tabindex="${roving(index)}"
                     aria-label="${item.tooltip || item.title || false}"
                     aria-haspopup="true"
+                    aria-disabled="${live(() => (item.disabled ? 'true' : false))}"
                     aria-expanded="${() => (colorAt.value?.index === index ? 'true' : 'false')}"
-                    onclick="${(e: MouseEvent) => pickColor(e, index)}">
+                    onfocus="${() => (rov.value = index)}"
+                    onclick="${(e: MouseEvent) => pickColor(e, index)}"
+                    onkeydown="${(e: KeyboardEvent) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            pickColor(e, index);
+                        }
+                    }}">
                     ${item.icon
-                        ? html`<i class="material-icons material-symbols-outlined">${item.icon}</i>`
+                        ? html`<i class="material-icons material-symbols-outlined" aria-hidden="true">${item.icon}</i>`
                         : ''}
                     <span class="lm-toolbar-swatch"
                         style="${live(() => 'background-color:' + (item.value || 'transparent'))}"></span>
@@ -258,10 +354,23 @@ export const Toolbar = component('toolbar', {
             data-disabled="${live(() => (item.disabled ? 'true' : false))}"
             data-gap="${item.gap ? 'true' : false}">
             <a href="${item.route || false}" title="${live(() => item.tooltip || item.title || false)}"
-                onclick="${(e: MouseEvent) => activate(e, index)}">
+                role="${item.route ? false : 'button'}"
+                tabindex="${roving(index)}"
+                aria-label="${live(() => item.tooltip || item.title || false)}"
+                aria-disabled="${live(() => (item.disabled ? 'true' : false))}"
+                aria-pressed="${live(() => (item.selected === undefined ? false : String(!!item.selected)))}"
+                onfocus="${() => (rov.value = index)}"
+                onclick="${(e: MouseEvent) => activate(e, index)}"
+                onkeydown="${(e: KeyboardEvent) => {
+                    // route items keep the NATIVE Enter → click → navigate
+                    if ((e.key === 'Enter' || e.key === ' ') && !item.route) {
+                        e.preventDefault();
+                        activate(e, index);
+                    }
+                }}">
                 ${item.image ? html`<img src="${item.image}" alt="" />` : ''}
                 ${item.icon
-                    ? html`<i class="material-icons material-symbols-outlined">${live(() => item.icon)}</i>`
+                    ? html`<i class="material-icons material-symbols-outlined" aria-hidden="true">${live(() => item.icon)}</i>`
                     : ''}
                 ${item.title ? html`<span>${live(() => item.title)}</span>` : ''}
             </a>
@@ -272,7 +381,8 @@ export const Toolbar = component('toolbar', {
         ref="${(el: HTMLElement) => (root = el)}"
         aria-orientation="${() => (props.position.value === 'left' ? 'vertical' : false)}"
         data-position="${() => props.position.value || false}"
-        data-visible="${() => (props.visible.value === false ? 'false' : 'true')}">
+        data-visible="${() => (props.visible.value === false ? 'false' : 'true')}"
+        onkeydown="${onBarKey}">
         ${() => items().map((item, i) => itemView(item, i))}
         <${Contextmenu} ref="${(a: MenuApi) => (menu = a)}"
             onclose="${() => (expanded.value = null)}" />

@@ -134,3 +134,43 @@ describe('Core rendering and reactivity', () => {
         expect(handle.query('div')!.textContent).toBe('a < b');
     });
 });
+
+describe('Static character references (parse-time decode)', () => {
+    it('decodes named, decimal and hex references in static text', () => {
+        const C: Component = () => html`<div>
+            <h1>&lt;Kanban /&gt;</h1>
+            <p>a &amp; b &mdash; c &#8942; d &#x2713;</p>
+        </div>`;
+        handle = t(C);
+        expect(handle.query('h1')!.textContent).toBe('<Kanban />');
+        expect(handle.query('p')!.textContent).toBe('a & b — c ⋮ d ✓');
+    });
+
+    it('decodes references in static attribute values', () => {
+        const C: Component = () => html`<div><span title="Tom &amp; Jerry &rarr; chase">x</span></div>`;
+        handle = t(C);
+        expect(handle.query('span')!.getAttribute('title')).toBe('Tom & Jerry → chase');
+    });
+
+    it('NEVER decodes dynamic values — interpolations stay verbatim (injection-safe)', () => {
+        const C: Component = () => html`<div>
+            <p>${'&lt;script&gt;'}</p>
+            <span title="${'&amp;'}">x</span>
+        </div>`;
+        handle = t(C);
+        expect(handle.query('p')!.textContent).toBe('&lt;script&gt;'); // the raw string, untouched
+        expect(handle.query('span')!.getAttribute('title')).toBe('&amp;');
+    });
+
+    it('unknown named references and bare ampersands stay verbatim', () => {
+        const C: Component = () => html`<div><p>&zzz; a & b &notARef</p></div>`;
+        handle = t(C);
+        expect(handle.query('p')!.textContent).toBe('&zzz; a & b &notARef');
+    });
+
+    it('&amp;lt; decodes exactly once (no double decode)', () => {
+        const C: Component = () => html`<div><p>&amp;lt;</p></div>`;
+        handle = t(C);
+        expect(handle.query('p')!.textContent).toBe('&lt;');
+    });
+});

@@ -1,7 +1,8 @@
 /* <Drawer /> — default styling, lm-drawer-* convention.
    The Modal primitive provides the panel (left/right are full-height side
    panels, bottom is the sheet); the drawer adds the slide-in animation per
-   anchor and its own header/body chrome, scoped under .lm-drawer. */
+   anchor and the body chrome, scoped under .lm-drawer; the header
+   (title + close) is Modal's own. */
 
 .lm-drawer .lm-modal {
     min-width: 0; /* the width prop is authoritative, not Modal's 280px floor */
@@ -39,47 +40,12 @@
     to { transform: translateY(0); }
 }
 
-/* The drawer owns its chrome: optional header row + scrolling body */
+/* Modal renders the header; the drawer owns only the scrolling body */
 .lm-drawer .lm-modal-content {
     display: flex;
     flex-direction: column;
     padding: 0;
     overflow: hidden;
-}
-
-.lm-drawer-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-    padding: 12px 16px;
-    border-bottom: 1px solid var(--lm-border-color, #e4e4e7);
-    user-select: none;
-}
-
-.lm-drawer-title {
-    font-weight: 600;
-}
-
-.lm-drawer-close {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border: 0;
-    background: transparent;
-    font-size: 18px;
-    line-height: 1;
-    width: 30px;
-    height: 30px;
-    padding: 0;
-    border-radius: var(--lm-radius, 6px);
-    cursor: pointer;
-    color: var(--lm-font-grayout, #52525b);
-}
-
-.lm-drawer-close:hover {
-    background: var(--lm-border-color, #e4e4e7);
-    color: var(--lm-font-color, #18181b);
 }
 
 .lm-drawer-body {

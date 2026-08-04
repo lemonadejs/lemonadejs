@@ -45,6 +45,17 @@ export const Quickmenu = component('quickmenu', {
         if (props.disabled.value) {
             return;
         }
+        // Already open: do NOTHING but cancel the trigger. mouseover
+        // re-fires on every wiggle inside the header, and a click lands on
+        // a menu the hover already opened — re-opening the Contextmenu for
+        // those would close + reopen it, a visible flash.
+        if (menuOpen.peek()) {
+            if (e) {
+                e.preventDefault();
+                e.stopImmediatePropagation();
+            }
+            return;
+        }
         const rect = header?.getBoundingClientRect();
         menu?.open(
             (props.options.value as ContextItem[]) || [],

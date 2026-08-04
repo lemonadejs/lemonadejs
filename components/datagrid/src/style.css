@@ -155,6 +155,12 @@
     box-sizing: border-box;
 }
 
+/* zebra: every second window row (view-index parity, so the stripes
+   survive virtual scrolling). Hover and selection rules below win. */
+.lm-datagrid-zebra {
+    background: var(--lm-background-color-highlight, #f4f4f5);
+}
+
 .lm-datagrid-row:hover {
     background: var(--lm-background-color-header, #fafafa);
 }

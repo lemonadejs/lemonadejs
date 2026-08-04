@@ -643,6 +643,110 @@ describe('components/schedule', () => {
         expect(data.length).toBe(0);
     });
 
+    // ---- v5 change events: onchangeevent / onbeforechangeevent -----------------------
+
+    it('onchangeevent fires with (record, oldValue, newValue) after a drag-move commit (v5)', () => {
+        const calls: unknown[][] = [];
+        const data = [sample({ guid: 'ce-1' })];
+        mount({ data, onchangeevent: (...args: unknown[]) => calls.push(args) });
+        const el = item();
+        stubRect(el, 60);
+        mouse(el, 'mousedown', { clientY: 10 }); // < 25px: move zone
+        mouse(cellAt('2026-06-12', 20), 'mousemove');
+        expect(calls.length).toBe(0); // nothing committed mid-drag
+        mouse(document, 'mouseup');
+        expect(calls.length).toBe(1);
+        const [record, oldValue, newValue] = calls[0] as [ScheduleEvent, Partial<ScheduleEvent>, Partial<ScheduleEvent>];
+        expect(record).toBe(data[0]); // the live record, already updated
+        expect(record).toMatchObject({ guid: 'ce-1', date: '2026-06-12', start: '05:00', end: '06:00' });
+        expect(oldValue).toEqual({ start: '09:00', end: '10:00', date: '2026-06-10' });
+        expect(newValue).toEqual({ start: '05:00', end: '06:00', date: '2026-06-12' });
+    });
+
+    it('onchangeevent fires after a drag-resize commit with only the changed fields in oldValue', () => {
+        const calls: unknown[][] = [];
+        const data = [sample({ guid: 'ce-2' })];
+        mount({ data, onchangeevent: (...args: unknown[]) => calls.push(args) });
+        const el = item();
+        stubRect(el, 60);
+        mouse(el, 'mousedown', { clientY: 58 }); // bottom 5px: resize
+        mouse(cellAt('2026-06-10', 42), 'mousemove');
+        mouse(document, 'mouseup');
+        expect(calls.length).toBe(1);
+        const [record, oldValue, newValue] = calls[0] as [ScheduleEvent, Partial<ScheduleEvent>, Partial<ScheduleEvent>];
+        expect(record.guid).toBe('ce-2');
+        expect(oldValue).toEqual({ end: '10:00' }); // start/date did not change
+        expect(newValue).toMatchObject({ end: '10:45' });
+        expect(data[0].end).toBe('10:45');
+    });
+
+    it('onbeforechangeevent returning false cancels: data unmutated, no onchangeevent, no onchange', () => {
+        const before: unknown[][] = [];
+        let changed = 0;
+        let changes = 0;
+        let updates = 0;
+        const data = [sample({ guid: 'bce-1' })];
+        mount({
+            data,
+            onbeforechangeevent: (...args: unknown[]) => {
+                before.push(args);
+                return false;
+            },
+            onchangeevent: () => changed++,
+            onupdate: () => updates++,
+            onchange: () => changes++,
+        });
+        const el = item();
+        stubRect(el, 60);
+        mouse(el, 'mousedown', { clientY: 10 }); // move zone
+        mouse(cellAt('2026-06-12', 20), 'mousemove');
+        mouse(document, 'mouseup');
+        expect(before.length).toBe(1);
+        const [record, oldValue, newValue] = before[0] as [ScheduleEvent, Partial<ScheduleEvent>, Partial<ScheduleEvent>];
+        expect(record.guid).toBe('bce-1');
+        expect(oldValue).toEqual({ start: '09:00', end: '10:00', date: '2026-06-10' });
+        expect(newValue).toEqual({ start: '05:00', end: '06:00', date: '2026-06-12' });
+        // snapped back: nothing mutated, no ghost, event still at 09:00 on the 10th
+        expect(data[0]).toMatchObject({ date: '2026-06-10', start: '09:00', end: '10:00' });
+        expect(ghost()).toBeNull();
+        expect(cellAt('2026-06-10', 36).querySelector('.lm-schedule-item')).not.toBeNull();
+        expect(cellAt('2026-06-12', 20).querySelector('.lm-schedule-item')).toBeNull();
+        expect(changed).toBe(0);
+        expect(updates).toBe(0);
+        expect(changes).toBe(0);
+    });
+
+    it('onbeforechangeevent returning undefined or true proceeds (drag and api/editor commits)', () => {
+        const seen: string[] = [];
+        const data = [sample({ guid: 'ok-1' })];
+        mount({
+            data,
+            onbeforechangeevent: () => undefined,
+            onchangeevent: (r: ScheduleEvent) => seen.push(r.guid!),
+        });
+        const el = item();
+        stubRect(el, 60);
+        mouse(el, 'mousedown', { clientY: 10 });
+        mouse(cellAt('2026-06-11', 40), 'mousemove');
+        mouse(document, 'mouseup');
+        expect(data[0]).toMatchObject({ date: '2026-06-11', start: '10:00', end: '11:00' });
+        expect(seen).toEqual(['ok-1']);
+        handle!.unmount();
+
+        // the same pre-flight guards the updateEvent path (editor save / api)
+        const data2 = [sample({ guid: 'ok-2' })];
+        const calls2: unknown[][] = [];
+        const api = mount({
+            data: data2,
+            onbeforechangeevent: () => true,
+            onchangeevent: (...args: unknown[]) => calls2.push(args),
+        });
+        expect(api.updateEvent('ok-2', { title: 'Renamed' })).toBe(true);
+        expect(data2[0].title).toBe('Renamed');
+        expect(calls2.length).toBe(1);
+        expect(calls2[0][1]).toEqual({ title: 'Standup' }); // oldValue
+    });
+
     // ---- the built-in editor (on Modal) ------------------------------------------------
 
     it('double click fires ondblclick + onedition and opens the Modal editor', async () => {

@@ -2,7 +2,7 @@
 
 LemonadeJS datagrid block — virtualized big-data grid, contract-verified, framework-agnostic.
 
-**✓ verified** — 23 contract checks · framework-agnostic · zero dependencies
+**✓ verified** — 33 contract checks · framework-agnostic · zero dependencies
 
 ## Overview
 
@@ -25,6 +25,21 @@ keep ~a viewport of DOM alive.
     px, oncolumnresize on release), column.hidden + api.setColumn for
     runtime changes, headerrender for custom header content,
     column.class on body cells
+  - remote data (v5 parity): `url` fetches the rows on mount when
+    data is empty; with `remote` the SERVER owns search/sort/paging —
+    every page change, search and sort re-fetches with
+    ?pagination=&page=&orderBy=&asc=&term= and the response's
+    { result, total } feeds the window and the pager (caller-owned
+    totals), a bare array works too
+  - zebra striping (`zebra`), themable via --lm-* tokens
+  - `resizable` gates the header drag handles. v5 defaulted to OFF;
+    v6 keeps its always-on behavior as the default (true) so existing
+    v6 users are unaffected — pass resizable="false" for v5's default
+  - api.setValue(x, y, value): x is the column index OR name, y the
+    row index (v5 argument order). v5 fired onupdate; v6 funnels it
+    into onchange with the (row, columnName, value, oldValue) shape
+  - onchangepage(page) + onsearch(query, total): v5 passed the
+    instance — v6 events are data-only
 
 Not a spreadsheet: no formulas, no merged cells — that is jspreadsheet.
 
@@ -74,6 +89,10 @@ state for a two-way live wire. Attribute strings are coerced to the declared typ
 | `editable` | boolean | `false` | grid default; column.editable overrides |
 | `search` | boolean | `false` | built-in search box |
 | `pagination` | number | `0` | rows per page; 0 = virtual scroll |
+| `url` | string | `''` | fetch rows on mount when data is empty (v5: url) |
+| `remote` | boolean | `false` | with url: server-side search/sort/pagination (v5: remote) |
+| `zebra` | boolean | `false` | stripe every second row |
+| `resizable` | boolean | `true` | header drag-resize handles (v5 default: false) |
 
 ## Events
 
@@ -84,6 +103,8 @@ All event names are lowercase (the platform convention — LJS-305 warns otherwi
 - `onsort` — (columnName, direction | null)
 - `onrowclick` — (row, event)
 - `oncolumnresize` — (columnName, widthPx) on handle release
+- `onchangepage` — (page) — zero-based, after the page actually moves
+- `onsearch` — (query, total) — total after the filter/fetch settles
 
 ## API (via `ref`)
 
@@ -91,7 +112,7 @@ All event names are lowercase (the platform convention — LJS-305 warns otherwi
 import { ref } from 'lemonadejs';
 const datagrid = ref();
 html`<${Datagrid} ref="${datagrid}" />`;
-// datagrid.current.getSelected(...)  ·  datagrid.current.setSearch(...)  ·  datagrid.current.sort(...)  ·  datagrid.current.page(...)  ·  datagrid.current.refresh(...)  ·  datagrid.current.setColumn(...)
+// datagrid.current.getSelected(...)  ·  datagrid.current.setSearch(...)  ·  datagrid.current.sort(...)  ·  datagrid.current.page(...)  ·  datagrid.current.refresh(...)  ·  datagrid.current.setColumn(...)  ·  datagrid.current.setValue(...)
 ```
 
 - `getSelected()`
@@ -100,6 +121,7 @@ html`<${Datagrid} ref="${datagrid}" />`;
 - `page()`
 - `refresh()`
 - `setColumn()`
+- `setValue()`
 
 ## Styling
 

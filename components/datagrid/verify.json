@@ -71,6 +71,38 @@
             "pass": true
         },
         {
+            "name": "prop url",
+            "pass": true
+        },
+        {
+            "name": "prop url (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop remote",
+            "pass": true
+        },
+        {
+            "name": "prop remote (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop zebra",
+            "pass": true
+        },
+        {
+            "name": "prop zebra (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop resizable",
+            "pass": true
+        },
+        {
+            "name": "prop resizable (live state)",
+            "pass": true
+        },
+        {
             "name": "event onchange",
             "pass": true
         },
@@ -88,6 +120,14 @@
         },
         {
             "name": "event oncolumnresize",
+            "pass": true
+        },
+        {
+            "name": "event onchangepage",
+            "pass": true
+        },
+        {
+            "name": "event onsearch",
             "pass": true
         },
         {

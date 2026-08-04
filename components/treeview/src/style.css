@@ -43,8 +43,8 @@
 }
 
 .lm-treeview .lm-treeview-row.lm-treeview-selected {
-    background: var(--lm-treeview-selected-bg, #e0e7ff);
-    color: var(--lm-treeview-selected-color, #1e3a8a);
+    background: var(--lm-treeview-selected-bg, #1e90ff);
+    color: var(--lm-treeview-selected-color, #fff);
 }
 
 /* Drag-and-drop (draggable). ZERO LAYOUT SHIFT: every affordance is
@@ -150,4 +150,11 @@
     font-family: "Material Symbols Outlined", "Material Icons", "FontAwesome";
     font-size: var(--lm-treeview-icon-size, 16px);
     color: var(--lm-icon-color, var(--lm-font-grayout, #71717a));
+}
+
+/* selected row is solid blue — grey glyphs disappear on it: the label
+   icon AND the expand chevron follow the row's white text instead */
+.lm-treeview .lm-treeview-selected .lm-treeview-label[data-icon]::before,
+.lm-treeview .lm-treeview-selected > .lm-treeview-toggle {
+    color: inherit;
 }

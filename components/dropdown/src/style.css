@@ -185,11 +185,12 @@
     background-color: var(--lm-background-color-highlight, #f4f4f5);
 }
 
-/* selected: SOLID accent + white text, like the native <select> highlight
-   (was a pale tint — too quiet to read as "selected") */
+/* selected: solid dodger blue + white, the native-select look (Paul:
+   #1e90ff — the accent token read too purple, system Highlight varies
+   by platform) */
 .lm-dropdown-item[data-selected='true'] {
-    background-color: var(--lm-main-color, #2563eb);
-    color: #fff;
+    background-color: var(--lm-dropdown-selected, #1e90ff);
+    color: var(--lm-dropdown-selected-text, #fff);
     font-weight: 500;
 }
 
@@ -204,7 +205,7 @@
 
 .lm-dropdown-item[data-selected='true']:hover,
 .lm-dropdown-item[data-cursor='true'][data-selected='true'] {
-    background-color: var(--lm-main-color-highlight, #1d4ed8);
+    background-color: color-mix(in srgb, var(--lm-dropdown-selected, #1e90ff) 88%, #000);
 }
 
 .lm-dropdown-item[data-disabled='true'] {

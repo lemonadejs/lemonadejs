@@ -39,8 +39,14 @@ export const Speeddial = component('speeddial', {
     onclose: Function,            // fan closed (user/api — bind writes are silent)
     onaction: Function,           // (name, event) when an action is picked
     api: { open: Function, close: Function, toggle: Function },
-}, (props, { bind, onUnmount }) => {
+}, (props, { bind, state, onUnmount }) => {
     const fanned = bind(props, false);
+
+    // Side tooltips default to the LEFT of the buttons — off-screen when
+    // the speeddial sits near the left viewport edge. Measured at each
+    // open: the labels go to whichever side has more room.
+    const labelSide = state<'left' | 'right'>('left');
+    let rootEl: HTMLElement | null = null;
 
     // ---- hover grace timer: ONE in flight, cleared on re-enter AND unmount
     let grace: ReturnType<typeof setTimeout> | null = null;
@@ -55,6 +61,10 @@ export const Speeddial = component('speeddial', {
     const doOpen = () => {
         clearGrace();
         if (!props.disabled.value && !fanned.value) {
+            if (rootEl && typeof window !== 'undefined') {
+                const r = rootEl.getBoundingClientRect();
+                labelSide.value = r.left < window.innerWidth - r.right ? 'right' : 'left';
+            }
             fanned.set(true);
             props.onopen?.();
         }
@@ -99,6 +109,8 @@ export const Speeddial = component('speeddial', {
             props.disabled.value ? 'lm-speeddial-disabled' : ''} ${() =>
             props.position.value === 'fixed' ? 'lm-speeddial-fixed' : ''}"
         data-direction="${() => props.direction.value || false}"
+        data-labels="${() => labelSide.value}"
+        ref="${(el: HTMLElement) => (rootEl = el)}"
         onmouseenter="${doOpen}"
         onmouseleave="${onLeave}"
         onkeydown="${(e: KeyboardEvent) => e.key === 'Escape' && doClose()}">

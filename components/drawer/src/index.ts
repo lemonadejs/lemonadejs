@@ -2,8 +2,9 @@
  * <Drawer /> — a side panel sliding from an edge, built ON
  * the Modal primitive: position left/right are already full-viewport-height
  * side panels and bottom is the sheet mode, so the drawer is a thin
- * composition — anchor mapping, its own header chrome and the slide-in
- * animation (CSS keyframes scoped by data-anchor on the wrapper).
+ * composition — anchor mapping and the slide-in animation (CSS keyframes
+ * scoped by data-anchor on the wrapper). The header IS Modal's own
+ * (title + close button): one header implementation across the catalog.
  *
  * Contract:
  *   bind      two-way open state (named `visible` internally — assignment
@@ -63,19 +64,20 @@ export const Drawer = component('drawer', {
         toggle: () => (visible.value ? doClose('api') : doOpen()),
     });
 
+    // Modal's OWN header carries the title and the close button — one
+    // header implementation for the whole catalog (same chrome, same
+    // close control, same onclose('button') origin). No title, no header.
+    const hasHeader = computed(() => !!(props.title.value as string));
+
     return html`<div class="lm-drawer" data-anchor="${position}">
-        <${Modal} bind="${visible}" header="${false}"
+        <${Modal} bind="${visible}"
+            header="${hasHeader}"
+            title="${props.title}"
             position="${position}"
             width="${props.width}"
             backdrop="${props.backdrop}"
             closable="${props.closable}"
             onclose="${(origin: string) => props.onclose?.(origin)}">
-            ${() =>
-                props.title.value &&
-                html`<header class="lm-drawer-header">
-                    <span class="lm-drawer-title">${props.title}</span>
-                    <button class="lm-drawer-close" onclick="${() => doClose('button')}">×</button>
-                </header>`}
             <div class="lm-drawer-body">${props.children}</div>
         </${Modal}>
     </div>`;

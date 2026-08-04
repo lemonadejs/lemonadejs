@@ -23,9 +23,16 @@
  *     (v5's onedition moments) — disable with editor=false
  *
  * v5 → v6 mapping: validRange → validrange, readOnlyRange → readonlyrange,
- * onchangeevent → onupdate(record, oldValue, newValue),
- * onbeforechangeevent → onbeforedrag({ kind, record }), render() →
- * api.refresh(); callbacks drop the leading `self` argument (pure
+ * render() → api.refresh(); onchangeevent(record, oldValue, newValue)
+ * keeps its v5 name — it fires after every committed event update
+ * (drag-move/resize commit, editor save, api.updateEvent), alongside
+ * onupdate (same payload); onbeforechangeevent(record, oldValue,
+ * newValue) is its cancellable pre-flight — return false and nothing
+ * mutates (the drag snaps back). v5 fired onbeforechangeevent at
+ * gesture START with the raw drag state; the v6 gesture-start veto is
+ * onbeforedrag({ kind, record }) — onbeforechangeevent now guards the
+ * concrete change at COMMIT, so it sees the real oldValue/newValue.
+ * Callbacks drop the leading `self` argument (pure
  * components, no this); document.dictionary → weekdays prop; getEvent
  * returns the RECORD (not a DOM node). Data is BY REFERENCE: mutate the
  * array (or a record) and touch() — the grid re-renders once.
@@ -198,9 +205,11 @@ export const Schedule = component('schedule', {
     oncreate: Function,           // (events) — events added
     onbeforecreate: Function,     // (events) — return false to cancel
     onbeforeinsert: Function,     // (event) — drag-create template; false cancels, object replaces
-    onupdate: Function,           // (record, oldValue, newValue) (v5: onchangeevent)
+    onupdate: Function,           // (record, oldValue, newValue) — alias of onchangeevent
+    onchangeevent: Function,      // (record, oldValue, newValue) — v5 name, after a committed update
     onbeforechange: Function,     // ({ action, ... }) — return false to cancel
-    onbeforedrag: Function,       // ({ kind, record }) — false cancels the gesture (v5: onbeforechangeevent)
+    onbeforechangeevent: Function,// (record, oldValue, newValue) — return false to cancel the update
+    onbeforedrag: Function,       // ({ kind, record }) — false cancels the gesture at its start
     ondelete: Function,           // (record) — per removed event
     ondblclick: Function,         // (record)
     onedition: Function,          // (record) — editor moment (dblclick / after drag-create)
@@ -553,17 +562,25 @@ export const Schedule = component('schedule', {
             if (newValue[k] !== undefined && newValue[k] !== record[k]) {
                 (oldValue as Record<string, unknown>)[k] = record[k];
                 (applied as Record<string, unknown>)[k] = newValue[k];
-                (record as Record<string, unknown>)[k] = newValue[k];
                 changed = true;
             }
         }
         if (!changed) {
             return true;
         }
+        // v5 onbeforechangeevent: the cancellable pre-flight of the concrete
+        // change — nothing has mutated yet, so false means a clean snap-back
+        if (!replaying && call('onbeforechangeevent', record, oldValue, newValue) === false) {
+            return false;
+        }
+        for (const k of Object.keys(applied)) {
+            (record as Record<string, unknown>)[k] = (applied as Record<string, unknown>)[k];
+        }
         sortData();
         remember({ action: 'update', guid: record.guid!, newValue: applied, oldValue });
         props.data.touch();
         call('onupdate', record, oldValue, newValue);
+        call('onchangeevent', record, oldValue, newValue); // v5 name, same payload
         notifyChange();
         return true;
     };

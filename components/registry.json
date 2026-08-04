@@ -253,7 +253,7 @@
         "name": "calendar",
         "path": "components/calendar",
         "verified": true,
-        "checks": 41,
+        "checks": 45,
         "contract": {
             "name": "calendar",
             "props": {
@@ -318,6 +318,13 @@
                 "placeholder": {
                     "type": "string",
                     "default": ""
+                },
+                "input": {
+                    "type": "any"
+                },
+                "initinput": {
+                    "type": "boolean",
+                    "default": true
                 },
                 "width": {
                     "type": "number",
@@ -818,7 +825,7 @@
         "name": "datagrid",
         "path": "components/datagrid",
         "verified": true,
-        "checks": 23,
+        "checks": 33,
         "contract": {
             "name": "datagrid",
             "props": {
@@ -851,6 +858,22 @@
                 "pagination": {
                     "type": "number",
                     "default": 0
+                },
+                "url": {
+                    "type": "string",
+                    "default": ""
+                },
+                "remote": {
+                    "type": "boolean",
+                    "default": false
+                },
+                "zebra": {
+                    "type": "boolean",
+                    "default": false
+                },
+                "resizable": {
+                    "type": "boolean",
+                    "default": true
                 }
             },
             "bind": null,
@@ -859,7 +882,9 @@
                 "onselect",
                 "onsort",
                 "onrowclick",
-                "oncolumnresize"
+                "oncolumnresize",
+                "onchangepage",
+                "onsearch"
             ],
             "api": [
                 "getSelected",
@@ -867,7 +892,8 @@
                 "sort",
                 "page",
                 "refresh",
-                "setColumn"
+                "setColumn",
+                "setValue"
             ]
         }
     },
@@ -1863,7 +1889,7 @@
         "name": "schedule",
         "path": "components/schedule",
         "verified": true,
-        "checks": 35,
+        "checks": 37,
         "contract": {
             "name": "schedule",
             "props": {
@@ -1915,7 +1941,9 @@
                 "onbeforecreate",
                 "onbeforeinsert",
                 "onupdate",
+                "onchangeevent",
                 "onbeforechange",
+                "onbeforechangeevent",
                 "onbeforedrag",
                 "ondelete",
                 "ondblclick",

@@ -68,13 +68,6 @@
     overflow-wrap: break-word;
 }
 
-/* The typing surface opts out of the catalog focus ring — it would be a
-   permanent frame around the prose while writing */
-.lm-editor .lm-editor-area:focus,
-.lm-editor .lm-editor-area:focus-visible {
-    outline: none;
-}
-
 /* EDITOR-SCOPED focus style: the focused control's BORDER turns black,
    keeping its normal radius exactly — no outline layered on top (outline
    ignores border-radius in older Safari and reads as a square box).

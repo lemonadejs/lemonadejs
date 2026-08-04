@@ -540,12 +540,13 @@ export const Dropdown = component('dropdown', {
             moveCursor(-1);
         } else if (e.key === 'ArrowDown') {
             moveCursor(1);
-        } else if (e.key === 'Home') {
+        } else if (e.key === 'Home' || e.key === 'PageUp') {
+            // ALWAYS prevented while open (no autocomplete exemption): on
+            // macOS Home/End scroll the PAGE even with a text focus, so the
+            // cursor jumped to the first item and the page scrolled too
             moveCursor(-1, true);
-            prevent = !autocomplete();
-        } else if (e.key === 'End') {
+        } else if (e.key === 'End' || e.key === 'PageDown') {
             moveCursor(1, true);
-            prevent = !autocomplete();
         } else if (e.key === 'Enter') {
             select(itemAt(cursor.value));
         } else if (e.key === 'Escape') {

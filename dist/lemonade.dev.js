@@ -179,6 +179,41 @@ var lemonade = (() => {
     "track",
     "wbr"
   ]);
+  var NAMED_REFS = {
+    lt: "<",
+    gt: ">",
+    amp: "&",
+    quot: '"',
+    apos: "'",
+    nbsp: "\xA0",
+    copy: "\xA9",
+    reg: "\xAE",
+    trade: "\u2122",
+    hellip: "\u2026",
+    middot: "\xB7",
+    bull: "\u2022",
+    ndash: "\u2013",
+    mdash: "\u2014",
+    larr: "\u2190",
+    rarr: "\u2192",
+    uarr: "\u2191",
+    darr: "\u2193",
+    times: "\xD7"
+  };
+  var decodeRefs = function(s) {
+    if (s.indexOf("&") < 0) {
+      return s;
+    }
+    return s.replace(/&(?:#x([0-9a-fA-F]+)|#(\d+)|([a-zA-Z]+));/g, function(m, hex, dec, name) {
+      if (hex) {
+        return String.fromCodePoint(parseInt(hex, 16));
+      }
+      if (dec) {
+        return String.fromCodePoint(parseInt(dec, 10));
+      }
+      return NAMED_REFS[name.toLowerCase()] ?? m;
+    });
+  };
   var parse = function(strings) {
     const root = { type: "#root", children: [] };
     const stack = [root];
@@ -216,14 +251,14 @@ var lemonade = (() => {
         t = /\n/.test(text) ? "" : text;
       }
       if (t) {
-        children(parent()).push({ type: "#text", text: t });
+        children(parent()).push({ type: "#text", text: decodeRefs(t) });
       }
       text = "";
     };
     const commitAttr = function() {
       if (attrName) {
         if (valBuf) {
-          parts.push(valBuf);
+          parts.push(decodeRefs(valBuf));
         }
         if (!tag.props) {
           tag.props = [];

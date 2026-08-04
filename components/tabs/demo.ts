@@ -38,9 +38,10 @@ const App: Component = (props, { state }) => {
         <p>Bound index: <b>${() => String(index.value)}</b></p>
         <button onclick="${() => (index.value = (index.value + 1) % 3)}">write from outside (no onchange echo)</button>
 
-        <h3>Style variant (basic vs modern) + animated indicator</h3>
+        <h3>Style variant (basic / modern / segmented) + animated indicator</h3>
         <button onclick="${() => (variant.value = 'basic')}">basic</button>
         <button onclick="${() => (variant.value = 'modern')}">modern</button>
+        <button onclick="${() => (variant.value = 'segmented')}">segmented</button>
         <span> current: <b>${() => variant.value || 'basic'}</b></span>
         <${Tabs}
             variant="${variant}"
@@ -48,6 +49,15 @@ const App: Component = (props, { state }) => {
                 { title: 'Overview', icon: 'dashboard', content: '<h4>Overview</h4><p>Switch the variant above — the panel fades and the modern indicator slides in.</p>' },
                 { title: 'Activity', icon: 'bolt', content: '<h4>Activity</h4><p>Same block, two looks.</p>' },
                 { title: 'Reports', icon: 'bar_chart', content: '<h4>Reports</h4><p>Animations respect prefers-reduced-motion.</p>' },
+            ]}" />
+
+        <h3>Segmented — the modern inset quick-tabs style</h3>
+        <${Tabs}
+            variant="segmented"
+            data="${[
+                { title: 'Preview', icon: 'visibility', content: '<p>The strip is a soft well; the selected tab is a raised card.</p>' },
+                { title: 'Code', icon: 'code', content: '<p>Same tabs API — only the variant changes.</p>' },
+                { title: 'Settings', icon: 'settings', content: '<p>Works with icons, keyboard and drag sorting.</p>' },
             ]}" />
 
         <h3>Overflow scroll — many tabs (modern), header scrolls horizontally</h3>

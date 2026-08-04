@@ -9,8 +9,9 @@ LemonadeJS drawer block — anchored side panels and the bottom sheet on the Mod
 <Drawer /> — a side panel sliding from an edge, built ON
 the Modal primitive: position left/right are already full-viewport-height
 side panels and bottom is the sheet mode, so the drawer is a thin
-composition — anchor mapping, its own header chrome and the slide-in
-animation (CSS keyframes scoped by data-anchor on the wrapper).
+composition — anchor mapping and the slide-in animation (CSS keyframes
+scoped by data-anchor on the wrapper). The header IS Modal's own
+(title + close button): one header implementation across the catalog.
 
 Contract:
   bind      two-way open state (named `visible` internally — assignment

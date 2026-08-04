@@ -45,6 +45,63 @@ const App: Component = (props, { state }) => {
                 { title: 'Zoom out', shortcut: 'Ctrl+-', onclick: () => note('View > Zoom out') },
             ],
         },
+        {
+            // The torture menu: FOUR levels deep, separators before every
+            // submenu entry at every level (the alignment regression shape),
+            // long lists, disabled entries and shortcuts mixed in
+            title: 'Insert',
+            submenu: [
+                { title: 'Text block', icon: 'notes', onclick: () => note('Insert > Text') },
+                { type: 'line' },
+                {
+                    title: 'Chart',
+                    icon: 'bar_chart',
+                    submenu: [
+                        { title: 'Bar', onclick: () => note('Chart > Bar') },
+                        { title: 'Line', onclick: () => note('Chart > Line') },
+                        { type: 'line' },
+                        {
+                            title: 'Advanced',
+                            submenu: [
+                                { title: 'Heatmap', onclick: () => note('Advanced > Heatmap') },
+                                { title: 'Treemap', onclick: () => note('Advanced > Treemap') },
+                                { type: 'line' },
+                                {
+                                    title: 'Flow',
+                                    submenu: [
+                                        { title: 'Sankey', onclick: () => note('Flow > Sankey') },
+                                        { title: 'Chord', onclick: () => note('Flow > Chord') },
+                                        { type: 'line' },
+                                        { title: 'Arc diagram', onclick: () => note('Flow > Arc') },
+                                    ],
+                                },
+                                { title: 'Gauge', disabled: true },
+                            ],
+                        },
+                        { title: 'Pie', onclick: () => note('Chart > Pie') },
+                    ],
+                },
+                { type: 'line' },
+                {
+                    title: 'Table',
+                    icon: 'table_chart',
+                    submenu: [
+                        { title: '2 × 2', onclick: () => note('Table > 2x2') },
+                        { title: '4 × 4', onclick: () => note('Table > 4x4') },
+                        { type: 'line' },
+                        {
+                            title: 'From template',
+                            submenu: [
+                                { title: 'Budget', shortcut: 'Ctrl+B', onclick: () => note('Template > Budget') },
+                                { title: 'Invoice', onclick: () => note('Template > Invoice') },
+                                { title: 'Timesheet', disabled: true },
+                            ],
+                        },
+                    ],
+                },
+                { title: 'Image', icon: 'image', disabled: true },
+            ],
+        },
         { title: 'Disabled', disabled: true, submenu: [{ title: 'Never shown' }] },
         { title: 'Plain' }, // no submenu
     ];
