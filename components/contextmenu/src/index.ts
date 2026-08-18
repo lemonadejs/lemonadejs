@@ -4,9 +4,11 @@
  * horizontally when out of space (inheriting the parent's direction),
  * correct vertical overflow, open on a 200ms hover delay — and the full
  * v5 keyboard system: ArrowUp/Down cursor skipping disabled items and
- * separators with wrap-around, ArrowRight into a submenu (cursor on its
- * first enabled item), ArrowLeft back out, Enter activates, Escape
- * closes everything.
+ * separators with wrap-around, Home/End jump to the first/last enabled
+ * item, ArrowRight into a submenu (cursor on its first enabled item),
+ * ArrowLeft back out, Enter/Space activates, Escape closes everything —
+ * keyboard closes hand focus back to the invoker (WCAG 2.4.3), and
+ * aria-activedescendant on the focused wrapper tracks the cursor.
  *
  * v5 → v6 mapping: open(options, x, y) and openAt(x, y | event) keep
  * their signatures; the per-item render() DOM hook was dropped.
@@ -35,6 +37,10 @@ interface Level {
 
 const MENU_WIDTH = 220;
 const HOVER_DELAY = 200;
+
+/** Document-unique id base per instance — gives every menuitem a stable
+ *  id so aria-activedescendant can point at the keyboard cursor */
+let uid = 0;
 
 const isSelectable = (item: ContextItem | undefined): boolean =>
     !!item && !item.disabled && item.type !== 'line';
@@ -65,9 +71,13 @@ export const Contextmenu = component('contextmenu', {
 }, (props, { state, listen, onUnmount }) => {
     const levels = state<Level[]>([]);
     const cursors = state<Record<number, number>>({});
+    const id = 'lm-contextmenu-' + ++uid;
 
     let wrapper: HTMLElement | null = null;
     let hoverTimer: ReturnType<typeof setTimeout> | null = null;
+    // the element that had focus when the menu opened — keyboard closes
+    // (Escape, Enter, api.close) hand focus back to it (WCAG 2.4.3)
+    let opener: HTMLElement | null = null;
 
     // destroy-clean: an unmount mid-hover must leave no submenu timer behind
     onUnmount(() => {
@@ -79,7 +89,7 @@ export const Contextmenu = component('contextmenu', {
     const modalEl = (level: number): HTMLElement | null =>
         (wrapper?.querySelectorAll('.lm-modal')[level] as HTMLElement) || null;
 
-    const closeFrom = (level: number) => {
+    const closeFrom = (level: number, restore = true) => {
         if (hoverTimer) {
             clearTimeout(hoverTimer);
             hoverTimer = null;
@@ -97,12 +107,34 @@ export const Contextmenu = component('contextmenu', {
             });
             if (level === 0) {
                 wrapper?.classList.remove('lm-menu-focus');
+                // Focus goes back to the invoker (WCAG 2.4.3) — but only
+                // when the menu still holds it: a Tab-away or an outside
+                // click already moved focus where the user wants it
+                const invoker = opener;
+                opener = null;
+                if (
+                    restore &&
+                    invoker &&
+                    invoker.isConnected &&
+                    (document.activeElement === wrapper || wrapper?.contains(document.activeElement))
+                ) {
+                    invoker.focus({ preventScroll: true });
+                }
                 props.onclose?.();
             }
         }
     };
 
     const doOpen = (options: ContextItem[] | null, x: number, y: number, adjustToCursor = false) => {
+        // remember the invoker BEFORE the wrapper steals focus. A re-open
+        // while focus is already INSIDE the menu is a composer moving it to
+        // a new invoker (topmenu/toolbar hover-move) — the recorded opener
+        // is stale then, and restoring to it would select the wrong item;
+        // the composer's own onclose refocus takes over instead
+        const active = document.activeElement as HTMLElement | null;
+        if (active && active !== document.body) {
+            opener = active === wrapper || wrapper?.contains(active) ? null : active;
+        }
         batch(() => {
             levels.value = [
                 {
@@ -282,10 +314,17 @@ export const Contextmenu = component('contextmenu', {
             } else {
                 handled = false;
             }
-        } else if (e.key === 'Enter') {
+        } else if (e.key === 'Enter' || e.key === ' ') {
             const at = cursors.value[level];
             if (typeof at === 'number') {
                 activate(level, at, e);
+            }
+        } else if (e.key === 'Home' || e.key === 'End') {
+            const options = levels.value[level].options;
+            const target =
+                e.key === 'Home' ? findEnabled(options, 0, true) : findEnabled(options, options.length - 1, false);
+            if (target !== null) {
+                cursors.value = { ...cursors.value, [level]: target };
             }
         } else if (e.key === 'Escape') {
             closeFrom(0);
@@ -308,7 +347,7 @@ export const Contextmenu = component('contextmenu', {
     // focus management is unreliable; the engine removes it on unmount
     listen<MouseEvent>(document, 'mousedown', (e) => {
         if (levels.value.length && !wrapper?.contains(e.target as Node)) {
-            closeFrom(0);
+            closeFrom(0, false); // pointer moved on — no focus restore
         }
     });
 
@@ -321,7 +360,7 @@ export const Contextmenu = component('contextmenu', {
         'scroll',
         (e: Event) => {
             if (levels.value.length && !(e.target instanceof Node && wrapper?.contains(e.target))) {
-                closeFrom(0);
+                closeFrom(0, false); // restoring focus would yank the scroll
             }
         },
         true
@@ -332,8 +371,9 @@ export const Contextmenu = component('contextmenu', {
             ? html`<li class="lm-contextmenu-line" role="separator"></li>`
             : html`<li class="lm-contextmenu-item ${item.disabled ? 'lm-contextmenu-disabled' : ''} ${() =>
                   cursors.value[level] === index ? 'lm-contextmenu-cursor' : ''}"
-                  data-item role="menuitem"
+                  data-item role="menuitem" id="${id + '-' + level + '-' + index}"
                   title="${item.tooltip || false}"
+                  aria-disabled="${item.disabled ? 'true' : false}"
                   aria-haspopup="${item.submenu ? 'true' : false}"
                   onmouseup="${(e: MouseEvent) => activate(level, index, e)}"
                   onmouseenter="${() => {
@@ -368,20 +408,31 @@ export const Contextmenu = component('contextmenu', {
         html`<${Modal} key="${lvl}" header="${false}" position="fixed" bind="${true}"
             top="${lvl.top}" left="${lvl.left}"
             focus="${false}" responsive="${false}" autoadjust overflow>
-            <ul class="lm-contextmenu-list" role="menu" aria-orientation="vertical">${lvl.options.map(
+            <ul class="lm-contextmenu-list" role="group">${lvl.options.map(
                 (item, ii) => itemView(li, ii, item)
             )}</ul>
         </${Modal}>`;
 
-    return html`<div class="lm-contextmenu" tabindex="-1" role="menu"
+    // ONE menu owns every menuitem: the focused wrapper is the menu, each
+    // level's list is a role=group inside it (menu > group > menuitem per
+    // ARIA), and aria-activedescendant tracks the deepest keyboard cursor
+    return html`<div class="lm-contextmenu" tabindex="-1" role="menu" aria-orientation="vertical"
         ref="${(el: HTMLElement) => (wrapper = el)}"
+        aria-activedescendant="${() => {
+            for (let l = levels.value.length - 1; l >= 0; l--) {
+                if (typeof cursors.value[l] === 'number') {
+                    return id + '-' + l + '-' + cursors.value[l];
+                }
+            }
+            return false;
+        }}"
         onkeydown="${onKey}"
         onfocusout="${(e: FocusEvent) => {
             if (isDisposing()) {
                 return; // renderer disposing a level is not the user leaving
             }
             if (!wrapper?.contains(e.relatedTarget as Node)) {
-                closeFrom(0);
+                closeFrom(0, false); // focus already left — don't pull it back
             }
         }}">${() => levels.value.map((lvl, li) => levelView(lvl, li))}</div>`;
 });

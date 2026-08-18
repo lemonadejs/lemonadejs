@@ -315,7 +315,8 @@
     cursor: pointer;
 }
 
-.lm-organogram .lm-organogram-results li:hover {
+.lm-organogram .lm-organogram-results li:hover,
+.lm-organogram .lm-organogram-results li[data-active="true"] {
     background: var(--lm-background-color-highlight, #ececec);
 }
 

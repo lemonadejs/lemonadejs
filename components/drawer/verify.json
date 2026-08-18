@@ -47,6 +47,14 @@
             "pass": true
         },
         {
+            "name": "prop label",
+            "pass": true
+        },
+        {
+            "name": "prop label (live state)",
+            "pass": true
+        },
+        {
             "name": "event onopen",
             "pass": true
         },

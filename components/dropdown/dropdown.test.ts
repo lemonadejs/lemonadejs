@@ -368,6 +368,55 @@ describe('components/dropdown — the select on the Modal primitive', () => {
         expect((handle!.query('.lm-modal') as HTMLElement).style.width).toBe('300px');
     });
 
+    it('ARIA: combobox trigger, expanded toggles, listbox and options wired', async () => {
+        const api = await open({ multiple: true, 'aria-label': 'Fruits' });
+        expect(input().getAttribute('role')).toBe('combobox');
+        expect(input().getAttribute('aria-haspopup')).toBe('listbox');
+        expect(input().getAttribute('aria-label')).toBe('Fruits');
+        expect(input().getAttribute('aria-expanded')).toBe('false');
+        api.open();
+        await flush();
+        expect(input().getAttribute('aria-expanded')).toBe('true');
+        const listbox = handle!.query('.lm-dropdown-lazy') as HTMLElement;
+        expect(listbox.getAttribute('role')).toBe('listbox');
+        expect(listbox.id).toBe(input().getAttribute('aria-controls'));
+        expect(listbox.getAttribute('aria-multiselectable')).toBe('true');
+        expect(itemByText('Apple').getAttribute('role')).toBe('option');
+        expect(itemByText('Daikon').getAttribute('aria-disabled')).toBe('true');
+        itemByText('Apple').click();
+        expect(itemByText('Apple').getAttribute('aria-selected')).toBe('true');
+        expect(itemByText('Banana').getAttribute('aria-selected')).toBe('false');
+        api.close('button');
+        expect(input().getAttribute('aria-expanded')).toBe('false');
+    });
+
+    it('ARIA: aria-activedescendant follows the keyboard cursor', async () => {
+        const api = await open();
+        api.open();
+        await flush();
+        expect(input().getAttribute('aria-activedescendant')).toBeNull(); // no cursor yet
+        key('ArrowDown'); // Apple (skips the Fruits header)
+        expect(input().getAttribute('aria-activedescendant')).toBe(itemByText('Apple').id);
+        key('ArrowDown'); // Banana
+        expect(input().getAttribute('aria-activedescendant')).toBe(itemByText('Banana').id);
+        key('Escape');
+        expect(input().getAttribute('aria-activedescendant')).toBeNull(); // cleared on close
+        void api;
+    });
+
+    it('ARIA: the search field is a labelled searchbox wired to the listbox', async () => {
+        const api = await open({ autocomplete: true, 'aria-label': 'Fruits' });
+        api.open();
+        await flush();
+        expect(input().getAttribute('role')).toBe('searchbox');
+        expect(input().getAttribute('aria-label')).toBe('Fruits'); // falls back to "Search" without the prop
+        expect(input().getAttribute('aria-autocomplete')).toBe('list');
+        expect(input().getAttribute('aria-controls')).toBe((handle!.query('.lm-dropdown-lazy') as HTMLElement).id);
+        key('ArrowDown');
+        expect(input().getAttribute('aria-activedescendant')).toBe(itemByText('Apple').id);
+        void api;
+    });
+
     it('onopen fires on open; onclose reports the origin', async () => {
         const opens: number[] = [];
         const origins: string[] = [];

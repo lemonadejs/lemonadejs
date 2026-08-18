@@ -2,7 +2,7 @@
 
 LemonadeJS toggle block — contract-verified, framework-agnostic.
 
-**✓ verified** — 14 contract checks · framework-agnostic · zero dependencies
+**✓ verified** — 16 contract checks · framework-agnostic · zero dependencies
 
 ## Overview
 
@@ -61,6 +61,7 @@ state for a two-way live wire. Attribute strings are coerced to the declared typ
 | `icon` | string | `''` | material icon name (e.g. 'mic', 'videocam') |
 | `name` | string | `''` | form identification name |
 | `disabled` | boolean | `false` | blocks interaction (native) |
+| `aria-label` | string | `''` |  |
 
 ## Events
 

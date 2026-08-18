@@ -509,6 +509,129 @@ describe('components/schedule', () => {
         expect(copy.guid).not.toBe('c-1');
     });
 
+    it('Enter opens the editor for the selected event (keyboard alternative to double click)', async () => {
+        const editions: ScheduleEvent[] = [];
+        const data = [sample({ guid: 'en-1', location: 'Room 4' })];
+        mount({ data, editor: true, onedition: (r: ScheduleEvent) => editions.push(r) });
+        mouse(item(), 'mousedown');
+        mouse(document, 'mouseup');
+        key('Enter');
+        await flush();
+        expect(editions.length).toBe(1);
+        expect(handle!.query('.lm-modal')).not.toBeNull();
+        expect((handle!.query('.lm-schedule-editor-title') as HTMLInputElement).value).toBe('Standup');
+    });
+
+    it('Enter on a read-only event opens nothing', async () => {
+        mount({ data: [sample({ guid: 'en-ro', readonly: true })], editor: true });
+        mouse(item(), 'mousedown');
+        mouse(document, 'mouseup');
+        key('Enter');
+        await flush();
+        expect(handle!.query('.lm-modal')).toBeNull();
+    });
+
+    it('N creates a snap-sized event after the selected one — the drag-create commit path', () => {
+        const created: ScheduleEvent[][] = [];
+        const editions: ScheduleEvent[] = [];
+        const data = [sample({ guid: 'n-1' })];
+        mount({
+            data,
+            oncreate: (e: ScheduleEvent[]) => created.push(e),
+            onedition: (r: ScheduleEvent) => editions.push(r),
+        });
+        mouse(item(), 'mousedown');
+        mouse(document, 'mouseup');
+        key('n');
+        expect(data.length).toBe(2);
+        const born = data.find((e) => e.guid !== 'n-1')!;
+        expect(born).toMatchObject({ date: '2026-06-10', start: '10:00', end: '10:15' });
+        expect(created.length).toBe(1);
+        expect(editions.length).toBe(1); // keyboard creates are edition moments too
+    });
+
+    it('N with no selection creates on the first visible column; onbeforeinsert still applies', () => {
+        const data: ScheduleEvent[] = [];
+        mount({ data, onbeforeinsert: () => ({ title: 'Keyboard born' }) });
+        key('n');
+        expect(data.length).toBe(1);
+        expect(data[0]).toMatchObject({ date: '2026-06-07', start: '00:00', end: '00:15', title: 'Keyboard born' });
+        handle!.unmount();
+
+        const blocked: ScheduleEvent[] = [];
+        mount({ data: blocked, onbeforeinsert: () => false });
+        key('n');
+        expect(blocked.length).toBe(0);
+    });
+
+    it('Alt+arrows move the selected event through the same commit path as drag-move', () => {
+        const calls: unknown[][] = [];
+        const data = [sample({ guid: 'kb-m' })];
+        mount({ data, onchangeevent: (...args: unknown[]) => calls.push(args) });
+        mouse(item(), 'mousedown');
+        mouse(document, 'mouseup');
+
+        key('ArrowDown', { altKey: true });
+        expect(data[0]).toMatchObject({ start: '09:15', end: '10:15' });
+        key('ArrowRight', { altKey: true });
+        expect(data[0].date).toBe('2026-06-11');
+        key('ArrowUp', { altKey: true });
+        key('ArrowLeft', { altKey: true });
+        expect(data[0]).toMatchObject({ date: '2026-06-10', start: '09:00', end: '10:00' });
+        expect(calls.length).toBe(4); // every keyboard move commits like a drag
+        const [record, oldValue, newValue] = calls[0] as [ScheduleEvent, Partial<ScheduleEvent>, Partial<ScheduleEvent>];
+        expect(record.guid).toBe('kb-m');
+        expect(oldValue).toEqual({ start: '09:00', end: '10:00' });
+        expect(newValue).toMatchObject({ start: '09:15', end: '10:15' });
+    });
+
+    it('Shift+Up/Down resize the selected event, snapped and conflict-guarded', () => {
+        const errors: string[] = [];
+        const data = [sample({ guid: 'kb-r' }), sample({ guid: 'fix', start: '11:00', end: '12:00' })];
+        mount({ data, snap: 30, onerror: (m: string) => errors.push(m) });
+        mouse(items()[0], 'mousedown');
+        mouse(document, 'mouseup');
+
+        key('ArrowDown', { shiftKey: true });
+        expect(data[0].end).toBe('10:30'); // one 30-minute snap step
+        key('ArrowDown', { shiftKey: true });
+        expect(data[0].end).toBe('11:00');
+        key('ArrowDown', { shiftKey: true }); // would overlap 'fix' — blocked
+        expect(data[0].end).toBe('11:00');
+        expect(errors).toEqual(['Time conflict: This event overlaps with another event']);
+        key('ArrowUp', { shiftKey: true });
+        expect(data[0].end).toBe('10:30');
+    });
+
+    it('keyboard move/resize ignore read-only events and vetoes from onbeforechangeevent', () => {
+        const data = [sample({ guid: 'kb-ro', readonly: true })];
+        mount({ data });
+        mouse(item(), 'mousedown');
+        mouse(document, 'mouseup');
+        key('ArrowDown', { altKey: true });
+        key('ArrowDown', { shiftKey: true });
+        expect(data[0]).toMatchObject({ start: '09:00', end: '10:00' });
+        handle!.unmount();
+
+        const data2 = [sample({ guid: 'kb-v' })];
+        mount({ data: data2, onbeforechangeevent: () => false });
+        mouse(item(), 'mousedown');
+        mouse(document, 'mouseup');
+        key('ArrowDown', { altKey: true });
+        expect(data2[0]).toMatchObject({ start: '09:00', end: '10:00' }); // snapped back
+    });
+
+    it('grid shortcuts ignore keys typed into the editor form', async () => {
+        const data = [sample({ guid: 'ty-1' })];
+        const api = mount({ data, editor: true });
+        api.openEditor('ty-1');
+        await flush();
+        const title = handle!.query('.lm-schedule-editor-title') as HTMLInputElement;
+        title.dispatchEvent(new KeyboardEvent('keydown', { key: 'n', bubbles: true }));
+        title.dispatchEvent(new KeyboardEvent('keydown', { key: 'Delete', bubbles: true }));
+        expect(data.length).toBe(1); // no create, no delete
+    });
+
     // ---- drag gestures ---------------------------------------------------------------
 
     it('drag-create: press a cell, drag down, release — a snapped event is born', () => {
@@ -807,6 +930,61 @@ describe('components/schedule', () => {
         expect(data.length).toBe(1);
         expect(handle!.query('.lm-modal')).not.toBeNull();
         expect(handle!.query('.lm-schedule-editor-start')!.children.length).toBeGreaterThan(0); // <Dropdown/>
+    });
+
+    // ---- accessibility ----------------------------------------------------------------
+
+    it('events expose button semantics: accessible name with title, day and times; aria-pressed selection', () => {
+        const data = [sample({ guid: 'a-1' })];
+        mount({ data });
+        const el = item();
+        expect(el.getAttribute('role')).toBe('button');
+        expect(el.getAttribute('aria-label')).toBe('Standup, 2026-06-10, 09:00 to 10:00');
+        expect(el.getAttribute('aria-pressed')).toBe('false');
+
+        mouse(el, 'mousedown');
+        mouse(document, 'mouseup');
+        expect(item().getAttribute('aria-pressed')).toBe('true');
+    });
+
+    it('weekly mode names events by weekday (localized through the weekdays prop)', () => {
+        mount({
+            weekly: true,
+            weekdays: ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab'],
+            data: [{ weekday: 3, start: '09:00', end: '10:00', title: 'Recurring' }],
+        });
+        expect(item().getAttribute('aria-label')).toBe('Recurring, Qua, 09:00 to 10:00');
+    });
+
+    it('the focused root exposes the single selected event via aria-activedescendant', () => {
+        const data = [sample({ guid: 'a-2' }), sample({ guid: 'a-3', start: '11:00', end: '12:00' })];
+        mount({ data });
+        expect(root().getAttribute('aria-activedescendant')).toBeNull();
+
+        mouse(items()[0], 'mousedown');
+        mouse(document, 'mouseup');
+        const id = items()[0].getAttribute('id')!;
+        expect(id).toContain('a-2');
+        expect(root().getAttribute('aria-activedescendant')).toBe(id);
+
+        // multi-select: no single active descendant to point at
+        mouse(items()[1], 'mousedown', { ctrlKey: true });
+        mouse(document, 'mouseup');
+        expect(root().getAttribute('aria-activedescendant')).toBeNull();
+    });
+
+    it('editor palette buttons carry accessible color names and pressed state', async () => {
+        const api = mount({ data: [sample({ guid: 'p-1', color: '#2563eb' })], editor: true });
+        api.openEditor('p-1');
+        await flush();
+        const buttons = handle!.queryAll('.lm-schedule-editor-palette button');
+        expect(buttons.length).toBe(16);
+        expect(buttons[0].getAttribute('aria-label')).toBe('Blue');
+        expect(buttons.every((b) => (b.getAttribute('aria-label') || '').length > 0)).toBe(true);
+        expect(buttons[0].getAttribute('aria-pressed')).toBe('true'); // the event color
+        expect(buttons[1].getAttribute('aria-pressed')).toBe('false');
+        (buttons[1] as HTMLButtonElement).click();
+        expect(buttons[1].getAttribute('aria-pressed')).toBe('true');
     });
 
     // ---- lifecycle ------------------------------------------------------------------------

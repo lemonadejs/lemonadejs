@@ -385,7 +385,7 @@ export const Cropper = component('cropper', {
     };
 
     /** v5 editorMouseMove: move or resize the box, clamped to the area */
-    const moveBox = (e: MouseEvent, start: Box & { x: number; y: number }, d: string) => {
+    const moveBox = (e: { clientX: number; clientY: number }, start: Box & { x: number; y: number }, d: string) => {
         const aw = num('width');
         const ah = num('height');
         const minW = num('cropwidth');
@@ -436,6 +436,24 @@ export const Cropper = component('cropper', {
             }
         }
         box.value = b;
+    };
+
+    /** 2.1.1 keyboard access: arrows move the box, Shift+arrows resize it
+     *  when resizable (east/south edge), Ctrl/Meta steps ×10 — all through
+     *  moveBox, so the v5 clamp/aspect rules apply exactly as for the drag */
+    const onBoxKey = (e: KeyboardEvent) => {
+        const arrows: Record<string, [number, number]> = {
+            ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1],
+        };
+        const dir = arrows[e.key];
+        if (!dir) {
+            return;
+        }
+        const step = e.ctrlKey || e.metaKey ? 10 : 1;
+        const start = { ...box.value, x: 0, y: 0 };
+        const d = e.shiftKey && props.resizable.value ? (dir[0] ? 'e' : 's') : 'move';
+        moveBox({ clientX: dir[0] * step, clientY: dir[1] * step }, start, d);
+        e.preventDefault();
     };
 
     const onPress = (e: MouseEvent) => {
@@ -735,7 +753,7 @@ export const Cropper = component('cropper', {
 
     return html`<div class="lm-cropper ${() => (hasImage.value ? 'lm-cropper-edition' : '')} ${() =>
         dragging.value ? 'lm-cropper-dragging' : ''}">
-        <div class="lm-cropper-editor"
+        <div class="lm-cropper-editor" role="region" aria-label="Image editor"
             style="${() => css({ width: num('width'), height: num('height') })}"
             ref="${(el: HTMLElement) => (editor = el)}"
             onmousedown="${onPress}"
@@ -751,10 +769,11 @@ export const Cropper = component('cropper', {
             }}"
             ondragleave="${() => (dragging.value = false)}"
             ondrop="${onDrop}">
-            <canvas class="lm-cropper-canvas"
+            <canvas class="lm-cropper-canvas" role="img" aria-label="Image preview"
                 width="${props.width}" height="${props.height}"
                 ref="${init}"></canvas>
-            <div class="lm-cropper-box" style="${boxStyle}" onmousemove="${onHoverBox}"></div>
+            <div class="lm-cropper-box" tabindex="0" role="application" aria-label="Crop area"
+                style="${boxStyle}" onmousemove="${onHoverBox}" onkeydown="${onBoxKey}"></div>
         </div>
         ${() =>
             props.controls.value &&
@@ -806,7 +825,7 @@ export const Cropper = component('cropper', {
                         onclick="${() => toggle(invertLevel)}">Invert</button>
                     ${() =>
                         props.resizable.value &&
-                        html`<select class="lm-cropper-aspect"
+                        html`<select class="lm-cropper-aspect" aria-label="Aspect ratio"
                             disabled="${() => !hasImage.value}"
                             onchange="${(e: Event) => setAspect(parseFloat((e.target as HTMLSelectElement).value))}">
                             <option value="0">Free</option>

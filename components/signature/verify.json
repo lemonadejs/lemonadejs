@@ -63,6 +63,14 @@
             "pass": true
         },
         {
+            "name": "prop clearlabel",
+            "pass": true
+        },
+        {
+            "name": "prop clearlabel (live state)",
+            "pass": true
+        },
+        {
             "name": "prop disabled",
             "pass": true
         },

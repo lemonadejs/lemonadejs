@@ -210,7 +210,9 @@ export const Toolbar = component('toolbar', {
     });
     listen<KeyboardEvent>(document, 'keydown', (e) => {
         if (e.key === 'Escape' && colorAt.value) {
+            const at = colorAt.value.index;
             colorAt.value = null;
+            focusItem(at); // Escape lands focus back on the swatch (WCAG 2.4.3)
         }
     });
 
@@ -385,7 +387,16 @@ export const Toolbar = component('toolbar', {
         onkeydown="${onBarKey}">
         ${() => items().map((item, i) => itemView(item, i))}
         <${Contextmenu} ref="${(a: MenuApi) => (menu = a)}"
-            onclose="${() => (expanded.value = null)}" />
+            onclose="${() => {
+                const at = expanded.value;
+                expanded.value = null;
+                // the dropdown closed while focus was still in the bar or
+                // menu — land it back on the picker header (WCAG 2.4.3);
+                // when the user already moved focus away, their target wins
+                if (at !== null && root?.contains(document.activeElement)) {
+                    headerEl(at)?.focus();
+                }
+            }}" />
         ${() => {
             const at = colorAt.value;
             if (!at) {

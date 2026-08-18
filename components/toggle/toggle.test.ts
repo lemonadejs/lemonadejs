@@ -129,6 +129,21 @@ describe('components/toggle', () => {
         expect(changes).toEqual([true, false]);
     });
 
+    it('aria-label names an icon-only toggle and demotes the icon to decoration', () => {
+        handle = t(Toggle, { icon: 'mic', 'aria-label': 'Microphone' });
+        expect(input().getAttribute('aria-label')).toBe('Microphone');
+        expect(handle.query('.lm-toggle-icon')!.getAttribute('aria-hidden')).toBe('true');
+        handle.unmount();
+
+        handle = t(Toggle, { icon: 'mic', text: 'Mic' }); // text names it, icon is decoration
+        expect(input().hasAttribute('aria-label')).toBe(false);
+        expect(handle.query('.lm-toggle-icon')!.getAttribute('aria-hidden')).toBe('true');
+        handle.unmount();
+
+        handle = t(Toggle, { icon: 'mic' }); // nothing else to name it: keep the ligature
+        expect(handle.query('.lm-toggle-icon')!.hasAttribute('aria-hidden')).toBe(false);
+    });
+
     it('uses contract coercion: attribute-style strings work', () => {
         const App: Component = () => html`<main><${Toggle} disabled="true" checked="true" text="x" /></main>`;
         handle = t(App);

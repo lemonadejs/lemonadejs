@@ -94,6 +94,9 @@ interface OrgModel { nodes: OrgNode[]; edges: OrgEdge[]; width: number; height: 
 
 const clamp = (v: number, lo: number, hi: number): number => Math.max(lo, Math.min(hi, v));
 
+/** Per-instance uid so listbox/option ids stay unique across mounts. */
+let uid = 0;
+
 /* The layout works in MAIN/CROSS space (main = the depth axis, cross = the
  * sibling axis) and maps to x/y at the end by orientation. A subtree is laid
  * out into a local box whose top-left is (0,0); the parent then translates the
@@ -522,6 +525,9 @@ export const Organogram = component('organogram', {
     /* ----- quick search ----- */
     const query = state('');
     const open = state(false);
+    const active = state(-1); // highlighted result index (-1 = none)
+    const listId = 'lm-organogram-results-' + ++uid;
+    const optionId = (i: number): string => listId + '-' + i;
     const matches = computed<OrgItem[]>(() => {
         const q = query.value.trim().toLowerCase();
         if (!q) return [];
@@ -532,14 +538,46 @@ export const Organogram = component('organogram', {
     const pick = (it: OrgItem): void => {
         query.value = '';
         open.value = false;
+        active.value = -1;
         doSelect(it);
         center(it.id);
+    };
+    const onSearchKey = (e: KeyboardEvent): void => {
+        const m = matches.value;
+        if (e.key === 'ArrowDown' && m.length) {
+            e.preventDefault();
+            open.value = true;
+            active.value = Math.min(active.value + 1, m.length - 1);
+        } else if (e.key === 'ArrowUp' && m.length) {
+            e.preventDefault();
+            active.value = Math.max(active.value - 1, 0);
+        } else if (e.key === 'Enter') {
+            // the highlighted result wins; no highlight defaults to the first
+            const it = m[active.value] ?? m[0];
+            if (it) pick(it);
+        } else if (e.key === 'Escape') {
+            open.value = false;
+            active.value = -1;
+        }
     };
 
     /* ----- views ----- */
     const statusTitle = (color: string): string => {
         const map = props.statuslabels.value as Record<string, string> | undefined;
         return (map && map[color]) || color || '';
+    };
+
+    /** Accessible name for a card: name, role, status and who it reports to
+     *  (the hierarchy is otherwise only drawn by the SVG connectors). */
+    const nodeLabel = (it: OrgItem): string => {
+        const parts = [String(it.name ?? ''), String(it.role ?? '')].filter(Boolean);
+        const status = String(it.status ?? '');
+        if (status) parts.push('status ' + statusTitle(status));
+        const boss = it.parent != null && it.parent !== 0
+            ? items().find((p) => Object.is(p.id, it.parent))
+            : undefined;
+        if (boss && boss.name) parts.push('reports to ' + String(boss.name));
+        return parts.join(', ');
     };
 
     const nodeView = (n: OrgNode): View => {
@@ -549,11 +587,13 @@ export const Organogram = component('organogram', {
         const status = String(it.status ?? '');
         const showToggle = props.collapsible.value !== false && n.hasChildren;
         return html`<div class="lm-organogram-node ${() => (Object.is(selected.value, n.id) ? 'lm-organogram-selected' : '')}"
-            key="${n.id}" data-id="${String(n.id)}" tabindex="0"
+            key="${n.id}" data-id="${String(n.id)}" tabindex="0" role="button"
+            aria-pressed="${() => (Object.is(selected.value, n.id) ? 'true' : 'false')}"
+            aria-label="${nodeLabel(it)}"
             style="${css({ left: n.x + 'px', top: n.y + 'px', width: w + 'px', height: h + 'px', 'border-left-color': status || 'transparent' })}"
             onclick="${() => { if (!moved) { doSelect(it); props.onnodeclick?.(it.id, it); } }}"
             onkeydown="${(e: KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); doSelect(it); props.onnodeclick?.(it.id, it); } }}">
-            ${status ? html`<span class="lm-organogram-status" style="${css({ background: status })}" title="${statusTitle(status)}"></span>` : false}
+            ${status ? html`<span class="lm-organogram-status" aria-hidden="true" style="${css({ background: status })}" title="${statusTitle(status)}"></span>` : false}
             ${props.avatars.value !== false ? html`<div class="lm-organogram-avatar">
                 <span class="lm-organogram-initials">${initials(String(it.name ?? ''))}</span>
                 ${it.img ? html`<img alt="${String(it.name ?? '')}" src="${String(it.img)}"
@@ -596,12 +636,17 @@ export const Organogram = component('organogram', {
 
     const search = (): View | false => props.search.value === false ? false : html`<div class="lm-organogram-search">
         <input type="text" placeholder="Search people…" aria-label="Search"
+            role="combobox" aria-autocomplete="list" aria-controls="${listId}"
+            aria-expanded="${() => (open.value && matches.value.length ? 'true' : 'false')}"
+            aria-activedescendant="${() => (open.value && active.value >= 0 && matches.value[active.value] ? optionId(active.value) : false)}"
             value="${() => query.value}"
-            oninput="${(e: Event) => { query.value = (e.target as HTMLInputElement).value; open.value = true; }}"
+            oninput="${(e: Event) => { query.value = (e.target as HTMLInputElement).value; open.value = true; active.value = -1; }}"
             onfocus="${() => (open.value = true)}"
-            onkeydown="${(e: KeyboardEvent) => { if (e.key === 'Enter' && matches.value[0]) pick(matches.value[0]); if (e.key === 'Escape') open.value = false; }}" />
-        ${() => (open.value && matches.value.length ? html`<ul class="lm-organogram-results">
-            ${matches.value.map((it) => html`<li key="${it.id}"
+            onkeydown="${onSearchKey}" />
+        ${() => (open.value && matches.value.length ? html`<ul class="lm-organogram-results" id="${listId}" role="listbox">
+            ${matches.value.map((it, i) => html`<li key="${it.id}" id="${optionId(i)}" role="option"
+                aria-selected="${() => (active.value === i ? 'true' : 'false')}"
+                data-active="${() => (active.value === i ? 'true' : false)}"
                 onmousedown="${(e: MouseEvent) => { e.preventDefault(); pick(it); }}">
                 <span class="lm-organogram-result-name">${String(it.name ?? '')}</span>
                 <span class="lm-organogram-result-role">${String(it.role ?? '')}</span>

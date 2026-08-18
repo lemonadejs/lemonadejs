@@ -57,6 +57,7 @@ export const ButtonGroup = component('buttongroup', {
     size: '',                     // small | large (default in between)
     orientation: '',              // '' horizontal | vertical
     disabled: false,              // blocks the whole group (native)
+    'aria-label': '',             // accessible name for the group
     onchange: Function,           // (selection) on user toggles
     onclick: Function,            // (value, event) in plain mode
 }, (props, { bind }) => {
@@ -84,6 +85,13 @@ export const ButtonGroup = component('buttongroup', {
         }
     };
 
+    /** Icon-only options must not be named by the ligature text: the icon
+     *  is decoration (aria-hidden) and the button falls back to the
+     *  option's label, then its value, as the accessible name */
+    const hasLabel = (item: ButtonGroupOption) => item.label !== undefined && item.label !== '';
+    const optionName = (item: ButtonGroupOption) =>
+        (item.icon && !hasLabel(item) && String(item.value ?? '')) || false;
+
     /** One button per option; the raw entry is the key (identity for
      *  objects, the value itself for strings/numbers) */
     const view = (raw: RawOption, item: ButtonGroupOption) => html`<button type="button"
@@ -91,13 +99,15 @@ export const ButtonGroup = component('buttongroup', {
         class="lm-buttongroup-button"
         data-selected="${() => (isSelected(item.value) ? 'true' : false)}"
         aria-pressed="${() => (props.selectable.value ? String(isSelected(item.value)) : false)}"
+        aria-label="${optionName(item)}"
         disabled="${() => props.disabled.value || item.disabled === true}"
         onclick="${(e: MouseEvent) => press(item, e)}">
-        ${item.icon ? html`<i class="lm-buttongroup-icon material-icons">${item.icon}</i>` : ''}
-        ${item.label !== undefined && item.label !== '' ? html`<span class="lm-buttongroup-label">${item.label}</span>` : ''}
+        ${item.icon ? html`<i class="lm-buttongroup-icon material-icons" aria-hidden="true">${item.icon}</i>` : ''}
+        ${hasLabel(item) ? html`<span class="lm-buttongroup-label">${item.label}</span>` : ''}
     </button>`;
 
     return html`<div class="lm-buttongroup" role="group"
+        aria-label="${() => props['aria-label'].value || false}"
         data-selectable="${() => props.selectable.value || false}"
         data-variant="${() => props.variant.value || false}"
         data-color="${() => props.color.value || false}"

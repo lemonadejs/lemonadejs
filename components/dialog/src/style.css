@@ -61,6 +61,13 @@
     box-sizing: border-box;
 }
 
+/* Keyboard focus stays visible (WCAG 2.4.7): the reset above drops the
+   native outline, so :focus-visible paints the house ring back */
+.lm-dialog-footer input:focus-visible {
+    outline: 2px solid var(--lm-border-outline, #000);
+    outline-offset: -2px;
+}
+
 .lm-dialog-confirm,
 .lm-dialog-cancel {
     cursor: pointer;

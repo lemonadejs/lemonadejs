@@ -43,6 +43,9 @@ type RowEntry = { kind: 'item'; item: DropdownItem } | { kind: 'header'; text: s
 const OVERSCAN = 4;
 const SEARCH_DEBOUNCE = 300;
 
+/** Document-unique id base per instance — pairs the combobox and its listbox */
+let uid = 0;
+
 /** v5 normalizeData: strings/numbers and {id,name} become items */
 const normalize = (list: unknown[]): DropdownItem[] =>
     (list || []).map((v) => {
@@ -87,6 +90,7 @@ export const Dropdown = component('dropdown', {
     insert: false,                // + button adds the typed text
     type: '',                     // '' | default | picker | searchbar | inline | auto
     placeholder: '',
+    'aria-label': '',             // accessible name for the combobox (and the search field)
     width: 0,
     height: 300,                  // panel viewport height
     rowheight: 28,
@@ -108,6 +112,11 @@ export const Dropdown = component('dropdown', {
     },
 }, (props, { bind, state, onMount, onUnmount, resource }) => {
     const picked = bind(props, '');
+
+    // APG combobox wiring: one id base per instance, option ids by row
+    // index — aria-activedescendant mirrors the existing cursor state
+    const id = 'lm-dropdown-' + ++uid;
+    const listboxId = id + '-listbox';
 
     const opened = state(false);
     const resolvedType = state('');   // auto resolves at open
@@ -679,13 +688,18 @@ export const Dropdown = component('dropdown', {
     });
 
     // ---- rendering
+    const activeId = () => (cursor.value === null ? false : id + '-option-' + cursor.value);
+
     const rowView = (entry: RowEntry, index: number) => {
         if (entry.kind === 'header') {
-            return html`<div class="lm-dropdown-group" style="height:${rowHeight()}px">${entry.text}</div>`;
+            return html`<div class="lm-dropdown-group" role="presentation" style="height:${rowHeight()}px">${entry.text}</div>`;
         }
         const item = entry.item;
-        return html`<div class="lm-dropdown-item"
+        return html`<div class="lm-dropdown-item" role="option"
+            id="${id + '-option-' + index}"
             style="height:${rowHeight()}px"
+            aria-selected="${() => (chosen.indexOf(item) >= 0 ? 'true' : 'false')}"
+            aria-disabled="${item.disabled === true ? 'true' : false}"
             data-selected="${() => (chosen.indexOf(item) >= 0 ? 'true' : false)}"
             data-cursor="${() => (cursor.value === index ? 'true' : false)}"
             data-disabled="${item.disabled === true ? 'true' : false}"
@@ -695,12 +709,13 @@ export const Dropdown = component('dropdown', {
         </div>`;
     };
 
-    const listView = () => html`<div class="lm-dropdown-lazy"
+    const listView = () => html`<div class="lm-dropdown-lazy" id="${listboxId}" role="listbox"
+        aria-multiselectable="${() => (props.multiple.value ? 'true' : false)}"
         style="${() => 'height:' + viewportHeight() + 'px'}"
         ref="${(el: HTMLElement) => (scroller = el)}"
         onscroll="${onScroll}">
-        <div class="lm-dropdown-canvas" style="${() => 'height:' + rows.value.length * rowHeight() + 'px'}">
-            <div class="lm-dropdown-window"
+        <div class="lm-dropdown-canvas" role="presentation" style="${() => 'height:' + rows.value.length * rowHeight() + 'px'}">
+            <div class="lm-dropdown-window" role="presentation"
                 style="${() => 'transform:translateY(' + first.value * rowHeight() + 'px)'}">
                 <!-- deliberately UNKEYED: a fixed-size window over virtualized
                      rows recycles each DOM slot in place on scroll — keys would
@@ -712,12 +727,23 @@ export const Dropdown = component('dropdown', {
     </div>`;
 
     const searchField = () => html`<div class="lm-dropdown-input" contenteditable="true" tabindex="0"
+        role="searchbox"
+        aria-label="${() => props['aria-label'].value || 'Search'}"
+        aria-autocomplete="list"
+        aria-controls="${listboxId}"
+        aria-activedescendant="${() => activeId()}"
         placeholder="${() => props.placeholder.value || false}"
         ref="${(el: HTMLElement) => el.focus()}"
         oninput="${(e: Event) => search((e.target as HTMLElement).textContent || '')}"
         onpaste="${onPaste}"></div>`;
 
     const labelField = () => html`<div class="lm-dropdown-input" tabindex="0"
+        role="combobox"
+        aria-expanded="${() => (opened.value || inline() ? 'true' : 'false')}"
+        aria-haspopup="listbox"
+        aria-controls="${listboxId}"
+        aria-label="${() => props['aria-label'].value || false}"
+        aria-activedescendant="${() => activeId()}"
         placeholder="${() => props.placeholder.value || false}">${label}</div>`;
 
     return html`<div class="lm-dropdown"

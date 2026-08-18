@@ -8,9 +8,9 @@
  * bound visibility: hidden means not in the DOM. Entry fades in via a
  * pure CSS animation.
  *
- * Visibility is the bound state (default hidden): closable clicks and
- * the api close via .set — which fires onclose — while external writes
- * to the bound state stay silent.
+ * Visibility is the bound state (default hidden): closable clicks (and
+ * Escape) and the api close via .set — which fires onclose — while
+ * external writes to the bound state stay silent.
  *
  * opacity/zindex use 0 = "keep the CSS default" (0.5 dim, z-index
  * 1200); any other value lands as an inline style so call sites can
@@ -24,11 +24,11 @@ export const Backdrop = component('backdrop', {
     blur: false,                  // backdrop-filter blur behind the dim
     opacity: 0,                   // 0 = default 0.5; else 0-100 → rgba alpha inline
     zindex: 0,                    // 0 = CSS default 1200; else inline z-index
-    closable: false,              // clicking the backdrop closes it
+    closable: false,              // click or Escape closes it
     onclick: Function,            // any click on the backdrop (always fires)
     onclose: Function,            // fires when the backdrop closes itself
     api: { open: Function, close: Function, toggle: Function },
-}, (props, { bind }) => {
+}, (props, { bind, listen }) => {
     const visible = bind(props, false);
 
     const open = () => {
@@ -48,6 +48,16 @@ export const Backdrop = component('backdrop', {
             close();
         }
     };
+
+    // closable dismissal must not be pointer-only (WCAG 2.1.1): Escape
+    // closes an open closable backdrop too. Document-level on purpose —
+    // the overlay itself holds no focus to scope a key handler to.
+    listen<KeyboardEvent>(document, 'keydown', (e) => {
+        if (e.key === 'Escape' && visible.value && props.closable.value) {
+            e.preventDefault();
+            close();
+        }
+    });
 
     props.ref?.({
         open,

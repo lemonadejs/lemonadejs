@@ -2,7 +2,7 @@
 
 LemonadeJS wheel block — contract-verified, framework-agnostic.
 
-**✓ verified** — 14 contract checks · framework-agnostic · zero dependencies
+**✓ verified** — 16 contract checks · framework-agnostic · zero dependencies
 
 ## Overview
 
@@ -74,6 +74,7 @@ state for a two-way live wire. Attribute strings are coerced to the declared typ
 | `rowheight` | number | `40` | px per row (v5: fixed 40) |
 | `visible` | number | `5` | rows in the viewport (v5: fixed 200px / 40) |
 | `disabled` | boolean | `false` | blocks interaction (new) |
+| `aria-label` | string | `''` |  |
 
 ## Events
 

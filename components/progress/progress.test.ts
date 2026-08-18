@@ -44,6 +44,15 @@ describe('components/progress', () => {
         expect(root().hasAttribute('data-type')).toBe(false); // '' = linear
     });
 
+    it('arialabel names the progressbar; absent by default', () => {
+        handle = t(Progress, { bind: store(50) });
+        expect(root().hasAttribute('aria-label')).toBe(false);
+        handle.unmount();
+
+        handle = t(Progress, { bind: store(50), arialabel: 'Upload progress' });
+        expect(root().getAttribute('aria-label')).toBe('Upload progress');
+    });
+
     it('linear: live updates flow in through the bound store', () => {
         const pct = store(10);
         handle = t(Progress, { bind: pct });

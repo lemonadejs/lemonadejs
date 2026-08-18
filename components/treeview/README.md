@@ -58,6 +58,13 @@ Keyboard (APG tree pattern, single select):
   ArrowUp/Down move focus across VISIBLE nodes
   Enter       selects the focused node
 
+Focus lands on the <li role="treeitem"> ITSELF, so the focused element
+is the one carrying aria-expanded/aria-selected (WCAG 4.1.2), and the
+tree exposes a ROVING tabindex (WCAG 2.4.3): exactly one visible node
+— the last focused, else the selected, else the first — is
+tabindex="0"; every other node is tabindex="-1", so Tab enters and
+leaves the tree in one stop.
+
 ## Install
 
 ```bash

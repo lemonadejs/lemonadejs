@@ -9,13 +9,15 @@
  *   - while the menu is open, hovering another top item moves the open
  *     dropdown to it (menubar behavior)
  *   - keyboard: ArrowLeft/ArrowRight walk enabled items (wrapping, skipping
- *     disabled); with the menu open they move the OPEN dropdown; Enter
- *     toggles. Up/Down/Enter/Escape inside the dropdown belong to the
- *     composed Contextmenu
+ *     disabled); with the menu open they move the OPEN dropdown; Enter or
+ *     Space toggles, ArrowDown/ArrowUp open the submenu. Up/Down/Enter/
+ *     Escape inside the dropdown belong to the composed Contextmenu —
+ *     closing it lands focus back on the menubar item
  *   - focusin selects the focused item; focusout of the whole bar clears
  *     the selection highlight (the remembered index survives, as in v5)
- *   - full ARIA: menubar / menuitem, aria-haspopup, aria-expanded,
- *     aria-label, tabindex managed per item (disabled items unreachable)
+ *   - full ARIA: menubar / menuitem (the menubar directly owns its items),
+ *     aria-haspopup, aria-expanded, aria-label, roving tabindex (one tab
+ *     stop for the bar; disabled items unreachable)
  *
  * v5 → v6 mapping: options keeps the v5 item model ({ title, submenu,
  * disabled }; submenu items are Contextmenu items). self.open(index) →
@@ -138,13 +140,19 @@ export const Topmenu = component('topmenu', {
     };
 
     const onKey = (e: KeyboardEvent) => {
-        // Up/Down/Enter/Escape inside the open dropdown are consumed by the
-        // Contextmenu; only unhandled keys bubble here (v5 architecture)
+        // Up/Down/Enter/Space/Escape inside the open dropdown are consumed
+        // by the Contextmenu; only unhandled keys bubble here (v5 architecture)
         const at = current.value ?? 0;
         let target: number | null = null;
-        if (e.key === 'Enter') {
+        if (e.key === 'Enter' || e.key === ' ') {
             if (current.value !== null) {
                 toggle(e, current.value);
+            }
+        } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+            // APG menubar: vertical arrows open the focused item's submenu
+            if (current.value !== null && !menuOpen.value && items()[current.value]?.submenu) {
+                e.preventDefault();
+                open(current.value);
             }
         } else if (e.key === 'ArrowLeft') {
             target = findEnabled(at - 1, false);
@@ -152,6 +160,7 @@ export const Topmenu = component('topmenu', {
             target = findEnabled(at + 1, true);
         }
         if (target !== null) {
+            e.preventDefault();
             if (menuOpen.value) {
                 open(target);
             } else {
@@ -191,29 +200,47 @@ export const Topmenu = component('topmenu', {
         close: () => menu?.close(),
     });
 
+    /** Roving tabindex: ONE tab stop for the whole bar — the remembered
+     *  item when it is still enabled, otherwise the first enabled item */
+    const rover = (): number | null => {
+        const at = current.value;
+        return at !== null && items()[at] && !items()[at].disabled ? at : findEnabled(0, true);
+    };
+
     // Items are keyed by identity: a changed options array moves the
     // existing item DOM instead of rewriting every item after it
     const itemView = (item: TopmenuItem, index: number) =>
         html`<div class="lm-topmenu-title" key="${item}" role="menuitem"
             data-disabled="${item.disabled ? 'true' : false}"
             data-selected="${() => (selected.value && current.value === index ? 'true' : false)}"
-            tabindex="${item.disabled ? false : '0'}"
+            tabindex="${item.disabled ? false : () => (rover() === index ? '0' : '-1')}"
             aria-haspopup="${item.submenu ? 'true' : 'false'}"
             aria-expanded="${() => (menuOpen.value && current.value === index ? 'true' : 'false')}"
             aria-label="${item.title}"
             onmousedown="${(e: MouseEvent) => toggle(e, index)}"
             onmouseenter="${() => hoverMove(index)}">${item.title}</div>`;
 
-    return html`<div class="lm-topmenu" role="menubar" aria-orientation="horizontal"
+    // role=menubar sits on the options row so it DIRECTLY owns its
+    // menuitems (the composed Contextmenu is a sibling, outside the bar)
+    return html`<div class="lm-topmenu"
         ref="${(el: HTMLElement) => (root = el)}"
         oncontextmenu="${cancel}"
         onfocusin="${onFocusIn}"
         onfocusout="${onFocusOut}"
         onkeydown="${onKey}">
-        <div class="lm-topmenu-options">${() => items().map((item, i) => itemView(item, i))}</div>
+        <div class="lm-topmenu-options" role="menubar" aria-orientation="horizontal">${() =>
+            items().map((item, i) => itemView(item, i))}</div>
         <${Contextmenu} ref="${(a: MenuApi) => (menu = a)}"
             onopen="${() => (menuOpen.value = true)}"
-            onclose="${() => (menuOpen.value = false)}" />
+            onclose="${() => {
+                menuOpen.value = false;
+                // the dropdown closed while focus was still in the bar or
+                // menu — land it back on the menubar item (WCAG 2.4.3);
+                // when the user already moved focus away, their target wins
+                if (current.value !== null && root?.contains(document.activeElement)) {
+                    itemEl(current.value)?.focus();
+                }
+            }}" />
     </div>`;
 });
 

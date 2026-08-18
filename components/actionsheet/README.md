@@ -2,7 +2,7 @@
 
 LemonadeJS actionsheet block — contract-verified, framework-agnostic.
 
-**✓ verified** — 13 contract checks · framework-agnostic · zero dependencies beyond `@lemonadejs/modal`
+**✓ verified** — 15 contract checks · framework-agnostic · zero dependencies beyond `@lemonadejs/modal`
 
 ## Overview
 
@@ -22,8 +22,10 @@ properties; in v6 you write the state instead). Per-option onclick still
 receives the option object. The sheet does NOT auto-close on a pick —
 exactly like v5, closing is the consumer's call.
 
-Added: closable (backdrop click / Escape close — v5 shipped no close
-affordance at all); title/message header card (v5 shipped the CSS for
+Added: closable (backdrop click closes — v5 shipped no close affordance
+at all; Escape ALWAYS closes regardless: the backdrop Modal traps Tab
+inside the sheet, so the keyboard must keep an exit); title/message
+header card (v5 shipped the CSS for
 .jactionsheet-title/-message but never rendered them — resurrected).
 Dropped: the v5 slide-bottom-out exit animation (it gated closing on
 animationend; v6 closes immediately, the slide-IN stays, pure CSS).
@@ -72,7 +74,8 @@ state for a two-way live wire. Attribute strings are coerced to the declared typ
 | `actions` | array | — | ActionsheetGroup[] — live (v5: actions) |
 | `title` | string | `''` | optional header card title (v5 CSS, resurrected) |
 | `message` | string | `''` | optional header card message (v5 CSS, resurrected) |
-| `closable` | boolean | `false` | backdrop click / Escape close the sheet |
+| `label` | string | `"Actions"` | accessible name when there is no title (aria-label) |
+| `closable` | boolean | `false` | backdrop click closes the sheet (Escape always closes) |
 
 ## Events
 

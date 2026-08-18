@@ -696,3 +696,127 @@ describe('components/datagrid — v5 parity surface', () => {
         }
     });
 });
+
+// ---- accessibility: keyboard sort/resize, ARIA exposure ------------------
+
+describe('components/datagrid — accessibility', () => {
+    const grid = () => handle!.query('.lm-datagrid') as HTMLElement;
+    const key = (k: string, shiftKey = false) =>
+        grid().dispatchEvent(new KeyboardEvent('keydown', { key: k, shiftKey, bubbles: true }));
+
+    it('KEYBOARD SORT: ArrowUp reaches the header row, Enter cycles asc → desc → off', () => {
+        const sorts: [string, 1 | -1 | null][] = [];
+        open({ onsort: (n: string, d: 1 | -1 | null) => sorts.push([n, d]) });
+        key('ArrowUp'); // row 0 → header row (-1)
+        key('ArrowRight');
+        key('ArrowRight'); // amount column
+        key('Enter'); // asc
+        expect(Number(cellTexts(renderedRows()[0])[2])).toBe(1);
+        expect(thAt(2).getAttribute('aria-sort')).toBe('ascending');
+        key('Enter'); // desc
+        expect(Number(cellTexts(renderedRows()[0])[2])).toBe(1000);
+        expect(thAt(2).getAttribute('aria-sort')).toBe('descending');
+        key(' '); // Space works on the header too: off
+        expect(firstName()).toBe('Person 1');
+        expect(thAt(2).hasAttribute('aria-sort')).toBe(false);
+        expect(sorts).toEqual([['amount', 1], ['amount', -1], ['amount', null]]);
+    });
+
+    it('headers expose role=columnheader; the active header cell is highlighted', () => {
+        open();
+        expect(thAt(0).getAttribute('role')).toBe('columnheader');
+        key('ArrowUp');
+        expect(thAt(0).className).toContain('lm-datagrid-active');
+        key('ArrowDown'); // back into the body
+        expect(thAt(0).className).not.toContain('lm-datagrid-active');
+    });
+
+    it('KEYBOARD RESIZE: Shift+ArrowLeft/Right resizes the focused header column', () => {
+        const resizes: [string, number][] = [];
+        open({ oncolumnresize: (n: string, w: number) => resizes.push([n, w]) });
+        key('ArrowUp'); // header row, id column (70px)
+        key('ArrowRight', true); // +10
+        expect(templateOf(headerEl())).toBe('80px 1fr 1fr 1fr');
+        key('ArrowLeft', true);
+        key('ArrowLeft', true);
+        key('ArrowLeft', true); // 80 → 70 → 60 → clamped at 60
+        expect(templateOf(headerEl())).toBe('60px 1fr 1fr 1fr');
+        expect(resizes).toEqual([['id', 80], ['id', 70], ['id', 60], ['id', 60]]);
+    });
+
+    it('resizable=false disables the keyboard resize too', () => {
+        open({ resizable: false });
+        key('ArrowUp');
+        key('ArrowRight', true);
+        expect(templateOf(headerEl())).toBe('70px 1fr 1fr 1fr');
+    });
+
+    it('aria-activedescendant tracks the active cell id (body and header)', () => {
+        open({ data: makeRows(10) });
+        expect(grid().hasAttribute('aria-activedescendant')).toBe(false);
+        key('ArrowDown');
+        key('ArrowRight');
+        const id = grid().getAttribute('aria-activedescendant')!;
+        expect(id).toBeTruthy();
+        const cell = grid().querySelector('[id="' + id + '"]') as HTMLElement;
+        expect(cell.className).toContain('lm-datagrid-active');
+        expect(cell.getAttribute('role')).toBe('gridcell');
+        key('ArrowUp');
+        key('ArrowUp'); // header
+        const headerId = grid().getAttribute('aria-activedescendant')!;
+        expect((grid().querySelector('[id="' + headerId + '"]') as HTMLElement).getAttribute('role')).toBe(
+            'columnheader'
+        );
+    });
+
+    it('aria-rowindex follows the VIEW order after a sort (header is row 1)', () => {
+        open({ data: makeRows(10) });
+        expect(renderedRows()[0].getAttribute('aria-rowindex')).toBe('2');
+        expect(renderedRows()[1].getAttribute('aria-rowindex')).toBe('3');
+        thAt(2).click(); // amount asc
+        thAt(2).click(); // amount desc — row order changes, indices stay view-based
+        expect(renderedRows()[0].getAttribute('aria-rowindex')).toBe('2');
+        expect(renderedRows()[1].getAttribute('aria-rowindex')).toBe('3');
+    });
+
+    it('aria-rowcount includes the header row; aria-colcount counts the selection column', () => {
+        open({ data: makeRows(10) });
+        expect(grid().getAttribute('aria-rowcount')).toBe('11');
+        expect(grid().getAttribute('aria-colcount')).toBe('4');
+        handle!.unmount();
+        handle = null;
+        open({ data: makeRows(10), selectable: 'multiple' });
+        expect(grid().getAttribute('aria-colcount')).toBe('5');
+    });
+
+    it('aria-selected reflects row selection; absent when the grid is not selectable', () => {
+        open({ data: makeRows(5), selectable: 'single' });
+        expect(renderedRows()[0].getAttribute('aria-selected')).toBe('false');
+        renderedRows()[1].dispatchEvent(new MouseEvent('click', { bubbles: true }));
+        expect(renderedRows()[1].getAttribute('aria-selected')).toBe('true');
+        expect(renderedRows()[0].getAttribute('aria-selected')).toBe('false');
+        handle!.unmount();
+        handle = null;
+        open({ data: makeRows(5) });
+        expect(renderedRows()[0].hasAttribute('aria-selected')).toBe(false);
+    });
+
+    it('every checkbox carries an accessible name', () => {
+        open({ data: makeRows(5), selectable: 'multiple' });
+        const headerBox = headerEl().querySelector('input[type=checkbox]') as HTMLInputElement;
+        expect(headerBox.getAttribute('aria-label')).toBe('Select all rows');
+        const rowBoxes = renderedRows()[0].querySelectorAll('input[type=checkbox]');
+        expect(rowBoxes[0].getAttribute('aria-label')).toBe('Select row');
+        expect(rowBoxes[1].getAttribute('aria-label')).toBe('Active'); // the checkbox COLUMN uses its title
+    });
+
+    it('pagination marks the current page with aria-current="page"', () => {
+        open({ data: makeRows(45), pagination: 20 });
+        const current = () =>
+            handle!.queryAll('.lm-datagrid-pages button').filter((b) => b.getAttribute('aria-current') === 'page');
+        expect(current()).toHaveLength(1);
+        expect(current()[0].textContent).toBe('1');
+        handle!.queryAll('.lm-datagrid-pages button')[2].click(); // page 2
+        expect(current()[0].textContent).toBe('2');
+    });
+});

@@ -50,6 +50,13 @@
  *   ArrowLeft   closes an open parent; otherwise moves to the parent
  *   ArrowUp/Down move focus across VISIBLE nodes
  *   Enter       selects the focused node
+ *
+ * Focus lands on the <li role="treeitem"> ITSELF, so the focused element
+ * is the one carrying aria-expanded/aria-selected (WCAG 4.1.2), and the
+ * tree exposes a ROVING tabindex (WCAG 2.4.3): exactly one visible node
+ * — the last focused, else the selected, else the first — is
+ * tabindex="0"; every other node is tabindex="-1", so Tab enters and
+ * leaves the tree in one stop.
  */
 
 import { batch, component, css, html, type View } from 'lemonadejs';
@@ -169,6 +176,11 @@ export const TreeView = component('treeview', {
         props.ontoggle?.(id, want);
     };
 
+    // The roving tabindex stop (WCAG 2.4.3): the id of the LAST focused
+    // node — selection and arrow navigation both move it, so exactly one
+    // treeitem is ever tabbable (see rovingStop below).
+    const active = state<TreeNodeId | null>(null);
+
     // Selection commits manually (not selected.set) so onchange can carry
     // the NODE as a second argument — the declared contract signature
     // onchange(id, node) owns the type even with bind; set() could only
@@ -179,7 +191,10 @@ export const TreeView = component('treeview', {
         if (!node || Object.is(selected.value, id)) {
             return;
         }
-        selected.value = id;
+        batch(() => {
+            selected.value = id;
+            active.value = id; // selecting moves the roving stop with it
+        });
         props.onchange?.(id, node);
     };
 
@@ -207,22 +222,43 @@ export const TreeView = component('treeview', {
         return out;
     };
 
-    const rowOf = (id: TreeNodeId): HTMLElement | null => {
+    const itemOf = (id: TreeNodeId): HTMLElement | null => {
         if (!rootEl) {
             return null;
         }
         const key = String(id);
         for (const li of rootEl.querySelectorAll('li[data-id]')) {
             if (li.getAttribute('data-id') === key) {
-                return li.firstElementChild as HTMLElement; // the row div
+                return li as HTMLElement; // the treeitem — the focusable
             }
         }
         return null;
     };
 
+    /** The one tabindex="0" node: last focused, else selected, else the
+     *  first — always a VISIBLE node, so Tab never lands in a collapsed
+     *  branch (a hidden stop would make the whole tree untabbable). */
+    const rovingStop = (): TreeNodeId | null => {
+        const flat = visible();
+        if (!flat.length) {
+            return null;
+        }
+        const shown = (id: TreeNodeId | null) =>
+            id !== null && flat.some((n) => Object.is(n.id, id));
+        if (shown(active.value)) {
+            return active.value;
+        }
+        const sel = selected.value as TreeNodeId | null;
+        if (shown(sel)) {
+            return sel;
+        }
+        return flat[0].id;
+    };
+
     const focusNode = (node: TreeNode | null | undefined) => {
         if (node) {
-            rowOf(node.id)?.focus();
+            active.value = node.id; // the roving stop follows focus
+            itemOf(node.id)?.focus();
         }
     };
 
@@ -542,10 +578,10 @@ export const TreeView = component('treeview', {
         const kids = node.children?.length ? node.children : null;
         return html`<li class="lm-treeview-node ${() => liClass(node)}" key="${node.id}" role="treeitem"
             data-id="${String(node.id)}"
+            tabindex="${() => (Object.is(rovingStop(), node.id) ? '0' : '-1')}"
             aria-expanded="${kids ? () => (isOpen(node.id) ? 'true' : 'false') : false}"
             aria-selected="${() => (Object.is(selected.value, node.id) ? 'true' : 'false')}">
             <div class="lm-treeview-row ${() => rowClass(node)}"
-                tabindex="0"
                 onmousedown="${(e: MouseEvent) => armDrag(e, node)}"
                 onclick="${() => clickRow(node.id)}">
                 <span class="lm-treeview-toggle"

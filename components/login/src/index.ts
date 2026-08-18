@@ -426,6 +426,14 @@ export const Login = component('login', {
         emailError.value = !EMAIL.test(email.value);
     };
 
+    /** href-less link-buttons: Enter/Space must activate (WCAG 2.1.1) */
+    const linkKey = (go: () => void) => (e: KeyboardEvent) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault(); // Space would scroll the page
+            go();
+        }
+    };
+
     props.ref?.({ show });
 
     onMount((el) => {
@@ -468,8 +476,8 @@ export const Login = component('login', {
         class="lm-login ${() => (props.fullscreen.value ? 'lm-login-fullscreen' : '')} ${() =>
             loading.value ? 'lm-login-loading' : ''}"
         data-screen="${screen}">
-        <div class="lm-login-alert">${alertText}</div>
-        <div class="lm-login-message">${notice}</div>
+        <div class="lm-login-alert" role="alert">${alertText}</div>
+        <div class="lm-login-message" role="status">${notice}</div>
         <form class="lm-login-form" onsubmit="${(e: Event) => e.preventDefault()}">
             ${() => props.logo.value && html`<div class="lm-login-logo"><img src="${props.logo}" alt="" /></div>`}
             ${() => instructions.value && html`<div class="lm-login-instructions">${instructions}</div>`}
@@ -506,6 +514,7 @@ export const Login = component('login', {
                 html`<div class="lm-login-row">
                     <label for="lm-login-email">Email</label>
                     <input type="text" id="lm-login-email" name="email" autocomplete="username"
+                        aria-required="true" aria-invalid="${() => (emailError.value ? 'true' : false)}"
                         class="${() => (emailError.value ? 'lm-login-error' : '')}"
                         bind="${email}" onkeydown="${enter}" onblur="${checkEmail}" />
                 </div>`}
@@ -541,14 +550,15 @@ export const Login = component('login', {
                 on('code') &&
                 html`<div class="lm-login-row">
                     <label for="lm-login-code">Code</label>
-                    <input type="text" id="lm-login-code" name="code" inputmode="numeric"
+                    <input type="text" id="lm-login-code" name="code" inputmode="numeric" aria-required="true"
                         bind="${code}" onkeydown="${enter}" />
                 </div>`}
             ${() =>
                 on('login', 'reset', 'bind') &&
                 html`<div class="lm-login-row">
                     <label for="lm-login-password">Password</label>
-                    <input type="password" id="lm-login-password" name="password" autocomplete="new-password"
+                    <input type="password" id="lm-login-password" name="password" aria-required="true"
+                        autocomplete="${() => (screen.value === 'login' ? 'current-password' : 'new-password')}"
                         bind="${password}" onkeydown="${enter}" />
                 </div>`}
             ${() =>
@@ -556,7 +566,7 @@ export const Login = component('login', {
                 html`<div class="lm-login-row">
                     <label for="lm-login-password2">Repeat the password</label>
                     <input type="password" id="lm-login-password2" name="password2" autocomplete="new-password"
-                        bind="${repeat}" onkeydown="${enter}" />
+                        aria-required="true" bind="${repeat}" onkeydown="${enter}" />
                 </div>`}
             ${() =>
                 on('login') &&
@@ -568,7 +578,8 @@ export const Login = component('login', {
             ${() =>
                 on('login') &&
                 html`<div class="lm-login-row lm-login-forgot">
-                    <a class="lm-login-link" onclick="${() => show('forgot')}">Forgot Password?</a>
+                    <a class="lm-login-link" role="button" tabindex="0" onclick="${() => show('forgot')}"
+                        onkeydown="${linkKey(() => show('forgot'))}">Forgot Password?</a>
                 </div>`}
             ${() =>
                 ((on('register') && props.terms.value) || on('terms')) &&
@@ -602,7 +613,8 @@ export const Login = component('login', {
                 props.profile.value &&
                 html`<div class="lm-login-row lm-login-profile">
                     Do not have an account?
-                    <a class="lm-login-link" onclick="${() => show('register')}">Create a new profile</a>
+                    <a class="lm-login-link" role="button" tabindex="0" onclick="${() => show('register')}"
+                        onkeydown="${linkKey(() => show('register'))}">Create a new profile</a>
                 </div>`}
         </form>
     </div>`;

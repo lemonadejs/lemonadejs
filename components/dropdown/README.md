@@ -2,7 +2,7 @@
 
 LemonadeJS dropdown block — select, autocomplete and picker on the Modal primitive; contract-verified, framework-agnostic.
 
-**✓ verified** — 39 contract checks · framework-agnostic · zero dependencies beyond `@lemonadejs/modal`
+**✓ verified** — 41 contract checks · framework-agnostic · zero dependencies beyond `@lemonadejs/modal`
 
 ## Overview
 
@@ -78,6 +78,7 @@ state for a two-way live wire. Attribute strings are coerced to the declared typ
 | `insert` | boolean | `false` | + button adds the typed text |
 | `type` | string | `''` | '' | default | picker | searchbar | inline | auto |
 | `placeholder` | string | `''` |  |
+| `aria-label` | string | `''` |  |
 | `width` | number | `0` |  |
 | `height` | number | `300` | panel viewport height |
 | `rowheight` | number | `28` |  |

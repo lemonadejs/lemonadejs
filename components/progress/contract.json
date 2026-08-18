@@ -24,6 +24,10 @@
         "label": {
             "type": "boolean",
             "default": false
+        },
+        "arialabel": {
+            "type": "string",
+            "default": ""
         }
     },
     "bind": {

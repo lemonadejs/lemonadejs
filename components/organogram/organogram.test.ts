@@ -198,6 +198,72 @@ describe('components/organogram', () => {
         expect(node(4).classList.contains('lm-organogram-selected')).toBe(true);
     });
 
+    it('cards are buttons for AT: role, aria-pressed tracks selection, label carries status + reports-to', () => {
+        handle = t(Organogram, {
+            data: data(),
+            statuslabels: { '#90EE90': 'Active', '#D3D3D3': 'Inactive' },
+        });
+
+        expect(node(2).getAttribute('role')).toBe('button');
+        expect(node(2).getAttribute('aria-pressed')).toBe('false');
+        click(node(2));
+        expect(node(2).getAttribute('aria-pressed')).toBe('true');
+        expect(node(1).getAttribute('aria-pressed')).toBe('false');
+
+        // the accessible name replaces the CSS-only cues: status label + hierarchy
+        const label = node(2).getAttribute('aria-label')!;
+        expect(label).toContain('Antonio');
+        expect(label).toContain('Vice president');
+        expect(label).toContain('status Active');
+        expect(label).toContain('reports to Jorge');
+        // a root reports to nobody
+        expect(node(1).getAttribute('aria-label')).not.toContain('reports to');
+    });
+
+    it('search results are a keyboard-navigable listbox: arrows move the highlight, Enter picks it', () => {
+        handle = t(Organogram, { data: data() });
+        setRect(viewport(), { width: 800, height: 600 });
+
+        const input = handle.query('.lm-organogram-search input') as HTMLInputElement;
+        const press = (k: string) =>
+            input.dispatchEvent(new KeyboardEvent('keydown', { key: k, bubbles: true, cancelable: true }));
+
+        input.value = 'intern'; // Pedro (4) + Carlos (5)
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+
+        const list = handle.query('.lm-organogram-results')!;
+        expect(list.getAttribute('role')).toBe('listbox');
+        const options = handle.queryAll('.lm-organogram-results li');
+        expect(options).toHaveLength(2);
+        expect(options.every((o) => o.getAttribute('role') === 'option' && !!o.id)).toBe(true);
+        expect(input.getAttribute('aria-activedescendant')).toBeNull(); // nothing highlighted yet
+
+        press('ArrowDown'); // → Pedro
+        expect(input.getAttribute('aria-activedescendant')).toBe(options[0].id);
+        expect(options[0].getAttribute('aria-selected')).toBe('true');
+        press('ArrowDown'); // → Carlos
+        expect(input.getAttribute('aria-activedescendant')).toBe(options[1].id);
+        press('ArrowDown'); // clamped at the last option
+        expect(input.getAttribute('aria-activedescendant')).toBe(options[1].id);
+        press('ArrowUp'); // back to Pedro
+        expect(input.getAttribute('aria-activedescendant')).toBe(options[0].id);
+        press('ArrowDown'); // → Carlos again
+
+        press('Enter'); // Enter picks the HIGHLIGHTED option, not matches[0]
+        expect(node(5).classList.contains('lm-organogram-selected')).toBe(true);
+    });
+
+    it('search Enter with no highlight still picks the first match', () => {
+        handle = t(Organogram, { data: data() });
+        setRect(viewport(), { width: 800, height: 600 });
+
+        const input = handle.query('.lm-organogram-search input') as HTMLInputElement;
+        input.value = 'intern';
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+        input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
+        expect(node(4).classList.contains('lm-organogram-selected')).toBe(true); // Pedro is matches[0]
+    });
+
     const left = (id: OrgId) => parseFloat((node(id) as HTMLElement).style.left);
     const top = (id: OrgId) => parseFloat((node(id) as HTMLElement).style.top);
 

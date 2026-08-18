@@ -345,6 +345,40 @@ describe('components/signature', () => {
         expect(changes.length).toBe(2); // the second stroke commits normally
     });
 
+    it('clearlabel renders a real, keyboard-operable clear button (WCAG 2.1.1)', () => {
+        const changes: unknown[] = [];
+        handle = t(Signature, {
+            value: [[1, 1], [2, 2], '1'],
+            clearlabel: 'Clear signature',
+            onchange: (v: unknown) => changes.push(v),
+        });
+
+        const button = handle.query('.lm-signature-clear') as HTMLButtonElement;
+        expect(button.tagName).toBe('BUTTON'); // native button: focusable, Enter/Space fire click
+        expect(button.getAttribute('type')).toBe('button'); // never submits a host form
+        expect(button.textContent).toBe('Clear signature'); // accessible name
+
+        button.click(); // pointer-free activation
+        expect(changes).toEqual([[]]);
+        handle.unmount();
+
+        handle = t(Signature);
+        expect(handle.query('.lm-signature-clear')).toBeNull(); // opt-in: no label, no button
+    });
+
+    it('disabled is LIVE on the clear button too', () => {
+        const disabled = store(false);
+        handle = t(Signature, { clearlabel: 'Clear', disabled });
+        const button = handle.query('.lm-signature-clear') as HTMLButtonElement;
+        expect(button.disabled).toBe(false);
+
+        disabled.value = true;
+        expect(button.disabled).toBe(true);
+
+        disabled.value = false;
+        expect(button.disabled).toBe(false);
+    });
+
     it('uses contract coercion: attribute-style strings work', () => {
         const App: Component = () =>
             html`<main><${Signature} width="400" height="120" line="5" disabled="true" /></main>`;

@@ -128,6 +128,17 @@ describe('components/switch', () => {
         expect(input().getAttribute('value')).toBe('yes');
     });
 
+    it('exposes role="switch" and takes aria-label when the label is empty', () => {
+        handle = t(Switch, { 'aria-label': 'Notifications' });
+        expect(input().getAttribute('role')).toBe('switch');
+        expect(input().getAttribute('aria-label')).toBe('Notifications');
+        handle.unmount();
+
+        handle = t(Switch, { label: 'News' }); // visible label names it natively
+        expect(input().getAttribute('role')).toBe('switch');
+        expect(input().hasAttribute('aria-label')).toBe(false);
+    });
+
     it('uses contract coercion: attribute-style strings work', () => {
         const App: Component = () => html`<main><${Switch} disabled="true" checked="true" label="x" /></main>`;
         handle = t(App);

@@ -334,3 +334,42 @@ describe('components/timeline', () => {
         expect(handle.queryAll('.lm-timeline-edit').length).toBe(2);
     });
 });
+
+describe('a11y', () => {
+    it('month navigation buttons carry aria-labels; the icon text is aria-hidden', () => {
+        handle = t(Timeline, { data: data(), type: 'monthly', date: '2026-06-15T12:00:00' });
+        const buttons = handle.queryAll('.lm-timeline-navigation .lm-timeline-icon');
+        expect(buttons[0].getAttribute('aria-label')).toBe('Previous month');
+        expect(buttons[1].getAttribute('aria-label')).toBe('Next month');
+        expect(buttons[0].querySelector('[aria-hidden="true"]')!.textContent).toBe('expand_less');
+        expect(buttons[1].querySelector('[aria-hidden="true"]')!.textContent).toBe('expand_more');
+    });
+
+    it('the edit button carries an aria-label; the ligature text is aria-hidden', () => {
+        handle = t(Timeline, { data: data(), editable: true });
+        const button = handle.query('.lm-timeline-edit .lm-timeline-icon')!;
+        expect(button.getAttribute('aria-label')).toBe('Edit');
+        expect(button.querySelector('[aria-hidden="true"]')!.textContent).toBe('edit');
+    });
+
+    it('clickable tags: role=button + tabindex, Enter and Space activate like a click', () => {
+        const clicks: TimelineTag[] = [];
+        const tag: TimelineTag = { title: 'urgent', onclick: (e, s) => clicks.push(s) };
+        handle = t(Timeline, {
+            data: [{ title: 'A', date: '2026-06-10T12:00:00', tags: [tag, { title: 'plain' }] }],
+        });
+        const tags = handle.queryAll('.lm-timeline-tag');
+        expect(tags[0].getAttribute('role')).toBe('button');
+        expect(tags[0].getAttribute('tabindex')).toBe('0');
+
+        tags[0].dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+        tags[0].dispatchEvent(new KeyboardEvent('keydown', { key: ' ', bubbles: true }));
+        expect(clicks).toEqual([tag, tag]);
+
+        // plain tags stay non-interactive: no role, no tabindex, keys do nothing
+        expect(tags[1].hasAttribute('role')).toBe(false);
+        expect(tags[1].hasAttribute('tabindex')).toBe(false);
+        tags[1].dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+        expect(clicks.length).toBe(2);
+    });
+});

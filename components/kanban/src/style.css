@@ -99,6 +99,19 @@
     box-shadow: var(--lm-kanban-card-shadow-hover);
 }
 
+.lm-kanban-card:focus-visible {
+    outline: 2px solid var(--lm-kanban-accent);
+    outline-offset: 1px;
+}
+
+/* keyboard/single-pointer move mode: the picked card stays in the flow,
+   highlighted; the shared ghost previews its landing slot */
+.lm-kanban-card-picked {
+    outline: 2px solid var(--lm-kanban-accent);
+    outline-offset: 1px;
+    box-shadow: var(--lm-kanban-card-shadow-hover);
+}
+
 .lm-kanban-card-dragging {
     opacity: 0.92;
     cursor: grabbing;
@@ -147,8 +160,66 @@
     color: var(--lm-font-color, #18181b);
 }
 
-.lm-kanban-card:has(.lm-kanban-card-menu) .lm-kanban-card-title {
+/* ---- the ⠿ grip: the always-present pick-up/drop affordance (keyboard
+   Space does the same); aria-pressed mirrors the pick, and keeps the
+   button visible while a move is in flight */
+.lm-kanban-card-move {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 22px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    border-radius: 6px;
+    padding: 0;
+    background: transparent;
+    color: var(--lm-icon-color, #71717a);
+    font-size: 11px;
+    line-height: 1;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.12s ease, background 0.12s ease;
+}
+
+.lm-kanban-card:hover .lm-kanban-card-move,
+.lm-kanban-card:focus-within .lm-kanban-card-move,
+.lm-kanban-card-move[aria-pressed='true'] {
+    opacity: 1;
+}
+
+.lm-kanban-card-move:hover {
+    background: var(--lm-background-color-highlight, rgba(0, 0, 0, 0.07));
+    color: var(--lm-font-color, #18181b);
+}
+
+/* the ▾ menu keeps the corner; the grip slides left of it */
+.lm-kanban-card:has(.lm-kanban-card-menu) .lm-kanban-card-move {
+    right: 30px;
+}
+
+.lm-kanban-card .lm-kanban-card-title {
     padding-right: 22px;
+}
+
+.lm-kanban-card:has(.lm-kanban-card-menu) .lm-kanban-card-title {
+    padding-right: 46px;
+}
+
+/* ---- the SR-only live region narrating pick/move/drop */
+.lm-kanban-live {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    border: 0;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
 }
 
 .lm-kanban-card-description {

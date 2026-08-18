@@ -21,7 +21,8 @@
  *     tab, fires onchangeposition) — simplified to reorder-on-drop, v5
  *     live-previewed during dragover by mutating DOM the engine now owns
  *   - keyboard: Enter selects, Arrow keys move focus (focus opens, v5's
- *     onfocusin behavior)
+ *     onfocusin behavior); Ctrl/Cmd+ArrowLeft/Right moves the focused tab
+ *     (the keyboard alternative to drag sorting)
  *
  * v5 → v6 mapping: selected → bind (live two-way) with selected as the
  * initial index when unbound; allowCreate → allowcreate (contract props
@@ -50,6 +51,9 @@ export interface TabItem {
 /** v5 meta extraction: attributes read off the panel element when missing */
 const META = ['title', 'selected', 'data-icon'] as const;
 
+/** Document-unique id base per instance — pairs tab headers and panels */
+let uid = 0;
+
 export const Tabs = component('tabs', {
     data: Array,                  // TabItem[] — programmatic tabs
     bind: Number,                 // two-way selected index (v5: selected)
@@ -65,6 +69,13 @@ export const Tabs = component('tabs', {
     onchangeposition: Function,   // (fromIndex, toIndex) after drag sorting
     api: { open: Function, create: Function },
 }, (props, { state, bind, onMount }) => {
+    // Stable per-item ids (identity-keyed, so they survive reordering):
+    // the header li is the tab, the kept-alive panel element the tabpanel
+    const id = 'lm-tabs-' + ++uid;
+    let seq = 0;
+    const ids = new WeakMap<TabItem, number>();
+    const tabId = (item: TabItem) => id + '-tab-' + ids.get(item);
+
     /**
      * v5 processing: every item gets a real panel element up front —
      * content becomes innerHTML once; existing elements contribute their
@@ -93,6 +104,15 @@ export const Tabs = component('tabs', {
                 }
             }
         }
+        // tab ⇄ panel wiring (1.3.1/4.1.2): the panel is a labelled,
+        // focusable tabpanel; the header li points at it via aria-controls
+        ids.set(item, ++seq);
+        item.el.setAttribute('role', 'tabpanel');
+        if (!item.el.id) {
+            item.el.id = id + '-panel-' + seq;
+        }
+        item.el.setAttribute('aria-labelledby', tabId(item));
+        item.el.setAttribute('tabindex', '0');
         return item;
     };
 
@@ -190,6 +210,24 @@ export const Tabs = component('tabs', {
     const onKeydown = (e: KeyboardEvent) => {
         const length = items.value.length;
         if (!length) {
+            return;
+        }
+        // Ctrl/Cmd+Arrow moves the focused tab — the keyboard alternative
+        // to drag sorting (WCAG 2.1.1); same contract as a drop: reorder,
+        // select the moved tab, fire onchangeposition
+        if ((e.ctrlKey || e.metaKey) && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
+            const from = headerIndex(e.target);
+            const to = e.key === 'ArrowLeft' ? from - 1 : from + 1;
+            if (from >= 0 && to >= 0 && to < length) {
+                e.preventDefault();
+                const list = [...items.value];
+                const [moved] = list.splice(from, 1);
+                list.splice(to, 0, moved);
+                items.value = list;
+                doSelect(to);
+                props.onchangeposition?.(from, to);
+                (ul?.children[to] as HTMLElement | undefined)?.focus();
+            }
             return;
         }
         if (e.key === 'Enter' || e.key === ' ') {
@@ -368,7 +406,7 @@ export const Tabs = component('tabs', {
         data-position="${() => props.position.value || false}"
         data-variant="${() => props.variant.value || false}"
         data-round="${() => (props.round.value ? 'true' : false)}">
-        <div class="lm-tabs-headers" role="tablist" aria-orientation="horizontal"
+        <div class="lm-tabs-headers"
             data-scroll="${() => (canScroll.value.left || canScroll.value.right ? 'true' : false)}">
             ${() =>
                 (canScroll.value.left || canScroll.value.right) &&
@@ -376,7 +414,10 @@ export const Tabs = component('tabs', {
                     aria-label="Scroll tabs left"
                     disabled="${() => !canScroll.value.left}"
                     onclick="${() => nudge(-1)}">chevron_left</button>`}
-            <ul ref="${(el: HTMLElement) => (ul = el)}"
+            <!-- role=tablist lives on the ul: it owns ONLY tabs — the
+                 scroll and add buttons stay outside the tablist (1.3.1) -->
+            <ul role="tablist" aria-orientation="horizontal"
+                ref="${(el: HTMLElement) => (ul = el)}"
                 onclick="${onOpenEvent}"
                 onfocusin="${onOpenEvent}"
                 onkeydown="${onKeydown}"
@@ -394,6 +435,7 @@ export const Tabs = component('tabs', {
                         html`<li key="${item}" class="lm-tabs-tab ${() => (selected.value === i ? 'lm-tabs-selected' : '')} ${() => (dropAt.value === i ? 'lm-tabs-drop' : '')} ${() =>
                             dropAt.value !== null && dropAt.value === items.value.length && i === items.value.length - 1 ? 'lm-tabs-drop-end' : ''}"
                             tabindex="${() => (selected.value === i ? '0' : '-1')}" role="tab" draggable="true"
+                            id="${tabId(item)}" aria-controls="${item.el!.id}"
                             aria-selected="${() => (selected.value === i ? 'true' : 'false')}"
                             data-icon="${item.icon || false}">${item.title || ''}</li>`
                 )}</ul>
@@ -405,8 +447,14 @@ export const Tabs = component('tabs', {
                     onclick="${() => nudge(1)}">chevron_right</button>`}
             ${() =>
                 props.allowcreate.value &&
-                html`<div class="lm-tabs-insert-button" role="button" aria-label="Add tab"
-                    onclick="${() => create({ title: 'Untitled' }, null, true)}">add</div>`}
+                html`<div class="lm-tabs-insert-button" role="button" aria-label="Add tab" tabindex="0"
+                    onclick="${() => create({ title: 'Untitled' }, null, true)}"
+                    onkeydown="${(e: KeyboardEvent) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault(); // Space must not scroll the page
+                            create({ title: 'Untitled' }, null, true);
+                        }
+                    }}">add</div>`}
         </div>
         <div class="lm-tabs-content">${() => items.value.map((item) => item.el)}</div>
     </div>`;

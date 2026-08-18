@@ -46,6 +46,7 @@ export const Color = component('color', {
     palette: Array,               // string[][] matrix — a flat string[] becomes one row
     type: '',                     // '' (popup via api) | 'input' | 'inline'
     placeholder: '',              // input placeholder (v5)
+    'aria-label': '',             // input accessible name (falls back to placeholder, then 'Color')
     closeonchange: false,         // v5: closeOnChange — picking commits + closes immediately
     onopen: Function,             // popup opened
     onclose: Function,            // popup closed (origin)
@@ -201,6 +202,75 @@ export const Color = component('color', {
         }
     };
 
+    // ---- palette grid keyboard (2.1.1): roving tabindex over the matrix.
+    // The grid re-renders its cells from data, so the position lives as
+    // component state and the per-cell tabindex expressions re-evaluate
+    // cleanly across re-renders.
+    const focusRow = state(0);
+    const focusCol = state(0);
+    let grid: HTMLElement | null = null;
+
+    // the single tab stop, clamped so a smaller palette never strands it
+    const roving = (r: number, c: number) => {
+        const p = palette();
+        const fr = Math.min(focusRow.value, p.length - 1);
+        return r === fr && c === Math.min(focusCol.value, p[fr].length - 1);
+    };
+
+    // a pointer pick moves the roving stop too, so keyboard resumes there
+    const pickAt = (r: number, c: number, color: string) => {
+        batch(() => {
+            focusRow.value = r;
+            focusCol.value = c;
+        });
+        select(color);
+    };
+
+    const onGridKey = (e: KeyboardEvent) => {
+        const p = palette();
+        let r = Math.min(focusRow.value, p.length - 1);
+        let c = Math.min(focusCol.value, p[r].length - 1);
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault(); // Space must not scroll the page
+            select(p[r][c]); // same code path as a cell click
+            return;
+        }
+        if (e.key === 'ArrowUp') {
+            r = Math.max(0, r - 1);
+        } else if (e.key === 'ArrowDown') {
+            r = Math.min(p.length - 1, r + 1);
+        } else if (e.key === 'ArrowLeft') {
+            c = Math.max(0, c - 1);
+        } else if (e.key === 'ArrowRight') {
+            c = Math.min(p[r].length - 1, c + 1);
+        } else if (e.key === 'Home') {
+            c = 0;
+        } else if (e.key === 'End') {
+            c = p[r].length - 1;
+        } else {
+            return;
+        }
+        e.preventDefault();
+        c = Math.min(c, p[r].length - 1); // rows may be ragged
+        batch(() => {
+            focusRow.value = r;
+            focusCol.value = c;
+        });
+        (grid?.children[r]?.children[c] as HTMLElement | undefined)?.focus();
+    };
+
+    // ---- tablist keyboard (the Tabs block pattern, two fixed tabs):
+    // arrows move focus AND select — selection follows focus
+    let tablist: HTMLElement | null = null;
+    const onTabKey = (e: KeyboardEvent) => {
+        if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+            e.preventDefault();
+            tab.value = e.key === 'ArrowLeft' ? 'grid' : 'spectrum';
+            const index = tab.value === 'grid' ? 0 : 1;
+            (tablist?.children[index] as HTMLElement | undefined)?.focus();
+        }
+    };
+
     // ---- Spectrum (v5 canvas gradient, ported verbatim; guarded — jsdom has no 2d context)
     const draw = () => {
         if (!canvas || !context) {
@@ -266,27 +336,34 @@ export const Color = component('color', {
 
     // ---- views
     const gridView = () =>
-        html`<div class="lm-color-grid" role="grid" aria-label="Color palette">
+        html`<div class="lm-color-grid" role="grid" aria-label="Color palette"
+            ref="${(el: HTMLElement) => (grid = el)}"
+            onkeydown="${onGridKey}">
             ${() =>
                 palette().map(
-                    (row) => html`<div class="lm-color-row" role="row">
+                    (row, r) => html`<div class="lm-color-row" role="row">
                         ${row.map(
-                            (c) => html`<div class="lm-color-cell ${() =>
+                            (c, i) => html`<div class="lm-color-cell ${() =>
                                 pending.value === c ? 'lm-color-selected' : ''}"
                                 role="gridcell"
+                                tabindex="${() => (roving(r, i) ? '0' : '-1')}"
                                 aria-selected="${() => (pending.value === c ? 'true' : 'false')}"
                                 aria-label="${c}"
                                 data-value="${c}"
                                 style="background-color: ${c}"
-                                onclick="${() => select(c)}"></div>`
+                                onclick="${() => pickAt(r, i, c)}"></div>`
                         )}
                     </div>`
                 )}
         </div>`;
 
+    // canvas keyboard nudging deferred: the palette grid + the text input
+    // already give a complete keyboard path, and the canvas takes no focus
+    // (no tabindex) so it cannot trap — role="img" is its text alternative
     const spectrumView = () =>
         html`<div class="lm-color-spectrum">
             <canvas class="lm-color-canvas" width="240" height="150"
+                role="img" aria-label="Color spectrum"
                 ref="${initCanvas}"
                 onmousedown="${pick}"
                 onmousemove="${pick}"
@@ -300,17 +377,23 @@ export const Color = component('color', {
                 <button type="button" class="lm-color-reset" onclick="${reset}">Reset</button>
                 <button type="button" class="lm-color-done" onclick="${update}">Done</button>
             </div>
-            <div class="lm-color-tabs" role="tablist">
+            <div class="lm-color-tabs" role="tablist"
+                ref="${(el: HTMLElement) => (tablist = el)}"
+                onkeydown="${onTabKey}">
                 <button type="button" class="lm-color-tab" role="tab"
+                    tabindex="${() => (tab.value === 'grid' ? '0' : '-1')}"
                     aria-selected="${() => (tab.value === 'grid' ? 'true' : 'false')}"
                     data-active="${() => tab.value === 'grid' || false}"
                     onclick="${() => (tab.value = 'grid')}">Grid</button>
                 <button type="button" class="lm-color-tab" role="tab"
+                    tabindex="${() => (tab.value === 'spectrum' ? '0' : '-1')}"
                     aria-selected="${() => (tab.value === 'spectrum' ? 'true' : 'false')}"
                     data-active="${() => tab.value === 'spectrum' || false}"
                     onclick="${() => (tab.value = 'spectrum')}">Spectrum</button>
             </div>
-            <div class="lm-color-content">${() => (tab.value === 'grid' ? gridView() : spectrumView())}</div>
+            <div class="lm-color-content" role="tabpanel"
+                aria-label="${() => (tab.value === 'grid' ? 'Grid' : 'Spectrum')}">${() =>
+                tab.value === 'grid' ? gridView() : spectrumView()}</div>
         </div>`;
 
     return html`<div class="lm-color"
@@ -322,6 +405,9 @@ export const Color = component('color', {
             props.type.value === 'input' &&
             html`<input type="text" class="lm-color-input"
                 placeholder="${() => props.placeholder.value || false}"
+                aria-label="${() => props['aria-label'].value || props.placeholder.value || 'Color'}"
+                aria-haspopup="dialog"
+                aria-expanded="${() => (opened.value ? 'true' : 'false')}"
                 value="${() => picked.value || ''}"
                 style="${() => (picked.value ? 'color:' + picked.value : '')}"
                 ref="${(el: HTMLInputElement) => (input = el)}"

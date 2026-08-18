@@ -169,3 +169,41 @@ describe('components/imagelist', () => {
         expect(rootStyle()).toContain('grid-template-columns:repeat(5, 1fr)');
     });
 });
+
+describe('a11y', () => {
+    it('alt priority: item.alt, then item.title, then empty', () => {
+        const data: ImageListItem[] = [
+            { src: 'a.jpg', alt: 'A plated breakfast', title: 'Breakfast' },
+            { src: 'b.jpg', title: 'Burger' },
+            { src: 'c.jpg' },
+        ];
+        handle = t(ImageList, { data });
+        expect(imgs()[0].getAttribute('alt')).toBe('A plated breakfast');
+        expect(imgs()[1].getAttribute('alt')).toBe('Burger');
+        expect(imgs()[2].getAttribute('alt')).toBe('');
+    });
+
+    it('interactive tiles: role=button + tabindex, Enter and Space activate like a click', () => {
+        const data = make(3);
+        const clicks: [ImageListItem, number, string][] = [];
+        handle = t(ImageList, {
+            data,
+            onitemclick: (item: ImageListItem, index: number, e: Event) =>
+                clicks.push([item, index, e.type]),
+        });
+        expect(items()[1].getAttribute('role')).toBe('button');
+        expect(items()[1].getAttribute('tabindex')).toBe('0');
+
+        items()[1].dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+        items()[1].dispatchEvent(new KeyboardEvent('keydown', { key: ' ', bubbles: true }));
+        expect(clicks).toEqual([[data[1], 1, 'keydown'], [data[1], 1, 'keydown']]);
+    });
+
+    it('without onitemclick tiles stay non-interactive: no role, no tabindex, keys silent', () => {
+        handle = t(ImageList, { data: make(2) });
+        expect(items()[0].hasAttribute('role')).toBe(false);
+        expect(items()[0].hasAttribute('tabindex')).toBe(false);
+        // no handler: never throws
+        items()[0].dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    });
+});

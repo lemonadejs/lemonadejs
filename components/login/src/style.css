@@ -155,6 +155,11 @@
     color: var(--lm-main-color, #2196f3);
 }
 
+.lm-login .lm-login-link:focus-visible {
+    outline: 2px solid var(--lm-border-outline, #2563eb);
+    outline-offset: -2px;
+}
+
 .lm-login .lm-login-forgot {
     text-align: right;
 }

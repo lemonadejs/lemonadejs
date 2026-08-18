@@ -11,9 +11,11 @@ every menu level is a headerless, auto-adjusting Modal. Submenus flip
 horizontally when out of space (inheriting the parent's direction),
 correct vertical overflow, open on a 200ms hover delay — and the full
 v5 keyboard system: ArrowUp/Down cursor skipping disabled items and
-separators with wrap-around, ArrowRight into a submenu (cursor on its
-first enabled item), ArrowLeft back out, Enter activates, Escape
-closes everything.
+separators with wrap-around, Home/End jump to the first/last enabled
+item, ArrowRight into a submenu (cursor on its first enabled item),
+ArrowLeft back out, Enter/Space activates, Escape closes everything —
+keyboard closes hand focus back to the invoker (WCAG 2.4.3), and
+aria-activedescendant on the focused wrapper tracks the cursor.
 
 v5 → v6 mapping: open(options, x, y) and openAt(x, y | event) keep
 their signatures; the per-item render() DOM hook was dropped.

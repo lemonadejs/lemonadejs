@@ -23,12 +23,28 @@ describe('components/alert', () => {
         expect(report.pass).toBe(true);
     });
 
-    it('renders visible by default with role=alert and no data attributes', () => {
+    it('renders visible by default with role=status and no data attributes', () => {
         handle = t(Alert, { message: 'hello' });
         expect(root()).not.toBeNull();
-        expect(root()!.getAttribute('role')).toBe('alert');
+        expect(root()!.getAttribute('role')).toBe('status'); // '' = info: polite
         expect(root()!.hasAttribute('data-severity')).toBe(false); // '' = info
         expect(root()!.hasAttribute('data-variant')).toBe(false); // '' = standard
+    });
+
+    it('maps the severity onto the live-region urgency: status vs alert', () => {
+        const severity = store('');
+        handle = t(Alert, { severity });
+        const role = () => root()!.getAttribute('role');
+        expect(role()).toBe('status'); // info
+
+        severity.value = 'success';
+        expect(role()).toBe('status');
+
+        severity.value = 'warning';
+        expect(role()).toBe('alert');
+
+        severity.value = 'error';
+        expect(role()).toBe('alert');
     });
 
     it('exposes severity as a data attribute, live', () => {

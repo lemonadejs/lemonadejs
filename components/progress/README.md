@@ -2,7 +2,7 @@
 
 LemonadeJS progress block — contract-verified, framework-agnostic.
 
-**✓ verified** — 15 contract checks · framework-agnostic · zero dependencies
+**✓ verified** — 17 contract checks · framework-agnostic · zero dependencies
 
 ## Overview
 
@@ -71,6 +71,7 @@ state for a two-way live wire. Attribute strings are coerced to the declared typ
 | `thickness` | number | `0` | stroke/bar thickness in px (defaults: 4 linear, 3.6 circular) |
 | `color` | string | `''` | green | orange | red | purple (default blue) |
 | `label` | boolean | `false` | show the % text: beside linear, centered in circular |
+| `arialabel` | string | `''` | accessible name for the progressbar (aria-label) |
 
 ## Events
 

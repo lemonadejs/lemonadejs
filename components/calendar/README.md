@@ -2,7 +2,7 @@
 
 LemonadeJS calendar block — date, datetime and range picker on the Modal primitive; contract-verified, framework-agnostic.
 
-**✓ verified** — 45 contract checks · framework-agnostic · zero dependencies beyond `@lemonadejs/modal`
+**✓ verified** — 47 contract checks · framework-agnostic · zero dependencies beyond `@lemonadejs/modal`
 
 ## Overview
 
@@ -109,6 +109,7 @@ state for a two-way live wire. Attribute strings are coerced to the declared typ
 | `footer` | boolean | `true` | Update button / time row |
 | `wheel` | boolean | `true` | mouse wheel month navigation |
 | `placeholder` | string | `''` | input placeholder |
+| `aria-label` | string | `''` |  |
 | `input` | any | — | 'any': an existing HTMLInputElement to adopt |
 | `initinput` | boolean | `true` | wire the interactive input listeners: open on |
 | `width` | number | `300` | popup panel width (v5 modal width) |

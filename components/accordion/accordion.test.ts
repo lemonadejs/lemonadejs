@@ -169,6 +169,22 @@ describe('components/accordion', () => {
         expect((handle.query('.inside') as HTMLInputElement).value).toBe('typed while open');
     });
 
+    it('closed bodies are inert so their focusables leave the Tab order', () => {
+        handle = t(Accordion, {
+            options: OPTIONS,
+            render: () => html`<input class="inside" />`,
+        });
+        // all closed: every body inert
+        expect(bodies().map((b) => b.hasAttribute('inert'))).toEqual([true, true, true]);
+
+        headers()[0].click(); // open the first — only it leaves inert
+        expect(bodies().map((b) => b.hasAttribute('inert'))).toEqual([false, true, true]);
+
+        headers()[0].click(); // collapse again — back to inert, DOM kept alive
+        expect(bodies().map((b) => b.hasAttribute('inert'))).toEqual([true, true, true]);
+        expect(handle.queryAll('.inside').length).toBe(3); // never unmounted
+    });
+
     it('walks header focus with ArrowDown/ArrowUp, skipping disabled headers', () => {
         handle = t(Accordion, {
             options: [

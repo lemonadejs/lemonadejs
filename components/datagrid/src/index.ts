@@ -12,7 +12,8 @@
  *   - inline editing (double-click or Enter; Escape cancels; commits
  *     mutate YOUR row objects and fire onchange)
  *   - keyboard: arrows move the active cell, Enter edits, Space toggles
- *     selection
+ *     selection; ArrowUp past the first row reaches the header row, where
+ *     Enter/Space toggles sort and Shift+ArrowLeft/Right resizes the column
  *   - pagination mode (pagination > 0) instead of virtual scroll
  *   - column customization: drag the header edge to resize (widths turn
  *     px, oncolumnresize on release), column.hidden + api.setColumn for
@@ -68,6 +69,9 @@ type Row = Record<string, unknown>;
 
 const OVERSCAN = 4;
 const MIN_COL = 60; // px floor while drag-resizing a column
+const RESIZE_STEP = 10; // px per Shift+Arrow keystroke on a header cell
+
+let instances = 0; // per-instance id prefix for aria-activedescendant
 
 export const Datagrid = component('datagrid', {
     data: Array,                  // row objects BY REFERENCE (mutate + touch())
@@ -129,6 +133,11 @@ export const Datagrid = component('datagrid', {
 
     let scroller: HTMLElement | null = null;
     let rootEl: HTMLElement | null = null;
+
+    // Cell ids for aria-activedescendant: the grid container keeps DOM
+    // focus, the id names the ACTIVE cell (r = -1 is the header row)
+    const uid = 'lm-datagrid-' + ++instances;
+    const cellId = (r: number, c: number) => uid + '-' + (r === -1 ? 'h' : r) + '-' + c;
 
     const refresh = () => {
         const data = rows();
@@ -289,6 +298,28 @@ export const Datagrid = component('datagrid', {
                 );
             }
         );
+    };
+
+    // ---- keyboard resize: Shift+ArrowLeft/Right on a header cell. Same
+    // width resolution order as the drag gesture (override → measured th
+    // → px width → 100), same MIN_COL floor, same oncolumnresize event
+    const resizeColumn = (col: Column, delta: number) => {
+        let startWidth = widths.value[col.name] || 0;
+        if (!startWidth) {
+            const offset = props.selectable.peek() === 'multiple' ? 1 : 0;
+            const i = visibleColumns().indexOf(col) + offset;
+            const th = rootEl?.querySelectorAll('.lm-datagrid-th')[i] as HTMLElement | undefined;
+            startWidth = th ? th.getBoundingClientRect().width : 0;
+        }
+        if (!startWidth && col.width && col.width.slice(-2) === 'px') {
+            startWidth = parseFloat(col.width);
+        }
+        if (!startWidth) {
+            startWidth = 100;
+        }
+        const w = Math.max(MIN_COL, Math.round(startWidth + delta));
+        widths.value = { ...widths.value, [col.name]: w };
+        props.oncolumnresize?.(col.name, w);
     };
 
     // ---- virtual window
@@ -488,7 +519,9 @@ export const Datagrid = component('datagrid', {
         );
     };
 
-    // ---- keyboard: arrows move the ACTIVE cell, Enter edits, Space selects
+    // ---- keyboard: arrows move the ACTIVE cell, Enter edits, Space
+    // selects. Row -1 is the HEADER row (ArrowUp past the first row):
+    // there Enter/Space toggles sort, Shift+ArrowLeft/Right resizes
     const onKey = (e: KeyboardEvent) => {
         if (editing.value) {
             return; // the editor input owns the keys
@@ -497,14 +530,24 @@ export const Datagrid = component('datagrid', {
         const lastR = view.value.length - 1;
         const lastC = visibleColumns().length - 1;
         let handled = true;
-        if (e.key === 'ArrowDown') {
+        if (a.r === -1 && e.shiftKey && (e.key === 'ArrowLeft' || e.key === 'ArrowRight') && props.resizable.value) {
+            const col = visibleColumns()[a.c];
+            if (col) {
+                resizeColumn(col, e.key === 'ArrowRight' ? RESIZE_STEP : -RESIZE_STEP);
+            }
+        } else if (e.key === 'ArrowDown') {
             active.value = { r: Math.min(a.r + 1, lastR), c: a.c };
         } else if (e.key === 'ArrowUp') {
-            active.value = { r: Math.max(a.r - 1, 0), c: a.c };
+            active.value = { r: Math.max(a.r - 1, -1), c: a.c };
         } else if (e.key === 'ArrowRight') {
             active.value = { r: a.r, c: Math.min(a.c + 1, lastC) };
         } else if (e.key === 'ArrowLeft') {
             active.value = { r: a.r, c: Math.max(a.c - 1, 0) };
+        } else if ((e.key === 'Enter' || e.key === ' ') && active.value && a.r === -1) {
+            const col = visibleColumns()[a.c];
+            if (col) {
+                sort(col.name);
+            }
         } else if (e.key === 'Enter' && active.value) {
             const col = visibleColumns()[a.c];
             if (col) {
@@ -518,7 +561,7 @@ export const Datagrid = component('datagrid', {
         if (handled) {
             e.preventDefault();
             // Keep the active row inside the window
-            if (!props.pagination.value && scroller && active.value) {
+            if (!props.pagination.value && scroller && active.value && active.value.r >= 0) {
                 const top = active.value.r * rowHeight();
                 if (top < scroller.scrollTop) {
                     scroller.scrollTop = top;
@@ -601,9 +644,11 @@ export const Datagrid = component('datagrid', {
     const cellView = (entry: { dataIndex: number; viewIndex: number }, col: Column, c: number) => {
         const row = rows()[entry.dataIndex];
         if (col.type === 'checkbox') {
-            return html`<div class="lm-datagrid-cell ${col.class || ''}" data-align="center" role="gridcell">
+            return html`<div class="lm-datagrid-cell ${col.class || ''}" data-align="center" role="gridcell"
+                id="${cellId(entry.viewIndex, c)}">
                 <input type="checkbox" checked="${() => !!row[col.name]}"
                     disabled="${!editable(col)}"
+                    aria-label="${col.title || col.name}"
                     onchange="${(e: Event) => setChecked(row, col, (e.target as HTMLInputElement).checked)}" />
             </div>`;
         }
@@ -611,6 +656,7 @@ export const Datagrid = component('datagrid', {
             active.value && active.value.r === entry.viewIndex && active.value.c === c ? 'lm-datagrid-active' : ''}"
             data-align="${col.align || (col.type === 'number' ? 'right' : false)}"
             role="gridcell"
+            id="${cellId(entry.viewIndex, c)}"
             onclick="${() => (active.value = { r: entry.viewIndex, c })}"
             ondblclick="${() => startEdit(entry.dataIndex, col)}">${() =>
             editing.value && editing.value.index === entry.dataIndex && editing.value.name === col.name
@@ -667,7 +713,9 @@ export const Datagrid = component('datagrid', {
             (selected.value.has(row) ? 'lm-datagrid-selected' : '') +
             (props.zebra.value && entry.viewIndex % 2 ? ' lm-datagrid-zebra' : '')}"
             role="row"
-            aria-rowindex="${entry.dataIndex + 2}"
+            aria-rowindex="${entry.viewIndex + 2 + (isRemote() ? page.value * ((props.pagination.peek() as number) || 0) : 0)}"
+            aria-selected="${() =>
+                props.selectable.value ? (selected.value.has(row) ? 'true' : 'false') : false}"
             style="${() => 'height:' + rowHeight() + 'px;grid-template-columns:' + gridTemplate()}"
             onclick="${(e: MouseEvent) => {
                 if (props.selectable.value === 'single') {
@@ -679,6 +727,7 @@ export const Datagrid = component('datagrid', {
                 props.selectable.value === 'multiple'
                     ? html`<div class="lm-datagrid-cell" data-align="center" role="gridcell">
                           <input type="checkbox" checked="${() => selected.value.has(row)}"
+                              aria-label="Select row"
                               onclick="${(e: Event) => e.stopPropagation()}"
                               onchange="${() => toggleRow(row, false)}" />
                       </div>`
@@ -694,14 +743,25 @@ export const Datagrid = component('datagrid', {
         style="grid-template-columns:${() => gridTemplate()}">
         ${() =>
             props.selectable.value === 'multiple'
-                ? html`<div class="lm-datagrid-th" data-align="center">
-                      <input type="checkbox" checked="${() => allVisibleSelected()}" onchange="${toggleAll}" />
+                ? html`<div class="lm-datagrid-th" data-align="center" role="columnheader">
+                      <input type="checkbox" checked="${() => allVisibleSelected()}"
+                          aria-label="Select all rows" onchange="${toggleAll}" />
                   </div>`
                 : ''}
         ${() =>
             liveColumns().map(
-                (col) => html`<div class="lm-datagrid-th" data-align="${col.align || (col.type === 'number' ? 'right' : false)}"
+                (col, c) => html`<div class="lm-datagrid-th ${() =>
+                    active.value && active.value.r === -1 && active.value.c === c ? 'lm-datagrid-active' : ''}"
+                    data-align="${col.align || (col.type === 'number' ? 'right' : false)}"
                     data-sortable="${col.sortable !== false}"
+                    role="columnheader"
+                    id="${cellId(-1, c)}"
+                    aria-sort="${() =>
+                        sortBy.value && sortBy.value.name === col.name
+                            ? sortBy.value.dir === 1
+                                ? 'ascending'
+                                : 'descending'
+                            : false}"
                     onclick="${() => sort(col.name)}">
                     <span>${headerContent(col)}</span>
                     <span class="lm-datagrid-arrow" data-dir="${() =>
@@ -717,7 +777,9 @@ export const Datagrid = component('datagrid', {
     </div>`;
 
     return html`<div class="lm-datagrid" tabindex="0" role="grid"
-        aria-rowcount="${() => view.value.length}"
+        aria-rowcount="${() => totalRows() + 1}"
+        aria-colcount="${() => liveColumns().length + (props.selectable.value === 'multiple' ? 1 : 0)}"
+        aria-activedescendant="${() => (active.value ? cellId(active.value.r, active.value.c) : false)}"
         ref="${(el: HTMLElement) => (rootEl = el)}"
         onkeydown="${onKey}">
         ${() =>
@@ -761,6 +823,7 @@ export const Datagrid = component('datagrid', {
                                   item < 0
                                       ? html`<span class="lm-datagrid-gap">…</span>`
                                       : html`<button data-current="${() => (page.value === item ? 'true' : false)}"
+                                            aria-current="${() => (page.value === item ? 'page' : false)}"
                                             onclick="${() => setPage(item)}">${item + 1}</button>`
                               )}
                           <button onclick="${() => setPage(page.value + 1)}"

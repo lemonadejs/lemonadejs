@@ -14,7 +14,9 @@
     border-radius: 999px;
     white-space: nowrap;
     max-width: 320px;
-    pointer-events: none;
+    /* hoverable (WCAG 1.4.13): the pointer may rest on the popper — the
+       wrapper's mouseenter (the popper is its child) cancels the hide */
+    pointer-events: auto;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
     animation: lm-tooltip-in 0.12s ease-out;
 }

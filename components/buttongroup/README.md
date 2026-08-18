@@ -2,7 +2,7 @@
 
 LemonadeJS buttongroup block — contract-verified, framework-agnostic.
 
-**✓ verified** — 18 contract checks · framework-agnostic · zero dependencies
+**✓ verified** — 20 contract checks · framework-agnostic · zero dependencies
 
 ## Overview
 
@@ -64,6 +64,7 @@ state for a two-way live wire. Attribute strings are coerced to the declared typ
 | `size` | string | `''` | small | large (default in between) |
 | `orientation` | string | `''` | '' horizontal | vertical |
 | `disabled` | boolean | `false` | blocks the whole group (native) |
+| `aria-label` | string | `''` |  |
 
 ## Events
 

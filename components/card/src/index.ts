@@ -30,7 +30,9 @@ export const Card = component('card', {
     subtitle: '',                 // muted line under the title
     image: '',                    // media url, top image (object-fit: cover)
     imageheight: 180,             // media height in px
+    imagealt: '',                 // media image alt text ('' = decorative)
     avatar: '',                   // small round img beside the header titles
+    avataralt: '',                // avatar alt text ('' = decorative)
     content: '',                  // body text (children render after it)
     actions: Array,               // CardAction[] — footer buttons, right-aligned
     variant: '',                  // '' = elevated | outlined
@@ -63,13 +65,13 @@ export const Card = component('card', {
         onclick="${press}">
         ${() =>
             props.image.value &&
-            html`<img class="lm-card-media" src="${props.image}" alt="" style="${heightOf}" />`}
+            html`<img class="lm-card-media" src="${props.image}" alt="${props.imagealt}" style="${heightOf}" />`}
         ${() =>
             (props.avatar.value || props.title.value || props.subtitle.value) &&
             html`<div class="lm-card-header">
                 ${() =>
                     props.avatar.value &&
-                    html`<img class="lm-card-avatar" src="${props.avatar}" alt="" />`}
+                    html`<img class="lm-card-avatar" src="${props.avatar}" alt="${props.avataralt}" />`}
                 <div class="lm-card-headings">
                     ${() => props.title.value && html`<div class="lm-card-title">${props.title}</div>`}
                     ${() =>

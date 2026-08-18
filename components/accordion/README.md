@@ -14,7 +14,8 @@ Panels come from a data array ({ title, content?, disabled? }):
   - every panel body is created once and KEPT ALIVE across toggles —
     the collapse is a grid-template-rows (0fr->1fr) transition driven by
     data-open (CSS), never an unmount, so content state (inputs, nested
-    components) survives open/close cycles
+    components) survives open/close cycles; closed bodies are inert
+    (out of the Tab order and the accessibility tree)
   - exclusive by default (a controlled accordion group): bind is the
     expanded INDEX, -1/null = all closed, opening one closes the other
   - multiple: bind becomes an ARRAY of open indices — each panel

@@ -16,6 +16,10 @@
             "type": "string",
             "default": ""
         },
+        "aria-label": {
+            "type": "string",
+            "default": ""
+        },
         "closeonchange": {
             "type": "boolean",
             "default": false

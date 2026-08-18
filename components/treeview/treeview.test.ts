@@ -5,7 +5,8 @@
  * click + two-way bind, onchange/ontoggle, keyboard (Arrows + Enter),
  * api open/close/select/toggle, keyed reorder of ROOT and NESTED siblings
  * preserving DOM identity, in-place child insertion, 5-level nesting,
- * listener balance on unmount.
+ * listener balance on unmount, roving tabindex + focus landing on the
+ * treeitem that carries the aria state.
  */
 import { describe, it, expect, afterEach, vi } from 'vitest';
 import { store } from 'lemonadejs';
@@ -141,16 +142,16 @@ describe('components/treeview', () => {
 
     it('keyboard: ArrowRight opens, then dives; ArrowLeft closes, then climbs', () => {
         handle = t(TreeView, { data: data() });
-        const docs = row('docs');
+        const docs = li('docs'); // focus lives on the treeitem <li> itself
         docs.focus();
 
         docs.dispatchEvent(key('ArrowRight')); // closed parent → opens
         expect(li('docs').getAttribute('aria-expanded')).toBe('true');
 
         docs.dispatchEvent(key('ArrowRight')); // open parent → first child
-        expect(document.activeElement).toBe(row('readme'));
+        expect(document.activeElement).toBe(li('readme'));
 
-        row('readme').dispatchEvent(key('ArrowLeft')); // leaf → parent
+        li('readme').dispatchEvent(key('ArrowLeft')); // leaf → parent
         expect(document.activeElement).toBe(docs);
 
         docs.dispatchEvent(key('ArrowLeft')); // open parent → closes
@@ -159,37 +160,83 @@ describe('components/treeview', () => {
 
     it('keyboard: ArrowDown/ArrowUp move across VISIBLE nodes only', () => {
         handle = t(TreeView, { data: data() });
-        row('src').focus();
+        li('src').focus();
 
-        row('src').dispatchEvent(key('ArrowDown')); // into the open src group
-        expect(document.activeElement).toBe(row('index'));
+        li('src').dispatchEvent(key('ArrowDown')); // into the open src group
+        expect(document.activeElement).toBe(li('index'));
 
-        row('index').dispatchEvent(key('ArrowDown'));
-        expect(document.activeElement).toBe(row('style'));
+        li('index').dispatchEvent(key('ArrowDown'));
+        expect(document.activeElement).toBe(li('style'));
 
-        row('style').dispatchEvent(key('ArrowDown'));
-        expect(document.activeElement).toBe(row('utils'));
+        li('style').dispatchEvent(key('ArrowDown'));
+        expect(document.activeElement).toBe(li('utils'));
 
-        row('utils').dispatchEvent(key('ArrowDown')); // utils is CLOSED → walk.ts skipped
-        expect(document.activeElement).toBe(row('docs'));
+        li('utils').dispatchEvent(key('ArrowDown')); // utils is CLOSED → walk.ts skipped
+        expect(document.activeElement).toBe(li('docs'));
 
-        row('docs').dispatchEvent(key('ArrowDown')); // docs closed → readme skipped
-        expect(document.activeElement).toBe(row('pkg'));
+        li('docs').dispatchEvent(key('ArrowDown')); // docs closed → readme skipped
+        expect(document.activeElement).toBe(li('pkg'));
 
-        row('pkg').dispatchEvent(key('ArrowDown')); // last visible: stays
-        expect(document.activeElement).toBe(row('pkg'));
+        li('pkg').dispatchEvent(key('ArrowDown')); // last visible: stays
+        expect(document.activeElement).toBe(li('pkg'));
 
-        row('pkg').dispatchEvent(key('ArrowUp'));
-        expect(document.activeElement).toBe(row('docs'));
+        li('pkg').dispatchEvent(key('ArrowUp'));
+        expect(document.activeElement).toBe(li('docs'));
     });
 
     it('keyboard: Enter selects the focused node', () => {
         const sel = store('');
         handle = t(TreeView, { data: data(), bind: sel });
-        row('utils').focus();
-        row('utils').dispatchEvent(key('Enter'));
+        li('utils').focus();
+        li('utils').dispatchEvent(key('Enter'));
         expect(sel.value).toBe('utils');
         expect(li('utils').getAttribute('aria-selected')).toBe('true');
+    });
+
+    it('the FOCUSED element is the treeitem carrying the aria state (4.1.2)', () => {
+        const sel = store('');
+        handle = t(TreeView, { data: data(), bind: sel });
+        li('src').focus();
+        const el = document.activeElement as HTMLElement;
+        expect(el.getAttribute('role')).toBe('treeitem');
+        expect(el.getAttribute('aria-expanded')).toBe('true');
+        el.dispatchEvent(key('Enter'));
+        expect(el.getAttribute('aria-selected')).toBe('true'); // state sits ON the focused element
+        expect(sel.value).toBe('src');
+    });
+
+    it('roving tabindex: ONE stop — the selected node, else the first', () => {
+        handle = t(TreeView, { data: data() });
+        const stops = () => handle!.queryAll('[role="treeitem"][tabindex="0"]');
+        // no selection yet: the first node holds the only stop
+        expect(stops().map((el) => el.getAttribute('data-id'))).toEqual(['src']);
+        expect(handle.queryAll('[role="treeitem"][tabindex="-1"]')).toHaveLength(7);
+
+        label('style').click(); // selection moves the stop
+        expect(stops().map((el) => el.getAttribute('data-id'))).toEqual(['style']);
+        expect(li('src').getAttribute('tabindex')).toBe('-1');
+    });
+
+    it('roving tabindex: arrow navigation moves focus AND the stop', () => {
+        handle = t(TreeView, { data: data() });
+        li('src').focus();
+        li('src').dispatchEvent(key('ArrowDown'));
+        expect(document.activeElement).toBe(li('index'));
+        expect(li('index').getAttribute('tabindex')).toBe('0');
+        expect(li('src').getAttribute('tabindex')).toBe('-1');
+        expect(handle.queryAll('[role="treeitem"][tabindex="0"]')).toHaveLength(1);
+    });
+
+    it('roving tabindex: a stop hidden by collapse falls back to a VISIBLE node', () => {
+        handle = t(TreeView, { data: data() });
+        li('src').focus();
+        li('src').dispatchEvent(key('ArrowDown')); // stop → index (inside src)
+        expect(li('index').getAttribute('tabindex')).toBe('0');
+
+        row('src').querySelector<HTMLElement>('.lm-treeview-toggle')!.click(); // collapse src
+        expect(li('src').getAttribute('aria-expanded')).toBe('false');
+        expect(li('src').getAttribute('tabindex')).toBe('0'); // first visible takes the stop
+        expect(handle.queryAll('[role="treeitem"][tabindex="0"]')).toHaveLength(1);
     });
 
     it('api: open/close/toggle drive expansion and fire ontoggle', () => {
@@ -311,17 +358,17 @@ describe('components/treeview', () => {
         expect(handle.queryAll('.lm-treeview-group')).toHaveLength(4);
 
         // keyboard walks all the way down (every level is open)
-        row('l1').focus();
+        li('l1').focus();
         for (const id of ['l2', 'l3', 'l4', 'l5']) {
             (document.activeElement as HTMLElement).dispatchEvent(key('ArrowDown'));
-            expect(document.activeElement).toBe(row(id));
+            expect(document.activeElement).toBe(li(id));
         }
         (document.activeElement as HTMLElement).dispatchEvent(key('Enter'));
         expect(sel.value).toBe('l5');
 
         // collapsing the ROOT hides the whole chain but keeps the DOM
         const l5 = li('l5');
-        row('l1').dispatchEvent(key('ArrowLeft'));
+        li('l1').dispatchEvent(key('ArrowLeft'));
         expect(li('l1').getAttribute('aria-expanded')).toBe('false');
         expect(li('l5')).toBe(l5); // alive, identical
     });

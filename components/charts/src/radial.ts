@@ -4,7 +4,21 @@
  */
 import { css, html, type View } from 'lemonadejs';
 import { PALETTES, type Model, type NormPoint, type RenderCtx } from './model';
-import { R, f, fullRing, niceScale, polar, roundedRing, textOn, wedge } from './helpers';
+import { R, f, fullRing, kbKeydown, niceScale, polar, roundedRing, textOn, wedge } from './helpers';
+
+/** Inline tip for the keyboard-active mark (the radial twin of the
+ *  cartesian .lm-chart-kbtip; state-driven, survives rebuilds). */
+const kbTip = (title: string, value: string, color: string): View =>
+    html`<div class="lm-chart-kbtip" style="${css({ left: '50%' })}">
+        <div class="lm-chart-kbtip-title">${title}</div>
+        <div class="lm-chart-tip-row">
+            <span class="lm-chart-tip-swatch" style="${css({ background: color })}"></span>
+            <span class="lm-chart-tip-value">${value}</span>
+        </div>
+    </div>`;
+
+/** Clamp the roving index to the current mark count (stale state → null). */
+const kbIndex = (v: number | null, n: number): number | null => (v != null && v < n ? v : null);
 
 /* ----- radar / spider (SVG polar) ----- */
 export const radarChart = (m: Model, ctx: RenderCtx): View => {
@@ -92,6 +106,19 @@ export const radialbarChart = (m: Model, ctx: RenderCtx): View => {
         // thin leader line connecting each label to its ring (the labels
         // used to hug the 12-o'clock arc starts and collide with them)
         const LABEL_X = 44;
+        // keyboard: arrows roam the category rings, Enter/Space activates
+        // the first visible series' point (mirrors the cartesian model)
+        const kbi = kbIndex(ctx.kb.value, n);
+        const kbKey = kbKeydown(ctx.kb, n, (i) => {
+            const s = vis[0];
+            if (s && s.points[i] && !s.points[i].gap) ctx.fire(s.points[i], m.series.indexOf(s), i);
+        });
+        const kbVals = (i: number): string => vis.filter((s) => s.points[i] && !s.points[i].gap)
+            .map((s) => s.name + ' ' + ctx.fmt(s.points[i].value)).join(', ');
+        const kbLabel = kbi == null
+            ? (n ? 'Chart, ' + n + ' points. Use arrow keys to explore.' : '')
+            : (m.categories[kbi] != null ? m.categories[kbi] : '#' + kbi) + ': ' + kbVals(kbi) +
+                '. Point ' + (kbi + 1) + ' of ' + n + '.';
         for (let i = 0; i < n; i++) {
             const r = R0 - per * i - th / 2;
             const cat = m.categories[i] != null ? m.categories[i] : '';
@@ -110,6 +137,7 @@ export const radialbarChart = (m: Model, ctx: RenderCtx): View => {
                 segs.push(html`<path class="lm-chart-radial-arc" data-stack="true"
                     d="M ${f(x0)} ${f(y0)} A ${f(r)} ${f(r)} 0 ${a1 - a0 > 180 ? 1 : 0} 1 ${f(x1)} ${f(y1)}"
                     stroke-width="${String(th)}" style="${css({ stroke: s.color })}" data-dim="${dim}"
+                    data-kb="${kbi === i ? 'true' : false}"
                     onmousemove="${tip}" ontouchstart="${tip}" onmouseleave="${ctx.hideTip}"
                     onclick="${() => ctx.fire(p, m.series.indexOf(s), i)}" />`);
             }
@@ -126,9 +154,14 @@ export const radialbarChart = (m: Model, ctx: RenderCtx): View => {
             })
             : [];
         return html`<div class="lm-chart-pie-core">
-            <div class="lm-chart-pie-area">
+            <div class="lm-chart-pie-area" tabindex="${n ? '0' : false}"
+                role="${n ? 'application' : false}"
+                aria-label="${n ? kbLabel : false}"
+                onkeydown="${kbKey}"
+                onblur="${() => { if (ctx.kb.value != null) ctx.kb.value = null; }}">
                 <svg class="lm-chart-pie" viewBox="0 0 100 100" aria-hidden="true">${leads}${segs}</svg>
                 ${catLabels}${tickLabels}
+                ${kbi != null ? kbTip(String(m.categories[kbi] != null ? m.categories[kbi] : '#' + kbi), kbVals(kbi), vis[0] ? vis[0].color : '') : false}
             </div>
         </div>`;
     }
@@ -145,6 +178,17 @@ export const radialbarChart = (m: Model, ctx: RenderCtx): View => {
         const [x1, y1] = polar(to, r);
         return `M ${f(x0)} ${f(y0)} A ${r} ${r} 0 ${to > 180 ? 1 : 0} 1 ${f(x1)} ${f(y1)}`;
     };
+    // keyboard: arrows roam the rings, Enter/Space activates (cartesian model)
+    const nKb = entries.length;
+    const kbi = kbIndex(ctx.kb.value, nKb);
+    const kbKey = kbKeydown(ctx.kb, nKb, (i) => ctx.fire(entries[i].p, 0, entries[i].i));
+    const kbText = (e: { p: NormPoint }): string => {
+        const fr = max > 0 ? Math.max(0, Math.min(1, e.p.value / max)) : 0;
+        return ctx.fmt(e.p.value) + ' (' + Math.round(fr * 100) + '%)';
+    };
+    const kbLabel = kbi == null
+        ? (nKb ? 'Chart, ' + nKb + ' points. Use arrow keys to explore.' : '')
+        : (entries[kbi].p.name || '—') + ': ' + kbText(entries[kbi]) + '. Point ' + (kbi + 1) + ' of ' + nKb + '.';
     const rings = entries.map((e, k) => {
         const r = R0 - per * k - th / 2;
         const fr = max > 0 ? Math.max(0, Math.min(1, e.p.value / max)) : 0;
@@ -152,7 +196,7 @@ export const radialbarChart = (m: Model, ctx: RenderCtx): View => {
         const dim = ctx.hover.value && ctx.hover.value !== e.key ? 'true' : false;
         const tip = (ev: MouseEvent): void =>
             ctx.showTip(ev, e.p.name || '—', [{ name: '', value: ctx.fmt(e.p.value) + ' (' + pct + '%)', color: e.p.color }]);
-        return html`<g class="lm-chart-radial" data-dim="${dim}">
+        return html`<g class="lm-chart-radial" data-dim="${dim}" data-kb="${kbi === k ? 'true' : false}">
             <circle class="lm-chart-radial-track" cx="50" cy="50" r="${String(r)}" stroke-width="${String(th)}" />
             ${fr > 0 ? html`<path class="lm-chart-radial-arc" d="${arc(Math.min(359.9, fr * 360), r)}"
                 stroke-width="${String(th)}" style="${css({ stroke: e.p.color })}"
@@ -169,8 +213,13 @@ export const radialbarChart = (m: Model, ctx: RenderCtx): View => {
         </div>`
         : false;
     return html`<div class="lm-chart-pie-core">
-        <div class="lm-chart-pie-area">${center}
+        <div class="lm-chart-pie-area" tabindex="${nKb ? '0' : false}"
+            role="${nKb ? 'application' : false}"
+            aria-label="${nKb ? kbLabel : false}"
+            onkeydown="${kbKey}"
+            onblur="${() => { if (ctx.kb.value != null) ctx.kb.value = null; }}">${center}
             <svg class="lm-chart-pie" viewBox="0 0 100 100" aria-hidden="true">${rings}</svg>
+            ${kbi != null ? kbTip(entries[kbi].p.name || '—', kbText(entries[kbi]), entries[kbi].p.color) : false}
         </div>
     </div>`;
 };
@@ -193,18 +242,26 @@ export const polarareaChart = (m: Model, ctx: RenderCtx): View => {
     };
     const rings = [1, 2, 3, 4].map((k) =>
         html`<circle class="lm-chart-radar-ring" cx="50" cy="50" r="${String((RMAX * k) / 4)}" />`);
+    // keyboard: arrows roam the wedges, Enter/Space activates (cartesian model)
+    const nKb = entries.length;
+    const kbi = kbIndex(ctx.kb.value, nKb);
+    const kbKey = kbKeydown(ctx.kb, nKb, (i) => ctx.fire(entries[i].p, 0, entries[i].i));
+    const kbLabel = kbi == null
+        ? (nKb ? 'Polar area chart, ' + nKb + ' slices. Use arrow keys to explore.' : '')
+        : (entries[kbi].p.name || '—') + ': ' + ctx.fmt(entries[kbi].p.value) + '. Slice ' + (kbi + 1) + ' of ' + nKb + '.';
     const slices = entries.map((e, k) => {
         const r = Math.max(0, Math.min(1, e.p.value / top)) * RMAX;
         const dim = ctx.hover.value && ctx.hover.value !== e.key ? 'true' : false;
+        const kb = kbi === k ? 'true' : false;
         const tip = (ev: MouseEvent): void => ctx.showTip(ev, e.p.name || '—', [{ name: '', value: ctx.fmt(e.p.value), color: e.p.color }]);
         // one entry = a full turn, which a single arc can't express → circle
         const shape = n === 1
             ? html`<circle class="lm-chart-slice" cx="50" cy="50" r="${f(r)}"
-                style="${css({ fill: e.p.color })}" data-dim="${dim}"
+                style="${css({ fill: e.p.color })}" data-dim="${dim}" data-kb="${kb}"
                 onmousemove="${tip}" ontouchstart="${tip}" onmouseleave="${ctx.hideTip}"
                 onclick="${() => ctx.fire(e.p, 0, e.i)}" />`
             : html`<path class="lm-chart-slice" d="${wedgeR((k * 360) / n, ((k + 1) * 360) / n, r)}"
-                style="${css({ fill: e.p.color })}" data-dim="${dim}"
+                style="${css({ fill: e.p.color })}" data-dim="${dim}" data-kb="${kb}"
                 onmousemove="${tip}" ontouchstart="${tip}" onmouseleave="${ctx.hideTip}"
                 onclick="${() => ctx.fire(e.p, 0, e.i)}" />`;
         return shape;
@@ -217,9 +274,14 @@ export const polarareaChart = (m: Model, ctx: RenderCtx): View => {
         })
         : [];
     return html`<div class="lm-chart-pie-core">
-        <div class="lm-chart-pie-area">
+        <div class="lm-chart-pie-area" tabindex="${nKb ? '0' : false}"
+            role="${nKb ? 'application' : false}"
+            aria-label="${nKb ? kbLabel : false}"
+            onkeydown="${kbKey}"
+            onblur="${() => { if (ctx.kb.value != null) ctx.kb.value = null; }}">
             <svg class="lm-chart-pie" viewBox="0 0 100 100" aria-hidden="true">${rings}${slices}</svg>
             ${labels}
+            ${kbi != null ? kbTip(entries[kbi].p.name || '—', ctx.fmt(entries[kbi].p.value), entries[kbi].p.color) : false}
         </div>
     </div>`;
 };
@@ -360,19 +422,32 @@ export const pie = (m: Model, ctx: RenderCtx): View => {
     const sliceTip = (e: MouseEvent, s: { p: NormPoint; percent: number }): void =>
         ctx.showTip(e, s.p.name || '—', [{ name: '', value: tipText(s), color: s.p.color }]);
     const donut = m.innerRadius > 0;
+
+    // ---- keyboard navigation: arrows roam slices, Enter/Space activates ----
+    // (the cartesian roving model; the focusable container sits OUTSIDE the
+    // aria-hidden svg, so no focusable element lands in a hidden subtree)
+    const nKb = drawn.length;
+    const kbi = kbIndex(ctx.kb.value, nKb);
+    const kbKey = kbKeydown(ctx.kb, nKb, (i) => ctx.fire(drawn[i].p, 0, drawn[i].i));
+    const kbLabel = kbi == null
+        ? (nKb ? 'Pie chart, ' + nKb + ' slices. Use arrow keys to explore.' : '')
+        : (drawn[kbi].p.name || '—') + ': ' + tipText(drawn[kbi]) + '. Slice ' + (kbi + 1) + ' of ' + nKb + '.';
+
     const wedges: View[] = single
         ? [donut
             ? html`<path class="lm-chart-slice" d="${fullRing(rInner)}" fill-rule="evenodd"
                 style="${css({ fill: drawn[0].p.color })}" data-dim="${dim(drawn[0].key)}"
+                data-kb="${kbi === 0 ? 'true' : false}"
                 onmousemove="${(e: MouseEvent) => sliceTip(e, drawn[0])}"
             ontouchstart="${(e: MouseEvent) => sliceTip(e, drawn[0])}"
                 onmouseleave="${ctx.hideTip}" />`
             : html`<circle class="lm-chart-slice" cx="50" cy="50" r="${String(R)}"
                 style="${css({ fill: drawn[0].p.color })}" data-dim="${dim(drawn[0].key)}"
+                data-kb="${kbi === 0 ? 'true' : false}"
                 onmousemove="${(e: MouseEvent) => sliceTip(e, drawn[0])}"
             ontouchstart="${(e: MouseEvent) => sliceTip(e, drawn[0])}"
                 onmouseleave="${ctx.hideTip}" />`]
-        : drawn.map((s) => {
+        : drawn.map((s, k) => {
             // donut segments: real ring paths with rounded corners — the
             // radius comes from `borderradius` (default a subtle 1.5 units,
             // Highcharts-like; crank it up for the fully-round pill look).
@@ -386,6 +461,7 @@ export const pie = (m: Model, ctx: RenderCtx): View => {
             data-donut="${donut ? 'true' : false}"
             style="${css({ fill: s.p.color })}"
             data-dim="${dim(s.key)}"
+            data-kb="${kbi === k ? 'true' : false}"
             onmousemove="${(e: MouseEvent) => sliceTip(e, s)}"
             ontouchstart="${(e: MouseEvent) => sliceTip(e, s)}"
             onmouseleave="${ctx.hideTip}"
@@ -434,12 +510,17 @@ export const pie = (m: Model, ctx: RenderCtx): View => {
         : false;
 
     return html`<div class="lm-chart-pie-core">
-        <div class="lm-chart-pie-area">${center}
+        <div class="lm-chart-pie-area" tabindex="${nKb ? '0' : false}"
+            role="${nKb ? 'application' : false}"
+            aria-label="${nKb ? kbLabel : false}"
+            onkeydown="${kbKey}"
+            onblur="${() => { if (ctx.kb.value != null) ctx.kb.value = null; }}">${center}
             <svg class="lm-chart-pie" viewBox="0 0 100 100" aria-hidden="true">${
                 total <= 0 ? false : wedges
             }${total <= 0 ? false : leaders}</svg>${
                 total <= 0 ? false : insideLabels
             }${total <= 0 ? false : outsideLabels}
+            ${kbi != null ? kbTip(drawn[kbi].p.name || '—', tipText(drawn[kbi]), drawn[kbi].p.color) : false}
         </div>
     </div>`;
 };

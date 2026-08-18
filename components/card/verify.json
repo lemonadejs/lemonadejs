@@ -39,11 +39,27 @@
             "pass": true
         },
         {
+            "name": "prop imagealt",
+            "pass": true
+        },
+        {
+            "name": "prop imagealt (live state)",
+            "pass": true
+        },
+        {
             "name": "prop avatar",
             "pass": true
         },
         {
             "name": "prop avatar (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop avataralt",
+            "pass": true
+        },
+        {
+            "name": "prop avataralt (live state)",
             "pass": true
         },
         {

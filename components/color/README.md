@@ -2,7 +2,7 @@
 
 LemonadeJS color block — contract-verified, framework-agnostic.
 
-**✓ verified** — 16 contract checks · framework-agnostic · zero dependencies beyond `@lemonadejs/modal`
+**✓ verified** — 18 contract checks · framework-agnostic · zero dependencies beyond `@lemonadejs/modal`
 
 ## Overview
 
@@ -68,6 +68,7 @@ state for a two-way live wire. Attribute strings are coerced to the declared typ
 | `palette` | array | — | string[][] matrix — a flat string[] becomes one row |
 | `type` | string | `''` | '' (popup via api) | 'input' | 'inline' |
 | `placeholder` | string | `''` | input placeholder (v5) |
+| `aria-label` | string | `''` |  |
 | `closeonchange` | boolean | `false` | v5: closeOnChange — picking commits + closes immediately |
 
 ## Events

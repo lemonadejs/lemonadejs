@@ -26,6 +26,7 @@ export const Switch = component('switch', {
     required: false,              // native form validation
     disabled: false,              // blocks interaction (native)
     position: '',                 // text position: 'right' moves it before the track
+    'aria-label': '',             // accessible name when no visible label
     onchange: Function,           // fires on user-initiated changes
     api: { toggle: Function },    // imperative surface via ref
 }, (props, { bind }) => {
@@ -45,7 +46,8 @@ export const Switch = component('switch', {
             props.size.value ? 'lm-switch-' + props.size.value : ''}"
         data-position="${() => props.position.value || false}"
         data-color="${() => props.color.value || false}">
-        <input type="checkbox" class="lm-switch-input"
+        <input type="checkbox" class="lm-switch-input" role="switch"
+            aria-label="${() => props['aria-label'].value || false}"
             name="${props.name}"
             value="${() => props.value.value || false}"
             required="${props.required}"

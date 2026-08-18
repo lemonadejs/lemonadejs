@@ -532,6 +532,17 @@ describe('components/kanban — drag and drop', () => {
         mouse('mouseup', 330, 90);
     });
 
+    it('a real drag preempts a keyboard pick (one move mode at a time)', () => {
+        open();
+        layout();
+        card('c1').dispatchEvent(new KeyboardEvent('keydown', { key: ' ', bubbles: true, cancelable: true }));
+        expect(ghost()).not.toBeNull(); // picked
+        mouse('mousedown', 320, 80, card('c4'));
+        mouse('mousemove', 100, 80); // threshold crossed: the drag owns the ghost now
+        expect(card('c1').querySelector('.lm-kanban-card-move')!.getAttribute('aria-pressed')).toBe('false');
+        mouse('mouseup', 100, 80);
+    });
+
     it('gestures never accumulate document listeners — even unmounting MID-DRAG', () => {
         const adds = vi.spyOn(document, 'addEventListener');
         const removes = vi.spyOn(document, 'removeEventListener');
@@ -558,5 +569,173 @@ describe('components/kanban — drag and drop', () => {
             adds.mockRestore();
             removes.mockRestore();
         }
+    });
+});
+
+describe('components/kanban — keyboard move (WCAG 2.1.1 / 2.5.7)', () => {
+    const key = (el: Element, k: string) =>
+        el.dispatchEvent(new KeyboardEvent('keydown', { key: k, bubbles: true, cancelable: true }));
+    const grip = (id: string) => card(id).querySelector('.lm-kanban-card-move') as HTMLElement;
+    const liveRegion = () => handle!.query('.lm-kanban-live')!;
+
+    it('cards are focusable (tabindex=0) and carry the always-present ⠿ grip', () => {
+        open();
+        expect(card('c1').getAttribute('tabindex')).toBe('0');
+        expect(grip('c1')).not.toBeNull();
+        expect(grip('c1').getAttribute('aria-pressed')).toBe('false');
+        expect(liveRegion().getAttribute('aria-live')).toBe('polite');
+    });
+
+    it('Space picks up, arrows steer the ghost, Space drops through the SAME move path', () => {
+        const moves: unknown[][] = [];
+        const changes: unknown[] = [];
+        const data = makeData();
+        open({ data, oncardmove: (...a: unknown[]) => moves.push(a), onchange: (d: unknown) => changes.push(d) });
+        const el = card('c1');
+        key(el, ' '); // pick up
+        expect(grip('c1').getAttribute('aria-pressed')).toBe('true');
+        expect(el.className).toContain('lm-kanban-card-picked');
+        expect(ghost()).not.toBeNull(); // previews the pickup slot
+        expect(ghostCol()).toBe('todo');
+        expect(moves).toHaveLength(0); // preview only — events fire on commit
+        key(el, 'ArrowRight'); // over to 'doing'
+        expect(ghostCol()).toBe('doing');
+        key(el, 'ArrowDown'); // slot 1 (after c4)
+        key(el, ' '); // drop
+        expect(data[1].cards.map((c) => c.id)).toEqual(['c4', 'c1']);
+        expect(data[0].cards.map((c) => c.id)).toEqual(['c2', 'c3']);
+        expect(moves).toEqual([['c1', 'todo', 'doing', 1]]); // same event shape as a drag commit
+        expect(changes).toHaveLength(1);
+        expect(ghost()).toBeNull(); // gone after the drop
+        expect(colOf(card('c1'))).toBe('doing');
+        expect(document.activeElement).toBe(card('c1')); // focus follows the re-parented card
+    });
+
+    it('ArrowDown reorders within the column; a keyboard drop is undoable', () => {
+        const data = makeData();
+        const api = open({ data });
+        const el = card('c1');
+        key(el, ' ');
+        key(el, 'ArrowDown');
+        key(el, 'Enter'); // Enter drops too while picked
+        expect(data[0].cards.map((c) => c.id)).toEqual(['c2', 'c1', 'c3']);
+        api.undo();
+        expect(data[0].cards.map((c) => c.id)).toEqual(['c1', 'c2', 'c3']);
+    });
+
+    it('Escape cancels: no mutation, no events, ghost and pressed state gone', () => {
+        const moves: unknown[] = [];
+        const changes: unknown[] = [];
+        const data = makeData();
+        open({ data, oncardmove: (...a: unknown[]) => moves.push(a), onchange: (d: unknown) => changes.push(d) });
+        const el = card('c1');
+        key(el, ' ');
+        key(el, 'ArrowRight');
+        expect(ghost()).not.toBeNull();
+        key(el, 'Escape');
+        expect(ghost()).toBeNull();
+        expect(grip('c1').getAttribute('aria-pressed')).toBe('false');
+        expect(data[0].cards.map((c) => c.id)).toEqual(['c1', 'c2', 'c3']);
+        expect(moves).toEqual([]);
+        expect(changes).toEqual([]);
+    });
+
+    it('dropping at the pickup slot is a silent no-op (same as the mouse path)', () => {
+        const moves: unknown[] = [];
+        const data = makeData();
+        open({ data, oncardmove: (...a: unknown[]) => moves.push(a) });
+        const el = card('c2');
+        key(el, ' ');
+        key(el, ' '); // drop where it started
+        expect(moves).toEqual([]);
+        expect(data[0].cards.map((c) => c.id)).toEqual(['c1', 'c2', 'c3']);
+    });
+
+    it('arrows clamp at the board edges and the column ends', () => {
+        const data = makeData();
+        open({ data });
+        const el = card('c1');
+        key(el, ' ');
+        key(el, 'ArrowLeft'); // already the first column — stays
+        expect(ghostCol()).toBe('todo');
+        key(el, 'ArrowUp'); // already slot 0 — stays
+        expect(ghostCol()).toBe('todo');
+        key(el, ' ');
+        expect(data[0].cards.map((c) => c.id)).toEqual(['c1', 'c2', 'c3']);
+    });
+
+    it('Enter on an idle card activates oncardclick — no move mode involved', () => {
+        const clicks: unknown[] = [];
+        const data = makeData();
+        open({ data, oncardclick: (c: KanbanCard) => clicks.push(c.id) });
+        key(card('c3'), 'Enter');
+        expect(clicks).toEqual(['c3']);
+        expect(ghost()).toBeNull();
+    });
+
+    it('Enter while picked drops — it never fires oncardclick', () => {
+        const clicks: unknown[] = [];
+        const data = makeData();
+        open({ data, oncardclick: (c: KanbanCard) => clicks.push(c.id) });
+        const el = card('c1');
+        key(el, ' ');
+        key(el, 'ArrowDown');
+        key(el, 'Enter');
+        expect(clicks).toEqual([]);
+        expect(data[0].cards.map((c) => c.id)).toEqual(['c2', 'c1', 'c3']);
+    });
+
+    it('keys on the menu button never pick the card up (target guard)', () => {
+        open({ oncardmenu: () => undefined });
+        const button = card('c1').querySelector('.lm-kanban-card-menu')!;
+        key(button, ' ');
+        expect(ghost()).toBeNull();
+        expect(grip('c1').getAttribute('aria-pressed')).toBe('false');
+    });
+
+    it('the live region narrates pick → move → drop', () => {
+        open();
+        const el = card('c1');
+        key(el, ' ');
+        expect(liveRegion().textContent).toContain('grabbed');
+        key(el, 'ArrowRight');
+        expect(liveRegion().textContent).toContain('In progress');
+        key(el, ' ');
+        expect(liveRegion().textContent).toContain('dropped');
+    });
+
+    it('grip click + destination click — a single-pointer, no-drag move (WCAG 2.5.7)', () => {
+        const moves: unknown[][] = [];
+        const clicks: unknown[] = [];
+        const data = makeData();
+        open({ data, oncardmove: (...a: unknown[]) => moves.push(a), oncardclick: (c: KanbanCard) => clicks.push(c.id) });
+        grip('c1').click(); // pick up — no drag needed
+        expect(grip('c1').getAttribute('aria-pressed')).toBe('true');
+        card('c4').click(); // drop AT c4's slot in 'doing'
+        expect(data[1].cards.map((c) => c.id)).toEqual(['c1', 'c4']);
+        expect(moves).toEqual([['c1', 'todo', 'doing', 0]]);
+        expect(clicks).toEqual([]); // a move-mode click never activates the card
+        card('c4').click(); // out of move mode: clicks are clicks again
+        expect(clicks).toEqual(['c4']);
+    });
+
+    it('clicking the grip again cancels the pick', () => {
+        const data = makeData();
+        open({ data });
+        grip('c2').click();
+        expect(ghost()).not.toBeNull();
+        grip('c2').click();
+        expect(ghost()).toBeNull();
+        expect(data[0].cards.map((c) => c.id)).toEqual(['c1', 'c2', 'c3']);
+    });
+
+    it("clicking a column's empty space drops at the end", () => {
+        const moves: unknown[][] = [];
+        const data = makeData();
+        open({ data, oncardmove: (...a: unknown[]) => moves.push(a) });
+        grip('c1').click();
+        (shell('done') as HTMLElement).click(); // the empty 'done' stack itself
+        expect(data[2].cards.map((c) => c.id)).toEqual(['c1']);
+        expect(moves).toEqual([['c1', 'todo', 'done', 0]]);
     });
 });

@@ -40,6 +40,10 @@
         "icon": {
             "type": "string",
             "default": ""
+        },
+        "aria-label": {
+            "type": "string",
+            "default": ""
         }
     },
     "bind": null,

@@ -2,7 +2,7 @@
 
 LemonadeJS modal block — contract-verified, framework-agnostic.
 
-**✓ verified** — 59 contract checks · framework-agnostic · zero dependencies
+**✓ verified** — 63 contract checks · framework-agnostic · zero dependencies
 
 ## Overview
 
@@ -87,6 +87,8 @@ state for a two-way live wire. Attribute strings are coerced to the declared typ
 | `fullscreen` | boolean | `false` | cover the whole viewport |
 | `header` | boolean | `true` | false: headerless floating panel (menus, chips) |
 | `role` | string | `''` | ARIA role: '' = auto (backdrop → dialog, else none) |
+| `label` | string | `''` | accessible name fallback when there is no title (aria-label) |
+| `describedby` | string | `''` | aria-describedby id passthrough (dialog message wiring) |
 | `autoclose` | boolean | `false` | v5: auto-close |
 | `autoadjust` | boolean | `false` | v5: auto-adjust |
 | `flip` | number | `0` | anchored panels: at the bottom edge, flip ABOVE the natural top, |

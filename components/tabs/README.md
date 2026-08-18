@@ -28,7 +28,8 @@ v6 additions (purely presentational — no behavior change):
     tab, fires onchangeposition) — simplified to reorder-on-drop, v5
     live-previewed during dragover by mutating DOM the engine now owns
   - keyboard: Enter selects, Arrow keys move focus (focus opens, v5's
-    onfocusin behavior)
+    onfocusin behavior); Ctrl/Cmd+ArrowLeft/Right moves the focused tab
+    (the keyboard alternative to drag sorting)
 
 v5 → v6 mapping: selected → bind (live two-way) with selected as the
 initial index when unbound; allowCreate → allowcreate (contract props

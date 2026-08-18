@@ -115,6 +115,13 @@
     cursor: pointer;
 }
 
+/* keyboard focus — the house focus ring */
+.lm-color-cell:focus-visible,
+.lm-color-tab:focus-visible {
+    outline: 2px solid var(--lm-border-outline, #2563eb);
+    outline-offset: -2px;
+}
+
 .lm-color-row:first-child > .lm-color-cell:first-child {
     border-top-left-radius: 3px;
 }

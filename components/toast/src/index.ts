@@ -13,7 +13,8 @@
  * Queue model: up to `max` toasts are visible at once; overflow waits in
  * an internal FIFO and is promoted when a visible toast finishes leaving.
  * Each toast auto-dismisses after its duration (host default 4000ms,
- * per-toast override, 0 = sticky until closed), then plays a 200ms leave
+ * per-toast override, 0 = sticky until closed; hover or focus PAUSES the
+ * clock, leaving resumes it), then plays a 200ms leave
  * animation (data-leaving) before it is removed and onclose(message)
  * fires. Manual close (×), the action button and unmount all clear the
  * pending timers — destroy-clean. clear() drops everything at once,
@@ -89,6 +90,8 @@ export const Toast = component('toast', {
     const waiting: ToastItem[] = [];                                  // FIFO overflow
     const autoTimers = new Map<number, ReturnType<typeof setTimeout>>();
     const leaveTimers = new Map<number, ReturnType<typeof setTimeout>>();
+    const deadlines = new Map<number, number>();                      // armed: when auto-dismiss fires
+    const remaining = new Map<number, number>();                      // paused: ms still on the clock
 
     const clearTimer = (timers: Map<number, ReturnType<typeof setTimeout>>, id: number) => {
         const timer = timers.get(id);
@@ -110,11 +113,36 @@ export const Toast = component('toast', {
         leaveTimers.clear();
     });
 
+    /** Arm (or re-arm) the auto-dismiss clock for ms from now */
+    const arm = (id: number, ms: number) => {
+        deadlines.set(id, Date.now() + ms);
+        autoTimers.set(id, setTimeout(() => dismiss(id), ms));
+    };
+
+    // Auto-dismiss pauses while the pointer or focus is ON the toast
+    // (WCAG 2.2.1): the deadline converts to a remaining budget on enter
+    // and re-arms with exactly that budget on leave
+    const pause = (id: number) => {
+        const deadline = deadlines.get(id);
+        if (deadline !== undefined) {
+            clearTimer(autoTimers, id);
+            deadlines.delete(id);
+            remaining.set(id, Math.max(0, deadline - Date.now()));
+        }
+    };
+    const resume = (id: number) => {
+        const left = remaining.get(id);
+        if (left !== undefined) {
+            remaining.delete(id);
+            arm(id, left);
+        }
+    };
+
     /** A toast becomes visible: enters the stack, arms its auto-dismiss */
     const activate = (toast: ToastItem) => {
         items.value = [...items.value, toast];
         if (toast.duration > 0) {
-            autoTimers.set(toast.id, setTimeout(() => dismiss(toast.id), toast.duration));
+            arm(toast.id, toast.duration);
         }
     };
 
@@ -143,6 +171,8 @@ export const Toast = component('toast', {
             return;
         }
         clearTimer(autoTimers, id);
+        deadlines.delete(id);
+        remaining.delete(id);
         items.value = items.value.map((t) => (t.id === id ? { ...t, leaving: true } : t));
         leaveTimers.set(id, setTimeout(() => removeToast(id), LEAVE));
     };
@@ -176,6 +206,8 @@ export const Toast = component('toast', {
         }
         autoTimers.clear();
         leaveTimers.clear();
+        deadlines.clear();
+        remaining.clear();
         waiting.length = 0;
         items.value = [];
     };
@@ -189,14 +221,22 @@ export const Toast = component('toast', {
         clear,
     });
 
-    return html`<div class="lm-toast"
+    // The HOST is the live region (aria-live, not role=status on items):
+    // it exists before any toast does, so screen readers announce the
+    // insertions; error toasts are role=alert for an assertive announce
+    return html`<div class="lm-toast" aria-live="polite"
         data-position="${() => props.position.value || false}">${() =>
         items.value.map(
             // keyed: dismissing a toast removes it MID-list — identity keeps
             // the surviving toasts' DOM (and their running CSS animations)
-            (t) => html`<div class="lm-toast-item" key="${t.id}" role="status"
+            (t) => html`<div class="lm-toast-item" key="${t.id}"
+                role="${t.severity === 'error' ? 'alert' : false}"
                 data-severity="${() => t.severity || false}"
-                data-leaving="${() => t.leaving || false}">
+                data-leaving="${() => t.leaving || false}"
+                onmouseenter="${() => pause(t.id)}"
+                onmouseleave="${() => resume(t.id)}"
+                onfocusin="${() => pause(t.id)}"
+                onfocusout="${() => resume(t.id)}">
                 <span class="lm-toast-message">${t.message}</span>
                 ${() =>
                     t.action &&

@@ -56,6 +56,20 @@
     background: var(--lm-background-color-header, #fafafa);
 }
 
+/* Interactive rows: the inner role=button wrapper lays out like the row */
+.lm-list-action {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+    min-width: 0;
+}
+
+.lm-list-action:focus-visible {
+    outline: 2px solid var(--lm-border-outline, #2563eb);
+    outline-offset: -2px;
+}
+
 .lm-list-divider .lm-list-item {
     border-bottom: 1px solid var(--lm-background-color-highlight, #f4f4f5);
 }

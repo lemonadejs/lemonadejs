@@ -275,6 +275,89 @@ describe('components/color — on the Modal primitive', () => {
         expect(handle!.query('.lm-color-canvas')).toBeNull();
     });
 
+    it('grid keyboard: roving tabindex, arrows move focus, Enter/Space pick like a click', async () => {
+        const current = store('');
+        await open({ bind: current });
+        const grid = handle!.query('.lm-color-grid')!;
+        const press = (k: string) =>
+            grid.dispatchEvent(new KeyboardEvent('keydown', { key: k, bubbles: true, cancelable: true }));
+
+        // exactly one tab stop — the roving cell, initially the first one
+        expect(cells().filter((c) => c.getAttribute('tabindex') === '0')).toHaveLength(1);
+        expect(cell('#ffebee').getAttribute('tabindex')).toBe('0');
+        (cell('#ffebee') as HTMLElement).focus();
+
+        press('ArrowRight');
+        expect(document.activeElement).toBe(cell('#fce4ec'));
+        expect(cell('#fce4ec').getAttribute('tabindex')).toBe('0'); // the stop roved
+        expect(cell('#ffebee').getAttribute('tabindex')).toBe('-1');
+        press('ArrowDown');
+        expect(document.activeElement).toBe(cell('#f8bbd0'));
+        press('ArrowLeft');
+        expect(document.activeElement).toBe(cell('#ffcdd2'));
+        press('ArrowUp');
+        expect(document.activeElement).toBe(cell('#ffebee'));
+        press('ArrowUp'); // clamped at the top edge
+        expect(document.activeElement).toBe(cell('#ffebee'));
+        press('End');
+        expect(document.activeElement).toBe(cell('#eceff1'));
+        press('Home');
+        expect(document.activeElement).toBe(cell('#ffebee'));
+
+        press('Enter'); // same code path as a click: pending only by default
+        expect(cell('#ffebee').className).toContain('lm-color-selected');
+        expect(current.value).toBe('');
+
+        press('ArrowRight');
+        press(' '); // Space picks too
+        expect(cell('#fce4ec').className).toContain('lm-color-selected');
+        expect(cell('#ffebee').className).not.toContain('lm-color-selected');
+    });
+
+    it('input ARIA: aria-label fallback chain, aria-haspopup, live aria-expanded', async () => {
+        handle = t(Color, { type: 'input', placeholder: 'Pick' });
+        expect(input().getAttribute('aria-label')).toBe('Pick'); // falls back to the placeholder
+        expect(input().getAttribute('aria-haspopup')).toBe('dialog');
+        expect(input().getAttribute('aria-expanded')).toBe('false');
+
+        key('ArrowDown');
+        await flush();
+        expect(modal()).not.toBeNull();
+        expect(input().getAttribute('aria-expanded')).toBe('true');
+        key('Escape');
+        expect(input().getAttribute('aria-expanded')).toBe('false');
+        handle.unmount();
+
+        handle = t(Color, { type: 'input', 'aria-label': 'Brand color' });
+        expect(input().getAttribute('aria-label')).toBe('Brand color');
+        handle.unmount();
+
+        handle = t(Color, { type: 'input' });
+        expect(input().getAttribute('aria-label')).toBe('Color'); // the last-resort name
+    });
+
+    it('tabs keyboard: roving tabindex, arrows move focus and select; the canvas is labeled', async () => {
+        await open();
+        const tabs = handle!.queryAll('.lm-color-tab');
+        expect(tabs[0].getAttribute('tabindex')).toBe('0');
+        expect(tabs[1].getAttribute('tabindex')).toBe('-1');
+        expect(handle!.query('.lm-color-content')!.getAttribute('role')).toBe('tabpanel');
+
+        tabs[0].dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true, cancelable: true }));
+        expect(handle!.query('.lm-color-canvas')).not.toBeNull(); // selection followed focus
+        expect(tabs[1].getAttribute('tabindex')).toBe('0');
+        expect(tabs[0].getAttribute('tabindex')).toBe('-1');
+        expect(document.activeElement).toBe(tabs[1]);
+
+        // the spectrum canvas carries a text alternative (1.1.1)
+        expect(handle!.query('.lm-color-canvas')!.getAttribute('role')).toBe('img');
+        expect(handle!.query('.lm-color-canvas')!.getAttribute('aria-label')).toBe('Color spectrum');
+
+        tabs[1].dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true, cancelable: true }));
+        expect(handle!.query('.lm-color-grid')).not.toBeNull();
+        expect(document.activeElement).toBe(tabs[0]);
+    });
+
     it('reopen restores the v5 pending model: the mark returns to the committed color', async () => {
         const current = store('#f44336');
         const api = await open({ bind: current });

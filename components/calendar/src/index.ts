@@ -85,6 +85,9 @@ const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Frida
 const HOURS = Array.from({ length: 24 }, (_, i) => i);
 const MINUTES = Array.from({ length: 60 }, (_, i) => i);
 
+// Instance-scoped id prefix for the cell ids aria-activedescendant points at
+let instances = 0;
+
 /** v5 T(): every label and name runs through document.dictionary */
 const translate = (t: string): string => {
     if (typeof document !== 'undefined') {
@@ -440,6 +443,7 @@ export const Calendar = component('calendar', {
     footer: true,                 // Update button / time row
     wheel: true,                  // mouse wheel month navigation
     placeholder: '',              // input placeholder
+    'aria-label': '',             // accessible name for the internal input
     input: null,                  // 'any': an existing HTMLInputElement to adopt
                                   // instead of rendering the internal input (v5 input)
     initinput: true,              // wire the interactive input listeners: open on
@@ -457,6 +461,9 @@ export const Calendar = component('calendar', {
     },
 }, (props, { bind, state, onMount, listen }) => {
     const picked = bind(props, '');
+
+    // Unique per instance: cell ids the listbox's aria-activedescendant tracks
+    const uid = 'lm-calendar-' + ++instances;
 
     // ---- adopted external input (v5 `input`): an existing element replaces
     // the internal input entirely; `{ current }` refs unwrap (v5 getInput)
@@ -1120,7 +1127,28 @@ export const Calendar = component('calendar', {
     });
 
     // ---- rendering
-    const cellView = (c: CalendarCell) => html`<div
+    /** Full human-readable option name: "15 August 2026" / "August 2026" / "2026" */
+    const cellLabel = (c: CalendarCell): string => {
+        const vw = view.peek();
+        return vw === 'days'
+            ? c.d + ' ' + translate(MONTHS[c.m]) + ' ' + c.y
+            : vw === 'months'
+              ? translate(MONTHS[c.m]) + ' ' + c.y
+              : String(c.y);
+    };
+
+    /** The id of the cursor cell — aria-activedescendant on the listbox */
+    const activeCellId = () => {
+        const at = cells.value.findIndex((entry) => entry.selected);
+        return at >= 0 ? uid + '-' + at : false;
+    };
+
+    const cellView = (c: CalendarCell, at: number) => html`<div
+        id="${uid + '-' + at}"
+        role="option"
+        aria-label="${cellLabel(c)}"
+        aria-selected="${c.selected ? 'true' : false}"
+        aria-disabled="${c.disabled ? 'true' : false}"
         data-grey="${c.grey ? 'true' : false}"
         data-selected="${c.selected ? 'true' : false}"
         data-disabled="${c.disabled ? 'true' : false}"
@@ -1151,19 +1179,27 @@ export const Calendar = component('calendar', {
                 </div>
                 <div class="lm-calendar-navigation">
                     <button type="button" class="lm-calendar-icon lm-calendar-prev lm-calendar-ripple"
+                        aria-label="${() =>
+                            translate(view.value === 'days' ? 'Previous month' : view.value === 'months' ? 'Previous year' : 'Previous years')}"
                         onclick="${() => move(-1)}"></button>
                     <button type="button" class="lm-calendar-icon lm-calendar-next lm-calendar-ripple"
+                        aria-label="${() =>
+                            translate(view.value === 'days' ? 'Next month' : view.value === 'months' ? 'Next year' : 'Next years')}"
                         onclick="${() => move(1)}"></button>
                 </div>
             </div>
             <div class="lm-calendar-weekdays">${() => {
                 const start = Number(props.startingday.value) || 0;
+                // Single letters are noise for AT (the options carry the full
+                // date); hidden from the tree, the full name kept on the cell
                 return Array.from({ length: 7 }, (_, at) =>
-                    html`<div>${translate(WEEKDAYS[(start + at) % 7]).substring(0, 1)}</div>`
+                    html`<div aria-hidden="true" aria-label="${translate(WEEKDAYS[(start + at) % 7])}">${translate(WEEKDAYS[(start + at) % 7]).substring(0, 1)}</div>`
                 );
             }}</div>
         </div>
-        <div class="lm-calendar-content" tabindex="0"
+        <div class="lm-calendar-content" tabindex="0" role="listbox"
+            aria-label="${() => translate('Calendar')}"
+            aria-activedescendant="${() => activeCellId()}"
             ref="${(el: HTMLElement) => (gridEl = el)}"
             onwheel="${onWheel}">
             ${() =>
@@ -1173,11 +1209,11 @@ export const Calendar = component('calendar', {
         </div>
         <div class="lm-calendar-footer" data-visible="${() => (props.footer.value === false ? 'false' : 'true')}">
             <div class="lm-calendar-time" data-visible="${() => (props.time.value ? 'true' : 'false')}">
-                <select class="lm-calendar-control" bind="${hour}">${HOURS.map(
+                <select class="lm-calendar-control" aria-label="${() => translate('Hours')}" bind="${hour}">${HOURS.map(
                     (h) => html`<option value="${h}">${two(h)}</option>`
                 )}</select>
                 <span>:</span>
-                <select class="lm-calendar-control" bind="${minute}">${MINUTES.map(
+                <select class="lm-calendar-control" aria-label="${() => translate('Minutes')}" bind="${minute}">${MINUTES.map(
                     (i) => html`<option value="${i}">${two(i)}</option>`
                 )}</select>
             </div>
@@ -1201,6 +1237,9 @@ export const Calendar = component('calendar', {
                 ? '' // adopted: the host's element IS the input
                 : html`<input type="text" class="lm-calendar-input" bind="${display}"
                       placeholder="${() => (props.placeholder.value as string) || false}"
+                      aria-label="${() => (props['aria-label'].value as string) || false}"
+                      aria-haspopup="dialog"
+                      aria-expanded="${() => (opened.value ? 'true' : 'false')}"
                       onclick="${() => wired() && open()}"
                       onfocusin="${() => wired() && open()}"
                       oninput="${(e: Event) => wired() && onType(e)}" />`}

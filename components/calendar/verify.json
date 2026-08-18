@@ -135,6 +135,14 @@
             "pass": true
         },
         {
+            "name": "prop aria-label",
+            "pass": true
+        },
+        {
+            "name": "prop aria-label (live state)",
+            "pass": true
+        },
+        {
             "name": "prop input",
             "pass": true
         },

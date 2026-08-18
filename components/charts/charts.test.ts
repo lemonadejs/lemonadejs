@@ -561,6 +561,150 @@ describe('components/charts', () => {
         expect(handle.query('.lm-chart-kbtip')).toBeNull();
     });
 
+    it('keyboard nav: pie slices roam by arrow keys, Enter activates, svg stays hidden', () => {
+        let fired: any = null;
+        handle = t(Chart, {
+            type: 'pie',
+            series: [{ data: [{ name: 'X', value: 30 }, { name: 'Y', value: 70 }] }],
+            onpointclick: (p: any, m: any) => (fired = { p, m }),
+        });
+        const area = handle.query('.lm-chart-pie-area')!;
+        expect(area.getAttribute('tabindex')).toBe('0');
+        expect(area.getAttribute('role')).toBe('application');
+        expect(area.getAttribute('aria-label')).toContain('2 slices');
+        // the focusable container lives OUTSIDE the aria-hidden svg (4.1.2)
+        expect(area.closest('[aria-hidden="true"]')).toBeNull();
+        expect(handle.query('svg[aria-hidden="true"] [tabindex]')).toBeNull();
+        // ArrowRight → first slice active: highlight + tip + updated label
+        area.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+        expect(handle.query('.lm-chart-slice[data-kb="true"]')).toBeTruthy();
+        expect(handle.query('.lm-chart-kbtip-title')!.textContent).toBe('X');
+        expect(handle.query('.lm-chart-pie-area')!.getAttribute('aria-label')).toContain('X: 30 (30%)');
+        // move to the second slice and activate with Enter
+        handle.query('.lm-chart-pie-area')!.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+        handle.query('.lm-chart-pie-area')!.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+        expect(fired.p.name).toBe('Y');
+        expect(fired.m).toEqual({ seriesIndex: 0, pointIndex: 1 });
+        // Escape clears the active slice
+        handle.query('.lm-chart-pie-area')!.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+        expect(handle.query('.lm-chart-kbtip')).toBeNull();
+        expect(handle.query('.lm-chart-slice[data-kb="true"]')).toBeNull();
+    });
+
+    it('keyboard nav: polararea wedges activate with Space', () => {
+        let fired: any = null;
+        handle = t(Chart, {
+            type: 'polararea',
+            series: [{ data: [{ name: 'N', value: 10 }, { name: 'E', value: 5 }] }],
+            onpointclick: (p: any, m: any) => (fired = { p, m }),
+        });
+        const area = handle.query('.lm-chart-pie-area')!;
+        expect(area.getAttribute('tabindex')).toBe('0');
+        expect(area.getAttribute('role')).toBe('application');
+        area.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+        expect(handle.query('.lm-chart-slice[data-kb="true"]')).toBeTruthy();
+        handle.query('.lm-chart-pie-area')!.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', bubbles: true }));
+        expect(fired.p.name).toBe('N');
+        expect(fired.m).toEqual({ seriesIndex: 0, pointIndex: 0 });
+    });
+
+    it('keyboard nav: radialbar rings are reachable and Enter activates', () => {
+        let fired: any = null;
+        handle = t(Chart, {
+            type: 'radialbar', ymax: 100,
+            series: [{ data: [{ name: 'A', value: 70 }, { name: 'B', value: 45 }] }],
+            onpointclick: (p: any, m: any) => (fired = { p, m }),
+        });
+        const area = handle.query('.lm-chart-pie-area')!;
+        expect(area.getAttribute('tabindex')).toBe('0');
+        // End jumps to the last ring; Enter fires it
+        area.dispatchEvent(new KeyboardEvent('keydown', { key: 'End', bubbles: true }));
+        expect(handle.query('.lm-chart-radial[data-kb="true"]')).toBeTruthy();
+        handle.query('.lm-chart-pie-area')!.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+        expect(fired.p.name).toBe('B');
+        expect(fired.m).toEqual({ seriesIndex: 0, pointIndex: 1 });
+    });
+
+    it('keyboard nav: multi-series radialbar roams category rings like the cartesian plot', () => {
+        let fired: any = null;
+        handle = t(Chart, {
+            type: 'radialbar', categories: ['Gold', 'Silver'],
+            series: [{ name: 'S1', data: [3, 5] }, { name: 'S2', data: [2, 4] }],
+            onpointclick: (p: any, m: any) => (fired = { p, m }),
+        });
+        const area = handle.query('.lm-chart-pie-area')!;
+        expect(area.getAttribute('role')).toBe('application');
+        area.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+        expect(handle.query('.lm-chart-radial-arc[data-kb="true"]')).toBeTruthy();
+        expect(handle.query('.lm-chart-pie-area')!.getAttribute('aria-label')).toContain('Gold');
+        handle.query('.lm-chart-pie-area')!.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+        expect(fired.p.value).toBe(3); // first visible series at the ring
+        expect(fired.m).toEqual({ seriesIndex: 0, pointIndex: 0 });
+    });
+
+    it('keyboard nav: sankey ribbons roam and Enter fires onpointclick', () => {
+        let fired: any = null;
+        handle = t(Chart, {
+            type: 'sankey',
+            series: [{ data: [
+                { from: 'A', to: 'X', value: 5 },
+                { from: 'B', to: 'X', value: 3 },
+            ] }],
+            onpointclick: (p: any, m: any) => (fired = { p, m }),
+        });
+        const flow = handle.query('.lm-chart-flow')!;
+        expect(flow.getAttribute('tabindex')).toBe('0');
+        expect(flow.getAttribute('role')).toBe('application');
+        expect(flow.getAttribute('aria-label')).toContain('2 links');
+        expect(handle.query('svg[aria-hidden="true"] [tabindex]')).toBeNull();
+        flow.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+        expect(handle.query('.lm-chart-sankey-link[data-kb="true"]')).toBeTruthy();
+        expect(handle.query('.lm-chart-flow')!.getAttribute('aria-label')).toContain('A to X: 5');
+        handle.query('.lm-chart-flow')!.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+        expect(fired.p.from).toBe('A');
+        expect(fired.m).toEqual({ seriesIndex: 0, pointIndex: 0 });
+    });
+
+    it('keyboard nav: chord ribbons activate by keyboard', () => {
+        let fired: any = null;
+        handle = t(Chart, {
+            type: 'chord',
+            series: [{ data: [
+                { from: 'US', to: 'EU', value: 5 },
+                { from: 'EU', to: 'Asia', value: 3 },
+            ] }],
+            onpointclick: (p: any, m: any) => (fired = { p, m }),
+        });
+        const area = handle.query('.lm-chart-pie-area')!;
+        expect(area.getAttribute('tabindex')).toBe('0');
+        area.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true })); // wraps to the last link
+        expect(handle.query('.lm-chart-chord-link[data-kb="true"]')).toBeTruthy();
+        handle.query('.lm-chart-pie-area')!.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+        expect(fired.p.from).toBe('EU');
+        expect(fired.m).toEqual({ seriesIndex: 0, pointIndex: 1 });
+    });
+
+    it('keyboard nav: arc diagram links activate by keyboard', () => {
+        let fired: any = null;
+        handle = t(Chart, {
+            type: 'arcdiagram',
+            series: [{ data: [
+                { from: 'A', to: 'B', value: 2 },
+                { from: 'B', to: 'C', value: 4 },
+            ] }],
+            onpointclick: (p: any, m: any) => (fired = { p, m }),
+        });
+        const flow = handle.query('.lm-chart-flow')!;
+        expect(flow.getAttribute('tabindex')).toBe('0');
+        expect(flow.getAttribute('role')).toBe('application');
+        flow.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+        flow.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+        expect(handle.query('.lm-chart-arc-link[data-kb="true"]')).toBeTruthy();
+        handle.query('.lm-chart-flow')!.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+        expect(fired.p.to).toBe('C');
+        expect(fired.m).toEqual({ seriesIndex: 0, pointIndex: 1 });
+    });
+
     it('treemap: one tile per positive point, tiles tile the full area', () => {
         handle = t(Chart, {
             type: 'treemap', labels: true,

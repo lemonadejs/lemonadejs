@@ -21,16 +21,22 @@
  * releases everything (onUnmount → release).
  *
  * Autoplay: setInterval armed when autoplay > 0, re-armed live on prop
- * change (subscribe), PAUSED while hovering or dragging, cleared on
- * unmount. Autoplay always wraps (rewinds to 0 after the last slide),
- * even when loop=false — loop only governs user navigation at the edges.
+ * change (subscribe), PAUSED while hovering, focused (focusin/focusout)
+ * or dragging, cleared on unmount. When autoplay is active a labelled
+ * pause/play toggle renders BEFORE the slides (WAI-ARIA APG carousel
+ * pattern); the toggle itself never pauses rotation on focus, so "play"
+ * resumes immediately. Autoplay always wraps (rewinds to 0 after the
+ * last slide), even when loop=false — loop only governs user navigation
+ * at the edges.
  *
  * Contract: bind (current index, two-way; set → onchange), data (slides:
  * { image?, title?, description?, link? } — only provided fields
  * render), autoplay (ms, 0 = off), loop, arrows, dots, onchange(index);
  * api { next, prev, goto }. Keyboard: ArrowLeft/ArrowRight on the
  * focused region. ARIA: aria-roledescription carousel/slide, off-screen
- * slides aria-hidden.
+ * slides aria-hidden AND inert (their links leave the tab order), slide
+ * labels carry the title, and the track is aria-live=polite only while
+ * not auto-rotating.
  */
 
 import { batch, component, html } from 'lemonadejs';
@@ -74,6 +80,10 @@ export const Carousel = component('carousel', {
 
     let viewportEl: HTMLElement | null = null;
     let hovering = false;
+    let focused = false;
+
+    // user-facing pause/play toggle (2.2.2): reactive so the button relabels
+    const paused = state(false);
 
     /** loop=true wraps; loop=false clamps (edge no-ops stay silent — set
      *  only fires onchange when the index actually changes) */
@@ -101,7 +111,7 @@ export const Carousel = component('carousel', {
     const startAuto = () => {
         stopAuto();
         const ms = Number(props.autoplay.value) || 0;
-        if (ms > 0 && !hovering && !dragging.value && count() > 1) {
+        if (ms > 0 && !hovering && !focused && !paused.value && !dragging.value && count() > 1) {
             // autoplay always wraps — a stuck end frame helps nobody
             timer = setInterval(() => index.set((cur.value + 1) % count()), ms);
         }
@@ -130,6 +140,24 @@ export const Carousel = component('carousel', {
     const onLeave = () => {
         hovering = false;
         startAuto();
+    };
+    // keyboard parity with hover (2.2.2): focus anywhere inside pauses,
+    // leaving resumes — EXCEPT the rotation control itself, so activating
+    // "play" restarts rotation while the button keeps focus (APG)
+    const onFocusIn = (e: FocusEvent) => {
+        if ((e.target as HTMLElement | null)?.closest?.('.lm-carousel-playpause')) {
+            return;
+        }
+        focused = true;
+        stopAuto();
+    };
+    const onFocusOut = () => {
+        focused = false;
+        startAuto();
+    };
+    const togglePlay = () => {
+        paused.value = !paused.value;
+        startAuto(); // stops first; re-arms only when nothing else pauses
     };
 
     // ---- swipe/drag: document listeners armed per gesture, ONE release
@@ -218,7 +246,9 @@ export const Carousel = component('carousel', {
         tabindex="0"
         onkeydown="${onKey}"
         onmouseenter="${onEnter}"
-        onmouseleave="${onLeave}">
+        onmouseleave="${onLeave}"
+        onfocusin="${onFocusIn}"
+        onfocusout="${onFocusOut}">
         <style>
             .lm-carousel { position: relative; user-select: none; -webkit-user-select: none; }
             .lm-carousel:focus-visible { outline: 2px solid #3b82f6; outline-offset: 2px; }
@@ -251,12 +281,28 @@ export const Carousel = component('carousel', {
             .lm-carousel-dot { width: 10px; height: 10px; padding: 0; border: none;
                 border-radius: 50%; cursor: pointer; background: rgba(255, 255, 255, 0.55); }
             .lm-carousel-dot[data-active='true'] { background: #fff; }
+            .lm-carousel-playpause { position: absolute; top: 10px; right: 10px; z-index: 1;
+                width: 32px; height: 32px; border: none; border-radius: 50%; cursor: pointer;
+                background: rgba(255, 255, 255, 0.85); color: #111;
+                display: flex; align-items: center; justify-content: center; }
+            .lm-carousel-playpause:hover { background: #fff; }
+            .lm-carousel-playpause svg { width: 16px; height: 16px; display: block;
+                fill: none; stroke: currentColor; stroke-width: 2.5;
+                stroke-linecap: round; stroke-linejoin: round; }
         </style>
+        ${() =>
+            Number(props.autoplay.value) > 0 && count() > 1 &&
+            html`<button type="button" class="lm-carousel-playpause"
+                aria-label="${() => (paused.value ? 'Start automatic slide show' : 'Stop automatic slide show')}"
+                data-paused="${() => (paused.value ? 'true' : false)}"
+                onclick="${togglePlay}"><svg viewBox="0 0 24 24" aria-hidden="true"><path
+                    d="${() => (paused.value ? 'M8 6l10 6-10 6z' : 'M9 5v14M15 5v14')}" /></svg></button>`}
         <div class="lm-carousel-viewport"
             ref="${(el: HTMLElement) => (viewportEl = el)}"
             onmousedown="${onDown}"
             ontouchstart="${onDown}">
             <div class="lm-carousel-track"
+                aria-live="${() => (Number(props.autoplay.value) > 0 && !paused.value ? 'off' : 'polite')}"
                 style="${() => 'transform: translateX(calc(' + cur.value * -100 + '% + ' + drag.value + 'px))'}">
                 ${() =>
                     slides().map((raw, i, arr) => {
@@ -265,8 +311,9 @@ export const Carousel = component('carousel', {
                         return html`<div class="lm-carousel-slide" key="${raw}"
                             role="group"
                             aria-roledescription="slide"
-                            aria-label="${i + 1 + ' of ' + arr.length}"
-                            aria-hidden="${() => (cur.value === i ? 'false' : 'true')}">
+                            aria-label="${i + 1 + ' of ' + arr.length + (s.title ? ': ' + s.title : '')}"
+                            aria-hidden="${() => (cur.value === i ? 'false' : 'true')}"
+                            inert="${() => (cur.value === i ? false : 'true')}">
                             ${s.image
                                 ? html`<img class="lm-carousel-image" src="${s.image}"
                                       alt="${s.title || ''}" draggable="false" />`

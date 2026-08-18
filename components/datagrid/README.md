@@ -19,7 +19,8 @@ keep ~a viewport of DOM alive.
   - inline editing (double-click or Enter; Escape cancels; commits
     mutate YOUR row objects and fire onchange)
   - keyboard: arrows move the active cell, Enter edits, Space toggles
-    selection
+    selection; ArrowUp past the first row reaches the header row, where
+    Enter/Space toggles sort and Shift+ArrowLeft/Right resizes the column
   - pagination mode (pagination > 0) instead of virtual scroll
   - column customization: drag the header edge to resize (widths turn
     px, oncolumnresize on release), column.hidden + api.setColumn for

@@ -25,6 +25,13 @@ kept); a cross-column move re-parents the card.
     others close ranks) and a ghost slot the card's size previews the
     exact landing position; Escape cancels mid-drag, events fire ONLY
     on commit
+  - keyboard: cards are tabbable; Space (or the ⠿ grip button) picks
+    the focused card up, arrows steer the ghost between slots and
+    columns, Space/Enter drops through the SAME move path a mouse
+    drop commits through, Escape cancels; Enter on an idle card fires
+    oncardclick. While picked, clicking a destination card or a
+    column's empty space drops there — a single-pointer, no-drag
+    alternative. A polite live region narrates pick/move/drop
   - oncardmove(cardId, fromColumnId, toColumnId, index) on any move
     (drag or api.moveCard); onchange(data) on any data change;
     oncardclick(card) on click (never after a drag);

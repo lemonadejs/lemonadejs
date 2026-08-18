@@ -32,6 +32,10 @@
             "type": "string",
             "default": ""
         },
+        "aria-label": {
+            "type": "string",
+            "default": ""
+        },
         "width": {
             "type": "number",
             "default": 0

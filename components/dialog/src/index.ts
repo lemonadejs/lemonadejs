@@ -39,6 +39,9 @@ export type DialogOptions = {
 /** What api.open() resolves with */
 export type DialogResult = { confirmed: boolean; value: string };
 
+/** Document-unique id base per instance — wires aria-describedby */
+let uid = 0;
+
 export const Dialog = component('dialog', {
     bind: String,                 // two-way prompt value (v5: input)
     title: '',                    // bold first line
@@ -51,10 +54,11 @@ export const Dialog = component('dialog', {
     onconfirm: Function,          // (value) — the prompt value ('' for other types)
     oncancel: Function,           // Cancel button pressed
     api: { open: Function, close: Function },
-}, (props, { state, bind }) => {
+}, (props, { state, bind, computed }) => {
     const typed = bind(props, '');
     const opened = state(false);
     const overrides = state<DialogOptions>({});
+    const id = 'lm-dialog-' + ++uid;
 
     // Effective values: the last open(options) wins over props (v5
     // setProperties merged options straight into self)
@@ -64,6 +68,12 @@ export const Dialog = component('dialog', {
     const confirmLabel = () => overrides.value.confirmlabel ?? props.confirmlabel.value;
     const cancelLabel = () => overrides.value.cancellabel ?? props.cancellabel.value;
     const placeholder = () => overrides.value.placeholder ?? props.placeholder.value;
+
+    // Accessible name/description for the dialog box: the visible title
+    // names the Modal panel through its label mechanism (4.1.2) and the
+    // message is associated via aria-describedby (1.3.1)
+    const accessibleTitle = computed(() => title() || 'Dialog');
+    const describedby = computed(() => (message() ? id + '-message' : ''));
 
     // v5: `cancel || !(type == 'alert' || type == 'input')` — Cancel always
     // shows on the default type; cancel=false hides it on alert/input
@@ -127,10 +137,11 @@ export const Dialog = component('dialog', {
     });
 
     return html`<div class="lm-dialog" data-type="${() => kind() || false}">
-        <${Modal} bind="${opened}" header="${false}" backdrop responsive="${false}">
+        <${Modal} bind="${opened}" header="${false}" backdrop responsive="${false}"
+            label="${accessibleTitle}" describedby="${describedby}">
             <div class="lm-dialog-header">
                 <div class="lm-dialog-title">${title}</div>
-                <div class="lm-dialog-message">${message}</div>
+                <div class="lm-dialog-message" id="${id + '-message'}">${message}</div>
             </div>
             <div class="lm-dialog-footer">
                 ${() =>
@@ -138,6 +149,7 @@ export const Dialog = component('dialog', {
                     html`<div class="lm-dialog-prompt">
                         <input type="text" class="lm-dialog-input"
                             bind="${typed}"
+                            aria-label="${() => placeholder() || 'Value'}"
                             placeholder="${() => placeholder() || false}" />
                     </div>`}
                 <div class="lm-dialog-option">

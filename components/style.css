@@ -587,6 +587,14 @@ body.lm-application {
     color: #fff;
 }
 
+/* outline: none above removes the always-on ring; keyboard focus gets the
+   house ring back (WCAG 2.4.7) — same convention as accordion/toast. */
+.lm-application .lm-button:focus-visible,
+.lm-button:focus-visible {
+    outline: 2px solid var(--lm-border-outline, #2563eb);
+    outline-offset: 2px;
+}
+
 .lm-application .lm-button.red,
 .lm-button.red {
     background-color: #a23131;

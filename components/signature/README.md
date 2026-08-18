@@ -2,7 +2,7 @@
 
 LemonadeJS signature block — contract-verified, framework-agnostic.
 
-**✓ verified** — 21 contract checks · framework-agnostic · zero dependencies
+**✓ verified** — 23 contract checks · framework-agnostic · zero dependencies
 
 ## Overview
 
@@ -18,9 +18,15 @@ v5 → v6 mapping: value (two-way) → bind; value (initial) stays value;
 line/width/height/instructions/disabled unchanged; onchange/onload
 unchanged (onchange now receives the value, not the instance);
 getValue/setValue/getImage move to the api surface (props.ref), plus
-clear() = setValue([]). New: color (v5 hardcoded #000) and name (renders
+clear() = setValue([]). New: color (v5 hardcoded #000), name (renders
 a hidden input so the pad participates in forms — v5 only patched .val()
-onto the canvas).
+onto the canvas), and clearlabel (renders a real, keyboard-operable
+clear <button> — WCAG 2.1.1: clearing must not require a pointer).
+
+Accessibility: drawing is a path-of-movement input (WCAG 2.1.1
+essential-exception territory) — the canvas is exposed as role="img"
+("Signature pad") and the host application should offer keyboard users
+an alternative (e.g. a typed signature) alongside the pad.
 
 jsdom has no canvas: a null 2d context downgrades the pad to a no-op.
 
@@ -70,6 +76,7 @@ state for a two-way live wire. Attribute strings are coerced to the declared typ
 | `color` | string | `''` | stroke color, #000 when unset (v5 fixed) |
 | `name` | string | `''` | form field name (hidden input, JSON value) |
 | `instructions` | string | `''` | helper text under the canvas |
+| `clearlabel` | string | `''` | when set, renders a keyboard-operable clear <button> |
 | `disabled` | boolean | `false` | blocks drawing |
 
 ## Events

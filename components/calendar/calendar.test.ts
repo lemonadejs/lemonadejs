@@ -584,6 +584,69 @@ describe('components/calendar — the date picker on the Modal primitive', () =>
         }
     });
 
+    it('a11y: cells are options with ids, full-date labels, selected/disabled states', () => {
+        make({ type: 'inline', bind: '2026-06-15', min: '2026-06-10' });
+        expect(grid().getAttribute('role')).toBe('listbox');
+        const day = cell('15');
+        expect(day.getAttribute('role')).toBe('option');
+        expect(day.id).toMatch(/^lm-calendar-\d+-\d+$/);
+        expect(day.getAttribute('aria-label')).toBe('15 June 2026');
+        expect(day.getAttribute('aria-selected')).toBe('true');
+        expect(cell('16').getAttribute('aria-selected')).toBeNull();
+        expect(cell('5').getAttribute('aria-disabled')).toBe('true');
+        expect(cell('15').getAttribute('aria-disabled')).toBeNull();
+        // month and year options carry full names too
+        monthLabel().click();
+        expect(cells()[5].getAttribute('aria-label')).toBe('June 2026');
+        expect(cells()[5].getAttribute('role')).toBe('option');
+        yearLabel().click();
+        expect(cell('2026').getAttribute('aria-label')).toBe('2026');
+    });
+
+    it('a11y: aria-activedescendant follows the arrow-key cursor', () => {
+        make({ type: 'inline', bind: '2026-06-15' });
+        expect(grid().getAttribute('aria-activedescendant')).toBe(cell('15').id);
+        key(grid(), 'ArrowRight');
+        expect(grid().getAttribute('aria-activedescendant')).toBe(cell('16').id);
+        key(grid(), 'ArrowDown');
+        expect(grid().getAttribute('aria-activedescendant')).toBe(cell('23').id);
+    });
+
+    it('a11y: navigation buttons are named per view', () => {
+        make({ type: 'inline', bind: '2026-06-15' });
+        expect(navButtons()[0].getAttribute('aria-label')).toBe('Previous month');
+        expect(navButtons()[1].getAttribute('aria-label')).toBe('Next month');
+        monthLabel().click(); // months view pages by year
+        expect(navButtons()[0].getAttribute('aria-label')).toBe('Previous year');
+        expect(navButtons()[1].getAttribute('aria-label')).toBe('Next year');
+        yearLabel().click(); // years view pages by 16-year block
+        expect(navButtons()[0].getAttribute('aria-label')).toBe('Previous years');
+        expect(navButtons()[1].getAttribute('aria-label')).toBe('Next years');
+    });
+
+    it('a11y: the input takes aria-label and reports its popup state', async () => {
+        const api = make({ bind: '2026-06-15', 'aria-label': 'Due date' });
+        expect(input().getAttribute('aria-label')).toBe('Due date');
+        expect(input().getAttribute('aria-haspopup')).toBe('dialog');
+        expect(input().getAttribute('aria-expanded')).toBe('false');
+        api.open();
+        await flush();
+        expect(input().getAttribute('aria-expanded')).toBe('true');
+        key(input(), 'Escape');
+        expect(input().getAttribute('aria-expanded')).toBe('false');
+    });
+
+    it('a11y: time selects are named; weekday initials hidden with full names kept', () => {
+        make({ type: 'inline', bind: '2026-06-15', time: true });
+        const selects = handle!.queryAll('.lm-calendar-time select');
+        expect(selects[0].getAttribute('aria-label')).toBe('Hours');
+        expect(selects[1].getAttribute('aria-label')).toBe('Minutes');
+        const headers = handle!.queryAll('.lm-calendar-weekdays > div');
+        expect(headers[0].getAttribute('aria-hidden')).toBe('true');
+        expect(headers[0].getAttribute('aria-label')).toBe('Sunday');
+        expect(headers[6].getAttribute('aria-label')).toBe('Saturday');
+    });
+
     it('input: unmount removes every listener added to the adopted element', () => {
         const ext = document.createElement('input');
         document.body.appendChild(ext);

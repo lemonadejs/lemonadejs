@@ -80,11 +80,22 @@
 .lm-accordion .lm-accordion-body {
     display: grid;
     grid-template-rows: 0fr;
-    transition: grid-template-rows 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+    /* Closed bodies leave the Tab order and the accessibility tree:
+       inert is set by the template, and visibility:hidden backs it up for
+       engines without inert — delayed by the collapse duration so the
+       fold animation still shows the content on its way out. */
+    visibility: hidden;
+    transition:
+        grid-template-rows 0.28s cubic-bezier(0.4, 0, 0.2, 1),
+        visibility 0s linear 0.28s;
 }
 
 .lm-accordion .lm-accordion-body[data-open='true'] {
     grid-template-rows: 1fr;
+    visibility: visible;
+    transition:
+        grid-template-rows 0.28s cubic-bezier(0.4, 0, 0.2, 1),
+        visibility 0s;
 }
 
 .lm-accordion .lm-accordion-clip {

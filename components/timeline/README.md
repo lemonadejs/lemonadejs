@@ -19,7 +19,8 @@ The v5 model, ported faithfully:
   - items can also come from element children (v5 extractFromHtml:
     title from textContent or title=, data-date, data-color, data-style)
   - per-item borders through borderColor / borderStyle, per-tag colors,
-    tag onclick(e, tag) handlers
+    tag onclick(e, tag) handlers (clickable tags are keyboard-operable:
+    role="button", tabindex, Enter/Space)
   - editable: an edit button per item firing onedition(record)
   - url: data fetched remotely ({ result: [...] } or a plain array);
     remote + monthly asks the server per month (?year&month&asc) and

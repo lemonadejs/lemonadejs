@@ -127,6 +127,22 @@
             "pass": true
         },
         {
+            "name": "prop label",
+            "pass": true
+        },
+        {
+            "name": "prop label (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop describedby",
+            "pass": true
+        },
+        {
+            "name": "prop describedby (live state)",
+            "pass": true
+        },
+        {
             "name": "prop autoclose",
             "pass": true
         },

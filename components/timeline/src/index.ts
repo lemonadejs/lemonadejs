@@ -12,7 +12,8 @@
  *   - items can also come from element children (v5 extractFromHtml:
  *     title from textContent or title=, data-date, data-color, data-style)
  *   - per-item borders through borderColor / borderStyle, per-tag colors,
- *     tag onclick(e, tag) handlers
+ *     tag onclick(e, tag) handlers (clickable tags are keyboard-operable:
+ *     role="button", tabindex, Enter/Space)
  *   - editable: an edit button per item firing onedition(record)
  *   - url: data fetched remotely ({ result: [...] } or a plain array);
  *     remote + monthly asks the server per month (?year&month&asc) and
@@ -38,7 +39,7 @@ export interface TimelineTag {
     title?: string;
     /** Tag background color */
     color?: string;
-    /** Makes the tag clickable */
+    /** Makes the tag clickable (keyboard included: Enter/Space) */
     onclick?: (e: Event, tag: TimelineTag) => void;
 }
 
@@ -300,8 +301,10 @@ export const Timeline = component('timeline', {
                 <div class="lm-timeline-month">${() => MONTHS[period.value.month - 1]}</div>
             </div>
             <div class="lm-timeline-navigation">
-                <button type="button" class="lm-timeline-icon" onclick="${prev}" tabindex="0">expand_less</button>
-                <button type="button" class="lm-timeline-icon" onclick="${next}" tabindex="0">expand_more</button>
+                <button type="button" class="lm-timeline-icon" onclick="${prev}" tabindex="0"
+                    aria-label="Previous month"><span aria-hidden="true">expand_less</span></button>
+                <button type="button" class="lm-timeline-icon" onclick="${next}" tabindex="0"
+                    aria-label="Next month"><span aria-hidden="true">expand_more</span></button>
             </div>
         </div>
         <div class="lm-timeline-data"
@@ -317,7 +320,7 @@ export const Timeline = component('timeline', {
                     ${() => props.editable.value &&
                         html`<div class="lm-timeline-edit"><button type="button" class="lm-timeline-icon"
                             onclick="${() => props.onedition?.(item)}"
-                            tabindex="0">edit</button></div>`}
+                            tabindex="0" aria-label="Edit"><span aria-hidden="true">edit</span></button></div>`}
                     <div class="lm-timeline-title">${item.title || ''}</div>
                     <div class="lm-timeline-subtitle">${item.subtitle || ''}</div>
                     <div class="lm-timeline-description">${item.description || ''}</div>
@@ -325,8 +328,17 @@ export const Timeline = component('timeline', {
                         ? html`<div class="lm-timeline-tags">${item.tags.map((tag) =>
                             html`<span class="lm-timeline-tag"
                                 data-clickable="${tag.onclick ? 'true' : false}"
+                                role="${tag.onclick ? 'button' : false}"
+                                tabindex="${tag.onclick ? '0' : false}"
                                 style="${tag.color ? 'background-color:' + tag.color : false}"
-                                onclick="${(e: Event) => tag.onclick?.(e, tag)}">${tag.title || ''}</span>`)}</div>`
+                                onclick="${(e: Event) => tag.onclick?.(e, tag)}"
+                                onkeydown="${(e: KeyboardEvent) => {
+                                    // role=button contract: Enter/Space activate like a click
+                                    if (tag.onclick && (e.key === 'Enter' || e.key === ' ')) {
+                                        e.preventDefault();
+                                        tag.onclick(e, tag);
+                                    }
+                                }}">${tag.title || ''}</span>`)}</div>`
                         : false}
                 </div>`)
                 : html`<div class="lm-timeline-message">${() => props.message.value}</div>`

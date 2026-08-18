@@ -40,6 +40,12 @@
     display: block;
 }
 
+/* keyboard focus ring (arrows move, Shift+arrows resize) */
+.lm-cropper .lm-cropper-box:focus-visible {
+    outline: 2px solid var(--lm-main-color, #2563eb);
+    outline-offset: 1px;
+}
+
 .lm-cropper .lm-cropper-controls {
     border: 1px solid var(--lm-border-color, #e4e4e7);
     border-top: none;

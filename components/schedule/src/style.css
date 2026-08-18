@@ -21,6 +21,14 @@
     box-sizing: border-box;
 }
 
+/* Keyboard focus on the grid root: the base rule suppresses the default
+   outline (the selection ring marks the active event), but 2.4.7 needs a
+   visible indicator on the focused container itself */
+.lm-schedule:focus-visible {
+    outline: 2px solid var(--lm-main-color, #2563eb);
+    outline-offset: -2px;
+}
+
 .lm-schedule table {
     table-layout: fixed;
     font-size: 0.8em;

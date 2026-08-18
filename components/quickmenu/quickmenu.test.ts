@@ -171,6 +171,18 @@ describe('components/quickmenu — a dropdown button on the Contextmenu block', 
         expect(menus()).toHaveLength(0);
     });
 
+    it('keyboard close hands focus back to the header (WCAG 2.4.3)', async () => {
+        mountMenu();
+        header().focus();
+        key('Enter');
+        await flush();
+        const wrapper = handle!.query('.lm-contextmenu') as HTMLElement;
+        expect(document.activeElement).toBe(wrapper);
+        wrapper.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+        expect(menus()).toHaveLength(0);
+        expect(document.activeElement).toBe(header());
+    });
+
     it('api.open() opens programmatically; api.close() dismisses', async () => {
         const api = mountMenu();
         api.open();

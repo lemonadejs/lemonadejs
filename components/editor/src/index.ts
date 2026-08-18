@@ -10,11 +10,13 @@
  *     outdent, links (inline balloon), inline images (file picker, paste
  *     and drop — stored as data URLs), horizontal rule, clear
  *     formatting, fullscreen
- *   - images are objects: click one for drag-resize — corner handles
+ *   - images are objects: click one (or Tab to it — images are
+ *     focusable, focusing selects) for drag-resize — corner handles
  *     keep the aspect ratio, edge handles stretch width or height
  *     independently — and an alignment menu: wrap left / center / wrap
  *     right / inline, full width, remove; Delete removes the selection
- *   - tables, CKEditor-style: a hover grid picker inserts; a floating
+ *   - tables, CKEditor-style: a hover grid picker inserts (keyboard
+ *     too: arrows size the grid, Enter inserts, Escape closes); a floating
  *     balloon over the active table carries Row / Column / Cell menus
  *     (insert above/below/left/right, header row/column, delete), cell
  *     merge (drag across cells to select, or merge right/down), split,
@@ -120,6 +122,10 @@ export const Editor = component('editor', {
                 el.removeAttribute('class');
             }
         }
+        // the image tabindex is an editing artifact too (keyboard path)
+        for (const el of Array.from(clone.querySelectorAll('img[tabindex]'))) {
+            el.removeAttribute('tabindex');
+        }
         return clone.innerHTML;
     };
 
@@ -134,10 +140,22 @@ export const Editor = component('editor', {
     let redoStack: string[] = [];
     let lastPush = 0;
 
+    /** Keyboard path to images (2.1.1): every image is focusable, focusing
+     *  one selects it (the button-based balloon appears), Delete removes.
+     *  getData() strips the tabindex like the cell-selection marks */
+    const armImages = () => {
+        if (area) {
+            for (const img of Array.from(area.querySelectorAll('img'))) {
+                img.tabIndex = 0;
+            }
+        }
+    };
+
     const commit = (structural = false) => {
         if (!area) {
             return;
         }
+        armImages();
         const raw = area.innerHTML;
         if (raw !== last) {
             const now = Date.now();
@@ -161,6 +179,7 @@ export const Editor = component('editor', {
             return;
         }
         area.innerHTML = snapshot;
+        armImages();
         last = snapshot;
         content.set(getData());
         empty.value = isEmpty();
@@ -371,6 +390,40 @@ export const Editor = component('editor', {
             rows: 0,
             cols: 0,
         };
+        if (grid.value.on) {
+            // keyboard path: the picker takes focus so the arrows work
+            queueMicrotask(() => (root?.querySelector('.lm-editor-grid') as HTMLElement | null)?.focus());
+        }
+    };
+
+    /** Keyboard operation of the size picker: arrows grow/shrink the
+     *  highlighted rectangle, Enter inserts, Escape closes */
+    const gridKeydown = (e: KeyboardEvent) => {
+        const { rows, cols } = grid.value;
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            insertTableAt(Math.max(1, rows), Math.max(1, cols));
+            return;
+        }
+        if (e.key === 'Escape') {
+            grid.value = { ...grid.value, on: false };
+            area?.focus();
+            return;
+        }
+        let next: { rows: number; cols: number } | null = null;
+        if (e.key === 'ArrowRight') {
+            next = { rows: Math.max(1, rows), cols: Math.min(GRID_COLS, cols + 1) };
+        } else if (e.key === 'ArrowLeft') {
+            next = { rows: Math.max(1, rows), cols: Math.max(1, cols - 1) };
+        } else if (e.key === 'ArrowDown') {
+            next = { rows: Math.min(GRID_ROWS, rows + 1), cols: Math.max(1, cols) };
+        } else if (e.key === 'ArrowUp') {
+            next = { rows: Math.max(1, rows - 1), cols: Math.max(1, cols) };
+        }
+        if (next) {
+            e.preventDefault();
+            grid.value = { ...grid.value, ...next };
+        }
     };
 
     const openLink = (e: Event) => {
@@ -1056,6 +1109,7 @@ export const Editor = component('editor', {
             currentImage.remove();
             deselectImage();
             commit(true);
+            area?.focus(); // the focused image is gone — keep focus in the editor
         }
     };
 
@@ -1269,6 +1323,7 @@ export const Editor = component('editor', {
     onMount(() => {
         if (area) {
             area.innerHTML = (content.value as string) || '';
+            armImages();
             last = area.innerHTML;
             empty.value = isEmpty();
         }
@@ -1279,6 +1334,7 @@ export const Editor = component('editor', {
         const unsubscribe = content.subscribe((value) => {
             if (area && area.innerHTML !== value && getData() !== value) {
                 area.innerHTML = (value as string) || '';
+                armImages();
                 last = area.innerHTML;
                 empty.value = isEmpty();
                 hideTableUi();
@@ -1319,7 +1375,7 @@ export const Editor = component('editor', {
             </div>`}
         <div class="lm-editor-area" ref="${(el: HTMLElement) => (area = el)}"
             contenteditable="${() => (readonly() ? 'false' : 'true')}"
-            role="textbox" aria-multiline="true"
+            role="textbox" aria-multiline="true" aria-label="Rich text editor"
             data-empty="${() => (empty.value ? 'true' : false)}"
             data-placeholder="${() => props.placeholder.value || false}"
             style="${() => (props.height.value ? 'height:' + props.height.value + ';overflow-y:auto;' : false)}"
@@ -1333,6 +1389,13 @@ export const Editor = component('editor', {
             }}"
             ondrop="${onDrop}"
             onmousedown="${onCellPress}"
+            onfocusin="${(e: FocusEvent) => {
+                // Tab reaches images (armImages): focusing one selects it
+                const target = e.target as Element | null;
+                if (target instanceof HTMLImageElement && !readonly()) {
+                    selectImage(target);
+                }
+            }}"
             onmouseover="${onCellSweep}"
             onmousemove="${hover}"
             onmouseleave="${(e: MouseEvent) => {
@@ -1377,7 +1440,10 @@ export const Editor = component('editor', {
             </div>`}
         ${() =>
             grid.value.on &&
-            html`<div class="lm-editor-grid"
+            html`<div class="lm-editor-grid" tabindex="0"
+                aria-label="${() =>
+                    'Table size picker' + (grid.value.rows ? ', ' + grid.value.rows + ' by ' + grid.value.cols : '')}"
+                onkeydown="${gridKeydown}"
                 style="${() => 'top:' + grid.value.top + 'px;left:' + grid.value.left + 'px'}">
                 <div class="lm-editor-grid-cells"
                     onmouseleave="${() => (grid.value = { ...grid.value, rows: 0, cols: 0 })}">
@@ -1390,7 +1456,7 @@ export const Editor = component('editor', {
             link.value.on &&
             html`<div class="lm-editor-link"
                 style="${() => 'top:' + link.value.top + 'px;left:' + link.value.left + 'px'}">
-                <input type="url" placeholder="https://"
+                <input type="url" placeholder="https://" aria-label="Link URL"
                     onkeydown="${(e: KeyboardEvent) => {
                         if (e.key === 'Enter') {
                             e.preventDefault();

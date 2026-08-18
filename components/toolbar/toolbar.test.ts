@@ -319,6 +319,33 @@ describe('components/toolbar — an action bar with Contextmenu pickers', () => 
         expect(color.value).toBeUndefined();
     });
 
+    it('Escape in the picker dropdown lands focus back on the header (WCAG 2.4.3)', async () => {
+        mountBar({
+            options: [{ type: 'select', title: 'Font', options: ['Arial', 'Verdana'] }] as ToolbarItem[],
+        });
+        headers()[0].focus();
+        headers()[0].dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+        await flush();
+        expect(menus()).toHaveLength(1);
+        const wrapper = handle!.query('.lm-contextmenu') as HTMLElement;
+        expect(document.activeElement).toBe(wrapper);
+        wrapper.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+        expect(menus()).toHaveLength(0);
+        expect(document.activeElement).toBe(headers()[0]);
+    });
+
+    it('Escape in the color popover lands focus back on the swatch item (WCAG 2.4.3)', async () => {
+        const color: ToolbarItem = { type: 'color', icon: 'format_color_fill', tooltip: 'Fill' };
+        mountBar({ options: [color] });
+        anchor(0).focus();
+        click(anchor(0));
+        await flush();
+        expect(handle!.query('.lm-toolbar-color-pop')).not.toBeNull();
+        document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+        expect(handle!.query('.lm-toolbar-color-pop')).toBeNull();
+        expect(document.activeElement).toBe(anchor(0));
+    });
+
     it('keyboard: roving tabindex — one tab stop, arrows walk enabled items, Home/End jump', () => {
         mountBar({
             options: [

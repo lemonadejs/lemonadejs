@@ -20,6 +20,9 @@ exact model is preserved here:
     drag-resize (bottom 5px zone) of events, with conflict blocking
     when overlap=false and read-only hour ranges
   - selection (click, Ctrl+click multi), keyboard: arrows walk events,
+    Enter opens the editor for the selected event, N creates an event
+    at the first free slot, Alt+arrows move and Shift+Up/Down resize
+    the selected event (the same commit path as the drag gestures),
     Delete removes, Ctrl+C/V copy/paste (+1 row shift), Ctrl+Z/Y
     undo/redo (full history: add/update/delete/setData)
   - validrange hides hours outside the window; readonlyrange disables

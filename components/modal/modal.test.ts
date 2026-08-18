@@ -435,6 +435,47 @@ describe('components/modal — behaviors', () => {
         expect(el.style.height).toBe('260px');
     });
 
+    it('keyboard: arrows move a draggable modal when the panel itself is focused', async () => {
+        const moves: [number, number][] = [];
+        const { el } = await openModal({
+            draggable: true,
+            width: 400,
+            height: 300,
+            onmove: (top: number, left: number) => moves.push([top, left]),
+        });
+        const top = parseInt(el.style.top);
+        const left = parseInt(el.style.left);
+
+        el.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+        expect(el.style.left).toBe(left + 10 + 'px');
+        el.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+        expect(el.style.top).toBe(top + 10 + 'px');
+        expect(moves).toEqual([[top, left + 10], [top + 10, left + 10]]);
+    });
+
+    it('keyboard: Shift+arrows resize a resizable modal from the panel', async () => {
+        const sizes: [number, number][] = [];
+        const { el } = await openModal({
+            resizable: true,
+            width: 400,
+            height: 300,
+            onresize: (w: number, h: number) => sizes.push([w, h]),
+        });
+        el.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', shiftKey: true, bubbles: true }));
+        expect(el.style.width).toBe('410px');
+        el.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp', shiftKey: true, bubbles: true }));
+        expect(el.style.height).toBe('290px');
+        expect(sizes).toEqual([[410, 300], [410, 290]]);
+    });
+
+    it('keyboard: arrows inside inner content never move the modal (target-scoped)', async () => {
+        const { el } = await openModal({ draggable: true, closable: true, width: 400, height: 300 });
+        const left = el.style.left;
+        const button = el.querySelector('button') as HTMLElement;
+        button.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+        expect(el.style.left).toBe(left); // unchanged: the panel was not the target
+    });
+
     it('flip + adjust(): an anchored panel overflowing the bottom flips above its anchor', async () => {
         const { api, el } = await openModal({ position: 'absolute', autoadjust: true, flip: 37 });
         // Panel bottom crosses the viewport edge: flip above, clearing the
@@ -465,6 +506,35 @@ describe('a11y', () => {
         expect(el.getAttribute('role')).toBe('dialog');
         expect(el.getAttribute('aria-modal')).toBe('true');
         expect(el.getAttribute('aria-label')).toBe('Settings');
+    });
+
+    it('label names a title-less dialog; the title wins when present', async () => {
+        const { el } = await openModal({ backdrop: true, label: 'Pick a color' });
+        expect(el.getAttribute('aria-label')).toBe('Pick a color');
+        handle?.unmount();
+        const second = await openModal({ backdrop: true, title: 'Settings', label: 'Pick a color' });
+        expect(second.el.getAttribute('aria-label')).toBe('Settings');
+    });
+
+    it('describedby lands as aria-describedby on the panel', async () => {
+        const { el } = await openModal({ backdrop: true, describedby: 'my-message' });
+        expect(el.getAttribute('aria-describedby')).toBe('my-message');
+        handle?.unmount();
+        const second = await openModal({ backdrop: true });
+        expect(second.el.hasAttribute('aria-describedby')).toBe(false);
+    });
+
+    it('close restores focus to the pre-open element', async () => {
+        const opener = document.createElement('button');
+        document.body.appendChild(opener);
+        opener.focus();
+
+        const { el } = await openModal({ focus: true, closable: true });
+        expect(document.activeElement).toBe(el); // the modal took focus on open
+
+        el.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+        expect(document.activeElement).toBe(opener); // handed back on close
+        opener.remove();
     });
 
     it('headless panel: no implicit role; the role prop overrides', async () => {

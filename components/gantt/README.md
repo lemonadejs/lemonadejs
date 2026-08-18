@@ -24,6 +24,10 @@ shading and the today line — same engine, same percentages.
   - editable: drag the bar to move, drag the edges to resize — day
     snapping, live preview, Escape cancels mid-drag, onchange(task,
     start, end) fires ONLY on commit and mutates YOUR task object
+  - keyboard: bars are focusable buttons (label + dates in the
+    accessible name); Ctrl/Alt+Arrow moves a snap step, Shift+Arrow
+    resizes the end — the SAME commit path (and onchange) as drag.
+    Enter/Space activates (onclick); the header pans with arrows
   - dates are 'YYYY-MM-DD' strings, all math in LOCAL time
   - data BY REFERENCE: mutate + touch() re-renders
 

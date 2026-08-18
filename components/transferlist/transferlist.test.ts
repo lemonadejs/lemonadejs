@@ -259,6 +259,23 @@ describe('components/transferlist', () => {
         expect(labels(0)).toEqual(['a', 'b', 'c', 'd']);
     });
 
+    it('names each list and search box from the titles (group semantics)', () => {
+        handle = t(Transferlist, { data: DATA, titles: ['Source', 'Target'], search: true });
+        const groups = handle.queryAll('.lm-transferlist-items');
+        expect(groups.map((el) => el.getAttribute('role'))).toEqual(['group', 'group']);
+        expect(groups.map((el) => el.getAttribute('aria-label'))).toEqual(['Source', 'Target']);
+        const inputs = handle.queryAll('.lm-transferlist-search');
+        expect(inputs.map((el) => el.getAttribute('aria-label'))).toEqual(['Search Source', 'Search Target']);
+        handle.unmount();
+
+        // default titles name the lists too
+        handle = t(Transferlist, { data: DATA, search: true });
+        expect(handle.queryAll('.lm-transferlist-items').map((el) => el.getAttribute('aria-label')))
+            .toEqual(['Available', 'Chosen']);
+        expect(handle.queryAll('.lm-transferlist-search').map((el) => el.getAttribute('aria-label')))
+            .toEqual(['Search Available', 'Search Chosen']);
+    });
+
     it('uses contract coercion: attribute-style strings work', () => {
         const App: Component = () =>
             html`<main><${Transferlist} data="${DATA}" search="true" height="150" /></main>`;

@@ -3,6 +3,37 @@
  * formatting, colour math, SVG path builders, and the shared polar
  * geometry (viewBox 0 0 100 100, centre 50,50). No DOM, no state.
  */
+import type { State } from 'lemonadejs';
+
+/**
+ * The shared roving-focus keyboard handler for the mark-based plots
+ * (pie/donut, radialbar, polararea, sankey, chord, arc diagram). It
+ * mirrors the cartesian column model in cartesian.ts exactly: the
+ * arrow keys roam the marks, Home/End jump, Enter/Space activates the
+ * current mark, Escape clears. The CONTAINER carries tabindex/role/
+ * aria-label — the SVG itself stays aria-hidden, because the focusable
+ * element lives outside the hidden subtree.
+ */
+export const kbKeydown = (kb: State<number | null>, n: number, activate: (i: number) => void) =>
+    (e: KeyboardEvent): void => {
+        if (!n) return;
+        const cur = kb.value != null && kb.value < n ? kb.value : null;
+        let next = cur;
+        switch (e.key) {
+            case 'ArrowRight': case 'ArrowUp': next = cur == null ? 0 : Math.min(n - 1, cur + 1); break;
+            case 'ArrowLeft': case 'ArrowDown': next = cur == null ? n - 1 : Math.max(0, cur - 1); break;
+            case 'Home': next = 0; break;
+            case 'End': next = n - 1; break;
+            case 'Enter': case ' ':
+                if (cur != null) activate(cur);
+                e.preventDefault();
+                return;
+            case 'Escape': kb.value = null; return;
+            default: return;
+        }
+        e.preventDefault();
+        kb.value = next;
+    };
 
 /** A "nice" number near `x` (1/2/5 × 10^n); `round` snaps to nearest vs ceils. */
 const niceNum = (x: number, round: boolean): number => {

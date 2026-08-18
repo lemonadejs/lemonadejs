@@ -28,6 +28,10 @@
             "type": "string",
             "default": ""
         },
+        "clearlabel": {
+            "type": "string",
+            "default": ""
+        },
         "disabled": {
             "type": "boolean",
             "default": false

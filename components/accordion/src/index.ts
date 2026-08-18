@@ -7,7 +7,8 @@
  *   - every panel body is created once and KEPT ALIVE across toggles —
  *     the collapse is a grid-template-rows (0fr->1fr) transition driven by
  *     data-open (CSS), never an unmount, so content state (inputs, nested
- *     components) survives open/close cycles
+ *     components) survives open/close cycles; closed bodies are inert
+ *     (out of the Tab order and the accessibility tree)
  *   - exclusive by default (a controlled accordion group): bind is the
  *     expanded INDEX, -1/null = all closed, opening one closes the other
  *   - multiple: bind becomes an ARRAY of open indices — each panel
@@ -153,6 +154,7 @@ export const Accordion = component('accordion', CONTRACT, (props, { bind }) => {
                 <div class="lm-accordion-body" role="region"
                     id="${id + '-body-' + i}"
                     aria-labelledby="${id + '-header-' + i}"
+                    inert="${() => (isOpen(i) ? false : 'true')}"
                     data-open="${() => (isOpen(i) ? 'true' : false)}">
                     <div class="lm-accordion-clip"><div class="lm-accordion-content">${() => body(item, i)}</div></div>
                 </div>

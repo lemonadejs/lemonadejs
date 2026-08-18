@@ -216,6 +216,48 @@ describe('components/contextmenu — on the Modal primitive', () => {
         expect(opens).toEqual([1]);
     });
 
+    it('keyboard: Space activates like Enter; Home/End jump to first/last enabled', async () => {
+        const clicked: string[] = [];
+        await open(clicked);
+        key('End');
+        expect(cursorTitle()).toBe('Delete');
+        key('Home');
+        expect(cursorTitle()).toBe('Open');
+        key(' ');
+        expect(clicked).toEqual(['Open']);
+        expect(menus()).toHaveLength(0);
+    });
+
+    it('aria: menuitems have ids, aria-activedescendant tracks the cursor, disabled marked', async () => {
+        await open();
+        expect(wrapper().getAttribute('role')).toBe('menu');
+        // exactly ONE menu owns the items: levels are role=group inside it
+        expect(menus()[0].querySelector('.lm-contextmenu-list')!.getAttribute('role')).toBe('group');
+        expect(wrapper().hasAttribute('aria-activedescendant')).toBe(false);
+        key('ArrowDown');
+        const active = wrapper().getAttribute('aria-activedescendant');
+        expect(active).toBeTruthy();
+        const item = document.getElementById(active!)!;
+        expect(item.getAttribute('role')).toBe('menuitem');
+        expect(item.textContent).toContain('Open');
+        // disabled items carry aria-disabled
+        const blocked = [...menus()[0].querySelectorAll('[data-item]')].find((el) =>
+            el.textContent!.includes('Blocked')
+        )!;
+        expect(blocked.getAttribute('aria-disabled')).toBe('true');
+    });
+
+    it('keyboard close restores focus to the element that had it on open', async () => {
+        const button = document.createElement('button');
+        document.body.appendChild(button);
+        button.focus();
+        await open();
+        expect(document.activeElement).toBe(wrapper());
+        key('Escape');
+        expect(document.activeElement).toBe(button);
+        button.remove();
+    });
+
     it('scroll outside closes (OS behavior); scroll INSIDE a menu does not', async () => {
         await open();
         // wheel inside a long menu list: stays open

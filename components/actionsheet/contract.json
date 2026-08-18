@@ -12,6 +12,10 @@
             "type": "string",
             "default": ""
         },
+        "label": {
+            "type": "string",
+            "default": "Actions"
+        },
         "closable": {
             "type": "boolean",
             "default": false

@@ -219,6 +219,10 @@ export const Transferlist = component('transferlist', {
         const query = side === 'left' ? queryLeft : queryRight;
         const checked = side === 'left' ? checkedLeft : checkedRight;
         const visible = () => all().filter((item) => matches(item, query.value));
+        const searchLabel = () => {
+            const title = titleOf(side);
+            return title ? 'Search ' + title : 'Search';
+        };
         return html`<div class="lm-transferlist-list" data-side="${side}">
             <div class="lm-transferlist-header">
                 <div class="lm-transferlist-title">${() => titleOf(side)}</div>
@@ -228,11 +232,13 @@ export const Transferlist = component('transferlist', {
             </div>
             ${() =>
                 props.search.value
-                    ? html`<input type="search" class="lm-transferlist-search" placeholder="Search" aria-label="Search"
+                    ? html`<input type="search" class="lm-transferlist-search" placeholder="Search"
+                          aria-label="${() => searchLabel()}"
                           value="${() => query.value}"
                           oninput="${(e: Event) => (query.value = (e.target as HTMLInputElement).value)}" />`
                     : ''}
-            <div class="lm-transferlist-items" role="list" style="height:${() => props.height.value}px">
+            <div class="lm-transferlist-items" role="group" aria-label="${() => titleOf(side)}"
+                style="height:${() => props.height.value}px">
                 ${() => visible().map((item) => rowView(item, checked))}
                 ${() => (visible().length === 0 ? html`<div class="lm-transferlist-empty">No items</div>` : '')}
             </div>

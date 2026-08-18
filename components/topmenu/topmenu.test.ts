@@ -65,16 +65,28 @@ describe('components/topmenu — a menubar on the Contextmenu block', () => {
 
     it('renders the bar items with the v5 ARIA model', () => {
         mountBar();
-        expect(bar().getAttribute('role')).toBe('menubar');
-        expect(bar().getAttribute('aria-orientation')).toBe('horizontal');
+        // the menubar role sits on the options row so it DIRECTLY owns the
+        // menuitems (the composed Contextmenu renders outside it)
+        const menubar = handle!.query('.lm-topmenu-options') as HTMLElement;
+        expect(menubar.getAttribute('role')).toBe('menubar');
+        expect(menubar.getAttribute('aria-orientation')).toBe('horizontal');
+        expect(bar().hasAttribute('role')).toBe(false);
         expect(titles().map((el) => el.textContent)).toEqual(['File', 'Edit', 'Blocked', 'About']);
         expect(titles()[0].getAttribute('role')).toBe('menuitem');
         expect(titles()[0].getAttribute('aria-haspopup')).toBe('true');
         expect(titles()[3].getAttribute('aria-haspopup')).toBe('false');
-        expect(titles()[0].getAttribute('tabindex')).toBe('0');
+        expect(titles()[0].getAttribute('tabindex')).toBe('0'); // the roving stop
+        expect(titles()[1].getAttribute('tabindex')).toBe('-1'); // one tab stop only
         expect(titles()[2].hasAttribute('tabindex')).toBe(false); // disabled: unreachable
         expect(titles()[2].getAttribute('data-disabled')).toBe('true');
         expect(menus()).toHaveLength(0); // closed by default
+    });
+
+    it('roving tabindex follows the selection', () => {
+        mountBar();
+        titles()[1].dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
+        expect(titles()[1].getAttribute('tabindex')).toBe('0');
+        expect(titles()[0].getAttribute('tabindex')).toBe('-1');
     });
 
     it('mousedown on a top item opens its dropdown as a Contextmenu Modal', async () => {
@@ -185,6 +197,35 @@ describe('components/topmenu — a menubar on the Contextmenu block', () => {
         key(bar(), 'Enter');
         await flush();
         expect(menus()).toHaveLength(0);
+    });
+
+    it('keyboard: Space toggles and ArrowDown opens the selected dropdown', async () => {
+        mountBar();
+        titles()[0].dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
+        key(bar(), ' ');
+        await flush();
+        expect(menus()).toHaveLength(1);
+        key(bar(), ' ');
+        await flush();
+        expect(menus()).toHaveLength(0);
+
+        key(bar(), 'ArrowDown');
+        await flush();
+        expect(menus()).toHaveLength(1);
+        expect(menus()[0].textContent).toContain('New');
+    });
+
+    it('Escape in the open dropdown lands focus back on the menubar item (WCAG 2.4.3)', async () => {
+        mountBar();
+        titles()[0].focus();
+        key(bar(), 'Enter'); // keyboard open — the Contextmenu wrapper takes focus
+        await flush();
+        expect(menus()).toHaveLength(1);
+        const wrapper = handle!.query('.lm-contextmenu') as HTMLElement;
+        expect(document.activeElement).toBe(wrapper);
+        key(wrapper, 'Escape');
+        expect(menus()).toHaveLength(0);
+        expect(document.activeElement).toBe(titles()[0]);
     });
 
     it('keyboard while open: unhandled arrows bubble out of the Contextmenu and move the open dropdown', async () => {

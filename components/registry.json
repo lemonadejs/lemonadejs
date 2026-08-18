@@ -31,7 +31,7 @@
         "name": "actionsheet",
         "path": "components/actionsheet",
         "verified": true,
-        "checks": 13,
+        "checks": 15,
         "contract": {
             "name": "actionsheet",
             "props": {
@@ -45,6 +45,10 @@
                 "message": {
                     "type": "string",
                     "default": ""
+                },
+                "label": {
+                    "type": "string",
+                    "default": "Actions"
                 },
                 "closable": {
                     "type": "boolean",
@@ -151,7 +155,7 @@
         "name": "button",
         "path": "components/button",
         "verified": true,
-        "checks": 22,
+        "checks": 24,
         "contract": {
             "name": "button",
             "props": {
@@ -194,6 +198,10 @@
                 "icon": {
                     "type": "string",
                     "default": ""
+                },
+                "aria-label": {
+                    "type": "string",
+                    "default": ""
                 }
             },
             "bind": null,
@@ -207,7 +215,7 @@
         "name": "buttongroup",
         "path": "components/buttongroup",
         "verified": true,
-        "checks": 18,
+        "checks": 20,
         "contract": {
             "name": "buttongroup",
             "props": {
@@ -237,6 +245,10 @@
                 "disabled": {
                     "type": "boolean",
                     "default": false
+                },
+                "aria-label": {
+                    "type": "string",
+                    "default": ""
                 }
             },
             "bind": {
@@ -253,7 +265,7 @@
         "name": "calendar",
         "path": "components/calendar",
         "verified": true,
-        "checks": 45,
+        "checks": 47,
         "contract": {
             "name": "calendar",
             "props": {
@@ -319,6 +331,10 @@
                     "type": "string",
                     "default": ""
                 },
+                "aria-label": {
+                    "type": "string",
+                    "default": ""
+                },
                 "input": {
                     "type": "any"
                 },
@@ -358,7 +374,7 @@
         "name": "card",
         "path": "components/card",
         "verified": true,
-        "checks": 20,
+        "checks": 24,
         "contract": {
             "name": "card",
             "props": {
@@ -378,7 +394,15 @@
                     "type": "number",
                     "default": 180
                 },
+                "imagealt": {
+                    "type": "string",
+                    "default": ""
+                },
                 "avatar": {
+                    "type": "string",
+                    "default": ""
+                },
+                "avataralt": {
                     "type": "string",
                     "default": ""
                 },
@@ -662,7 +686,7 @@
         "name": "color",
         "path": "components/color",
         "verified": true,
-        "checks": 16,
+        "checks": 18,
         "contract": {
             "name": "color",
             "props": {
@@ -678,6 +702,10 @@
                     "default": ""
                 },
                 "placeholder": {
+                    "type": "string",
+                    "default": ""
+                },
+                "aria-label": {
                     "type": "string",
                     "default": ""
                 },
@@ -951,7 +979,7 @@
         "name": "drawer",
         "path": "components/drawer",
         "verified": true,
-        "checks": 15,
+        "checks": 17,
         "contract": {
             "name": "drawer",
             "props": {
@@ -974,6 +1002,10 @@
                 "title": {
                     "type": "string",
                     "default": ""
+                },
+                "label": {
+                    "type": "string",
+                    "default": "Drawer"
                 }
             },
             "bind": {
@@ -994,7 +1026,7 @@
         "name": "dropdown",
         "path": "components/dropdown",
         "verified": true,
-        "checks": 39,
+        "checks": 41,
         "contract": {
             "name": "dropdown",
             "props": {
@@ -1026,6 +1058,10 @@
                     "default": ""
                 },
                 "placeholder": {
+                    "type": "string",
+                    "default": ""
+                },
+                "aria-label": {
                     "type": "string",
                     "default": ""
                 },
@@ -1453,7 +1489,7 @@
         "name": "modal",
         "path": "components/modal",
         "verified": true,
-        "checks": 59,
+        "checks": 63,
         "contract": {
             "name": "modal",
             "props": {
@@ -1514,6 +1550,14 @@
                     "default": true
                 },
                 "role": {
+                    "type": "string",
+                    "default": ""
+                },
+                "label": {
+                    "type": "string",
+                    "default": ""
+                },
+                "describedby": {
                     "type": "string",
                     "default": ""
                 },
@@ -1727,7 +1771,7 @@
         "name": "progress",
         "path": "components/progress",
         "verified": true,
-        "checks": 15,
+        "checks": 17,
         "contract": {
             "name": "progress",
             "props": {
@@ -1754,6 +1798,10 @@
                 "label": {
                     "type": "boolean",
                     "default": false
+                },
+                "arialabel": {
+                    "type": "string",
+                    "default": ""
                 }
             },
             "bind": {
@@ -1975,7 +2023,7 @@
         "name": "signature",
         "path": "components/signature",
         "verified": true,
-        "checks": 21,
+        "checks": 23,
         "contract": {
             "name": "signature",
             "props": {
@@ -2003,6 +2051,10 @@
                     "default": ""
                 },
                 "instructions": {
+                    "type": "string",
+                    "default": ""
+                },
+                "clearlabel": {
                     "type": "string",
                     "default": ""
                 },
@@ -2128,7 +2180,7 @@
         "name": "switch",
         "path": "components/switch",
         "verified": true,
-        "checks": 22,
+        "checks": 24,
         "contract": {
             "name": "switch",
             "props": {
@@ -2165,6 +2217,10 @@
                     "default": false
                 },
                 "position": {
+                    "type": "string",
+                    "default": ""
+                },
+                "aria-label": {
                     "type": "string",
                     "default": ""
                 }
@@ -2346,7 +2402,7 @@
         "name": "toggle",
         "path": "components/toggle",
         "verified": true,
-        "checks": 14,
+        "checks": 16,
         "contract": {
             "name": "toggle",
             "props": {
@@ -2369,6 +2425,10 @@
                 "disabled": {
                     "type": "boolean",
                     "default": false
+                },
+                "aria-label": {
+                    "type": "string",
+                    "default": ""
                 }
             },
             "bind": {
@@ -2547,7 +2607,7 @@
         "name": "wheel",
         "path": "components/wheel",
         "verified": true,
-        "checks": 14,
+        "checks": 16,
         "contract": {
             "name": "wheel",
             "props": {
@@ -2569,6 +2629,10 @@
                 "disabled": {
                     "type": "boolean",
                     "default": false
+                },
+                "aria-label": {
+                    "type": "string",
+                    "default": ""
                 }
             },
             "bind": {

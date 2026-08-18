@@ -11,9 +11,15 @@
  * line/width/height/instructions/disabled unchanged; onchange/onload
  * unchanged (onchange now receives the value, not the instance);
  * getValue/setValue/getImage move to the api surface (props.ref), plus
- * clear() = setValue([]). New: color (v5 hardcoded #000) and name (renders
+ * clear() = setValue([]). New: color (v5 hardcoded #000), name (renders
  * a hidden input so the pad participates in forms — v5 only patched .val()
- * onto the canvas).
+ * onto the canvas), and clearlabel (renders a real, keyboard-operable
+ * clear <button> — WCAG 2.1.1: clearing must not require a pointer).
+ *
+ * Accessibility: drawing is a path-of-movement input (WCAG 2.1.1
+ * essential-exception territory) — the canvas is exposed as role="img"
+ * ("Signature pad") and the host application should offer keyboard users
+ * an alternative (e.g. a typed signature) alongside the pad.
  *
  * jsdom has no canvas: a null 2d context downgrades the pad to a no-op.
  */
@@ -32,6 +38,7 @@ export const Signature = component('signature', {
     color: '',                    // stroke color, #000 when unset (v5 fixed)
     name: '',                     // form field name (hidden input, JSON value)
     instructions: '',             // helper text under the canvas
+    clearlabel: '',               // when set, renders a keyboard-operable clear <button>
     disabled: false,              // blocks drawing
     onchange: Function,           // fires on stroke end, setValue and clear
     onload: Function,             // fires once the canvas is ready (v5)
@@ -168,7 +175,7 @@ export const Signature = component('signature', {
     onMount(() => strokes.subscribe(() => redraw()));
 
     return html`<div class="lm-signature ${() => (props.disabled.value ? 'lm-signature-disabled' : '')}">
-        <canvas class="lm-signature-canvas" role="img" aria-label="Signature"
+        <canvas class="lm-signature-canvas" role="img" aria-label="Signature pad"
             width="${() => props.width.value || false}"
             height="${() => props.height.value || false}"
             ref="${init}"
@@ -176,6 +183,11 @@ export const Signature = component('signature', {
             ontouchstart="${start}"
             onmousemove="${draw}"
             ontouchmove="${draw}"></canvas>
+        ${() =>
+            props.clearlabel.value &&
+            html`<button type="button" class="lm-signature-clear"
+                disabled="${() => props.disabled.value || false}"
+                onclick="${() => clear()}">${props.clearlabel}</button>`}
         ${() =>
             props.instructions.value &&
             html`<div class="lm-signature-instructions">${props.instructions}</div>`}

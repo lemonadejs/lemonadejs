@@ -61,6 +61,14 @@
             "type": "string",
             "default": ""
         },
+        "label": {
+            "type": "string",
+            "default": ""
+        },
+        "describedby": {
+            "type": "string",
+            "default": ""
+        },
         "autoclose": {
             "type": "boolean",
             "default": false

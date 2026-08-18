@@ -2,7 +2,7 @@
 
 LemonadeJS button block — contract-verified, framework-agnostic.
 
-**✓ verified** — 22 contract checks · framework-agnostic · zero dependencies
+**✓ verified** — 24 contract checks · framework-agnostic · zero dependencies
 
 ## Overview
 
@@ -67,6 +67,7 @@ state for a two-way live wire. Attribute strings are coerced to the declared typ
 | `href` | string | `''` | renders a real <a> instead of <button> |
 | `type` | string | `''` | button type: submit | reset ('' = button) |
 | `icon` | string | `''` | material icon name shown before the label |
+| `aria-label` | string | `''` |  |
 
 ## Events
 

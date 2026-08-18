@@ -70,9 +70,11 @@ instrument — receipts come from eval data from here on.
 
 ### 4. The quality tail (alongside or after)
 
-- Accessibility pass (deliberately parked — behavior-changing): card
-  keyboard activation, tabs roving tabindex, rating/signature/color roles,
-  Modal `role` pass-through prop
+- Accessibility: full static WCAG 2.1 AA audit AND remediation pass done
+  2026-08-11 (`docs/A11Y-AUDIT.md`) — all 15 blockers and most serious/minor
+  findings fixed, +146 tests. Remaining gaps listed at the top of the audit
+  doc (captcha alternative, treeview keyboard reorder, gantt dependency
+  drawing, screen-reader/contrast testing)
 - Modal scroll-lock + dialog-mode focus trap
 - Chrome probes for jsdom-blind newer blocks (kanban drag, carousel swipe,
   color spectrum sampling, tabs drag-reorder, topmenu placement)

@@ -283,9 +283,15 @@
     }
 }
 
-/* No ring on the panel by default (the base rule's outline:none holds —
-   a ring around a whole dialog reads as noise). The `outline` prop opts
-   back into the house ring. */
+/* Keyboard focus stays visible (WCAG 2.4.7): the base rule's outline:none
+   only silences pointer/programmatic focus — :focus-visible paints a ring
+   whenever the panel is reached through the keyboard. The `outline` prop
+   keeps its stronger always-on catalog ring below. */
+:where(.lm-modal-root) .lm-modal:focus-visible {
+    outline: 2px solid var(--lm-border-outline, #000);
+    outline-offset: -1px;
+}
+
 .lm-modal-root .lm-modal[data-outline='true']:focus-visible {
     outline: 2px solid var(--lm-border-outline, #000);
     outline-offset: -1px;

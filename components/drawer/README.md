@@ -2,7 +2,7 @@
 
 LemonadeJS drawer block — anchored side panels and the bottom sheet on the Modal primitive; contract-verified, framework-agnostic.
 
-**✓ verified** — 15 contract checks · framework-agnostic · zero dependencies beyond `@lemonadejs/modal`
+**✓ verified** — 17 contract checks · framework-agnostic · zero dependencies beyond `@lemonadejs/modal`
 
 ## Overview
 
@@ -22,6 +22,8 @@ Contract:
   backdrop  dimmed overlay behind the panel
   closable  backdrop click + Escape close the drawer
   title     optional header row with a close ×
+  label     accessible name for the title-less drawer (the panel is a
+            role=dialog — it must never be unnamed)
 
 onclose(origin): 'button' | 'backdrop' | 'escape' | 'api'.
 
@@ -70,6 +72,7 @@ state for a two-way live wire. Attribute strings are coerced to the declared typ
 | `backdrop` | boolean | `true` | dimmed overlay |
 | `closable` | boolean | `true` | backdrop click + Escape close |
 | `title` | string | `''` | optional header row with a close × |
+| `label` | string | `"Drawer"` | accessible name when there is no visible title (aria-label) |
 
 ## Events
 

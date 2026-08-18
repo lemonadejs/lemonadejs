@@ -152,6 +152,31 @@ describe('components/button', () => {
         expect(next.className).toContain('lm-button-label');
     });
 
+    it('aria-label names an icon-only button; the icon is decorative', () => {
+        handle = t(Button, { icon: 'send', 'aria-label': 'Send message' });
+        expect(root().getAttribute('aria-label')).toBe('Send message');
+        expect(handle.query('.lm-button-icon')!.getAttribute('aria-hidden')).toBe('true');
+        handle.unmount();
+
+        handle = t(Button, { label: 'Send' }); // no prop → no attribute
+        expect(root().hasAttribute('aria-label')).toBe(false);
+    });
+
+    it('loading sets aria-busy and keeps the accessible name', () => {
+        const busy = store(false);
+        handle = t(Button, { label: 'Save', loading: busy });
+        expect(root().hasAttribute('aria-busy')).toBe(false);
+
+        busy.value = true; // spinner replaces the text — the label steps in
+        expect(root().getAttribute('aria-busy')).toBe('true');
+        expect(root().getAttribute('aria-label')).toBe('Save');
+        expect(handle.query('.lm-button-spinner')!.getAttribute('aria-hidden')).toBe('true');
+
+        busy.value = false; // text content is back: no redundant aria-label
+        expect(root().hasAttribute('aria-busy')).toBe(false);
+        expect(root().hasAttribute('aria-label')).toBe(false);
+    });
+
     it('uses contract coercion: attribute-style strings work', () => {
         const App: Component = () =>
             html`<main><${Button} disabled="true" fullwidth="true" label="x" /></main>`;

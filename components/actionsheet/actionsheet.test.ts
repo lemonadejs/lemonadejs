@@ -210,6 +210,29 @@ describe('components/actionsheet — on the Modal primitive', () => {
         expect(closes).toEqual(['escape']);
     });
 
+    it('Escape ALWAYS closes — the Tab trap keeps a keyboard exit even when not closable', async () => {
+        const closes: string[] = [];
+        const api = await open({ onclose: (o: string) => closes.push(o) }); // closable defaults false
+
+        modal()!.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }));
+        expect(modal()).toBeNull();
+        expect(api.isOpened()).toBe(false);
+        expect(closes).toEqual(['escape']);
+    });
+
+    it('the dialog is named: the sheet title, or the label fallback', async () => {
+        await open({ title: 'Photo' });
+        expect(modal()!.getAttribute('aria-label')).toBe('Photo');
+        handle!.unmount();
+
+        await open(); // title-less: the fallback keeps the dialog named
+        expect(modal()!.getAttribute('aria-label')).toBe('Actions');
+        handle!.unmount();
+
+        await open({ label: 'Share options' });
+        expect(modal()!.getAttribute('aria-label')).toBe('Share options');
+    });
+
     it('title/message render a header card only when provided (resurrected v5 CSS)', async () => {
         await open({ title: 'Photo', message: 'Choose what to do with it' });
         expect(handle!.query('.lm-actionsheet-header')).not.toBeNull();

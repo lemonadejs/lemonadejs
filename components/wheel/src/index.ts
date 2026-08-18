@@ -26,6 +26,9 @@
 
 import { component, html } from 'lemonadejs';
 
+/** Document-unique id base per instance — option ids for aria-activedescendant */
+let uid = 0;
+
 export const Wheel = component('wheel', {
     bind: Number,                 // two-way selected index (v5: value held the option)
     selected: 0,                  // initial index when unbound
@@ -33,10 +36,12 @@ export const Wheel = component('wheel', {
     rowheight: 40,                // px per row (v5: fixed 40)
     visible: 5,                   // rows in the viewport (v5: fixed 200px / 40)
     disabled: false,              // blocks interaction (new)
+    'aria-label': '',             // accessible name for the listbox
     onchange: Function,           // (index) on user/component-initiated changes
     api: { getIndex: Function, setIndex: Function, getValue: Function },
 }, (props, { bind, state, listen, onMount, onUnmount }) => {
     const index = bind(props, Number(props.selected.value) || 0);
+    const id = 'lm-wheel-' + ++uid;
 
     const items = () => props.options.value || [];
     const rh = () => Number(props.rowheight.value) || 40;
@@ -220,6 +225,8 @@ export const Wheel = component('wheel', {
 
     return html`<div class="lm-wheel ${() => (dragging.value ? 'lm-wheel-dragging' : '')}"
         role="listbox"
+        aria-label="${() => props['aria-label'].value || false}"
+        aria-activedescendant="${() => (items().length ? id + '-option-' + nearest() : false)}"
         tabindex="${() => (props.disabled.value ? false : '0')}"
         data-disabled="${() => (props.disabled.value ? 'true' : false)}"
         style="${() => 'height:' + visible() * rh() + 'px'}"
@@ -232,6 +239,7 @@ export const Wheel = component('wheel', {
             ${() =>
                 items().map(
                     (opt, i) => html`<li class="lm-wheel-option" role="option"
+                        id="${id + '-option-' + i}"
                         data-index="${String(i)}"
                         data-selected="${() => (nearest() === i ? 'true' : false)}"
                         aria-selected="${() => (nearest() === i ? 'true' : 'false')}"

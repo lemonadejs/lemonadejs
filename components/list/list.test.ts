@@ -252,6 +252,54 @@ describe('components/list — the v5 list with the v6 item surface', () => {
         expect(renderedItems()[0].hasAttribute('data-clickable')).toBe(false); // false → no attribute
     });
 
+    it('keyboard: interactive rows expose role=button + tabindex, Enter/Space activate', () => {
+        const clicks: [unknown, number][] = [];
+        const data = make(3);
+        open({ data, onitemclick: (item: unknown, i: number) => clicks.push([item, i]) });
+
+        // list structure stays valid: the row is a listitem, the button is inside
+        expect(renderedItems()[1].getAttribute('role')).toBe('listitem');
+        const action = renderedItems()[1].querySelector('.lm-list-action') as HTMLElement;
+        expect(action.getAttribute('role')).toBe('button');
+        expect(action.getAttribute('tabindex')).toBe('0');
+
+        action.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
+        expect(clicks).toEqual([[data[1], 1]]);
+
+        const space = new KeyboardEvent('keydown', { key: ' ', bubbles: true, cancelable: true });
+        action.dispatchEvent(space);
+        expect(clicks).toEqual([[data[1], 1], [data[1], 1]]);
+        expect(space.defaultPrevented).toBe(true); // Space must not scroll the page
+
+        action.dispatchEvent(new KeyboardEvent('keydown', { key: 'a', bubbles: true, cancelable: true }));
+        expect(clicks).toHaveLength(2); // other keys are inert
+        handle!.unmount();
+
+        // without onitemclick rows stay plain, non-focusable listitems
+        open({ data });
+        expect(handle!.query('.lm-list-action')).toBeNull();
+        expect(renderedItems()[0].hasAttribute('tabindex')).toBe(false);
+    });
+
+    it('aria-setsize/posinset place each row in the FULL data (virtual window)', () => {
+        open({ data: make(1000), height: 400, rowheight: 40 });
+        expect(renderedItems()[0].getAttribute('aria-setsize')).toBe('1000');
+        expect(renderedItems()[0].getAttribute('aria-posinset')).toBe('1');
+        scrollTo(4000); // row 100
+        expect(renderedItems()[0].getAttribute('aria-setsize')).toBe('1000');
+        expect(renderedItems()[0].getAttribute('aria-posinset')).toBe('97'); // 100 - overscan + 1
+    });
+
+    it('pagination: the current page button carries aria-current="page"', () => {
+        const api = open({ data: make(45), pagination: 20 });
+        const buttons = () => handle!.queryAll('.lm-list-pages button[aria-current="page"]');
+        expect(buttons()).toHaveLength(1);
+        expect(buttons()[0].textContent).toBe('1');
+        api.setPage(2);
+        expect(buttons()).toHaveLength(1);
+        expect(buttons()[0].textContent).toBe('3');
+    });
+
     it('dense and divider variants land as lm-list-* classes', () => {
         open({ data: make(2), dense: true, divider: true });
         const root = handle!.query('.lm-list')!;

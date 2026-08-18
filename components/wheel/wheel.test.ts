@@ -233,6 +233,25 @@ describe('components/wheel — the iOS-style option wheel', () => {
         expect(selectedRow()!.textContent).toBe('Red');
     });
 
+    it('aria: option ids + aria-activedescendant track the cursor, aria-label names the listbox', () => {
+        handle = t(Wheel, { options: COLORS, 'aria-label': 'Color' });
+        expect(root().getAttribute('role')).toBe('listbox');
+        expect(root().getAttribute('aria-label')).toBe('Color');
+
+        const first = rows()[0];
+        expect(first.id).toBeTruthy();
+        expect(root().getAttribute('aria-activedescendant')).toBe(first.id);
+
+        root().dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true, cancelable: true }));
+        expect(root().getAttribute('aria-activedescendant')).toBe(rows()[1].id);
+        expect(rows()[1].getAttribute('aria-selected')).toBe('true');
+        handle.unmount();
+
+        handle = t(Wheel); // empty-safe: no options → no dangling reference
+        expect(root().hasAttribute('aria-activedescendant')).toBe(false);
+        expect(root().hasAttribute('aria-label')).toBe(false);
+    });
+
     it('disabled blocks every interaction and removes the tab stop', () => {
         const changes: number[] = [];
         handle = t(Wheel, { options: COLORS, disabled: true, onchange: (i: number) => changes.push(i) });

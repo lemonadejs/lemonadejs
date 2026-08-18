@@ -13,6 +13,9 @@
  *     drag-resize (bottom 5px zone) of events, with conflict blocking
  *     when overlap=false and read-only hour ranges
  *   - selection (click, Ctrl+click multi), keyboard: arrows walk events,
+ *     Enter opens the editor for the selected event, N creates an event
+ *     at the first free slot, Alt+arrows move and Shift+Up/Down resize
+ *     the selected event (the same commit path as the drag gestures),
  *     Delete removes, Ctrl+C/V copy/paste (+1 row shift), Ctrl+Z/Y
  *     undo/redo (full history: add/update/delete/setData)
  *   - validrange hides hours outside the window; readonlyrange disables
@@ -109,6 +112,15 @@ export const PALETTE: string[] = [
     '#8b5cf6', '#06b6d4', '#84cc16', '#f97316',
 ];
 
+/** Accessible names for the editor palette swatches (color-only buttons
+ *  are unnamed to a screen reader — 4.1.2) */
+const COLOR_NAMES: Record<string, string> = {
+    '#2563eb': 'Blue', '#39a33b': 'Green', '#f59e0b': 'Amber', '#a23131': 'Brick red',
+    '#7c3aed': 'Violet', '#0ea5e9': 'Sky blue', '#db2777': 'Pink', '#64748b': 'Slate gray',
+    '#14b8a6': 'Teal', '#eab308': 'Yellow', '#ef4444': 'Red', '#ec4899': 'Rose',
+    '#8b5cf6': 'Purple', '#06b6d4': 'Cyan', '#84cc16': 'Lime', '#f97316': 'Orange',
+};
+
 const TIME = /^(2[0-4]|[01]?\d):([0-5]\d)$/;
 
 const two = (v: number | string): string => {
@@ -188,6 +200,8 @@ const ALL_TIMES: string[] = (() => {
  *  shortcuts (copy/paste/delete/undo) so they work without the grid being
  *  focused, and so multiple schedules on a page don't all react at once. */
 let activeSchedule: unknown = null;
+
+let instances = 0; // per-instance id prefix for aria-activedescendant
 
 export const Schedule = component('schedule', {
     data: Array,                  // ScheduleEvent[] BY REFERENCE (mutate + touch())
@@ -312,6 +326,11 @@ export const Schedule = component('schedule', {
     let replaying = false; // suppresses guards + per-op onchange during undo/redo
     let editorGuid: string | null = null;
     let rootEl: HTMLElement | null = null;
+
+    // Event element ids: the root keeps DOM focus (root-focus keyboard
+    // model), aria-activedescendant names the selected event to AT
+    const uid = 'lm-schedule-' + ++instances;
+    const itemId = (g: string): string => uid + '-' + g;
 
     const call = (name: string, ...args: unknown[]): unknown =>
         ((props as Record<string, unknown>)[name] as ((...a: unknown[]) => unknown) | undefined)?.(...args);
@@ -1042,7 +1061,103 @@ export const Schedule = component('schedule', {
         rootEl.style.cursor = zone === 'resize' ? 's-resize' : zone === 'move' ? 'move' : '';
     };
 
+    // ---- keyboard gestures (2.1.1): move, resize and create without a
+    // pointer. Both commit through commitDragChange — the SAME path the
+    // mouse drags take — so onbeforechange/onbeforechangeevent, conflict
+    // and read-only-range guards, history and onchangeevent are identical.
+
+    /** Alt+arrows (move) / Shift+Up/Down (resize) on the selected event */
+    const nudge = (dx: number, dy: number, resize: boolean): void => {
+        if (selection.value.length !== 1) {
+            return;
+        }
+        const rec = find(selection.value[0]);
+        if (!rec || rec.readonly) {
+            return;
+        }
+        const cols = columns().filter((c): c is Column => !!c);
+        let place: Place = weekly() ? (rec.weekday as number) : String(rec.date || '').substring(0, 10);
+        let i = cols.findIndex((c) => placeOf(c) === place);
+        if (dx) {
+            const next = cols[i + dx];
+            if (i < 0 || !next) {
+                return; // off the visible columns (a drag cannot leave them either)
+            }
+            i += dx;
+            place = placeOf(next);
+        }
+        const div = snapDiv();
+        const [lo, hi] = rowWindow();
+        let y1 = hourToInt(rec.start);
+        let y2 = hourToInt(rec.end) - 1;
+        if (resize) {
+            y2 = Math.min(hi - 1, Math.max(y1, y2 + dy * div));
+        } else if (dy) {
+            y1 += dy * div;
+            y2 += dy * div;
+            if (y1 < lo || y2 >= hi) {
+                return; // off the visible rows
+            }
+        }
+        commitDragChange({
+            kind: resize ? 'resize' : 'move',
+            record: rec,
+            guid: rec.guid || null,
+            column: i >= 0 ? cols[i].x : 0,
+            place,
+            y1,
+            y2,
+        });
+    };
+
+    /** N: create an event from the keyboard — the drag-create commit path
+     *  (onbeforeinsert template → addEvents → edition, so the editor opens).
+     *  Lands after the selected event on its column, else on today's
+     *  column, else the first visible one, at the first free snap slot. */
+    const keyboardCreate = (): void => {
+        const cols = columns().filter((c): c is Column => !!c);
+        if (!cols.length) {
+            return;
+        }
+        const selRec = selection.value.length === 1 ? find(selection.value[0]) : undefined;
+        const selPlace: Place | undefined = selRec
+            ? weekly()
+                ? (selRec.weekday as number)
+                : String(selRec.date || '').substring(0, 10)
+            : undefined;
+        const today = todayISO();
+        const col =
+            (selRec && cols.find((c) => placeOf(c) === selPlace)) ||
+            cols.find((c) => (weekly() ? c.weekday === new Date().getDay() : c.date === today)) ||
+            cols[0];
+        const place = placeOf(col);
+        const div = snapDiv();
+        const [lo, hi] = rowWindow();
+        let y = selRec && placeOf(col) === selPlace ? hourToInt(selRec.end) : lo;
+        while (y + div <= hi && (inDisabledRange(y, y + div) || (!props.overlap.value && conflicts(place, y, y + div)))) {
+            y += div;
+        }
+        if (y + div > hi) {
+            return; // no free slot in the visible window
+        }
+        let record: ScheduleEvent = weekly() ? { weekday: col.weekday } : { date: place as string };
+        const ret = call('onbeforeinsert', record);
+        if (ret === false) {
+            return;
+        }
+        if (ret && typeof ret === 'object') {
+            record = ret as ScheduleEvent;
+        }
+        commitDragChange({ kind: 'create', record, guid: null, column: col.x, place, y1: y, y2: y + div - 1 });
+    };
+
     const onKey = (e: KeyboardEvent): void => {
+        // typing in the editor form (or any form control inside the root)
+        // bubbles here — never treat it as a grid shortcut
+        const t = e.target as HTMLElement | null;
+        if (t && t !== rootEl && (/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName) || t.isContentEditable)) {
+            return;
+        }
         if (e.ctrlKey || e.metaKey) {
             if (e.key === 'z') {
                 e.preventDefault();
@@ -1057,6 +1172,23 @@ export const Schedule = component('schedule', {
             }
             return;
         }
+        if (e.altKey) {
+            // Alt+arrows: move the selected event (keyboard drag-move)
+            if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+                e.preventDefault();
+                nudge(0, e.key === 'ArrowUp' ? -1 : 1, false);
+            } else if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+                e.preventDefault();
+                nudge(e.key === 'ArrowLeft' ? -1 : 1, 0, false);
+            }
+            return;
+        }
+        if (e.shiftKey && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
+            // Shift+Up/Down: resize the selected event (keyboard drag-resize)
+            e.preventDefault();
+            nudge(0, e.key === 'ArrowUp' ? -1 : 1, true);
+            return;
+        }
         if (e.key === 'Delete') {
             if (selection.value.length) {
                 deleteEvents([...selection.value]);
@@ -1067,6 +1199,16 @@ export const Schedule = component('schedule', {
         } else if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
             moveSelection(1);
             e.preventDefault();
+        } else if (e.key === 'Enter') {
+            // keyboard alternative to double click: open the editor
+            const rec = selection.value.length === 1 ? find(selection.value[0]) : undefined;
+            if (rec && !rec.readonly) {
+                e.preventDefault();
+                edition(rec);
+            }
+        } else if (e.key === 'n' || e.key === 'N') {
+            e.preventDefault();
+            keyboardCreate();
         }
     };
 
@@ -1168,10 +1310,20 @@ export const Schedule = component('schedule', {
         const endRow = hourToInt(ev.end);
         const heightRows = Math.max(1, endRow - startRow);
         const color = ev.color || '';
+        // Accessible name (4.1.2): title/times paint via CSS attr()
+        // content, invisible to AT — name the event explicitly, with its
+        // day so a week of "Standup, 09:00 to 10:00" stays distinguishable
+        const dict = props.weekdays.value as string[] | undefined;
+        const names = Array.isArray(dict) && dict.length === 7 ? dict : DEFAULT_WEEKDAYS;
+        const when = weekly() ? names[(ev.weekday || 0) % 7] : String(ev.date || '').substring(0, 10);
         // Keyed by guid: deletes/pastes inside a cell move the surviving
         // siblings; a time change still rebuilds (the event leaves one
         // cell's list for another — keys are scoped per list)
         return html`<div key="${ev.guid}" class="lm-schedule-item ${selected ? 'lm-schedule-selected' : ''}"
+            id="${itemId(ev.guid!)}"
+            role="button"
+            aria-label="${(ev.title || 'No title') + ', ' + when + ', ' + ev.start + ' to ' + ev.end}"
+            aria-pressed="${selected ? 'true' : 'false'}"
             data-guid="${ev.guid}"
             data-title="${ev.title || ''}"
             data-description="${ev.description || false}"
@@ -1198,6 +1350,7 @@ export const Schedule = component('schedule', {
         const heightRows = hi - lo + 1;
         const color = d.record.color || '#2563eb';
         return html`<div class="lm-schedule-item lm-schedule-selected lm-schedule-dragging"
+            aria-hidden="true"
             data-title="${d.record.title || 'No title'}"
             data-start="${intToHour(lo)}"
             data-end="${intToHour(hi + 1)}"
@@ -1313,6 +1466,8 @@ export const Schedule = component('schedule', {
             <input type="text" class="lm-schedule-editor-location" placeholder="Location" bind="${fLocation}" />
             <div class="lm-schedule-editor-palette">${PALETTE.map(
                 (c) => html`<button type="button" style="background-color:${c}"
+                    aria-label="${COLOR_NAMES[c] || c}"
+                    aria-pressed="${() => (c === fColor.value ? 'true' : 'false')}"
                     data-color="${c}" data-selected="${() => (c === fColor.value ? 'true' : false)}"
                     onclick="${() => (fColor.value = c)}"></button>`
             )}</div>
@@ -1322,6 +1477,9 @@ export const Schedule = component('schedule', {
 
     return html`<div class="lm-schedule ${() => (gridMin() > 9 ? 'lm-schedule-large' : '')}"
         tabindex="0"
+        role="group"
+        aria-label="Schedule"
+        aria-activedescendant="${() => (selection.value.length === 1 ? itemId(selection.value[0]) : false)}"
         data-type="${() => (props.type.value as string) || 'week'}"
         data-weekly="${() => (weekly() ? 'true' : false)}"
         ref="${(el: HTMLElement) => (rootEl = el)}"

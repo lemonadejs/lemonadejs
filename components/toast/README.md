@@ -20,7 +20,8 @@ and fire toasts imperatively from anywhere:
 Queue model: up to `max` toasts are visible at once; overflow waits in
 an internal FIFO and is promoted when a visible toast finishes leaving.
 Each toast auto-dismisses after its duration (host default 4000ms,
-per-toast override, 0 = sticky until closed), then plays a 200ms leave
+per-toast override, 0 = sticky until closed; hover or focus PAUSES the
+clock, leaving resumes it), then plays a 200ms leave
 animation (data-leaving) before it is removed and onclose(message)
 fires. Manual close (×), the action button and unmount all clear the
 pending timers — destroy-clean. clear() drops everything at once,

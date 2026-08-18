@@ -9,9 +9,14 @@ LemonadeJS tooltip block — contract-verified, framework-agnostic.
 <Tooltip /> — a floating label for any element.
 
 Wraps its children and shows a small dark pill on hover/focus of the
-wrapper; hides on leave/blur/Escape. Self-contained on purpose: a
-tooltip is too small to compose <Modal /> — no chrome, no drag, no
-focus management, just one branch and four coordinates.
+wrapper; hides on leave/blur/Escape. The popper is HOVERABLE (WCAG
+1.4.13): leaving the wrapper starts a short grace timer instead of
+hiding, so the pointer can travel across the gap onto the popper —
+re-entering the subtree (trigger or popper) cancels the hide. While
+visible, the trigger children are wired to the popper through
+aria-describedby. Self-contained on purpose: a tooltip is too small to
+compose <Modal /> — no chrome, no drag, no focus management, just one
+branch and four coordinates.
 
   <${Tooltip} title="Save your work" position="top">
       <button>Save</button>

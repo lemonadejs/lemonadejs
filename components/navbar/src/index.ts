@@ -27,15 +27,32 @@ export const Navbar = component('navbar', {
     onprev: Function,   // left link clicked (new in v6)
     onnext: Function,   // right link clicked (new in v6)
 }, (props) => {
+    // Without an href an <a> is neither focusable nor a control — when a
+    // link is click-only (onprev/onnext driving in-app state) it becomes a
+    // keyboard button: role=button, tabindex=0, Enter/Space activate.
+    // With an href the native link semantics stay untouched.
+    const buttonKey = (handler: ((e: Event) => unknown) | undefined, href: () => string) =>
+        (e: KeyboardEvent) => {
+            if ((e.key === 'Enter' || e.key === ' ') && !href()) {
+                e.preventDefault(); // Space must not scroll the page
+                handler?.(e);
+            }
+        };
     return html`<nav class="lm-navbar">
         <div class="lm-navbar-container">
             <div class="lm-navbar-icon"><a
                 href="${() => props.prev.value || false}"
+                role="${() => (props.prev.value ? false : 'button')}"
+                tabindex="${() => (props.prev.value ? false : '0')}"
+                onkeydown="${buttonKey((e) => props.onprev?.(e), () => props.prev.value)}"
                 onclick="${(e: MouseEvent) =>
                     props.onprev?.(e)}">${props.left}</a></div>
             <div class="lm-navbar-title">${props.title}</div>
             <div class="lm-navbar-icon"><a
                 href="${() => props.next.value || false}"
+                role="${() => (props.next.value ? false : 'button')}"
+                tabindex="${() => (props.next.value ? false : '0')}"
+                onkeydown="${buttonKey((e) => props.onnext?.(e), () => props.next.value)}"
                 onclick="${(e: MouseEvent) =>
                     props.onnext?.(e)}">${props.right}</a></div>
         </div>

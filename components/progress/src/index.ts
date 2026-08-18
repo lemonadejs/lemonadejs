@@ -33,6 +33,7 @@ export const Progress = component('progress', {
     thickness: 0,             // stroke/bar thickness in px (defaults: 4 linear, 3.6 circular)
     color: '',                // green | orange | red | purple (default blue)
     label: false,             // show the % text: beside linear, centered in circular
+    arialabel: '',            // accessible name for the progressbar (aria-label)
     onchange: Function,       // fires when the bound percent is set via set()
 }, (props, { bind, computed }) => {
     // No bound percent → nothing to show → indeterminate by default
@@ -88,6 +89,7 @@ export const Progress = component('progress', {
 
     return html`<div class="lm-progress"
         role="progressbar"
+        aria-label="${() => props.arialabel.value || false}"
         aria-valuemin="0"
         aria-valuemax="100"
         aria-valuenow="${() => (indeterminate.value ? false : pct.value)}"

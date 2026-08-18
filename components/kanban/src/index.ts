@@ -18,6 +18,13 @@
  *     others close ranks) and a ghost slot the card's size previews the
  *     exact landing position; Escape cancels mid-drag, events fire ONLY
  *     on commit
+ *   - keyboard: cards are tabbable; Space (or the ⠿ grip button) picks
+ *     the focused card up, arrows steer the ghost between slots and
+ *     columns, Space/Enter drops through the SAME move path a mouse
+ *     drop commits through, Escape cancels; Enter on an idle card fires
+ *     oncardclick. While picked, clicking a destination card or a
+ *     column's empty space drops there — a single-pointer, no-drag
+ *     alternative. A polite live region narrates pick/move/drop
  *   - oncardmove(cardId, fromColumnId, toColumnId, index) on any move
  *     (drag or api.moveCard); onchange(data) on any data change;
  *     oncardclick(card) on click (never after a drag);
@@ -84,6 +91,13 @@ export const Kanban = component('kanban', {
         height: number;
     } | null>(null);
     const drop = state<{ col: string | number; index: number } | null>(null);
+
+    // ---- keyboard/single-pointer move mode: the picked card stays IN
+    // the flow (unlike a drag) and the shared ghost previews the landing
+    // slot; commit funnels through performMove — the same path as a
+    // mouse drop. `live` feeds the SR-only status region.
+    const pick = state<{ id: string | number; height: number } | null>(null);
+    const live = state('');
 
     // ---- geometry comes from the LIVE DOM, never from a registry.
     // (An earlier design cached elements via refs; refs fire only when a
@@ -308,6 +322,9 @@ export const Kanban = component('kanban', {
             moved = true;
             // The hot path: two writes per mousemove — one update pass
             batch(() => {
+                if (pick.peek()) {
+                    pick.value = null; // a real drag preempts a keyboard pick
+                }
                 drag.value = {
                     id: card.id,
                     dx: ev.clientX - startX,
@@ -329,9 +346,135 @@ export const Kanban = component('kanban', {
         releaseGesture = () => finish(false);
     };
 
+    // ---- keyboard pick-up/move/drop (WCAG 2.1.1) + single-pointer
+    // no-drag moves (WCAG 2.5.7). One pick at a time; a real mouse drag
+    // preempts it. drop.index counts the NON-picked cards — exactly the
+    // index applyMove splices at, so the ghost and the commit agree.
+    const columnTitle = (colId: string | number): string =>
+        String(peekColumns().find((c) => c.id === colId)?.title ?? '');
+    /** Valid landing slots in a column = its cards minus the picked one */
+    const slotCount = (colId: string | number, cardId: string | number): number => {
+        const col = peekColumns().find((c) => c.id === colId);
+        return col ? cardsOf(col).filter((c) => c.id !== cardId).length : 0;
+    };
+    const focusCard = (id: string | number) =>
+        (rootEl?.querySelector('[data-card="' + String(id) + '"]') as HTMLElement | null)?.focus();
+
+    const pickUp = (card: KanbanCard) => {
+        const hit = findCard(card.id);
+        if (!hit) {
+            return;
+        }
+        const el = rootEl?.querySelector('[data-card="' + String(card.id) + '"]') as HTMLElement | null;
+        batch(() => {
+            pick.value = { id: card.id, height: el ? el.getBoundingClientRect().height : 0 };
+            drop.value = { col: hit.col.id, index: hit.index }; // the pickup slot: dropping here is a no-op
+        });
+        live.value = String(card.title) + ' grabbed. Arrows move, Space or Enter drops, Escape cancels.';
+        el?.focus();
+    };
+
+    /** Drop (commit) or cancel the pick — the keyboard twin of finish() */
+    const settlePick = (commit: boolean) => {
+        const p = pick.peek();
+        if (!p) {
+            return;
+        }
+        const target = drop.peek();
+        const hit = findCard(p.id);
+        const title = hit ? String(cardsOf(hit.col)[hit.index].title) : '';
+        batch(() => {
+            // One update pass: mode reset + the committed move (touch)
+            pick.value = null;
+            drop.value = null;
+            if (commit && target) {
+                performMove(p.id, target.col, target.index);
+            }
+        });
+        live.value =
+            commit && target
+                ? title + ' dropped in ' + columnTitle(target.col) + ', position ' + (target.index + 1) + '.'
+                : title + ' move cancelled.';
+        // keep focus with the card — a cross-column drop re-parents its node
+        focusCard(p.id);
+    };
+
+    const steerPick = (key: string) => {
+        const p = pick.peek();
+        const t = drop.peek();
+        if (!p || !t) {
+            return;
+        }
+        const cols = peekColumns();
+        let ci = cols.findIndex((c) => c.id === t.col);
+        let index = t.index;
+        if (key === 'ArrowUp') {
+            index -= 1;
+        } else if (key === 'ArrowDown') {
+            index += 1;
+        } else if (key === 'ArrowLeft') {
+            ci -= 1;
+        } else {
+            ci += 1;
+        }
+        if (ci < 0 || ci >= cols.length) {
+            return; // the board edge: stay put
+        }
+        const max = slotCount(cols[ci].id, p.id);
+        index = Math.max(0, Math.min(index, max));
+        drop.value = { col: cols[ci].id, index };
+        live.value = columnTitle(cols[ci].id) + ', position ' + (index + 1) + ' of ' + (max + 1) + '.';
+    };
+
+    const cardKey = (e: KeyboardEvent, card: KanbanCard) => {
+        if (e.target !== e.currentTarget) {
+            return; // the grip/menu buttons own their own keys
+        }
+        const picked = pick.peek()?.id === card.id;
+        if (e.key === ' ') {
+            e.preventDefault();
+            if (picked) {
+                settlePick(true);
+            } else {
+                pickUp(card);
+            }
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            if (picked) {
+                settlePick(true);
+            } else {
+                clickCard(card); // move mode: drops at this card; idle: oncardclick
+            }
+        } else if (picked && e.key.startsWith('Arrow')) {
+            e.preventDefault();
+            steerPick(e.key);
+        } else if (picked && e.key === 'Escape') {
+            e.preventDefault();
+            settlePick(false);
+        }
+    };
+
     const clickCard = (card: KanbanCard) => {
         if (suppressClick) {
             suppressClick = false;
+            return;
+        }
+        const p = pick.peek();
+        if (p) {
+            // move mode: a click IS the single-pointer drop — land AT the
+            // clicked card's slot (clicking the picked card cancels)
+            if (p.id === card.id) {
+                settlePick(false);
+                return;
+            }
+            const hit = findCard(card.id);
+            if (hit) {
+                drop.value = {
+                    col: hit.col.id,
+                    index: cardsOf(hit.col).filter((c) => c.id !== p.id).findIndex((c) => c.id === card.id),
+                };
+            }
+            settlePick(true);
             return;
         }
         props.oncardclick?.(card);
@@ -358,12 +501,29 @@ export const Kanban = component('kanban', {
 
     const cardView = (card: KanbanCard, ri: number) =>
         html`<article class="lm-kanban-card ${() =>
-            drag.value?.id === card.id ? 'lm-kanban-card-dragging' : ''}"
-            key="${card.id}" data-card="${card.id}"
+            drag.value?.id === card.id
+                ? 'lm-kanban-card-dragging'
+                : pick.value?.id === card.id
+                  ? 'lm-kanban-card-picked'
+                  : ''}"
+            key="${card.id}" data-card="${card.id}" tabindex="0"
             style="${() => cardStyle(card, ri)}"
             onmousedown="${(e: MouseEvent) => armDrag(e, card)}"
             onclick="${() => clickCard(card)}"
-            ondblclick="${() => props.oncarddblclick?.(card)}">
+            ondblclick="${() => props.oncarddblclick?.(card)}"
+            onkeydown="${(e: KeyboardEvent) => cardKey(e, card)}">
+            <button type="button" class="lm-kanban-card-move"
+                aria-label="Move card" aria-pressed="${() => (pick.value?.id === card.id ? 'true' : 'false')}"
+                onmousedown="${(e: MouseEvent) => e.stopPropagation()}"
+                ondblclick="${(e: MouseEvent) => e.stopPropagation()}"
+                onclick="${(e: MouseEvent) => {
+                    e.stopPropagation();
+                    if (pick.peek()?.id === card.id) {
+                        settlePick(false);
+                    } else {
+                        pickUp(card);
+                    }
+                }}">⠿</button>
             ${props.oncardmenu
                 ? html`<button type="button" class="lm-kanban-card-menu"
                       aria-label="Card menu" aria-haspopup="menu"
@@ -384,6 +544,7 @@ export const Kanban = component('kanban', {
         </article>`;
 
     return html`<div class="lm-kanban" ref="${(el: HTMLElement) => (rootEl = el)}">
+        <div class="lm-kanban-live" role="status" aria-live="polite">${() => live.value}</div>
         ${() =>
             columns().map(
                 (col) => html`<div class="lm-kanban-column" key="${col.id}" data-column="${col.id}">
@@ -391,32 +552,47 @@ export const Kanban = component('kanban', {
                         <span class="lm-kanban-column-title">${col.title}</span>
                         <span class="lm-kanban-column-count">${cardsOf(col).length}</span>
                     </div>
-                    <div class="lm-kanban-column-cards">
+                    <div class="lm-kanban-column-cards"
+                        onclick="${(e: MouseEvent) => {
+                            // move mode: clicking a column's EMPTY space (not a
+                            // card) drops the picked card at the end — the
+                            // single-pointer path into empty/short columns
+                            const p = pick.peek();
+                            if (p && e.target === e.currentTarget) {
+                                drop.value = { col: col.id, index: slotCount(col.id, p.id) };
+                                settlePick(true);
+                            }
+                        }}">
                         ${() => cardsOf(col).map((card, ri) => cardView(card, ri))}
                         ${() => {
                             // The ghost slot: a card-sized dashed box rendered
                             // ONLY in the active column, slotted via flex order.
-                            // drop.index counts the NON-dragged cards, so map it
+                            // drop.index counts the NON-lifted cards, so map it
                             // to the data index of the card it lands before —
                             // the dragged card is out of the flow but keeps its
                             // data-based order, and this keeps the ghost honest
                             // for same-column drags too. Its own binding (reads
-                            // drag + drop) — a drag never rebuilds the keyed
-                            // card list (which reads columns()).
+                            // drag + pick + drop) — a drag never rebuilds the
+                            // keyed card list (which reads columns()). The
+                            // KEYBOARD pick shares the ghost: same target
+                            // state, same preview, same commit path.
                             const t = drop.value;
                             const d = drag.value;
-                            if (!t || !d || t.col !== col.id) {
+                            const p = pick.value;
+                            const liftedId = d ? d.id : p ? p.id : undefined;
+                            if (!t || liftedId === undefined || t.col !== col.id) {
                                 return '';
                             }
                             const list = cardsOf(col);
-                            const before = list.filter((c) => c.id !== d.id)[t.index];
+                            const before = list.filter((c) => c.id !== liftedId)[t.index];
                             const order = before ? list.indexOf(before) * 2 - 1 : list.length * 2;
-                            const hit = findCard(d.id);
+                            const hit = findCard(liftedId);
                             const color = hit && cardsOf(hit.col)[hit.index].color;
+                            const height = d ? d.height : p!.height;
                             return html`<div class="lm-kanban-ghost"
                                 style="${css({
                                     order,
-                                    height: d.height + 'px',
+                                    height: height ? height + 'px' : false,
                                     '--lm-kanban-accent': color || false,
                                 })}"></div>`;
                         }}

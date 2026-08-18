@@ -92,13 +92,28 @@ describe('components/tooltip', () => {
         expect(popper()).toBeNull();
     });
 
-    it('mouseleave hides a visible tooltip', async () => {
+    it('mouseleave hides a visible tooltip after the hover grace window', async () => {
         const el = mountTip();
         await show(el);
         expect(popper()).not.toBeNull();
 
         leave(el);
+        expect(popper()).not.toBeNull(); // grace: the pointer may be crossing to the popper
+        await vi.advanceTimersByTimeAsync(150);
         expect(popper()).toBeNull();
+    });
+
+    it('is HOVERABLE: re-entering during the grace window keeps it open', async () => {
+        const events: string[] = [];
+        const el = mountTip({ onclose: () => events.push('close') });
+        await show(el);
+
+        leave(el); // pointer crosses the gap toward the popper
+        await vi.advanceTimersByTimeAsync(50);
+        enter(el); // the popper is a wrapper child: reaching it re-enters the subtree
+        await vi.advanceTimersByTimeAsync(5000);
+        expect(popper()).not.toBeNull();
+        expect(events).toEqual([]);
     });
 
     it('shows on focus and hides on blur', async () => {
@@ -118,6 +133,41 @@ describe('components/tooltip', () => {
 
         el.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
         expect(popper()).toBeNull();
+    });
+
+    it('Escape that dismissed a visible tooltip does not propagate further', async () => {
+        const el = mountTip();
+        const seen: boolean[] = [];
+        const listener = () => seen.push(true);
+        document.addEventListener('keydown', listener);
+
+        await show(el);
+        el.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+        expect(popper()).toBeNull();
+        expect(seen).toEqual([]); // consumed by the dismissal
+
+        el.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+        expect(seen).toEqual([true]); // nothing to dismiss: passes through
+        document.removeEventListener('keydown', listener);
+    });
+
+    it('wires the trigger to the popper via aria-describedby while visible', async () => {
+        const App: Component = () =>
+            html`<main><${Tooltip} title="Save your work"><button>Save</button></${Tooltip}></main>`;
+        handle = t(App);
+        const el = wrapper();
+        setRect(el, { top: 100, left: 100, width: 80, height: 30 });
+        const button = handle.query('.lm-tooltip button')!;
+        expect(button.hasAttribute('aria-describedby')).toBe(false);
+
+        await show(el);
+        const ref = button.getAttribute('aria-describedby')!;
+        expect(ref).toBeTruthy();
+        expect(popper()!.getAttribute('id')).toBe(ref);
+
+        leave(el);
+        await vi.advanceTimersByTimeAsync(150); // grace runs out, wiring is removed
+        expect(button.hasAttribute('aria-describedby')).toBe(false);
     });
 
     it('positions with fixed coordinates from the wrapper rect (default top)', async () => {
@@ -180,6 +230,7 @@ describe('components/tooltip', () => {
         expect(events).toEqual(['open']);
 
         leave(el);
+        await vi.advanceTimersByTimeAsync(150); // the grace window runs out
         expect(events).toEqual(['open', 'close']);
 
         // a cancelled pending show fires NEITHER

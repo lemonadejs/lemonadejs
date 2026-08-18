@@ -15,8 +15,10 @@
  * receives the option object. The sheet does NOT auto-close on a pick —
  * exactly like v5, closing is the consumer's call.
  *
- * Added: closable (backdrop click / Escape close — v5 shipped no close
- * affordance at all); title/message header card (v5 shipped the CSS for
+ * Added: closable (backdrop click closes — v5 shipped no close affordance
+ * at all; Escape ALWAYS closes regardless: the backdrop Modal traps Tab
+ * inside the sheet, so the keyboard must keep an exit); title/message
+ * header card (v5 shipped the CSS for
  * .jactionsheet-title/-message but never rendered them — resurrected).
  * Dropped: the v5 slide-bottom-out exit animation (it gated closing on
  * animationend; v6 closes immediately, the slide-IN stays, pure CSS).
@@ -42,7 +44,8 @@ export const Actionsheet = component('actionsheet', {
     actions: Array,               // ActionsheetGroup[] — live (v5: actions)
     title: '',                    // optional header card title (v5 CSS, resurrected)
     message: '',                  // optional header card message (v5 CSS, resurrected)
-    closable: false,              // backdrop click / Escape close the sheet
+    label: 'Actions',             // accessible name when there is no title (aria-label)
+    closable: false,              // backdrop click closes the sheet (Escape always closes)
     onopen: Function,             // sheet opened
     onclose: Function,            // sheet closed (origin)
     api: {
@@ -85,9 +88,22 @@ export const Actionsheet = component('actionsheet', {
         option.onclick?.(option); // v5: self.onclick(self) — the option itself
     };
 
-    return html`<div class="lm-actionsheet">
+    return html`<div class="lm-actionsheet"
+        onkeydown="${(e: KeyboardEvent) => {
+            // The backdrop Modal traps Tab inside the sheet — Escape must
+            // stay a keyboard exit even with closable off (WCAG 2.1.2).
+            // With closable on, Modal's own Escape handling runs first and
+            // stops propagation, so this only catches the trapped case.
+            if (e.key === 'Escape' && opened.value) {
+                e.preventDefault();
+                e.stopImmediatePropagation();
+                doClose('escape');
+            }
+        }}">
         <${Modal} bind="${opened}" header="${false}" position="bottom" backdrop
             closable="${props.closable}"
+            title="${props.title}"
+            label="${props.label}"
             onclose="${(origin: string) => props.onclose?.(origin)}">
             ${() =>
                 Boolean(props.title.value || props.message.value) &&

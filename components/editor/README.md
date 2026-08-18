@@ -17,11 +17,13 @@ mutations + api.refresh()). Contenteditable engine, semantic HTML out.
     outdent, links (inline balloon), inline images (file picker, paste
     and drop — stored as data URLs), horizontal rule, clear
     formatting, fullscreen
-  - images are objects: click one for drag-resize — corner handles
+  - images are objects: click one (or Tab to it — images are
+    focusable, focusing selects) for drag-resize — corner handles
     keep the aspect ratio, edge handles stretch width or height
     independently — and an alignment menu: wrap left / center / wrap
     right / inline, full width, remove; Delete removes the selection
-  - tables, CKEditor-style: a hover grid picker inserts; a floating
+  - tables, CKEditor-style: a hover grid picker inserts (keyboard
+    too: arrows size the grid, Enter inserts, Escape closes); a floating
     balloon over the active table carries Row / Column / Cell menus
     (insert above/below/left/right, header row/column, delete), cell
     merge (drag across cells to select, or merge right/down), split,

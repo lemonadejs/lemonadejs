@@ -15,6 +15,8 @@
  *   backdrop  dimmed overlay behind the panel
  *   closable  backdrop click + Escape close the drawer
  *   title     optional header row with a close ×
+ *   label     accessible name for the title-less drawer (the panel is a
+ *             role=dialog — it must never be unnamed)
  *
  * onclose(origin): 'button' | 'backdrop' | 'escape' | 'api'.
  */
@@ -33,6 +35,7 @@ export const Drawer = component('drawer', {
     backdrop: true,               // dimmed overlay
     closable: true,               // backdrop click + Escape close
     title: '',                    // optional header row with a close ×
+    label: 'Drawer',              // accessible name when there is no visible title (aria-label)
     onopen: Function,
     onclose: Function,            // (origin)
     api: { open: Function, close: Function, toggle: Function },
@@ -73,6 +76,7 @@ export const Drawer = component('drawer', {
         <${Modal} bind="${visible}"
             header="${hasHeader}"
             title="${props.title}"
+            label="${props.label}"
             position="${position}"
             width="${props.width}"
             backdrop="${props.backdrop}"

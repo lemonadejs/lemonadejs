@@ -224,6 +224,24 @@ describe('components/dialog — on the Modal primitive', () => {
         expect(title()!.textContent).toBe('After');
     });
 
+    it('names the dialog from its visible title and describes it by the message', async () => {
+        await open({ title: 'Delete file', message: 'This cannot be undone.' });
+        const panel = modal()!;
+        expect(panel.getAttribute('aria-label')).toBe('Delete file');
+        const describedby = panel.getAttribute('aria-describedby')!;
+        expect(describedby).toBeTruthy();
+        expect(document.getElementById(describedby)).toBe(message());
+        handle!.unmount();
+
+        await open({ message: 'No title here' }); // title-less: generic fallback name
+        expect(modal()!.getAttribute('aria-label')).toBe('Dialog');
+    });
+
+    it('the prompt input carries an aria-label mirroring the placeholder', async () => {
+        await open({ type: 'input', placeholder: 'Your name' });
+        expect(prompt()!.getAttribute('aria-label')).toBe('Your name');
+    });
+
     it('neither Escape nor the backdrop closes it — only the buttons (v5 parity)', async () => {
         await open();
         modal()!.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }));

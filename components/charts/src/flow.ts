@@ -7,9 +7,30 @@
  */
 import { css, html, type View } from 'lemonadejs';
 import type { Model, NormPoint, RenderCtx } from './model';
-import { polar, sector } from './helpers';
+import { kbKeydown, polar, sector } from './helpers';
 
 const f2 = (n: number): string => n.toFixed(2);
+
+/** Inline tip for the keyboard-active link (the flow twin of the
+ *  cartesian .lm-chart-kbtip; state-driven, survives rebuilds). */
+const kbTip = (title: string, value: string, color: string): View =>
+    html`<div class="lm-chart-kbtip" style="${css({ left: '50%' })}">
+        <div class="lm-chart-kbtip-title">${title}</div>
+        <div class="lm-chart-tip-row">
+            <span class="lm-chart-tip-swatch" style="${css({ background: color })}"></span>
+            <span class="lm-chart-tip-value">${value}</span>
+        </div>
+    </div>`;
+
+/** Clamp the roving index to the current link count (stale state → null). */
+const kbIndex = (v: number | null, n: number): number | null => (v != null && v < n ? v : null);
+
+/** The aria-label for a link diagram: summary, or the active link. */
+const kbLinkLabel = (kind: string, links: FlowLink[], kbi: number | null, fmt: (n: number) => string): string => {
+    if (kbi == null) return links.length ? kind + ', ' + links.length + ' links. Use arrow keys to explore.' : '';
+    const p = links[kbi].p;
+    return p.from + ' to ' + p.to + ': ' + fmt(p.value) + '. Link ' + (kbi + 1) + ' of ' + links.length + '.';
+};
 
 interface FlowNode { name: string; color: string; in: number; out: number; total: number; }
 interface FlowLink { p: NormPoint; i: number; }
@@ -83,6 +104,13 @@ export const sankeyChart = (m: Model, ctx: RenderCtx): View => {
     const ordered = [...links].sort((a, b) =>
         (top[index.get(a.p.from) as number] - top[index.get(b.p.from) as number])
         || (top[index.get(a.p.to) as number] - top[index.get(b.p.to) as number]));
+    // keyboard: arrows roam the ribbons (data order), Enter/Space activates —
+    // the cartesian roving model; the focusable container sits OUTSIDE the
+    // aria-hidden svg, so no focusable element lands in a hidden subtree
+    const kbi = kbIndex(ctx.kb.value, links.length);
+    const kbLink = kbi != null ? links[kbi] : null;
+    const kbKey = kbKeydown(ctx.kb, links.length, (i) => ctx.fire(links[i].p, 0, links[i].i));
+    const kbLabel = kbLinkLabel('Sankey diagram', links, kbi, ctx.fmt);
     const ribbons = ordered.map((e) => {
         const a = index.get(e.p.from) as number;
         const b = index.get(e.p.to) as number;
@@ -97,6 +125,7 @@ export const sankeyChart = (m: Model, ctx: RenderCtx): View => {
         const tip = (ev: MouseEvent): void => ctx.showTip(ev, e.p.from + ' → ' + e.p.to,
             [{ name: '', value: ctx.fmt(e.p.value), color: nodes[a].color }]);
         return html`<path class="lm-chart-sankey-link" d="${d}" style="${css({ fill: nodes[a].color })}"
+            data-kb="${kbLink === e ? 'true' : false}"
             onmousemove="${tip}" ontouchstart="${tip}" onmouseleave="${ctx.hideTip}"
             onclick="${() => ctx.fire(e.p, 0, e.i)}" />`;
     });
@@ -115,9 +144,14 @@ export const sankeyChart = (m: Model, ctx: RenderCtx): View => {
             >${n.name}</span>`;
     }) : [];
 
-    return html`<div class="lm-chart-flow">
+    return html`<div class="lm-chart-flow" tabindex="${links.length ? '0' : false}"
+        role="${links.length ? 'application' : false}"
+        aria-label="${links.length ? kbLabel : false}"
+        onkeydown="${kbKey}"
+        onblur="${() => { if (ctx.kb.value != null) ctx.kb.value = null; }}">
         <svg class="lm-chart-flowsvg" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">${ribbons}${rects}</svg>
         ${labels}
+        ${kbLink ? kbTip(kbLink.p.from + ' → ' + kbLink.p.to, ctx.fmt(kbLink.p.value), nodes[index.get(kbLink.p.from) as number].color) : false}
     </div>`;
 };
 
@@ -154,6 +188,11 @@ export const arcChart = (m: Model, ctx: RenderCtx): View => {
         }
     };
     const hover = ctx.hover.value;
+    // keyboard: arrows roam the arcs, Enter/Space activates (cartesian model)
+    const kbi = kbIndex(ctx.kb.value, links.length);
+    const kbLink = kbi != null ? links[kbi] : null;
+    const kbKey = kbKeydown(ctx.kb, links.length, (i) => ctx.fire(links[i].p, 0, links[i].i));
+    const kbLabel = kbLinkLabel('Arc diagram', links, kbi, ctx.fmt);
     const arcs = links.map((e) => {
         const a = index.get(e.p.from) as number;
         const b = index.get(e.p.to) as number;
@@ -168,7 +207,7 @@ export const arcChart = (m: Model, ctx: RenderCtx): View => {
         return html`<path class="lm-chart-arc-link" vector-effect="non-scaling-stroke"
             d="M ${f2(xa)} ${f2(BASE)} A ${f2(rx)} ${f2(ry)} 0 0 1 ${f2(xb)} ${f2(BASE)}"
             style="${css({ stroke: nodes[a].color, strokeWidth: (1 + (e.p.value / vmax) * 2.2).toFixed(1) + 'px' })}"
-            data-dim="${dim}"
+            data-dim="${dim}" data-kb="${kbLink === e ? 'true' : false}"
             onmousemove="${tip}" ontouchstart="${tip}" onmouseleave="${ctx.hideTip}"
             onclick="${() => ctx.fire(e.p, 0, e.i)}" />`;
     });
@@ -195,12 +234,17 @@ export const arcChart = (m: Model, ctx: RenderCtx): View => {
         style="${css({ left: xOf(i) + '%', top: (rPx(i) + 4) + 'px', maxHeight: (rowH - rPx(i) - 6) + 'px' })}"
         data-on="${hover === n.name ? 'true' : false}">${n.name}</span>`) : [];
 
-    return html`<div class="lm-chart-flow lm-chart-arcflow">
+    return html`<div class="lm-chart-flow lm-chart-arcflow" tabindex="${links.length ? '0' : false}"
+        role="${links.length ? 'application' : false}"
+        aria-label="${links.length ? kbLabel : false}"
+        onkeydown="${kbKey}"
+        onblur="${() => { if (ctx.kb.value != null) ctx.kb.value = null; }}">
         <div class="lm-chart-arc-plot" ref="${measure}">
             <svg class="lm-chart-flowsvg" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">${arcs}</svg>
             ${dots}
         </div>
         <div class="lm-chart-arc-labels" style="${css({ height: rowH + 'px' })}">${labels}</div>
+        ${kbLink ? kbTip(kbLink.p.from + ' → ' + kbLink.p.to, ctx.fmt(kbLink.p.value), nodes[index.get(kbLink.p.from) as number].color) : false}
     </div>`;
 };
 
@@ -235,7 +279,12 @@ export const chordChart = (m: Model, ctx: RenderCtx): View => {
     const P = (a: number): string => { const [x, y] = polar(a, RI); return f2(x) + ' ' + f2(y); };
     const arcTo = (from: number, to: number): string =>
         `A ${RI} ${RI} 0 ${to - from > 180 ? 1 : 0} 1 ${P(to)}`;
-    const ribbons = links.map((e) => {
+    // keyboard: arrows roam the ribbons, Enter/Space activates (cartesian model)
+    const kbi = kbIndex(ctx.kb.value, links.length);
+    const kbLink = kbi != null ? links[kbi] : null;
+    const kbKey = kbKeydown(ctx.kb, links.length, (i) => ctx.fire(links[i].p, 0, links[i].i));
+    const kbLabel = kbLinkLabel('Chord diagram', links, kbi, ctx.fmt);
+    const ribbons = links.map((e, k) => {
         const a = index.get(e.p.from) as number;
         const b = index.get(e.p.to) as number;
         const w = (e.p.value / totalFlow) * span;
@@ -247,6 +296,7 @@ export const chordChart = (m: Model, ctx: RenderCtx): View => {
         const tip = (ev: MouseEvent): void => ctx.showTip(ev, e.p.from + ' → ' + e.p.to,
             [{ name: '', value: ctx.fmt(e.p.value), color: nodes[a].color }]);
         return html`<path class="lm-chart-chord-link" d="${d}" style="${css({ fill: nodes[a].color })}"
+            data-kb="${kbi === k ? 'true' : false}"
             onmousemove="${tip}" ontouchstart="${tip}" onmouseleave="${ctx.hideTip}"
             onclick="${() => ctx.fire(e.p, 0, e.i)}" />`;
     });
@@ -258,9 +308,14 @@ export const chordChart = (m: Model, ctx: RenderCtx): View => {
     }) : [];
 
     return html`<div class="lm-chart-pie-core">
-        <div class="lm-chart-pie-area">
+        <div class="lm-chart-pie-area" tabindex="${links.length ? '0' : false}"
+            role="${links.length ? 'application' : false}"
+            aria-label="${links.length ? kbLabel : false}"
+            onkeydown="${kbKey}"
+            onblur="${() => { if (ctx.kb.value != null) ctx.kb.value = null; }}">
             <svg class="lm-chart-pie" viewBox="0 0 100 100" aria-hidden="true">${ribbons}${arcs}</svg>
             ${labels}
+            ${kbLink ? kbTip(kbLink.p.from + ' → ' + kbLink.p.to, ctx.fmt(kbLink.p.value), nodes[index.get(kbLink.p.from) as number].color) : false}
         </div>
     </div>`;
 };

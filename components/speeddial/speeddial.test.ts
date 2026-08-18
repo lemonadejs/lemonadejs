@@ -161,6 +161,35 @@ describe('components/speeddial', () => {
         expect(isOpen()).toBe(false);
     });
 
+    it('Escape at document level dismisses a HOVER-opened fan (WCAG 1.4.13)', () => {
+        handle = t(Speeddial, { options: THREE });
+        enter(); // hover open — focus never entered the component
+        expect(isOpen()).toBe(true);
+        document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+        expect(isOpen()).toBe(false);
+    });
+
+    it('closing while focus is inside the fan moves focus back to the FAB', () => {
+        handle = t(Speeddial, { options: THREE });
+        fab().click();
+        actions()[1].focus();
+        expect(document.activeElement).toBe(actions()[1]);
+        root().dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+        expect(isOpen()).toBe(false);
+        expect(document.activeElement).toBe(fab());
+    });
+
+    it('group semantics: no menu roles, named FAB by default, icon hidden from AT', () => {
+        handle = t(Speeddial, { options: THREE });
+        expect(fab().getAttribute('aria-label')).toBe('Speed dial'); // sane default name
+        expect(fab().hasAttribute('aria-haspopup')).toBe(false);
+        expect(fab().querySelector('.lm-speeddial-icon')!.getAttribute('aria-hidden')).toBe('true');
+        const fan = handle.query('.lm-speeddial-actions')!;
+        expect(fan.getAttribute('role')).toBe('group');
+        expect(fan.getAttribute('aria-label')).toBe('Speed dial');
+        expect(actions()[0].hasAttribute('role')).toBe(false); // plain buttons
+    });
+
     it('clicking an action fires its onclick AND onaction(name, event), then closes', () => {
         const log: string[] = [];
         const options: SpeeddialAction[] = [

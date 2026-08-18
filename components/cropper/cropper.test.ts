@@ -291,6 +291,77 @@ describe('components/cropper', () => {
         expect(boxEl().style.cursor).toBe('move');
     });
 
+    it('moves the crop box with arrow keys, same clamps as the drag', () => {
+        const api = mount();
+        loadImage(api, 1600, 1440);
+        const key = (k: string, extra: KeyboardEventInit = {}) => {
+            const e = new KeyboardEvent('keydown', { key: k, bubbles: true, cancelable: true, ...extra });
+            boxEl().dispatchEvent(e);
+            return e;
+        };
+        // Box: left 250, top 60 — plain arrows step 1px
+        expect(key('ArrowRight').defaultPrevented).toBe(true);
+        expect(boxEl().style.left).toBe('251px');
+        key('ArrowDown');
+        expect(boxEl().style.top).toBe('61px');
+        key('ArrowLeft');
+        key('ArrowUp');
+        expect(boxEl().style.left).toBe('250px');
+        expect(boxEl().style.top).toBe('60px');
+
+        // Ctrl/Meta steps by 10px, clamped to the area (v5 rules)
+        key('ArrowRight', { ctrlKey: true });
+        expect(boxEl().style.left).toBe('260px');
+        for (let i = 0; i < 30; i++) {
+            key('ArrowRight', { ctrlKey: true });
+        }
+        expect(boxEl().style.left).toBe('498px'); // 800 - 300 - 2
+        for (let i = 0; i < 50; i++) {
+            key('ArrowLeft', { ctrlKey: true });
+        }
+        expect(boxEl().style.left).toBe('0px');
+
+        // Non-arrow keys pass through untouched
+        expect(key('Enter').defaultPrevented).toBe(false);
+    });
+
+    it('resizes the crop box with Shift+arrows when resizable, minimum kept', () => {
+        mount({ resizable: true });
+        const key = (k: string, extra: KeyboardEventInit = {}) =>
+            boxEl().dispatchEvent(new KeyboardEvent('keydown', { key: k, bubbles: true, cancelable: true, ...extra }));
+        // Box: 300×240 — Shift grows/shrinks the east/south edge
+        key('ArrowRight', { shiftKey: true });
+        expect(boxEl().style.width).toBe('301px');
+        key('ArrowDown', { shiftKey: true });
+        expect(boxEl().style.height).toBe('241px');
+        key('ArrowLeft', { shiftKey: true });
+        key('ArrowUp', { shiftKey: true });
+        expect(boxEl().style.width).toBe('300px');
+        expect(boxEl().style.height).toBe('240px');
+        // The crop size stays the minimum (v5 clamp)
+        key('ArrowLeft', { shiftKey: true, ctrlKey: true });
+        expect(boxEl().style.width).toBe('300px');
+        handle!.unmount();
+        handle = null;
+
+        mount(); // not resizable: Shift+arrow moves, like the drag
+        key('ArrowRight', { shiftKey: true });
+        expect(boxEl().style.left).toBe('251px');
+        expect(boxEl().style.width).toBe('300px');
+    });
+
+    it('exposes the crop box, canvas, editor and aspect select to AT', () => {
+        mount({ resizable: true });
+        expect(boxEl().getAttribute('tabindex')).toBe('0');
+        expect(boxEl().getAttribute('role')).toBe('application');
+        expect(boxEl().getAttribute('aria-label')).toBe('Crop area');
+        expect(canvasEl().getAttribute('role')).toBe('img');
+        expect(canvasEl().getAttribute('aria-label')).toBe('Image preview');
+        expect(editor().getAttribute('role')).toBe('region');
+        expect(editor().getAttribute('aria-label')).toBe('Image editor');
+        expect(handle!.query('.lm-cropper-aspect')!.getAttribute('aria-label')).toBe('Aspect ratio');
+    });
+
     it('drives the engine from the range controls (native bind)', () => {
         const api = mount();
         loadImage(api, 1600, 1440);

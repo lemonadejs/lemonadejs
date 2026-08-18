@@ -83,8 +83,13 @@ describe('components/carousel', () => {
         expect(root().getAttribute('role')).toBe('region');
         expect(root().getAttribute('tabindex')).toBe('0');
         expect(slideEls().map((s) => s.getAttribute('aria-roledescription'))).toEqual(['slide', 'slide', 'slide']);
-        expect(slideEls().map((s) => s.getAttribute('aria-label'))).toEqual(['1 of 3', '2 of 3', '3 of 3']);
+        // position + title (when available) so slide changes are meaningful
+        expect(slideEls().map((s) => s.getAttribute('aria-label'))).toEqual(['1 of 3: Alpha', '2 of 3: Beta', '3 of 3: Gamma']);
         expect(slideEls().map((s) => s.getAttribute('aria-hidden'))).toEqual(['true', 'false', 'true']);
+        // hidden slides are inert too — their links leave the tab order (2.4.3)
+        expect(slideEls().map((s) => s.hasAttribute('inert'))).toEqual([true, false, true]);
+        // no autoplay → the track announces slide changes politely
+        expect(track().getAttribute('aria-live')).toBe('polite');
     });
 
     it('api next/prev/goto move the strip; loop=false clamps silently at the edges', () => {
@@ -235,6 +240,50 @@ describe('components/carousel', () => {
         root().dispatchEvent(new MouseEvent('mouseleave'));
         vi.advanceTimersByTime(1000);
         expect(value.value).toBe(1); // resumed (fresh interval)
+    });
+
+    it('autoplay pauses while focus is inside the carousel and resumes on focusout', () => {
+        vi.useFakeTimers();
+        const value = store(0);
+        mount({ bind: value, autoplay: 1000 });
+
+        root().dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
+        vi.advanceTimersByTime(5000);
+        expect(value.value).toBe(0); // paused for keyboard users too
+
+        root().dispatchEvent(new FocusEvent('focusout', { bubbles: true }));
+        vi.advanceTimersByTime(1000);
+        expect(value.value).toBe(1); // resumed (fresh interval)
+    });
+
+    it('autoplay renders a pause/play toggle BEFORE the slides; clicking stops and restarts rotation', () => {
+        vi.useFakeTimers();
+        const value = store(0);
+        mount({ bind: value, autoplay: 1000 });
+
+        const toggle = handle!.query('.lm-carousel-playpause') as HTMLButtonElement;
+        expect(toggle).not.toBeNull();
+        // APG: the rotation control precedes the slide container in the DOM
+        expect(toggle.compareDocumentPosition(viewport()) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+        expect(toggle.getAttribute('aria-label')).toBe('Stop automatic slide show');
+        // rotating → the live region stays off
+        expect(track().getAttribute('aria-live')).toBe('off');
+
+        toggle.click();
+        expect(toggle.getAttribute('aria-label')).toBe('Start automatic slide show');
+        expect(track().getAttribute('aria-live')).toBe('polite'); // paused → announce
+        vi.advanceTimersByTime(5000);
+        expect(value.value).toBe(0); // stopped
+
+        toggle.click(); // resumes even though the button keeps focus
+        expect(toggle.getAttribute('aria-label')).toBe('Stop automatic slide show');
+        vi.advanceTimersByTime(1000);
+        expect(value.value).toBe(1);
+    });
+
+    it('no toggle without autoplay', () => {
+        mount();
+        expect(handle!.query('.lm-carousel-playpause')).toBeNull();
     });
 
     it('autoplay is live: changing the prop re-arms and 0 disarms', () => {

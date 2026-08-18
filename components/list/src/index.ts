@@ -30,7 +30,8 @@
  *     as plain text rows)
  *   - dense and divider variants
  *   - onitemclick(item, index, event) makes rows interactive (hover +
- *     cursor through data-clickable)
+ *     cursor through data-clickable; keyboard via an inner role=button
+ *     wrapper — tabindex=0, Enter/Space activate)
  *   - virtual scrolling (height + rowheight, no pagination): the
  *     datagrid window pattern — 100k-item feeds keep ~a viewport of
  *     DOM alive
@@ -253,17 +254,34 @@ export const List = component('list', {
         // render is a declared (non-event) prop, so it arrives as a live state
         const custom = props.render.value as ((item: unknown, index: number) => string | View) | undefined;
         const onitemclick = props.onitemclick as
-            | ((item: unknown, index: number, e: MouseEvent) => void)
+            | ((item: unknown, index: number, e: Event) => void)
             | undefined;
+        const content = custom ? custom(item, dataIndex) : defaultItem(item);
         // Keyed by data index — the item's identity here (records may be
         // primitives, so the object itself cannot be the key): the virtual
         // window reuses overlapping rows on scroll, and a search narrowing
-        // the view moves surviving rows instead of rebuilding them
+        // the view moves surviving rows instead of rebuilding them.
+        // aria-setsize/posinset: virtual scroll keeps only a window of
+        // items in the DOM — tell AT the row's place in the FULL data.
+        // Interactive rows (onitemclick) keep role=listitem on the row so
+        // the list structure stays valid, and wrap the content in an inner
+        // role=button that is focusable and Enter/Space-activatable.
         return html`<div class="lm-list-item" role="listitem" key="${dataIndex}"
+            aria-setsize="${items().length}" aria-posinset="${dataIndex + 1}"
             style="${virtual() ? 'height:' + rowHeight() + 'px' : false}"
             data-clickable="${onitemclick ? 'true' : false}"
             onclick="${(e: MouseEvent) => onitemclick?.(item, dataIndex, e)}">${
-            custom ? custom(item, dataIndex) : defaultItem(item)}</div>`;
+            onitemclick
+                ? html`<div class="lm-list-action" role="button" tabindex="0"
+                      onkeydown="${(e: KeyboardEvent) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                              if (e.key === ' ') {
+                                  e.preventDefault(); // no page scroll
+                              }
+                              onitemclick(item, dataIndex, e);
+                          }
+                      }}">${content}</div>`
+                : content}</div>`;
     };
 
     return html`<div class="lm-list ${() => (props.dense.value ? 'lm-list-dense' : '')} ${() =>
@@ -307,6 +325,7 @@ export const List = component('list', {
                                   item < 0
                                       ? html`<span class="lm-list-gap">…</span>`
                                       : html`<button data-current="${() => (page.value === item ? 'true' : false)}"
+                                            aria-current="${() => (page.value === item ? 'page' : false)}"
                                             onclick="${() => setPage(item)}">${item + 1}</button>`
                               )}
                           <button onclick="${() => setPage(page.value + 1)}"

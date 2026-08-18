@@ -86,6 +86,33 @@ describe('components/navbar', () => {
         expect(fired).toEqual(['prev', 'next', 'next']);
     });
 
+    it('href-less links are keyboard buttons: role, tabindex, Enter/Space fire', () => {
+        const fired: string[] = [];
+        const prev = store('');
+        handle = t(Navbar, {
+            left: 'Back',
+            right: 'Next',
+            prev,
+            onprev: () => fired.push('prev'),
+            onnext: () => fired.push('next'),
+        });
+        // no href → focusable button semantics
+        expect(links()[0].getAttribute('role')).toBe('button');
+        expect(links()[0].getAttribute('tabindex')).toBe('0');
+        links()[0].dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
+        const space = new KeyboardEvent('keydown', { key: ' ', bubbles: true, cancelable: true });
+        links()[1].dispatchEvent(space);
+        expect(fired).toEqual(['prev', 'next']);
+        expect(space.defaultPrevented).toBe(true); // Space must not scroll
+
+        // href present → native link semantics, no button role
+        prev.value = '/back';
+        expect(links()[0].hasAttribute('role')).toBe(false);
+        expect(links()[0].hasAttribute('tabindex')).toBe(false);
+        links()[0].dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
+        expect(fired).toEqual(['prev', 'next']); // native Enter → click handles it
+    });
+
     it('clicks are safe without handlers (v5: links only)', () => {
         handle = t(Navbar, { left: 'Back', right: 'Next' });
         links()[0].click();

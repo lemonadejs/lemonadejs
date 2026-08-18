@@ -546,3 +546,80 @@ describe('components/editor — local exporters', () => {
         expect(doc).not.toContain('src="data:image/png');
     });
 });
+
+describe('components/editor — keyboard accessibility', () => {
+    const IMG = 'data:image/gif;base64,R0lGODlhAQABAAAAACw=';
+
+    const barItem = (icon: string) =>
+        Array.from(handle!.queryAll('.lm-editor-toolbar .lm-toolbar-item'))
+            .find((el) => el.querySelector('i')?.textContent === icon)!
+            .querySelector('a') as HTMLElement;
+
+    const flushMicro = () => new Promise((r) => setTimeout(r, 0));
+
+    it('the writing area carries an accessible name', () => {
+        mountEditor({});
+        expect(area().getAttribute('aria-label')).toBe('Rich text editor');
+    });
+
+    it('TABLE PICKER: opens focusable, arrows size the grid, Enter inserts', async () => {
+        mountEditor({});
+        barItem('grid_on').click();
+        const picker = handle!.query('.lm-editor-grid') as HTMLElement;
+        expect(picker).not.toBeNull();
+        expect(picker.getAttribute('tabindex')).toBe('0');
+        await flushMicro();
+        expect(document.activeElement).toBe(picker); // focus wired in on open
+
+        const key = (k: string) =>
+            picker.dispatchEvent(new KeyboardEvent('keydown', { key: k, bubbles: true, cancelable: true }));
+        key('ArrowDown'); // 1 × 1
+        key('ArrowDown'); // 2 × 1
+        key('ArrowRight'); // 2 × 2
+        key('ArrowRight'); // 2 × 3
+        expect(handle!.query('.lm-editor-grid-label')!.textContent).toBe('2 × 3');
+        expect(picker.getAttribute('aria-label')).toContain('2 by 3');
+        key('Enter');
+        expect(handle!.query('.lm-editor-grid')).toBeNull(); // picker closed
+        const table = area().querySelector('table')!;
+        expect(table.rows).toHaveLength(2);
+        expect(table.rows[0].cells).toHaveLength(3);
+    });
+
+    it('TABLE PICKER: Escape closes without inserting', () => {
+        mountEditor({});
+        barItem('grid_on').click();
+        const picker = handle!.query('.lm-editor-grid') as HTMLElement;
+        picker.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }));
+        expect(handle!.query('.lm-editor-grid')).toBeNull();
+        expect(area().querySelector('table')).toBeNull();
+    });
+
+    it('IMAGES: focusable (tabindex), focus selects, Delete removes', () => {
+        mountEditor({ value: '<p><img src="' + IMG + '"></p>' });
+        const img = area().querySelector('img') as HTMLImageElement;
+        expect(img.getAttribute('tabindex')).toBe('0'); // armed on mount
+        img.dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
+        expect(handle!.query('.lm-editor-img-box')).not.toBeNull(); // focus selects
+        area().dispatchEvent(new KeyboardEvent('keydown', { key: 'Delete', bubbles: true }));
+        expect(area().querySelector('img')).toBeNull();
+        expect(handle!.query('.lm-editor-img-box')).toBeNull();
+    });
+
+    it('IMAGES: the editing tabindex never leaks into getData()', () => {
+        let api!: Api & { getData(): string };
+        mountEditor({ value: '<p><img src="' + IMG + '"></p>', ref: (a: Api & { getData(): string }) => (api = a) });
+        expect(area().querySelector('img')!.getAttribute('tabindex')).toBe('0');
+        expect(api.getData()).not.toContain('tabindex');
+    });
+
+    it('the link balloon input carries an accessible name', () => {
+        mountEditor({});
+        // jsdom Ranges have no getBoundingClientRect — anchor to the item
+        window.getSelection?.()?.removeAllRanges();
+        barItem('link').click();
+        const input = handle!.query('.lm-editor-link input') as HTMLInputElement;
+        expect(input).not.toBeNull();
+        expect(input.getAttribute('aria-label')).toBe('Link URL');
+    });
+});

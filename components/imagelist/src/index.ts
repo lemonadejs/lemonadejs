@@ -14,10 +14,12 @@
  * Item bars (bar): a translucent overlay at the bottom of each image with
  * the item title + optional subtitle.
  *
- * Images load lazily (loading="lazy"). data is held BY REFERENCE: mutate
- * the array or its records and call data.touch() to re-render — or assign
+ * Images load lazily (loading="lazy"); the alt text is item.alt, falling
+ * back to item.title, then ''. data is held BY REFERENCE: mutate the
+ * array or its records and call data.touch() to re-render — or assign
  * a new array. onitemclick(item, index, event) makes tiles interactive
- * (cursor through data-clickable).
+ * (cursor through data-clickable, plus role="button", tabindex and
+ * Enter/Space activation).
  */
 
 import { component, css, html } from 'lemonadejs';
@@ -25,8 +27,10 @@ import { component, css, html } from 'lemonadejs';
 export interface ImageListItem {
     /** Image URL */
     src: string;
-    /** Caption — the bar's first line and the image alt text */
+    /** Caption — the bar's first line and the alt fallback */
     title?: string;
+    /** Image alt text (falls back to title, then '') */
+    alt?: string;
     /** Muted second line in the bar */
     subtitle?: string;
     /** Quilted: columns this item spans (default 1) */
@@ -85,7 +89,7 @@ export const ImageList = component('imagelist', {
 
     // Events arrive as plain functions (or undefined), not states
     const onitemclick = props.onitemclick as
-        | ((item: ImageListItem, index: number, e: MouseEvent) => void)
+        | ((item: ImageListItem, index: number, e: MouseEvent | KeyboardEvent) => void)
         | undefined;
 
     return html`<div class="lm-imagelist"
@@ -93,10 +97,19 @@ export const ImageList = component('imagelist', {
         style="${() => rootStyle()}">${() =>
         items().map((item, index) => html`<div class="lm-imagelist-item" key="${item}"
             data-clickable="${onitemclick ? 'true' : false}"
+            role="${onitemclick ? 'button' : false}"
+            tabindex="${onitemclick ? '0' : false}"
             style="${() => itemStyle(item)}"
-            onclick="${(e: MouseEvent) => onitemclick?.(item, index, e)}">
+            onclick="${(e: MouseEvent) => onitemclick?.(item, index, e)}"
+            onkeydown="${(e: KeyboardEvent) => {
+                // role=button contract: Enter/Space activate like a click
+                if (onitemclick && (e.key === 'Enter' || e.key === ' ')) {
+                    e.preventDefault();
+                    onitemclick(item, index, e);
+                }
+            }}">
             <img class="lm-imagelist-img" loading="lazy"
-                src="${item.src || ''}" alt="${item.title || ''}" />
+                src="${item.src || ''}" alt="${item.alt ?? item.title ?? ''}" />
             ${() =>
                 props.bar.value
                     ? html`<div class="lm-imagelist-bar">

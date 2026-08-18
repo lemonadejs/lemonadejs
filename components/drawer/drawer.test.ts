@@ -200,6 +200,19 @@ describe('components/drawer — on the Modal primitive', () => {
         expect(body.textContent).toContain('Sent');
     });
 
+    it('the dialog is always named: title when visible, the label fallback otherwise', async () => {
+        await openDrawer(); // no title: the header is hidden but the panel keeps a name
+        expect(modal()!.getAttribute('aria-label')).toBe('Drawer');
+        handle!.unmount();
+
+        await openDrawer({ label: 'Filters' });
+        expect(modal()!.getAttribute('aria-label')).toBe('Filters');
+        handle!.unmount();
+
+        await openDrawer({ title: 'Navigation' }); // the visible title wins
+        expect(modal()!.getAttribute('aria-label')).toBe('Navigation');
+    });
+
     it('width passes through to the panel (left/right)', async () => {
         await openDrawer({ width: 320 });
         expect(modal()!.style.width).toBe('320px');

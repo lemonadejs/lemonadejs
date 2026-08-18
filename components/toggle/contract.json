@@ -20,6 +20,10 @@
         "disabled": {
             "type": "boolean",
             "default": false
+        },
+        "aria-label": {
+            "type": "string",
+            "default": ""
         }
     },
     "bind": {

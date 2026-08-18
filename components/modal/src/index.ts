@@ -96,6 +96,8 @@ export const Modal = component('modal', {
     fullscreen: false,            // cover the whole viewport
     header: true,                 // false: headerless floating panel (menus, chips)
     role: '',                     // ARIA role: '' = auto (backdrop → dialog, else none)
+    label: '',                    // accessible name fallback when there is no title (aria-label)
+    describedby: '',              // aria-describedby id passthrough (dialog message wiring)
     autoclose: false,             // v5: auto-close
     autoadjust: false,            // v5: auto-adjust
     flip: 0,                      // anchored panels: at the bottom edge, flip ABOVE the natural top,
@@ -133,6 +135,7 @@ export const Modal = component('modal', {
 
     let root: HTMLElement | null = null;
     let restoreTo = { top: 0, left: 0 };
+    let lastFocused: HTMLElement | null = null; // pre-open focus, restored on close (2.4.3)
 
     // ---- scroll lock (backdrop modals only): the backdrop already blocks
     // interaction with the page — letting it scroll underneath reads broken
@@ -198,7 +201,16 @@ export const Modal = component('modal', {
             if (minimized.value) {
                 restore();
             }
+            // Hand focus back to the pre-open element — only when it still
+            // exists and focus currently sits INSIDE the modal (never steal
+            // it from a control the user has since moved on to)
+            const opener =
+                lastFocused && lastFocused.isConnected && root && root.contains(document.activeElement)
+                    ? lastFocused
+                    : null;
+            lastFocused = null;
             open.set(false);
+            opener?.focus();
             props.onclose?.(origin);
         }
     };
@@ -368,6 +380,11 @@ export const Modal = component('modal', {
     const runSetup = () => {
         if (!setupDone && root && root.isConnected && open.value) {
             setupDone = true;
+            // Remember who had focus before the modal takes it (position
+            // changes re-run setup while open: never capture our own panel)
+            if (!root.contains(document.activeElement)) {
+                lastFocused = document.activeElement as HTMLElement | null;
+            }
             lockScroll();
             setup();
         }
@@ -595,6 +612,34 @@ export const Modal = component('modal', {
             e.stopImmediatePropagation();
             return;
         }
+        // Keyboard parity for the mouse-only drag/resize: with the PANEL
+        // itself focused, arrows move a draggable modal and Shift+arrows
+        // resize a resizable one — 10px steps, the pointer paths' clamps
+        // and callbacks. Target-scoped to the panel so arrows inside inner
+        // content (inputs, lists) are never hijacked.
+        if (e.key.indexOf('Arrow') === 0 && root && e.target === root && !minimized.value && !props.fullscreen.value) {
+            const dx = e.key === 'ArrowRight' ? 10 : e.key === 'ArrowLeft' ? -10 : 0;
+            const dy = e.key === 'ArrowDown' ? 10 : e.key === 'ArrowUp' ? -10 : 0;
+            if (e.shiftKey && props.resizable.value) {
+                const rect = root.getBoundingClientRect();
+                const w = Math.max(MIN_W, (size.value.w || rect.width) + dx);
+                const h = Math.max(MIN_H, (size.value.h || rect.height) + dy);
+                size.value = { w, h };
+                props.onresize?.(w, h);
+                e.preventDefault();
+            } else if (!e.shiftKey && props.draggable.value && pos.value.fixed) {
+                const rect = root.getBoundingClientRect();
+                const top = Math.min(Math.max(0, pos.value.top + dy), Math.max(0, window.innerHeight - BAR));
+                const left = Math.min(
+                    Math.max(-(rect.width - 80), pos.value.left + dx),
+                    Math.max(0, window.innerWidth - 80)
+                );
+                pos.value = { top, left, fixed: true };
+                props.onmove?.(top, left);
+                e.preventDefault();
+            }
+            return;
+        }
         // Focus trap — DIALOG MODE ONLY (backdrop): Tab cycles inside the
         // modal instead of escaping to the page the backdrop is masking.
         // Headless/anchored panels keep native tab order.
@@ -650,7 +695,8 @@ export const Modal = component('modal', {
                 style="${styles}"
                 role="${() => props.role.value || (props.backdrop.value ? 'dialog' : false)}"
                 aria-modal="${() => ((props.role.value || (props.backdrop.value ? 'dialog' : '')) === 'dialog' ? 'true' : false)}"
-                aria-label="${() => props.title.value || false}"
+                aria-label="${() => props.title.value || props.label.value || false}"
+                aria-describedby="${() => props.describedby.value || false}"
                 data-outline="${() => (props.outline.value ? 'true' : false)}"
                 data-radius="${() => (props.radius.value === false ? 'false' : false)}"
                 tabindex="-1"

@@ -2,7 +2,7 @@
 
 LemonadeJS card block — contract-verified, framework-agnostic.
 
-**✓ verified** — 20 contract checks · framework-agnostic · zero dependencies
+**✓ verified** — 24 contract checks · framework-agnostic · zero dependencies
 
 ## Overview
 
@@ -62,7 +62,9 @@ state for a two-way live wire. Attribute strings are coerced to the declared typ
 | `subtitle` | string | `''` | muted line under the title |
 | `image` | string | `''` | media url, top image (object-fit: cover) |
 | `imageheight` | number | `180` | media height in px |
+| `imagealt` | string | `''` | media image alt text ('' = decorative) |
 | `avatar` | string | `''` | small round img beside the header titles |
+| `avataralt` | string | `''` | avatar alt text ('' = decorative) |
 | `content` | string | `''` | body text (children render after it) |
 | `actions` | array | — | CardAction[] — footer buttons, right-aligned |
 | `variant` | string | `''` | '' = elevated | outlined |

@@ -222,6 +222,24 @@ describe('components/card', () => {
 });
 
 describe('a11y', () => {
+    it('media and avatar images default to alt="" (decorative)', () => {
+        handle = t(Card, { image: '/photo.jpg', avatar: '/me.png', title: 'Paul' });
+        expect(handle.query('.lm-card-media')!.getAttribute('alt')).toBe('');
+        expect(handle.query('.lm-card-avatar')!.getAttribute('alt')).toBe('');
+    });
+
+    it('imagealt and avataralt name the images', () => {
+        handle = t(Card, {
+            image: '/photo.jpg',
+            imagealt: 'A lemon tart on a plate',
+            avatar: '/me.png',
+            avataralt: 'Paul',
+            title: 'Paul',
+        });
+        expect(handle.query('.lm-card-media')!.getAttribute('alt')).toBe('A lemon tart on a plate');
+        expect(handle.query('.lm-card-avatar')!.getAttribute('alt')).toBe('Paul');
+    });
+
     it('clickable card: Enter and Space activate like a click', () => {
         const clicks: string[] = [];
         handle = t(Card, { clickable: true, title: 'Go', onclick: () => clicks.push('hit') });

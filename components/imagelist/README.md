@@ -21,10 +21,12 @@ Three layouts, all driven by deterministic inline styles (jsdom-testable):
 Item bars (bar): a translucent overlay at the bottom of each image with
 the item title + optional subtitle.
 
-Images load lazily (loading="lazy"). data is held BY REFERENCE: mutate
-the array or its records and call data.touch() to re-render — or assign
+Images load lazily (loading="lazy"); the alt text is item.alt, falling
+back to item.title, then ''. data is held BY REFERENCE: mutate the
+array or its records and call data.touch() to re-render — or assign
 a new array. onitemclick(item, index, event) makes tiles interactive
-(cursor through data-clickable).
+(cursor through data-clickable, plus role="button", tabindex and
+Enter/Space activation).
 
 ## Install
 

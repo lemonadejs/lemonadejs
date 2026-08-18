@@ -28,16 +28,22 @@ snaps back. Escape cancels the drag in flight. A mid-drag unmount
 releases everything (onUnmount → release).
 
 Autoplay: setInterval armed when autoplay > 0, re-armed live on prop
-change (subscribe), PAUSED while hovering or dragging, cleared on
-unmount. Autoplay always wraps (rewinds to 0 after the last slide),
-even when loop=false — loop only governs user navigation at the edges.
+change (subscribe), PAUSED while hovering, focused (focusin/focusout)
+or dragging, cleared on unmount. When autoplay is active a labelled
+pause/play toggle renders BEFORE the slides (WAI-ARIA APG carousel
+pattern); the toggle itself never pauses rotation on focus, so "play"
+resumes immediately. Autoplay always wraps (rewinds to 0 after the
+last slide), even when loop=false — loop only governs user navigation
+at the edges.
 
 Contract: bind (current index, two-way; set → onchange), data (slides:
 { image?, title?, description?, link? } — only provided fields
 render), autoplay (ms, 0 = off), loop, arrows, dots, onchange(index);
 api { next, prev, goto }. Keyboard: ArrowLeft/ArrowRight on the
 focused region. ARIA: aria-roledescription carousel/slide, off-screen
-slides aria-hidden.
+slides aria-hidden AND inert (their links leave the tab order), slide
+labels carry the title, and the track is aria-live=polite only while
+not auto-rotating.
 
 ## Install
 

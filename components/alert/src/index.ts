@@ -44,9 +44,13 @@ export const Alert = component('alert', {
         props.onclose?.();
     };
 
+    // Severity drives the live-region urgency: warning/error interrupt
+    // (role=alert), info/success wait their turn (role=status)
     return html`${() =>
         visible.value &&
-        html`<div class="lm-alert" role="alert"
+        html`<div class="lm-alert"
+            role="${() =>
+                props.severity.value === 'warning' || props.severity.value === 'error' ? 'alert' : 'status'}"
             data-severity="${() => props.severity.value || false}"
             data-variant="${() => props.variant.value || false}">
             ${() =>

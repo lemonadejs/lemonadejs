@@ -16,13 +16,15 @@ right under itself. Ported faithfully from the v5 plugin:
   - while the menu is open, hovering another top item moves the open
     dropdown to it (menubar behavior)
   - keyboard: ArrowLeft/ArrowRight walk enabled items (wrapping, skipping
-    disabled); with the menu open they move the OPEN dropdown; Enter
-    toggles. Up/Down/Enter/Escape inside the dropdown belong to the
-    composed Contextmenu
+    disabled); with the menu open they move the OPEN dropdown; Enter or
+    Space toggles, ArrowDown/ArrowUp open the submenu. Up/Down/Enter/
+    Escape inside the dropdown belong to the composed Contextmenu —
+    closing it lands focus back on the menubar item
   - focusin selects the focused item; focusout of the whole bar clears
     the selection highlight (the remembered index survives, as in v5)
-  - full ARIA: menubar / menuitem, aria-haspopup, aria-expanded,
-    aria-label, tabindex managed per item (disabled items unreachable)
+  - full ARIA: menubar / menuitem (the menubar directly owns its items),
+    aria-haspopup, aria-expanded, aria-label, roving tabindex (one tab
+    stop for the bar; disabled items unreachable)
 
 v5 → v6 mapping: options keeps the v5 item model ({ title, submenu,
 disabled }; submenu items are Contextmenu items). self.open(index) →

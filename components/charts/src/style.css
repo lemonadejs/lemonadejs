@@ -252,6 +252,35 @@
     border-radius: var(--lm-radius, 6px);
 }
 
+/* radial/flow plots share the same roving keyboard model: the container
+   (outside the aria-hidden svg) is the focusable element */
+.lm-chart-pie-area:focus,
+.lm-chart-flow:focus {
+    outline: none;
+}
+
+.lm-chart-pie-area:focus-visible,
+.lm-chart-flow:focus-visible {
+    outline: 2px solid var(--lm-border-outline, #2563eb);
+    outline-offset: 2px;
+    border-radius: var(--lm-radius, 6px);
+}
+
+/* keyboard-active mark inside a radial/flow plot (fill-based shapes get a
+   contrasting stroke; stroke-drawn arcs get a glow instead) */
+.lm-chart-slice[data-kb='true'],
+.lm-chart-sankey-link[data-kb='true'],
+.lm-chart-chord-link[data-kb='true'] {
+    stroke: var(--lm-border-outline, #2563eb);
+    stroke-width: 1.5;
+}
+
+.lm-chart-radial[data-kb='true'],
+.lm-chart-radial-arc[data-kb='true'],
+.lm-chart-arc-link[data-kb='true'] {
+    filter: drop-shadow(0 0 2px var(--lm-border-outline, #2563eb));
+}
+
 /* inline tooltip anchored to the keyboard-focused column */
 .lm-chart-kbtip {
     position: absolute;

@@ -20,6 +20,7 @@ export const Toggle = component('toggle', {
     icon: '',                     // material icon name (e.g. 'mic', 'videocam')
     name: '',                     // form identification name
     disabled: false,              // blocks interaction (native)
+    'aria-label': '',             // accessible name (icon-only toggles need one)
     onchange: Function,           // fires on user-initiated changes
     api: { toggle: Function },    // imperative surface via ref
 }, (props, { bind }) => {
@@ -37,11 +38,15 @@ export const Toggle = component('toggle', {
         class="lm-toggle ${() => (pressed.value ? 'lm-toggle-on' : 'lm-toggle-off')} ${() =>
             props.disabled.value ? 'lm-toggle-disabled' : ''}">
         <input type="checkbox" class="lm-toggle-input"
+            aria-label="${() => props['aria-label'].value || false}"
             name="${props.name}"
             checked="${pressed}"
             disabled="${props.disabled}"
             onchange="${(e: Event) => pressed.set((e.target as HTMLInputElement).checked)}" />
-        ${() => props.icon.value && html`<i class="lm-toggle-icon material-icons">${props.icon}</i>`}
+        ${() =>
+            props.icon.value &&
+            html`<i class="lm-toggle-icon material-icons"
+                aria-hidden="${() => (props.text.value || props['aria-label'].value ? 'true' : false)}">${props.icon}</i>`}
         ${() => props.text.value && html`<span class="lm-toggle-text">${props.text}</span>`}
     </label>`;
 });

@@ -209,6 +209,26 @@ describe('components/buttongroup', () => {
         expect(handle.queryAll('.lm-buttongroup-label').length).toBe(1); // icon-only has no label span
     });
 
+    it('icon-only options are named by their value, never the ligature', () => {
+        handle = t(ButtonGroup, {
+            options: [{ value: 'bold', icon: 'format_bold' }, { value: 'plain', label: 'Plain' }],
+        });
+        const [iconOnly, labeled] = handle.queryAll('.lm-buttongroup-button');
+        expect(iconOnly.getAttribute('aria-label')).toBe('bold');
+        expect(handle.query('.lm-buttongroup-icon')!.getAttribute('aria-hidden')).toBe('true');
+        expect(labeled.hasAttribute('aria-label')).toBe(false); // visible label names it
+    });
+
+    it('aria-label names the role="group" container', () => {
+        handle = t(ButtonGroup, { options: ['One'], 'aria-label': 'Text style' });
+        expect(root().getAttribute('role')).toBe('group');
+        expect(root().getAttribute('aria-label')).toBe('Text style');
+        handle.unmount();
+
+        handle = t(ButtonGroup, { options: ['One'] }); // no prop → no attribute
+        expect(root().hasAttribute('aria-label')).toBe(false);
+    });
+
     it('options stay live: a state write re-renders, the selection survives by value', () => {
         const options = store<unknown[]>(['One', 'Two']);
         const picked = store<unknown>('Two');

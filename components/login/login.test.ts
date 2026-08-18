@@ -455,6 +455,55 @@ describe('components/login', () => {
         expect(fetchMock).toHaveBeenCalledTimes(1);
     });
 
+    it('link-buttons are focusable and Enter/Space activate them (WCAG 2.1.1)', () => {
+        open({ profile: true });
+        const forgot = q('.lm-login-forgot a');
+        expect(forgot.getAttribute('role')).toBe('button');
+        expect(forgot.getAttribute('tabindex')).toBe('0');
+        forgot.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
+        expect(action().value).toBe('Request a new password');
+        q('.lm-login-cancel').click();
+
+        const profile = q('.lm-login-profile a');
+        expect(profile.getAttribute('role')).toBe('button');
+        expect(profile.getAttribute('tabindex')).toBe('0');
+        const space = new KeyboardEvent('keydown', { key: ' ', bubbles: true, cancelable: true });
+        profile.dispatchEvent(space);
+        expect(space.defaultPrevented).toBe(true); // Space must not scroll the page
+        expect(action().value).toBe('Create a new account');
+    });
+
+    it('feedback containers are live regions (WCAG 4.1.3)', () => {
+        open();
+        expect(handle!.query('.lm-login-alert')!.getAttribute('role')).toBe('alert');
+        expect(handle!.query('.lm-login-message')!.getAttribute('role')).toBe('status');
+    });
+
+    it('email blur validation toggles aria-invalid (WCAG 3.3.1)', () => {
+        open();
+        type('input[name="email"]', 'nope');
+        q('input[name="email"]').dispatchEvent(new Event('blur'));
+        expect(q('input[name="email"]').getAttribute('aria-invalid')).toBe('true');
+
+        type('input[name="email"]', 'a@b.co');
+        q('input[name="email"]').dispatchEvent(new Event('blur'));
+        expect(q('input[name="email"]').getAttribute('aria-invalid')).toBeNull();
+    });
+
+    it('login asks for current-password; reset keeps new-password (WCAG 1.3.5)', () => {
+        let api: { show: (s: string) => void } | null = null;
+        open({ ref: (a: { show: (s: string) => void }) => (api = a) });
+        expect(q('input[name="password"]').getAttribute('autocomplete')).toBe('current-password');
+        expect(q('input[name="password"]').getAttribute('aria-required')).toBe('true');
+
+        api!.show('reset');
+        expect(q('input[name="password"]').getAttribute('autocomplete')).toBe('new-password');
+        expect(q('input[name="password2"]').getAttribute('autocomplete')).toBe('new-password');
+
+        api!.show('bind');
+        expect(q('input[name="password"]').getAttribute('autocomplete')).toBe('new-password');
+    });
+
     it('email blur validation flags the field (v5 data-validation)', () => {
         open();
         type('input[name="email"]', 'nope');

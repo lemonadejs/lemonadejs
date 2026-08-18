@@ -2,7 +2,7 @@
 
 LemonadeJS switch block — contract-verified, framework-agnostic.
 
-**✓ verified** — 22 contract checks · framework-agnostic · zero dependencies
+**✓ verified** — 24 contract checks · framework-agnostic · zero dependencies
 
 ## Overview
 
@@ -67,6 +67,7 @@ state for a two-way live wire. Attribute strings are coerced to the declared typ
 | `required` | boolean | `false` | native form validation |
 | `disabled` | boolean | `false` | blocks interaction (native) |
 | `position` | string | `''` | text position: 'right' moves it before the track |
+| `aria-label` | string | `''` |  |
 
 ## Events
 

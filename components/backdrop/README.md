@@ -15,9 +15,9 @@ typically a progress spinner. The whole overlay is a branch on the
 bound visibility: hidden means not in the DOM. Entry fades in via a
 pure CSS animation.
 
-Visibility is the bound state (default hidden): closable clicks and
-the api close via .set — which fires onclose — while external writes
-to the bound state stay silent.
+Visibility is the bound state (default hidden): closable clicks (and
+Escape) and the api close via .set — which fires onclose — while
+external writes to the bound state stay silent.
 
 opacity/zindex use 0 = "keep the CSS default" (0.5 dim, z-index
 1200); any other value lands as an inline style so call sites can
@@ -65,7 +65,7 @@ state for a two-way live wire. Attribute strings are coerced to the declared typ
 | `blur` | boolean | `false` | backdrop-filter blur behind the dim |
 | `opacity` | number | `0` | 0 = default 0.5; else 0-100 → rgba alpha inline |
 | `zindex` | number | `0` | 0 = CSS default 1200; else inline z-index |
-| `closable` | boolean | `false` | clicking the backdrop closes it |
+| `closable` | boolean | `false` | click or Escape closes it |
 
 ## Events
 

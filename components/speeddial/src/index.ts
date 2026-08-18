@@ -39,7 +39,7 @@ export const Speeddial = component('speeddial', {
     onclose: Function,            // fan closed (user/api — bind writes are silent)
     onaction: Function,           // (name, event) when an action is picked
     api: { open: Function, close: Function, toggle: Function },
-}, (props, { bind, state, onUnmount }) => {
+}, (props, { bind, state, listen, onUnmount }) => {
     const fanned = bind(props, false);
 
     // Side tooltips default to the LEFT of the buttons — off-screen when
@@ -73,6 +73,12 @@ export const Speeddial = component('speeddial', {
     const doClose = () => {
         clearGrace();
         if (fanned.value) {
+            // closing hides the fan (aria-hidden + opacity:0) — focus must
+            // never be stranded inside it, so it moves back to the FAB
+            const active = document.activeElement as HTMLElement | null;
+            if (active && rootEl?.contains(active) && active.closest('.lm-speeddial-actions')) {
+                (rootEl?.querySelector('.lm-speeddial-fab') as HTMLElement | null)?.focus();
+            }
             fanned.set(false);
             props.onclose?.();
         }
@@ -104,6 +110,15 @@ export const Speeddial = component('speeddial', {
         doClose();
     };
 
+    // Escape dismisses the fan even when it was HOVER-opened and focus is
+    // elsewhere (WCAG 1.4.13) — document level; the engine removes the
+    // listener on unmount
+    listen<KeyboardEvent>(document, 'keydown', (e) => {
+        if (e.key === 'Escape' && fanned.value) {
+            doClose();
+        }
+    });
+
     return html`<div
         class="lm-speeddial ${() => (fanned.value ? 'lm-speeddial-open' : '')} ${() =>
             props.disabled.value ? 'lm-speeddial-disabled' : ''} ${() =>
@@ -112,17 +127,20 @@ export const Speeddial = component('speeddial', {
         data-labels="${() => labelSide.value}"
         ref="${(el: HTMLElement) => (rootEl = el)}"
         onmouseenter="${doOpen}"
-        onmouseleave="${onLeave}"
-        onkeydown="${(e: KeyboardEvent) => e.key === 'Escape' && doClose()}">
+        onmouseleave="${onLeave}">
         <button type="button" class="lm-speeddial-fab"
-            aria-label="${() => props.label.value || false}"
-            aria-haspopup="true"
+            aria-label="${() => props.label.value || 'Speed dial'}"
             aria-expanded="${() => (fanned.value ? 'true' : 'false')}"
             disabled="${props.disabled}"
             onclick="${toggle}">
-            <span class="lm-speeddial-icon material-icons">${() => props.icon.value || 'add'}</span>
+            <span class="lm-speeddial-icon material-icons" aria-hidden="true">${() => props.icon.value || 'add'}</span>
         </button>
-        <div class="lm-speeddial-actions" role="menu" aria-hidden="${() => (fanned.value ? 'false' : 'true')}">
+        <!-- a speed dial is a GROUP of plain buttons (APG), not a menu:
+             every action is a normal tab stop while open, so no menu
+             keyboard model is implied -->
+        <div class="lm-speeddial-actions" role="group"
+            aria-label="${() => props.label.value || 'Speed dial'}"
+            aria-hidden="${() => (fanned.value ? 'false' : 'true')}">
             <!-- deliberately UNKEYED: the buttons are stateless and the
                  fan-out stagger is BY POSITION (index * STAGGER), so a
                  moved action must take its new slot's delay, not carry
@@ -130,7 +148,6 @@ export const Speeddial = component('speeddial', {
             ${() =>
                 actions().map(
                     (action, index) => html`<button type="button" class="lm-speeddial-action"
-                        role="menuitem"
                         tabindex="${() => (fanned.value ? '0' : '-1')}"
                         style="transition-delay: ${index * STAGGER}ms"
                         onclick="${(e: Event) => pick(action, e)}">

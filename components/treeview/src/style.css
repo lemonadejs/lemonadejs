@@ -37,7 +37,13 @@
     background: var(--lm-treeview-hover-bg, var(--lm-background-color-highlight, #f4f4f5));
 }
 
-.lm-treeview .lm-treeview-row:focus-visible {
+/* Focus lives on the <li role="treeitem"> (it carries the aria state);
+   the ring still draws on ITS OWN row, never around the whole subtree */
+.lm-treeview .lm-treeview-node:focus {
+    outline: none;
+}
+
+.lm-treeview .lm-treeview-node:focus-visible > .lm-treeview-row {
     outline: 2px solid var(--lm-treeview-focus, var(--lm-border-outline, #2563eb));
     outline-offset: -2px;
 }

@@ -76,8 +76,13 @@
     border-top: 0;
 }
 
+/* Keyboard focus stays visible (WCAG 2.4.7): the reset above drops the
+   native outline, so :focus-visible paints the house ring (the subtle
+   background shift alone does not read as focus) */
 .lm-actionsheet-option:focus-visible {
     background-color: var(--lm-background-color-highlight, #f4f4f5);
+    outline: 2px solid var(--lm-border-outline, #000);
+    outline-offset: -2px;
 }
 
 .lm-actionsheet-option[data-action='cancel'] {

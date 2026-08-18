@@ -26,6 +26,7 @@ export const Button = component('button', {
     href: '',                     // renders a real <a> instead of <button>
     type: '',                     // button type: submit | reset ('' = button)
     icon: '',                     // material icon name shown before the label
+    'aria-label': '',             // accessible name (icon-only buttons need one)
     onclick: Function,            // fires on activation (never while disabled/loading)
 }, (props, { computed }) => {
     // Derived, not hand-rolled: computed() stays live wherever it is read
@@ -46,15 +47,24 @@ export const Button = component('button', {
             .join(' ')
     );
 
-    /** Spinner while loading; icon + label + children otherwise */
+    /** Spinner while loading; icon + label + children otherwise.
+        The icon is decorative (aria-hidden) — the accessible name comes
+        from the label text or the aria-label prop, never the ligature. */
     const content = () =>
         props.loading.value
-            ? html`<span class="lm-button-spinner"></span>`
+            ? html`<span class="lm-button-spinner" aria-hidden="true"></span>`
             : html`${() =>
                   props.icon.value &&
-                  html`<i class="lm-button-icon material-icons">${props.icon}</i>`}${() =>
+                  html`<i class="lm-button-icon material-icons" aria-hidden="true">${props.icon}</i>`}${() =>
                   props.label.value &&
                   html`<span class="lm-button-label">${props.label}</span>`}${props.children}`;
+
+    /** Accessible name: the aria-label prop wins; while the spinner has
+        replaced the text content, the label steps in so the button is
+        never nameless mid-load. */
+    const name = computed(
+        () => props['aria-label'].value || (props.loading.value && props.label.value) || false
+    );
 
     return html`${() =>
         props.href.value
@@ -63,6 +73,8 @@ export const Button = component('button', {
                   data-variant="${() => props.variant.value || false}"
                   data-color="${() => props.color.value || false}"
                   data-size="${() => props.size.value || false}"
+                  aria-label="${name}"
+                  aria-busy="${() => (props.loading.value ? 'true' : false)}"
                   aria-disabled="${() => (blocked.value ? 'true' : false)}"
                   onclick="${press}">${content}</a>`
             : html`<button class="lm-button ${classes}"
@@ -70,6 +82,8 @@ export const Button = component('button', {
                   data-variant="${() => props.variant.value || false}"
                   data-color="${() => props.color.value || false}"
                   data-size="${() => props.size.value || false}"
+                  aria-label="${name}"
+                  aria-busy="${() => (props.loading.value ? 'true' : false)}"
                   disabled="${blocked}"
                   onclick="${press}">${content}</button>`}`;
 });

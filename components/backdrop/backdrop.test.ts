@@ -90,6 +90,30 @@ describe('components/backdrop', () => {
         expect(closed).toBe(1);
     });
 
+    it('closable: Escape closes it too — dismissal is not pointer-only', () => {
+        const visible = store(true);
+        let closed = 0;
+        handle = t(Backdrop, { bind: visible, closable: true, onclose: () => closed++ });
+
+        document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }));
+        expect(root()).toBeNull();
+        expect(visible.value).toBe(false);
+        expect(closed).toBe(1);
+
+        document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+        expect(closed).toBe(1); // already hidden: inert
+    });
+
+    it('non-closable: Escape is inert', () => {
+        const visible = store(true);
+        let closed = 0;
+        handle = t(Backdrop, { bind: visible, onclose: () => closed++ });
+
+        document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+        expect(root()).not.toBeNull();
+        expect(closed).toBe(0);
+    });
+
     it('non-closable: clicks are inert', () => {
         const visible = store(true);
         let closed = 0;

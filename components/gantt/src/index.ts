@@ -17,6 +17,10 @@
  *   - editable: drag the bar to move, drag the edges to resize — day
  *     snapping, live preview, Escape cancels mid-drag, onchange(task,
  *     start, end) fires ONLY on commit and mutates YOUR task object
+ *   - keyboard: bars are focusable buttons (label + dates in the
+ *     accessible name); Ctrl/Alt+Arrow moves a snap step, Shift+Arrow
+ *     resizes the end — the SAME commit path (and onchange) as drag.
+ *     Enter/Space activates (onclick); the header pans with arrows
  *   - dates are 'YYYY-MM-DD' strings, all math in LOCAL time
  *   - data BY REFERENCE: mutate + touch() re-renders
  *
@@ -63,6 +67,8 @@ const toIso = (ms: number): string => {
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
+let uid = 0; // unique suffix per instance for the visually hidden keyboard hint id
+
 export const Gantt = component('gantt', {
     data: Array,                  // GanttTask[] BY REFERENCE (mutate + touch())
     start: '',                    // viewport start (default: earliest task - 2 days)
@@ -90,6 +96,11 @@ export const Gantt = component('gantt', {
     const canEdit = () => props.editable.value && !props.readonly.value && !props.disabled.value;
     const canEditPeek = () => (props.editable.peek() as boolean) && !props.readonly.peek() && !props.disabled.peek();
     const interactive = () => !props.disabled.peek();
+
+    // Every focusable bar points its aria-describedby at ONE visually
+    // hidden hint (rendered off the root, so table-mode lanes reach it
+    // too) — the keyboard instructions the title tooltips can't convey
+    const hintId = 'lm-gantt-hint-' + ++uid;
 
     // ---- the range: explicit props win; otherwise fit the data
     const range = state<{ from: number; to: number }>({ from: 0, to: 1 });
@@ -294,6 +305,22 @@ export const Gantt = component('gantt', {
         releaseGesture = () => finish(false);
     };
 
+    /**
+     * The ONE commit path — mouse drops and keyboard edits both land
+     * here: mutate the host's task object, keep the viewport put and
+     * fire onchange with the committed dates.
+     */
+    const commitSpan = (task: GanttTask, from: number, to: number) => {
+        task.start = toIso(from);
+        task.end = toIso(to);
+        touchKeepingViewport();
+        props.onchange?.(
+            task,
+            task.start,
+            task.end
+        );
+    };
+
     const startDrag = (e: MouseEvent, index: number, task: GanttTask, el: HTMLElement) => {
         if (!canEditPeek() || task.readonly) {
             return;
@@ -348,16 +375,48 @@ export const Gantt = component('gantt', {
                 if (!commit || !p || (p.from === from0 && p.to === to0)) {
                     return;
                 }
-                task.start = toIso(p.from);
-                task.end = toIso(p.to);
-                touchKeepingViewport();
-                props.onchange?.(
-                    task,
-                    task.start,
-                    task.end
-                );
+                commitSpan(task, p.from, p.to);
             }
         );
+    };
+
+    /**
+     * Keyboard editing on a focused bar — the non-drag path (WCAG 2.1.1).
+     * Ctrl/Alt+Arrow moves the whole span one snap step, Shift+Arrow
+     * resizes the END edge (clamped at the start; milestones move only),
+     * Enter/Space activates (onclick). Commits through commitSpan — the
+     * exact same mutation + onchange as a mouse drop.
+     */
+    const keyEdit = (e: KeyboardEvent, index: number, task: GanttTask, el: HTMLElement) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+            if (interactive()) {
+                e.preventDefault();
+                props.onclick?.(task, e);
+            }
+            return;
+        }
+        if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') {
+            return;
+        }
+        const resize = e.shiftKey && task.type !== 'milestone';
+        const move = e.ctrlKey || e.metaKey || e.altKey;
+        if ((!move && !resize) || !canEditPeek() || task.readonly) {
+            return; // plain arrows keep their native meaning (scroll, caret...)
+        }
+        e.preventDefault();
+        const step = (e.key === 'ArrowRight' ? 1 : -1) * Math.max(1, (props.snap.peek() as number) || 1) * DAY;
+        const from0 = toMs(task.start);
+        const to0 = toMs(task.end || task.start);
+        const from = resize ? from0 : from0 + step;
+        const to = resize ? Math.max(to0 + step, from0) : to0 + step;
+        if (from === from0 && to === to0) {
+            return;
+        }
+        // The commit re-renders the row, replacing the bar element:
+        // capture the container FIRST, then hand focus to the fresh bar
+        const area = el.closest('.lm-gantt-rows') as HTMLElement | null;
+        commitSpan(task, from, to);
+        (area?.querySelector('[data-index="' + index + '"]') as HTMLElement | null)?.focus();
     };
 
     /**
@@ -447,6 +506,17 @@ export const Gantt = component('gantt', {
         );
     };
 
+    /** Keyboard pan — the header is focusable; arrows shift the viewport
+     *  one day (Shift: one week), mirroring the drag-to-pan gesture. */
+    const panKey = (e: KeyboardEvent) => {
+        if (!interactive() || (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight')) {
+            return;
+        }
+        e.preventDefault();
+        const step = (e.key === 'ArrowRight' ? 1 : -1) * (e.shiftKey ? 7 : 1) * DAY;
+        range.value = { from: range.value.from + step, to: range.value.to + step };
+    };
+
     /** Remove dependency `sourceId` from the task at `targetIndex`. */
     const removeLink = (targetIndex: number, sourceId: string | number) => {
         if (!canEditPeek()) {
@@ -519,6 +589,13 @@ export const Gantt = component('gantt', {
                         props.onclick?.(task, e);
                     }
                 });
+                listen<KeyboardEvent>(lane, 'keydown', (e) => {
+                    const bar = (e.target as Element).closest('.lm-gantt-bar, .lm-gantt-milestone');
+                    const task = tasks()[index];
+                    if (bar && task) {
+                        keyEdit(e, index, task, bar as HTMLElement);
+                    }
+                });
             }
             lane.textContent = '';
             const task = list[index];
@@ -565,7 +642,23 @@ export const Gantt = component('gantt', {
             el.style.background = task.color;
         }
         el.title = (task.label || '') + ' · ' + toIso(from) + (milestone ? '' : ' → ' + toIso(to));
-        // No listeners here: mousedown/click delegate from the lane
+        // Same accessibility contract as the declarative bars: focusable
+        // button, dates in the name, the keyboard hint when editable
+        el.dataset.index = String(index);
+        el.setAttribute('role', 'button');
+        if (interactive()) {
+            el.tabIndex = 0;
+        }
+        el.setAttribute(
+            'aria-label',
+            milestone
+                ? (task.label || 'Milestone') + ', milestone, ' + toIso(from)
+                : (task.label || 'Task') + ', ' + toIso(from) + ' to ' + toIso(to)
+        );
+        if (canEditPeek() && !task.readonly) {
+            el.setAttribute('aria-describedby', hintId);
+        }
+        // No listeners here: mousedown/click/keydown delegate from the lane
         return el;
     };
 
@@ -650,9 +743,14 @@ export const Gantt = component('gantt', {
         if (milestone) {
             return html`<div class="lm-gantt-milestone ${dragging ? 'lm-gantt-dragging' : ''}"
                 data-index="${index}"
+                role="button"
+                tabindex="${props.disabled.value ? false : '0'}"
+                aria-label="${(task.label || 'Milestone') + ', milestone, ' + toIso(from)}"
+                aria-describedby="${canEdit() && !task.readonly ? hintId : false}"
                 style="left:${round2(pct(from) + widthPct(from, from) / 2)}%;${task.color ? 'background:' + task.color : ''}"
                 title="${(task.label || '') + ' · ' + toIso(from)}"
                 onmousedown="${(e: MouseEvent) => startDrag(e, index, task, (e.currentTarget || e.target) as HTMLElement)}"
+                onkeydown="${(e: KeyboardEvent) => keyEdit(e, index, task, (e.currentTarget || e.target) as HTMLElement)}"
                 onclick="${(e: MouseEvent) =>
                     interactive() && props.onclick?.(task, e)}"></div>`;
         }
@@ -662,11 +760,16 @@ export const Gantt = component('gantt', {
             canEdit() && !task.readonly ? 'lm-gantt-editable' : ''
         }"
             data-index="${index}"
+            role="button"
+            tabindex="${props.disabled.value ? false : '0'}"
+            aria-label="${(task.label || 'Task') + ', ' + toIso(from) + ' to ' + toIso(to)}"
+            aria-describedby="${canEdit() && !task.readonly ? hintId : false}"
             style="left:${round2(pct(from))}%;width:${round2(widthPct(from, to))}%;${
                 task.color ? 'background:' + task.color : ''
             }"
             title="${(task.label || '') + ' · ' + toIso(from) + ' → ' + toIso(to)}"
             onmousedown="${(e: MouseEvent) => startDrag(e, index, task, (e.currentTarget || e.target) as HTMLElement)}"
+            onkeydown="${(e: KeyboardEvent) => keyEdit(e, index, task, (e.currentTarget || e.target) as HTMLElement)}"
             onclick="${(e: MouseEvent) =>
                 interactive() && props.onclick?.(task, e)}">
             ${() =>
@@ -686,9 +789,18 @@ export const Gantt = component('gantt', {
         data-readonly="${() => (props.readonly.value ? 'true' : false)}"
         data-disabled="${() => (props.disabled.value ? 'true' : false)}">
         ${() =>
+            canEdit()
+                ? html`<span class="lm-gantt-sr" id="${hintId}">Control or Alt with the Left and Right arrow
+                      keys moves the focused task; Shift with the arrow keys resizes its end date.</span>`
+                : ''}
+        ${() =>
             props.header.value &&
             html`<div class="lm-gantt-header" title="Drag to pan the timeline"
-                onmousedown="${(e: MouseEvent) => panStart(e)}">
+                role="group"
+                tabindex="${props.disabled.value ? false : '0'}"
+                aria-label="Timeline. Drag, or focus and press the arrow keys, to pan."
+                onmousedown="${(e: MouseEvent) => panStart(e)}"
+                onkeydown="${(e: KeyboardEvent) => panKey(e)}">
                 <div class="lm-gantt-months">${() =>
                     monthSegments().map(
                         (m) => html`<div class="lm-gantt-month" style="left:${m.left}%;width:${m.width}%">${m.label}</div>`
@@ -733,7 +845,15 @@ export const Gantt = component('gantt', {
                               return '';
                           }
                           const editable = canEdit();
-                          const h = (((props.data.value as GanttTask[]) || []).length) * props.rowheight.value;
+                          const list = (props.data.value as GanttTask[]) || [];
+                          const h = list.length * props.rowheight.value;
+                          // Accessible name for a removable connector: name
+                          // BOTH ends so "which link?" never needs the mouse
+                          const linkName = (l: { ti: number; sid: string | number }) =>
+                              'Remove the dependency from ' +
+                              (list.find((t) => t.id === l.sid)?.label || l.sid) +
+                              ' to ' +
+                              (list[l.ti]?.label || 'task ' + (l.ti + 1));
                           // ONE wrapper root so the whole overlay is replaced as
                           // a unit each re-run — loose arrowhead siblings would
                           // otherwise orphan when a link is removed.
@@ -745,8 +865,16 @@ export const Gantt = component('gantt', {
                                   editable
                                       ? ls.map(
                                             (l) => html`<path class="lm-gantt-link-hit" d="${l.d}"
+                                                role="button" tabindex="0"
+                                                aria-label="${linkName(l)}"
                                                 title="Click to remove this dependency"
-                                                onclick="${() => removeLink(l.ti, l.sid)}"></path>`
+                                                onclick="${() => removeLink(l.ti, l.sid)}"
+                                                onkeydown="${(e: KeyboardEvent) => {
+                                                    if (e.key === 'Enter' || e.key === ' ') {
+                                                        e.preventDefault();
+                                                        removeLink(l.ti, l.sid);
+                                                    }
+                                                }}"></path>`
                                         )
                                       : ''
                               }${

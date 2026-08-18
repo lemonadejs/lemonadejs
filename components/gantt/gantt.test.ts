@@ -388,6 +388,131 @@ describe('components/gantt — %-positioned, table-embeddable', () => {
         expect(styleOf(row)).toContain('height:48px');
     });
 
+    it('KEYBOARD: bars are focusable buttons with the dates in the accessible name', () => {
+        open({ editable: true });
+        const bar = bars()[0];
+        expect(bar.getAttribute('tabindex')).toBe('0');
+        expect(bar.getAttribute('role')).toBe('button');
+        // 1.1.1: the dates are IN the name, not just the title tooltip
+        expect(bar.getAttribute('aria-label')).toBe('Design, 2026-06-01 to 2026-06-05');
+        const diamond = handle!.query('.lm-gantt-milestone')!;
+        expect(diamond.getAttribute('tabindex')).toBe('0');
+        expect(diamond.getAttribute('aria-label')).toBe('Ship, milestone, 2026-06-15');
+        // editable bars point at the visually hidden keyboard hint
+        const hintId = bar.getAttribute('aria-describedby')!;
+        expect(hintId).toBeTruthy();
+        expect(document.getElementById(hintId)!.textContent).toContain('arrow keys');
+    });
+
+    it('KEYBOARD MOVE: Ctrl/Alt+Arrow shifts the bar one day — same commit path as drag', () => {
+        const changes: unknown[][] = [];
+        const data = tasks();
+        open({ data, editable: true, onchange: (...a: unknown[]) => changes.push(a) });
+
+        bars()[0].dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', ctrlKey: true, bubbles: true }));
+        expect(data[0].start).toBe('2026-06-02'); // MY object mutated
+        expect(data[0].end).toBe('2026-06-06');
+        expect(changes).toEqual([[data[0], '2026-06-02', '2026-06-06']]);
+        // Alt is the modifier flavor for browsers where Ctrl+Arrow is taken
+        bars()[0].dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', altKey: true, bubbles: true }));
+        expect(data[0].start).toBe('2026-06-01');
+        expect(changes).toHaveLength(2);
+    });
+
+    it('KEYBOARD RESIZE: Shift+Arrow adjusts the end, clamped at the start', () => {
+        const data = tasks();
+        open({ data, editable: true });
+        bars()[0].dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', shiftKey: true, bubbles: true }));
+        expect(data[0].start).toBe('2026-06-01'); // start untouched
+        expect(data[0].end).toBe('2026-06-06');
+        // shrink far past the start: the end clamps to the start date
+        for (let i = 0; i < 10; i++) {
+            bars()[0].dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', shiftKey: true, bubbles: true }));
+        }
+        expect(data[0].end).toBe('2026-06-01');
+    });
+
+    it('KEYBOARD steps follow `snap`, like drag', () => {
+        const data = tasks();
+        open({ data, editable: true, snap: 7 });
+        bars()[0].dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', ctrlKey: true, bubbles: true }));
+        expect(data[0].start).toBe('2026-06-08');
+        expect(data[0].end).toBe('2026-06-12');
+    });
+
+    it('KEYBOARD respects the edit gate: plain arrows, readonly tasks and readonly charts are inert', () => {
+        const data = tasks();
+        data[1].readonly = true;
+        open({ data, editable: true });
+        bars()[0].dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true })); // no modifier
+        bars()[1].dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', ctrlKey: true, bubbles: true }));
+        expect(data[0].start).toBe('2026-06-01');
+        expect(data[1].start).toBe('2026-06-04');
+        // readonly bars carry no edit hint
+        expect(bars()[1].getAttribute('aria-describedby')).toBeNull();
+    });
+
+    it('Enter/Space on a focused bar activates it (onclick), like a real button', () => {
+        const clicks: unknown[] = [];
+        const data = tasks();
+        open({ data, onclick: (task: GanttTask) => clicks.push(task) });
+        bars()[0].dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+        bars()[1].dispatchEvent(new KeyboardEvent('keydown', { key: ' ', bubbles: true }));
+        expect(clicks).toEqual([data[0], data[1]]);
+    });
+
+    it('dependency removal works by keyboard: focusable hit-line, Enter unlinks', () => {
+        const unlinks: unknown[][] = [];
+        const data: GanttTask[] = [
+            { id: 'a', label: 'A', start: '2026-06-01', end: '2026-06-03' },
+            { id: 'b', label: 'B', start: '2026-06-06', end: '2026-06-09', dependencies: ['a'] },
+        ];
+        open({ data, editable: true, onunlink: (...a: unknown[]) => unlinks.push(a) });
+        const hit = handle!.query('.lm-gantt-link-hit')!;
+        expect(hit.getAttribute('tabindex')).toBe('0');
+        expect(hit.getAttribute('role')).toBe('button');
+        expect(hit.getAttribute('aria-label')).toBe('Remove the dependency from A to B');
+        hit.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+        expect(data[1].dependencies).toEqual([]);
+        expect(unlinks).toEqual([[data[0], data[1]]]);
+    });
+
+    it('the header pans by keyboard: arrows one day, Shift a week', () => {
+        const api = open();
+        const header = handle!.query('.lm-gantt-header')!;
+        expect(header.getAttribute('tabindex')).toBe('0');
+        header.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+        expect(api.getRange()).toEqual({ start: '2026-06-02', end: '2026-06-21' });
+        header.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', shiftKey: true, bubbles: true }));
+        expect(api.getRange()).toEqual({ start: '2026-05-26', end: '2026-06-14' });
+    });
+
+    it('TABLE MODE: lane bars are focusable and keyboard-movable too', () => {
+        const table = document.createElement('table');
+        table.setAttribute('data-test', '1');
+        table.id = 'gtable3';
+        table.innerHTML = '<tbody><tr><td>A</td></tr></tbody>';
+        document.body.appendChild(table);
+
+        const data: GanttTask[] = [{ label: 'A', start: '2026-06-01', end: '2026-06-05' }];
+        open({ data, table: '#gtable3', editable: true });
+        const laneBar = () => table.querySelector('.lm-gantt-bar') as HTMLElement;
+        expect(laneBar().getAttribute('tabindex')).toBe('0');
+        expect(laneBar().getAttribute('aria-label')).toBe('A, 2026-06-01 to 2026-06-05');
+        // keydown delegates from the lane, same commit path
+        laneBar().dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', ctrlKey: true, bubbles: true }));
+        expect(data[0].start).toBe('2026-06-02');
+        expect(data[0].end).toBe('2026-06-06');
+    });
+
+    it('disabled removes the keyboard surface: no tabindex, no edits', () => {
+        const data = tasks();
+        open({ data, editable: true, disabled: true });
+        expect(bars()[0].getAttribute('tabindex')).toBeNull();
+        bars()[0].dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', ctrlKey: true, bubbles: true }));
+        expect(data[0].start).toBe('2026-06-01');
+    });
+
     it('snap quantizes drag moves to N-day steps', () => {
         const changes: unknown[][] = [];
         const data = tasks();

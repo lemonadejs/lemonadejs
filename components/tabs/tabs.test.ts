@@ -275,9 +275,82 @@ describe('a11y', () => {
         handle = t(Tabs, { data: [{ title: 'A' }, { title: 'B' }, { title: 'C' }], selected: 1 });
         const tabs = handle.queryAll('.lm-tabs-tab');
         expect(tabs.map((el) => el.getAttribute('tabindex'))).toEqual(['-1', '0', '-1']);
-        expect(handle.query('.lm-tabs-headers')!.getAttribute('aria-orientation')).toBe('horizontal');
+        // the tablist is the ul — it owns ONLY tabs, so the scroll and add
+        // buttons never sit inside it
+        const tablist = handle.query('ul')!;
+        expect(tablist.getAttribute('role')).toBe('tablist');
+        expect(tablist.getAttribute('aria-orientation')).toBe('horizontal');
+        expect(handle.query('.lm-tabs-headers')!.hasAttribute('role')).toBe(false);
         // selecting another tab moves the tab stop
         (tabs[2] as HTMLElement).click();
         expect(tabs.map((el) => el.getAttribute('tabindex'))).toEqual(['-1', '-1', '0']);
+    });
+
+    it('wires tab ⇄ tabpanel: ids both ways, role/aria-labelledby/tabindex on panels', () => {
+        handle = t(Tabs, { data: [{ title: 'A', content: 'a' }, { title: 'B', content: 'b' }] });
+        const tabs = handle.queryAll('.lm-tabs-tab');
+        const panels = [...handle.query('.lm-tabs-content')!.children] as HTMLElement[];
+        tabs.forEach((tab, i) => {
+            expect(tab.id).toBeTruthy();
+            expect(tab.getAttribute('aria-controls')).toBe(panels[i].id);
+            expect(panels[i].getAttribute('role')).toBe('tabpanel');
+            expect(panels[i].getAttribute('aria-labelledby')).toBe(tab.id);
+            expect(panels[i].getAttribute('tabindex')).toBe('0');
+        });
+        // the wiring survives a reorder — ids are identity-keyed
+        tabs[0].dispatchEvent(new Event('dragstart', { bubbles: true }));
+        tabs[1].dispatchEvent(new Event('drop', { bubbles: true, cancelable: true }));
+        const after = handle.queryAll('.lm-tabs-tab');
+        const panelsAfter = [...handle.query('.lm-tabs-content')!.children] as HTMLElement[];
+        after.forEach((tab, i) => {
+            expect(tab.getAttribute('aria-controls')).toBe(panelsAfter[i].id);
+            expect(panelsAfter[i].getAttribute('aria-labelledby')).toBe(tab.id);
+        });
+    });
+
+    it('the add-tab control is a focusable button: Enter/Space create a tab', () => {
+        handle = t(Tabs, { data: [{ title: 'A' }], allowcreate: true });
+        const button = handle.query('.lm-tabs-insert-button')!;
+        expect(button.getAttribute('role')).toBe('button');
+        expect(button.getAttribute('tabindex')).toBe('0');
+        expect(button.getAttribute('aria-label')).toBe('Add tab');
+        button.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+        const space = new KeyboardEvent('keydown', { key: ' ', bubbles: true, cancelable: true });
+        button.dispatchEvent(space);
+        expect(space.defaultPrevented).toBe(true); // Space must not scroll
+        expect(handle.queryAll('.lm-tabs-tab').map((el) => el.textContent)).toEqual([
+            'A',
+            'Untitled',
+            'Untitled',
+        ]);
+    });
+
+    it('Ctrl/Cmd+Arrow moves the focused tab — the keyboard alternative to dragging', () => {
+        const moves: [number, number][] = [];
+        handle = t(Tabs, {
+            data: [{ title: 'One' }, { title: 'Two' }, { title: 'Three' }],
+            onchangeposition: (from: number, to: number) => moves.push([from, to]),
+        });
+        const tab = () => handle!.queryAll('.lm-tabs-tab');
+        tab()[0].dispatchEvent(
+            new KeyboardEvent('keydown', { key: 'ArrowRight', ctrlKey: true, bubbles: true, cancelable: true })
+        );
+        expect(tab().map((el) => el.textContent)).toEqual(['Two', 'One', 'Three']);
+        expect(moves).toEqual([[0, 1]]);
+        expect(document.activeElement).toBe(tab()[1]); // focus follows the moved tab
+        // and back with the meta key (macOS)
+        tab()[1].dispatchEvent(
+            new KeyboardEvent('keydown', { key: 'ArrowLeft', metaKey: true, bubbles: true, cancelable: true })
+        );
+        expect(tab().map((el) => el.textContent)).toEqual(['One', 'Two', 'Three']);
+        expect(moves).toEqual([
+            [0, 1],
+            [1, 0],
+        ]);
+        // clamped at the edges — no move, no event
+        tab()[0].dispatchEvent(
+            new KeyboardEvent('keydown', { key: 'ArrowLeft', ctrlKey: true, bubbles: true, cancelable: true })
+        );
+        expect(moves.length).toBe(2);
     });
 });

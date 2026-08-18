@@ -37,7 +37,8 @@ Plus the richer list affordances, where they cost nothing:
     as plain text rows)
   - dense and divider variants
   - onitemclick(item, index, event) makes rows interactive (hover +
-    cursor through data-clickable)
+    cursor through data-clickable; keyboard via an inner role=button
+    wrapper — tabindex=0, Enter/Space activate)
   - virtual scrolling (height + rowheight, no pagination): the
     datagrid window pattern — 100k-item feeds keep ~a viewport of
     DOM alive

@@ -13,7 +13,8 @@ let handle: ReturnType<typeof t> | null = null;
 let api!: ToastApi;
 
 beforeEach(() => {
-    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+    // Date is faked too: the hover-pause math reads Date.now()
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'Date'] });
 });
 afterEach(() => {
     handle?.unmount();
@@ -90,6 +91,46 @@ describe('components/toast', () => {
         closeOf(toasts()[0]).click();
         vi.advanceTimersByTime(200);
         expect(toasts()).toHaveLength(0);
+    });
+
+    it('hover PAUSES the auto-dismiss; leaving resumes with the remaining time', () => {
+        mountToast();
+        api.show('Hover me');
+
+        vi.advanceTimersByTime(3000); // 1000ms left on the clock
+        toasts()[0].dispatchEvent(new MouseEvent('mouseenter'));
+        vi.advanceTimersByTime(60000); // paused: nothing fires
+        expect(toasts()).toHaveLength(1);
+        expect(leaving()).toHaveLength(0);
+
+        toasts()[0].dispatchEvent(new MouseEvent('mouseleave'));
+        vi.advanceTimersByTime(999); // the clock resumed where it stopped
+        expect(leaving()).toHaveLength(0);
+        vi.advanceTimersByTime(1 + 200);
+        expect(toasts()).toHaveLength(0);
+    });
+
+    it('focus pauses the auto-dismiss like hover', () => {
+        mountToast();
+        api.show('Focus me');
+
+        toasts()[0].dispatchEvent(new FocusEvent('focusin'));
+        vi.advanceTimersByTime(60000);
+        expect(toasts()).toHaveLength(1); // held while focused
+
+        toasts()[0].dispatchEvent(new FocusEvent('focusout'));
+        vi.advanceTimersByTime(4000 + 200); // full budget was left
+        expect(toasts()).toHaveLength(0);
+    });
+
+    it('the host is a polite live region; error toasts are role=alert, the rest plain', () => {
+        mountToast({ duration: 0 });
+        expect(handle!.query('.lm-toast')!.getAttribute('aria-live')).toBe('polite');
+
+        api.show('plain');
+        api.error('bad');
+        expect(toasts()[0].hasAttribute('role')).toBe(false);
+        expect(toasts()[1].getAttribute('role')).toBe('alert');
     });
 
     it('manual close clears the auto-dismiss timer and fires onclose once', () => {

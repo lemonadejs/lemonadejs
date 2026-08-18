@@ -2,9 +2,14 @@
  * <Tooltip /> — a floating label for any element.
  *
  * Wraps its children and shows a small dark pill on hover/focus of the
- * wrapper; hides on leave/blur/Escape. Self-contained on purpose: a
- * tooltip is too small to compose <Modal /> — no chrome, no drag, no
- * focus management, just one branch and four coordinates.
+ * wrapper; hides on leave/blur/Escape. The popper is HOVERABLE (WCAG
+ * 1.4.13): leaving the wrapper starts a short grace timer instead of
+ * hiding, so the pointer can travel across the gap onto the popper —
+ * re-entering the subtree (trigger or popper) cancels the hide. While
+ * visible, the trigger children are wired to the popper through
+ * aria-describedby. Self-contained on purpose: a tooltip is too small to
+ * compose <Modal /> — no chrome, no drag, no focus management, just one
+ * branch and four coordinates.
  *
  *   <${Tooltip} title="Save your work" position="top">
  *       <button>Save</button>
@@ -20,8 +25,12 @@
 import { batch, component, css, html, isDisposing } from 'lemonadejs';
 
 const GAP = 8; // distance between the wrapper and the popper
+const GRACE = 150; // ms allowed to travel from the wrapper onto the popper (1.4.13)
 
 const SIDES = ['top', 'bottom', 'left', 'right'];
+
+/** Document-unique id per instance — the aria-describedby target */
+let uid = 0;
 
 export const Tooltip = component('tooltip', {
     title: '',                    // the tooltip text (live)
@@ -35,10 +44,12 @@ export const Tooltip = component('tooltip', {
     const open = state(false);
     const side = state('top');    // EFFECTIVE side, after flipping
     const pos = state({ top: 0, left: 0 });
+    const id = 'lm-tooltip-' + ++uid;
 
     let wrapper: HTMLElement | null = null;
     let popper: HTMLElement | null = null;
     let timer: ReturnType<typeof setTimeout> | null = null;
+    let hideTimer: ReturnType<typeof setTimeout> | null = null;
 
     const clearPending = () => {
         if (timer !== null) {
@@ -46,8 +57,35 @@ export const Tooltip = component('tooltip', {
             timer = null;
         }
     };
+    const clearHide = () => {
+        if (hideTimer !== null) {
+            clearTimeout(hideTimer);
+            hideTimer = null;
+        }
+    };
     // destroy-clean: an unmount mid-delay must leave no timer behind
-    onUnmount(clearPending);
+    onUnmount(() => {
+        clearPending();
+        clearHide();
+    });
+
+    // While visible, the trigger children point at the popper (1.3.1):
+    // aria-describedby is set on every element child except the popper
+    const describe = (on: boolean) => {
+        if (!wrapper) {
+            return;
+        }
+        for (const child of Array.from(wrapper.children)) {
+            if (child.classList.contains('lm-tooltip-popper')) {
+                continue;
+            }
+            if (on) {
+                child.setAttribute('aria-describedby', id);
+            } else if (child.getAttribute('aria-describedby') === id) {
+                child.removeAttribute('aria-describedby');
+            }
+        }
+    };
 
     // ---- placement: wrapper rect → fixed coordinates, flip on overflow
     const place = () => {
@@ -93,7 +131,12 @@ export const Tooltip = component('tooltip', {
     // by the time the callback fires the popper is attached and measurable.
     // Reopen reuses the cached branch (refs do not re-fire) — the open
     // state is the re-arm signal for both paths.
-    onMount(() => open.subscribe((v) => v && place()));
+    onMount(() => open.subscribe((v) => {
+        if (v) {
+            place();
+        }
+        describe(v);
+    }));
     // position is live while open
     onMount(() => props.position.subscribe(() => open.value && place()));
 
@@ -111,16 +154,36 @@ export const Tooltip = component('tooltip', {
 
     const hide = () => {
         clearPending(); // leaving mid-delay cancels the pending show
+        clearHide();
         if (open.value) {
             open.value = false;
             props.onclose?.();
         }
     };
 
+    // Hoverable (1.4.13): leaving the wrapper hides after a GRACE window
+    // instead of instantly, so the pointer can cross the GAP onto the
+    // popper — re-entering the subtree cancels the pending hide
+    const scheduleHide = () => {
+        clearHide();
+        hideTimer = setTimeout(() => {
+            hideTimer = null;
+            hide();
+        }, GRACE);
+    };
+
     return html`<span class="lm-tooltip"
         ref="${(el: HTMLElement) => (wrapper = el)}"
-        onmouseenter="${show}"
-        onmouseleave="${hide}"
+        onmouseenter="${() => {
+            clearHide(); // back on the trigger (or the popper): stay up
+            show();
+        }}"
+        onmouseleave="${() => {
+            clearPending(); // leaving mid-delay cancels the pending show
+            if (open.value) {
+                scheduleHide(); // visible: grace window to reach the popper
+            }
+        }}"
         onfocusin="${show}"
         onfocusout="${(e: FocusEvent) => {
             if (isDisposing()) {
@@ -131,9 +194,18 @@ export const Tooltip = component('tooltip', {
                 hide();
             }
         }}"
-        onkeydown="${(e: KeyboardEvent) => e.key === 'Escape' && hide()}">${props.children}${() =>
+        onkeydown="${(e: KeyboardEvent) => {
+            if (e.key === 'Escape') {
+                const wasOpen = open.value;
+                hide();
+                if (wasOpen) {
+                    e.stopPropagation(); // consumed: dismissed a visible tooltip
+                }
+            }
+        }}">${props.children}${() =>
         open.value &&
         html`<span class="lm-tooltip-popper ${() => (props.arrow.value ? 'lm-tooltip-arrow' : '')}"
+            id="${id}"
             role="tooltip"
             data-position="${() => side.value}"
             style="${() => css({ position: 'fixed', top: pos.value.top, left: pos.value.left })}"
