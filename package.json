@@ -6,6 +6,7 @@
   "name": "Contact <contact@jspreadsheet.com>",
   "url": "https://lemonadejs.com"
  },
+ "license": "MIT",
  "keywords": [
   "reactive",
   "two-way binding",
