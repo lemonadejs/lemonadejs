@@ -67,6 +67,12 @@ const toIso = (ms: number): string => {
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
+// A connector ends in an arrowhead a few px short of the successor bar:
+// the line stops at the arrowhead's base. Same values as the stylesheet
+// (.lm-gantt-link-arrow: 6px long, 3px gap)
+const ARROW_LEN = 6;
+const ARROW_GAP = 3;
+
 let uid = 0; // unique suffix per instance for the visually hidden keyboard hint id
 
 export const Gantt = component('gantt', {
@@ -181,35 +187,20 @@ export const Gantt = component('gantt', {
 
     const round2 = (n: number) => Math.round(n * 1000) / 1000;
 
-    /**
-     * Readable label color over a custom bar background (same luminance
-     * rule as the chart's textOn). Returns '' for the default bars — the
-     * stylesheet's white-on-series-color already contrasts — and for
-     * unparseable colors (named colors, gradients), where white + shadow
-     * stays the best guess. A LIGHT custom color (white, yellow...) flips
-     * the label dark and drops the shadow.
-     */
-    const labelStyle = (bg?: string): string => {
-        if (!bg) {
-            return '';
+    // Standalone mode: the rows width, so the px arrow tail becomes a %
+    // of the x axis (the links re-run when the chart is resized)
+    const rowsWidth = state(0);
+    let widthObserver: ResizeObserver | null = null;
+    const watchWidth = (el: HTMLElement) => {
+        rowsWidth.value = el.clientWidth;
+        if (typeof ResizeObserver !== 'undefined' && !widthObserver) {
+            widthObserver = new ResizeObserver(() => {
+                rowsWidth.value = el.clientWidth;
+            });
+            widthObserver.observe(el);
         }
-        let c: number[] | null = null;
-        const hex = bg.match(/^#([0-9a-f]{3}|[0-9a-f]{6})\b/i);
-        if (hex) {
-            const s = hex[1].length === 3 ? hex[1].split('').map((ch) => ch + ch).join('') : hex[1];
-            c = [0, 2, 4].map((i) => parseInt(s.slice(i, i + 2), 16));
-        } else {
-            const m = bg.match(/^rgba?\(([^)]+)\)/i);
-            if (m) {
-                c = m[1].split(',').slice(0, 3).map(Number);
-            }
-        }
-        if (!c || c.some((n) => !Number.isFinite(n))) {
-            return '';
-        }
-        const lum = 0.299 * c[0] + 0.587 * c[1] + 0.114 * c[2];
-        return lum > 150 ? 'color:#2b2f36;text-shadow:none' : '';
     };
+    onUnmount(() => widthObserver?.disconnect());
 
     /**
      * Dependency links — finish→start connectors. For each task carrying
@@ -235,6 +226,8 @@ export const Gantt = component('gantt', {
             if (t.id != null) byId.set(t.id, i);
         });
         const out: { d: string; ax: number; ay: number; ti: number; sid: string | number }[] = [];
+        // The arrowhead and its gap, in % of the axis (0 before the first layout)
+        const tail = rowsWidth.value ? ((ARROW_LEN + ARROW_GAP) * 100) / rowsWidth.value : 0;
         tasks.forEach((b, ib) => {
             const deps = b.dependencies;
             if (!Array.isArray(deps) || !deps.length) {
@@ -253,12 +246,12 @@ export const Gantt = component('gantt', {
                 const stub = 1.5; // % horizontal run out of the predecessor
                 let d: string;
                 if (bx - stub >= aEndX + stub) {
-                    // forward link: out of A → one vertical → into B's start
+                    // forward link: out of A, down right after it, into B's start
                     d =
                         'M ' + round2(aEndX) + ' ' + ay +
-                        ' H ' + round2(bx - stub) +
+                        ' H ' + round2(aEndX + stub) +
                         ' V ' + by +
-                        ' H ' + round2(bx);
+                        ' H ' + round2(bx - tail);
                 } else {
                     // BACK-link (B starts before A ends): a drop at A's edge
                     // would run behind B's bar. Route the horizontal leg
@@ -269,9 +262,9 @@ export const Gantt = component('gantt', {
                         'M ' + round2(aEndX) + ' ' + ay +
                         ' H ' + round2(aEndX + stub) +
                         ' V ' + gapY +
-                        ' H ' + round2(bx - stub) +
+                        ' H ' + round2(bx - tail - stub) +
                         ' V ' + by +
-                        ' H ' + round2(bx);
+                        ' H ' + round2(bx - tail);
                 }
                 out.push({ d, ax: round2(bx), ay: by, ti: ib, sid: depId });
             });
@@ -598,6 +591,14 @@ export const Gantt = component('gantt', {
                 });
             }
             lane.textContent = '';
+            // The day grid lines and the today line come from the stylesheet
+            lane.style.setProperty('--lm-gantt-days', String(totalDays()));
+            const today = props.today.peek() ? todayLeft() : null;
+            if (today === null) {
+                lane.style.removeProperty('--lm-gantt-today-left');
+            } else {
+                lane.style.setProperty('--lm-gantt-today-left', today + '%');
+            }
             const task = list[index];
             if (task) {
                 lane.appendChild(buildLaneBar(task, index));
@@ -632,10 +633,6 @@ export const Gantt = component('gantt', {
             const label = document.createElement('span');
             label.className = 'lm-gantt-label';
             label.textContent = task.label || '';
-            const contrast = labelStyle(task.color);
-            if (contrast) {
-                label.style.cssText = contrast;
-            }
             el.appendChild(label);
         }
         if (task.color) {
@@ -706,10 +703,48 @@ export const Gantt = component('gantt', {
         return out;
     };
 
+    /** ISO week number of the week holding `ms` (weeks run Monday to Sunday) */
+    const isoWeek = (ms: number): number => {
+        const d = new Date(ms);
+        d.setHours(12, 0, 0, 0);
+        // The Thursday of this week decides the year the week belongs to
+        d.setDate(d.getDate() - ((d.getDay() + 6) % 7) + 3);
+        const firstThursday = new Date(d.getFullYear(), 0, 4, 12);
+        firstThursday.setDate(firstThursday.getDate() - ((firstThursday.getDay() + 6) % 7) + 3);
+        return 1 + Math.round((d.getTime() - firstThursday.getTime()) / (7 * DAY));
+    };
+
+    /** Week segments: Sunday to Saturday, named by their ISO week number
+     *  (the Thursday inside the segment) — the scale for windows of up to
+     *  a few months; longer windows keep the month segments */
+    const weekSegments = () => {
+        const { from, to } = range.value;
+        const out: { week: number; range: string; left: number; width: number }[] = [];
+        let cursor = from;
+        while (cursor <= to) {
+            const d = new Date(cursor);
+            const weekEnd = cursor + (6 - d.getDay()) * DAY;
+            const segEnd = Math.min(weekEnd, to);
+            const a = new Date(weekEnd - 6 * DAY);
+            const b = new Date(weekEnd);
+            out.push({
+                week: isoWeek(weekEnd - 2 * DAY),
+                range: MONTHS[a.getMonth()] + ' ' + a.getDate() + ' - ' + MONTHS[b.getMonth()] + ' ' + b.getDate(),
+                left: round2(pct(cursor)),
+                width: round2(widthPct(cursor, segEnd)),
+            });
+            cursor = segEnd + DAY;
+        }
+        return out;
+    };
+
+    const weekScale = () => totalDays() <= 120;
+
     const dayTicks = () => {
         const { from, to } = range.value;
-        const out: { day: number; left: number; width: number; weekend: boolean }[] = [];
-        const showLabel = totalDays() <= 45; // keep the scale readable
+        const out: { day: number; left: number; width: number; weekend: boolean; today: boolean }[] = [];
+        const showLabel = totalDays() <= 60; // keep the scale readable
+        const today = toMs(toIso(Date.now()));
         for (let ms = from; ms <= to; ms += DAY) {
             const d = new Date(ms);
             out.push({
@@ -717,6 +752,7 @@ export const Gantt = component('gantt', {
                 left: round2(pct(ms)),
                 width: round2(widthPct(ms, ms)),
                 weekend: d.getDay() === 0 || d.getDay() === 6,
+                today: ms === today,
             });
         }
         return out;
@@ -776,7 +812,7 @@ export const Gantt = component('gantt', {
                 typeof task.progress === 'number'
                     ? html`<div class="lm-gantt-progress" style="width:${Math.min(100, Math.max(0, task.progress))}%"></div>`
                     : ''}
-            <span class="lm-gantt-label" style="${labelStyle(task.color) || false}">${task.label || ''}</span>
+            <span class="lm-gantt-label">${task.label || ''}</span>
             ${linkable
                 ? html`<div class="lm-gantt-link-handle" title="Drag to a task to link"
                       onmousedown="${(e: MouseEvent) =>
@@ -802,19 +838,24 @@ export const Gantt = component('gantt', {
                 onmousedown="${(e: MouseEvent) => panStart(e)}"
                 onkeydown="${(e: KeyboardEvent) => panKey(e)}">
                 <div class="lm-gantt-months">${() =>
-                    monthSegments().map(
-                        (m) => html`<div class="lm-gantt-month" style="left:${m.left}%;width:${m.width}%">${m.label}</div>`
-                    )}</div>
+                    weekScale()
+                        ? weekSegments().map(
+                              (w) => html`<div class="lm-gantt-month lm-gantt-week" style="left:${w.left}%;width:${w.width}%"><b>Week ${w.week}</b><span>${w.range}</span></div>`
+                          )
+                        : monthSegments().map(
+                              (m) => html`<div class="lm-gantt-month" style="left:${m.left}%;width:${m.width}%">${m.label}</div>`
+                          )}</div>
                 <div class="lm-gantt-days">${() =>
                     dayTicks().map(
-                        (t) => html`<div class="lm-gantt-day" data-weekend="${t.weekend ? 'true' : false}"
-                            style="left:${t.left}%;width:${t.width}%">${t.day ? String(t.day).padStart(2, '0') : ''}</div>`
+                        (t) => html`<div class="lm-gantt-day" data-weekend="${t.weekend ? 'true' : false}" data-today="${t.today ? 'true' : false}"
+                            style="left:${t.left}%;width:${t.width}%">${t.day ? String(t.day) : ''}</div>`
                     )}</div>
             </div>`}
         ${() =>
             props.table.value
                 ? '' // table mode: the rows live as lanes inside YOUR table
-                : html`<div class="lm-gantt-rows">
+                : html`<div class="lm-gantt-rows" style="${() => '--lm-gantt-days:' + totalDays()}"
+                      ref="${(el: HTMLElement) => watchWidth(el)}">
                       ${() =>
                           props.grid.value &&
                           html`<div class="lm-gantt-grid">${() =>
@@ -860,11 +901,12 @@ export const Gantt = component('gantt', {
                           return html`<div class="lm-gantt-link-layer">
                               <svg class="lm-gantt-links" viewBox="0 0 100 ${h}"
                                   preserveAspectRatio="none" style="height:${h}px">${ls.map(
-                                  (l) => html`<path class="lm-gantt-link" d="${l.d}"></path>`
-                              )}${
-                                  editable
-                                      ? ls.map(
-                                            (l) => html`<path class="lm-gantt-link-hit" d="${l.d}"
+                                  // The visible line and its hit line share a group: the
+                                  // hover highlight lands on the visible line (CSS :has)
+                                  // while the hit line keeps its width under the cursor
+                                  (l) => html`<g class="lm-gantt-link-pair"><path class="lm-gantt-link" d="${l.d}"></path>${
+                                      editable
+                                          ? html`<path class="lm-gantt-link-hit" d="${l.d}"
                                                 role="button" tabindex="0"
                                                 aria-label="${linkName(l)}"
                                                 title="Click to remove this dependency"
@@ -875,9 +917,9 @@ export const Gantt = component('gantt', {
                                                         removeLink(l.ti, l.sid);
                                                     }
                                                 }}"></path>`
-                                        )
-                                      : ''
-                              }${
+                                          : ''
+                                  }</g>`
+                              )}${
                                   lk
                                       ? html`<path class="lm-gantt-link-temp"
                                             d="M ${round2(lk.ax)} ${lk.ay} L ${round2(lk.cx)} ${lk.cy}"></path>`

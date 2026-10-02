@@ -270,14 +270,16 @@ describe('components/gantt — %-positioned, table-embeddable', () => {
         expect(handle!.query('.lm-gantt')!.getAttribute('data-disabled')).toBe('true');
     });
 
-    it('light custom bar colors flip the label dark for contrast', () => {
+    it('labels stand next to the bar in the text colour: no contrast colour per bar', () => {
         open({ data: [
             { label: 'Light', start: '2026-06-01', end: '2026-06-05', color: '#ffffff' },
             { label: 'Dark', start: '2026-06-06', end: '2026-06-10', color: '#1f2937' },
         ] });
         const labels = handle!.queryAll('.lm-gantt-label');
-        expect(styleOf(labels[0])).toContain('color:rgb(43, 47, 54)'); // white bar → dark text
-        expect(styleOf(labels[1])).not.toContain('color:rgb(43, 47, 54)'); // dark bar → default white
+        expect(labels.length).toBe(2);
+        expect(labels[0].textContent).toBe('Light');
+        expect(labels[0].getAttribute('style')).toBeNull();
+        expect(labels[1].getAttribute('style')).toBeNull();
     });
 
     it('readonly tasks and non-editable charts ignore drags', () => {

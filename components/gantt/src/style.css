@@ -9,15 +9,17 @@
        the gantt matches the chart with or without the global stylesheet. */
     --lm-gantt-font: 'Helvetica Neue', Helvetica, Arial, sans-serif;
     --lm-gantt-font-size: 1rem;
-    --lm-gantt-text: var(--lm-font-color, #333333);
-    --lm-gantt-muted: var(--lm-font-grayout, #666666);
-    --lm-gantt-grid: var(--lm-border-color, #e6e6e6);
+    --lm-gantt-text: var(--lm-font-color, #323338);
+    --lm-gantt-muted: var(--lm-font-grayout, #676879);
+    --lm-gantt-grid: var(--lm-border-color, #e6e9ef);
     /* the categorical series tokens keep gantt bars in step with chart
-       series: bar = series-1, milestone = series-2, today = series-4 */
-    --lm-gantt-bar: var(--lm-series-1, #4b81de);
-    --lm-gantt-milestone: var(--lm-series-2, #6342a1);
-    --lm-gantt-today: var(--lm-series-4, #bd7f40);
-    --lm-gantt-bar-radius: 2px;
+       series: bar = series-1, milestone = series-2; today is the accent */
+    --lm-gantt-bar: var(--lm-series-1, #579bfc);
+    --lm-gantt-milestone: var(--lm-series-2, #fdab3d);
+    --lm-gantt-today: #9a9eae;
+    --lm-gantt-today-bg: #e3e5ec;
+    --lm-gantt-link: #323338;
+    --lm-gantt-bar-radius: 4px;
     font-family: var(--lm-gantt-font);
     font-size: var(--lm-gantt-font-size);
     line-height: 1.4;
@@ -40,7 +42,8 @@
 
 .lm-gantt-months {
     position: relative;
-    height: 22px;
+    height: 24px;
+    border-bottom: 1px solid var(--lm-gantt-grid);
 }
 
 .lm-gantt-month {
@@ -59,6 +62,20 @@
     overflow: hidden;
 }
 
+/* the week scale: "Week 3" and its dates */
+.lm-gantt-week {
+    font-weight: normal;
+    gap: 5px;
+}
+
+.lm-gantt-week b {
+    font-weight: 600;
+}
+
+.lm-gantt-week span {
+    color: var(--lm-gantt-muted);
+}
+
 /* the first segment starts at the chart edge — no divider needed there */
 .lm-gantt-month:first-child {
     border-left: none;
@@ -66,7 +83,7 @@
 
 .lm-gantt-days {
     position: relative;
-    height: 18px;
+    height: 22px;
 }
 
 .lm-gantt-day {
@@ -76,19 +93,49 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    box-sizing: border-box;
+    border-left: 1px solid var(--lm-gantt-grid);
     font-size: 0.7em;
-    color: var(--lm-gantt-muted);
+    color: var(--lm-gantt-text);
     overflow: hidden;
+}
+
+.lm-gantt-day:first-child {
+    border-left: none;
 }
 
 .lm-gantt-day[data-weekend='true'] {
-    color: var(--lm-gantt-grid);
+    color: var(--lm-gantt-muted);
 }
 
-/* ---- chart area */
+/* today: the whole day cell shaded, the line below starts from it */
+.lm-gantt-day[data-today='true'] {
+    background: var(--lm-gantt-today-bg);
+    font-weight: 600;
+}
+
+/* ---- chart area: one line per day slot, the slot width from the day
+   count the component writes on the rows (and on every table lane) */
 .lm-gantt-rows {
     position: relative;
     overflow: hidden;
+    background-image: linear-gradient(to right, var(--lm-gantt-grid) 1px, transparent 1px);
+    background-size: calc(100% / var(--lm-gantt-days, 1)) 100%;
+}
+
+/* table mode: the today line on every lane, at the position the
+   component writes; lanes without the variable draw nothing */
+.lm-gantt-lane::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    height: 100%;
+    left: var(--lm-gantt-today-left, -10%);
+    width: 0;
+    border-left: 2px solid var(--lm-gantt-today);
+    transform: translateX(-1px);
+    pointer-events: none;
+    z-index: 2;
 }
 
 .lm-gantt-grid {
@@ -109,7 +156,8 @@
     top: 0;
     height: 100%;
     width: 0;
-    border-left: 2px dashed var(--lm-gantt-today);
+    border-left: 2px solid var(--lm-gantt-today);
+    transform: translateX(-1px);
     pointer-events: none;
     z-index: 2;
 }
@@ -124,23 +172,23 @@
     position: absolute;
     top: 50%;
     transform: translateY(-50%);
-    height: 62%;
+    height: 52%;
     min-width: 6px;
     /* flat series colour, like the chart bars (no gloss gradient) */
     background: var(--lm-gantt-bar);
-    border-radius: var(--lm-gantt-bar-radius, 2px);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+    border-radius: var(--lm-gantt-bar-radius, 4px);
     display: flex;
     align-items: center;
-    overflow: hidden;
+    /* the label hangs outside, to the right */
+    overflow: visible;
     box-sizing: border-box;
     transition: box-shadow 0.15s ease, filter 0.15s ease;
     z-index: 1;
 }
 
 .lm-gantt-bar:hover {
-    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.28);
-    filter: brightness(1.06);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    filter: brightness(1.04);
     z-index: 3;
 }
 
@@ -187,29 +235,34 @@
     pointer-events: none;
 }
 
+/* the label stands next to the bar, in the text colour, past the point
+   where a connector leaves the bar (the stub, ~14px) */
 .lm-gantt-label {
-    position: relative;
-    padding: 0 10px;
-    color: #fff;
-    font-weight: bold;
-    font-size: 0.7em;
+    position: absolute;
+    left: 100%;
+    top: 50%;
+    transform: translateY(-50%);
+    margin-left: 24px;
+    color: var(--lm-gantt-text);
+    font-weight: normal;
+    font-size: 0.75em;
+    line-height: 1;
     white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
     pointer-events: none;
-    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
 }
 
 /* ---- milestones: a diamond on the date */
 .lm-gantt-milestone {
     position: absolute;
     top: 50%;
-    width: 12px;
-    height: 12px;
-    background: var(--lm-gantt-milestone);
+    width: 14px;
+    height: 14px;
+    /* a ring: the colour on the edge, white inside */
+    background: #fff;
+    border: 3px solid var(--lm-gantt-milestone);
+    box-sizing: border-box;
     transform: translate(-50%, -50%) rotate(45deg);
     border-radius: 3px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
     transition: box-shadow 0.15s ease;
     z-index: 1;
 }
@@ -245,19 +298,24 @@
     vector-effect: non-scaling-stroke;
 }
 
+/* the arrowhead: 6px long, its tip 3px before the successor bar; the
+   line underneath stops at its base (ARROW_LEN / ARROW_GAP in the code) */
 .lm-gantt-link-arrow {
     position: absolute;
     width: 0;
     height: 0;
-    transform: translate(-100%, -50%);
-    border: 4px solid transparent;
-    border-left-color: var(--lm-gantt-link, var(--lm-icon-color, #666666));
+    transform: translate(calc(-100% - 3px), -50%);
+    border-style: solid;
+    border-width: 4px 0 4px 6px;
+    border-color: transparent transparent transparent var(--lm-gantt-link, var(--lm-icon-color, #666666));
     pointer-events: none;
     z-index: 2;
 }
 
 /* editable: a wide invisible hit-line over each connector — click to delete
-   the dependency (reddens on hover so it's clear what will go) */
+   the dependency. Its width never changes: a thinner stroke on hover would
+   leave the cursor outside the stroke, end the hover and flicker. The red
+   feedback goes on the visible line of the same pair instead. */
 .lm-gantt-link-hit {
     fill: none;
     stroke: transparent;
@@ -267,7 +325,8 @@
     cursor: pointer;
 }
 
-.lm-gantt-link-hit:hover {
+.lm-gantt-link-pair:has(> .lm-gantt-link-hit:hover) > .lm-gantt-link,
+.lm-gantt-link-pair:has(> .lm-gantt-link-hit:focus-visible) > .lm-gantt-link {
     stroke: var(--lm-color-danger, #dc2626);
     stroke-width: 2.5;
     opacity: 0.7;
@@ -332,11 +391,8 @@
     outline-offset: 1px;
 }
 
-/* keyboard focus on a connector hit-line: same red as its hover */
+/* keyboard focus on a connector hit-line: the pair rule above paints it */
 .lm-gantt-link-hit:focus-visible {
-    stroke: var(--lm-color-danger, #dc2626);
-    stroke-width: 2.5;
-    opacity: 0.7;
     outline: none;
 }
 
