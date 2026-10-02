@@ -1,35 +1,89 @@
 /**
- * <Charts /> — LemonadeJS v6 block
+ * A chart component for LemonadeJS v6. One component draws 35 chart types,
+ * selected by the `type` prop, from a single data definition: `series` and
+ * `categories`. Everything else is a plain prop.
  *
- * One block, two dozen chart types selected by `type` (bar, line, pie,
- * radar, radialbar, polararea, lollipop, dumbbell, histogram, streamgraph,
- * heatmap, treemap, candlestick... see the `type` prop for the full list).
- * Presentation is flat, typed, verifiable props; only the data itself —
- * `series` and `categories` — travels as arrays:
+ * ```js
+ * const categories = ['Jan', 'Feb', 'Mar'];
+ * const series = [
+ *     { name: 'Product A', data: [3, 5, 2] },
+ *     { name: 'Product B', data: [1, 2, 4] },
+ * ];
  *
- *   const series = [
- *       { name: 'Product A', data: [3, 5, 2] },
- *       { name: 'Product B', data: [1, 2, 4] },
- *   ];
- *   <${Charts} type="bar" categories="${cats}" series="${series}" legend labels />
+ * html`<${Charts} type="bar" title="Sales" categories="${categories}" series="${series}" />`;
+ * ```
  *
- * THE DESIGN, AND WHY IT IS NOT HIGHCHARTS:
- *   - bar / stackedbar render in PLAIN HTML + CSS (flex columns, % heights —
- *     the same mechanism <Progress> uses for its linear bar). They are
- *     responsive on both axes with ZERO JavaScript: no ResizeObserver, no
- *     redraw loop. The browser reflows the flexbox; we never recompute.
- *   - pie renders as a single <svg viewBox>; the viewBox scales the scene
- *     natively, so it too needs no resize handling. Per-slice paths give
- *     hover and labels for free.
+ * ### Chart types
  *
- * LAYOUT: index.ts owns the component (state, legend, tooltip, export,
- * dispatch); model.ts the data shapes + normalize(); helpers.ts the pure
- * math/geometry; cartesian.ts / radial.ts / extras.ts the renderers, as
- * plain (model, ctx) => View functions wired through RenderCtx.
+ * | Family | `type` |
+ * |---|---|
+ * | Bars and columns | `bar`, `stackedbar`, `histogram`, `pareto`, `waterfall`, `bullet`, `lollipop`, `dumbbell`, `columnrange` |
+ * | Lines and areas | `line`, `stackedarea`, `streamgraph`, `arearange` |
+ * | Parts of a whole | `pie`, `funnel`, `pyramid`, `treemap`, `sunburst`, `icicle`, `pictogram` |
+ * | Radial | `radar`, `radialbar`, `polararea`, `gauge` |
+ * | Points and distributions | `scatter`, `bubble`, `packedbubble`, `boxplot`, `heatmap` |
+ * | Financial | `candlestick`, `ohlc` |
+ * | Flows and relations | `sankey`, `chord`, `arcdiagram` |
+ * | Text | `wordcloud` |
  *
- * The scene is one reactive `model` derived from the props: change any prop
- * (assignment triggers, mutation does not — the v6 contract) and only the
- * dependent bindings rebuild. There is no imperative chart object to sync.
+ * A donut is a `pie` with `innerradius`. An area chart is a `line` with `area`.
+ *
+ * ### Data
+ *
+ * A series is `{ name, data, color? }`. Each entry of `data` is one point:
+ *
+ * - a number, one per category: `[3, 5, 2]`
+ * - a tuple: `[x, y]` for scatter, `[x, y, z]` for bubble, `[low, high]` for
+ *   the range types, `[open, high, low, close]` for candlestick and ohlc,
+ *   `[min, q1, median, q3, max]` for boxplot
+ * - an object: `{ name, value, color? }` for slices, `{ from, to, value }`
+ *   for sankey, chord and arcdiagram links, `{ name, parent, value }` for
+ *   sunburst and icicle
+ * - `null`, a gap in a line
+ *
+ * A series can set its own `type` (`bar`, `line`, `area` or `scatter`) to
+ * build a combo chart, and `axis: 'right'` to use a secondary y-axis.
+ *
+ * ### Features
+ *
+ * - Legend that shows and hides series, hover tooltip, shared tooltip with
+ *   a crosshair
+ * - Value labels, axis titles and number formatting: prefix, suffix,
+ *   compact notation, decimals or a custom formatter
+ * - Category, datetime and linear x-axes; logarithmic and secondary y-axes
+ * - Reference lines, reference bands and annotations pinned to data points
+ * - Zoom by drag selection, a navigator strip and drilldown with a breadcrumb
+ * - Sparkline mode for inline charts, and a toolbar with CSV download
+ * - Four built-in palettes, or your own colors
+ * - Responsive: the width is fluid and the chart follows its container
+ *   through CSS and the SVG viewBox, with no resize listeners
+ * - Accessible: a text summary and a hidden data table for screen readers,
+ *   and animations that respect reduced motion
+ *
+ * ### Updating
+ *
+ * The chart is derived from its props. Assign a new array to `series` or
+ * `categories`, or change any other prop, and the chart updates. Mutating
+ * an array in place does not trigger an update.
+ */
+
+/*
+ * Implementation notes
+ *
+ * index.ts owns the component: state, legend, tooltip, export and dispatch.
+ * model.ts holds the data shapes and normalize(); helpers.ts the math and
+ * geometry; cartesian.ts, radial.ts, extras.ts, flow.ts and hierarchy.ts
+ * the renderers, plain (model, ctx) => View functions wired through
+ * RenderCtx.
+ *
+ * bar and stackedbar render as HTML and CSS (flex columns, percentage
+ * heights, the mechanism <Progress> uses for its linear bar): the browser
+ * reflows them and nothing is recomputed on resize. The SVG types scale
+ * through the viewBox for the same reason.
+ *
+ * The scene is one reactive `model` derived from the props: only the
+ * bindings that depend on a changed prop rebuild, and there is no
+ * imperative chart object to keep in sync.
  */
 
 import { component, css, html, type View } from 'lemonadejs';

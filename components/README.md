@@ -15,7 +15,7 @@ three deployment forms (by value, by name, custom element).
 | [Calendar](./calendar/README.md) | `@lemonadejs/calendar` | 47 | LemonadeJS calendar block — date, datetime and range picker on the Modal primitive; contract-verified, framework-agnostic. |
 | [Card](./card/README.md) | `@lemonadejs/card` | 24 | LemonadeJS card block — contract-verified, framework-agnostic. |
 | [Carousel](./carousel/README.md) | `@lemonadejs/carousel` | 14 | LemonadeJS carousel block — single-file (styles ship inside the component), contract-verified, framework-agnostic. |
-| [Charts](./charts/README.md) | `@lemonadejs/charts` | 111 | LemonadeJS charts block — one unified data definition, bar/stacked/pie, responsive with no JS layout. |
+| [Charts](./charts/README.md) | `@lemonadejs/charts` | 111 | LemonadeJS charts block — 35 chart types from one data definition, responsive with no resize code. |
 | [Color](./color/README.md) | `@lemonadejs/color` | 18 | LemonadeJS color block — contract-verified, framework-agnostic. |
 | [Contextmenu](./contextmenu/README.md) | `@lemonadejs/contextmenu` | 6 | LemonadeJS contextmenu block — contract-verified, framework-agnostic. |
 | [Cropper](./cropper/README.md) | `@lemonadejs/cropper` | 31 | LemonadeJS cropper block — contract-verified, framework-agnostic. |

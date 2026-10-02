@@ -16,7 +16,7 @@ export interface ChartPoint {
     name?: string;
     /** The magnitude / y-value. (`y` is accepted as an alias.) */
     value?: number;
-    /** Highcharts-style alias for `value`. */
+    /** Alias for `value`. */
     y?: number;
     /** x-value for scatter/bubble (numeric x-axis). */
     x?: number;
