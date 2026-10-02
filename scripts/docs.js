@@ -42,9 +42,10 @@ const extractPropComments = function (source) {
         return comments;
     }
     for (const line of block[0].split('\n')) {
-        const m = line.match(/^\s{4}([a-z]+):.*?\/\/\s*(.*)$/);
+        const m = line.match(/^\s{4}([a-z][a-z0-9]*):.*?\/\/\s*(.*)$/);
         if (m) {
-            comments[m[1]] = m[2].trim();
+            // The comments land in table cells: a bare pipe would split the row
+            comments[m[1]] = m[2].trim().replace(/\|/g, '\\|');
         }
     }
     return comments;
@@ -85,7 +86,8 @@ const generate = function (name) {
     const schema = JSON.parse(fs.readFileSync(contractPath, 'utf8'));
     const verifyPath = path.join(base, 'verify.json');
     const report = fs.existsSync(verifyPath) ? JSON.parse(fs.readFileSync(verifyPath, 'utf8')) : null;
-    const source = fs.readFileSync(sourcePath, 'utf8');
+    // A Windows checkout carries CRLF: the line patterns below expect LF
+    const source = fs.readFileSync(sourcePath, 'utf8').replace(/\r\n/g, '\n');
     const overview = extractOverview(source);
     const comments = extractPropComments(source);
     const N = cap(name);
