@@ -60,8 +60,8 @@ state for a two-way live wire. Attribute strings are coerced to the declared typ
 | Prop | Type | Default | Description |
 |---|---|---|---|
 | `bind` | boolean | — | Two-way bound value. `.set()` fires `onchange`; plain assignment is silent. visibility two-way (default: visible) |
-| `severity` | string | `''` | '' = info | success | warning | error |
-| `variant` | string | `''` | '' = standard | outlined | filled |
+| `severity` | string | `''` | '' = info \| success \| warning \| error |
+| `variant` | string | `''` | '' = standard \| outlined \| filled |
 | `title` | string | `''` | optional bold title line |
 | `message` | string | `''` | body text (children render after it) |
 | `closable` | boolean | `false` | shows the × button |

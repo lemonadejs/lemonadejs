@@ -74,7 +74,7 @@ state for a two-way live wire. Attribute strings are coerced to the declared typ
 All event names are lowercase (the platform convention — LJS-305 warns otherwise).
 
 - `onchangepage` — (route, previous, isNew)
-- `onbeforechangepage` — (path, route) -> false | path | Route
+- `onbeforechangepage` — (path, route) -> false \| path \| Route
 - `onbeforecreatepage` — (route, html) -> false cancels
 
 ## API (via `ref`)

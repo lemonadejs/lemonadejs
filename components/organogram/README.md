@@ -78,9 +78,9 @@ state for a two-way live wire. Attribute strings are coerced to the declared typ
 
 | Prop | Type | Default | Description |
 |---|---|---|---|
-| `bind` | any | — | Two-way bound value. `.set()` fires `onchange`; plain assignment is silent. two-way selected node id ('any': string | number) |
+| `bind` | any | — | Two-way bound value. `.set()` fires `onchange`; plain assignment is silent. two-way selected node id ('any': string \| number) |
 | `data` | array | — | OrgItem[] — the flat adjacency list |
-| `orientation` | string | `''` | '' top-down (default) | 'horizontal' left-right |
+| `orientation` | string | `''` | '' top-down (default) \| 'horizontal' left-right |
 | `nodewidth` | number | `180` | card width in px |
 | `nodeheight` | number | `70` | card height in px |
 | `hspacing` | number | `24` | gap between siblings (px) |

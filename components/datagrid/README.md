@@ -86,7 +86,7 @@ state for a two-way live wire. Attribute strings are coerced to the declared typ
 | `columns` | array | — | Column[] |
 | `height` | number | `360` | viewport height (virtual mode) |
 | `rowheight` | number | `36` |  |
-| `selectable` | string | `''` | '' | 'single' | 'multiple' |
+| `selectable` | string | `''` | '' \| 'single' \| 'multiple' |
 | `editable` | boolean | `false` | grid default; column.editable overrides |
 | `search` | boolean | `false` | built-in search box |
 | `pagination` | number | `0` | rows per page; 0 = virtual scroll |
@@ -101,7 +101,7 @@ All event names are lowercase (the platform convention — LJS-305 warns otherwi
 
 - `onchange` — (row, columnName, value, oldValue)
 - `onselect` — (selectedRows)
-- `onsort` — (columnName, direction | null)
+- `onsort` — (columnName, direction \| null)
 - `onrowclick` — (row, event)
 - `oncolumnresize` — (columnName, widthPx) on handle release
 - `onchangepage` — (page) — zero-based, after the page actually moves

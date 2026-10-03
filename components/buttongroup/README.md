@@ -58,11 +58,11 @@ state for a two-way live wire. Attribute strings are coerced to the declared typ
 |---|---|---|---|
 | `bind` | any | — | Two-way bound value. `.set()` fires `onchange`; plain assignment is silent. selection: single value, array when multiple (any) |
 | `options` | array | — | { value, label, icon, disabled } or strings |
-| `selectable` | string | `''` | '' action buttons | single | multiple |
-| `variant` | string | `''` | '' contained | outlined | text |
-| `color` | string | `''` | green | orange | red | purple |
-| `size` | string | `''` | small | large (default in between) |
-| `orientation` | string | `''` | '' horizontal | vertical |
+| `selectable` | string | `''` | '' action buttons \| single \| multiple |
+| `variant` | string | `''` | '' contained \| outlined \| text |
+| `color` | string | `''` | green \| orange \| red \| purple |
+| `size` | string | `''` | small \| large (default in between) |
+| `orientation` | string | `''` | '' horizontal \| vertical |
 | `disabled` | boolean | `false` | blocks the whole group (native) |
 | `aria-label` | string | `''` |  |
 

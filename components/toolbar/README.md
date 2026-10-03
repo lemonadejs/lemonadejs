@@ -86,7 +86,7 @@ state for a two-way live wire. Attribute strings are coerced to the declared typ
 | Prop | Type | Default | Description |
 |---|---|---|---|
 | `options` | array | — | ToolbarItem[] |
-| `position` | string | `''` | '' = fixed bottom bar (v5 default) | 'static' | 'left' |
+| `position` | string | `''` | '' = fixed bottom bar (v5 default) \| 'static' \| 'left' |
 | `visible` | boolean | `true` | false hides the whole bar |
 
 ## Events

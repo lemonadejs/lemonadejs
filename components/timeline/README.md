@@ -81,8 +81,8 @@ state for a two-way live wire. Attribute strings are coerced to the declared typ
 | `date` | string | `''` | viewed month anchor (v5: value) — defaults to today |
 | `format` | string | `''` | day mask (v5 defaults: monthly 'dd mmm yyyy', feed 'dddd, dd') |
 | `message` | string | `"No records found"` | text shown when the feed is empty |
-| `order` | string | `"asc"` | asc | desc by date |
-| `align` | string | `"left"` | left | right | top | bottom (invalid → left, v5) |
+| `order` | string | `"asc"` | asc \| desc by date |
+| `align` | string | `"left"` | left \| right \| top \| bottom (invalid → left, v5) |
 | `position` | string | `''` | v5 pass-through → data-mode on the feed |
 | `controls` | boolean | `true` | month navigation header (visible in monthly mode only, as v5) |
 | `editable` | boolean | `false` | shows the per-item edit button |

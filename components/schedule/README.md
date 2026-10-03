@@ -88,7 +88,7 @@ state for a two-way live wire. Attribute strings are coerced to the declared typ
 |---|---|---|---|
 | `data` | array | — | ScheduleEvent[] BY REFERENCE (mutate + touch()) |
 | `value` | string | `''` | anchor date 'YYYY-MM-DD' (default: today) |
-| `type` | string | `"week"` | 'week' | 'weekdays' | 'day' |
+| `type` | string | `"week"` | 'week' \| 'weekdays' \| 'day' |
 | `weekly` | boolean | `false` | abstract weekday columns (no dates) |
 | `grid` | number | `15` | minutes per row (row height = grid px) |
 | `snap` | number | `0` | create/resize step in minutes (0 = grid) |

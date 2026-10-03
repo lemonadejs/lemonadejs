@@ -76,7 +76,7 @@ state for a two-way live wire. Attribute strings are coerced to the declared typ
 | `remote` | boolean | `false` | search against url?q= instead of locally |
 | `url` | string | `''` |  |
 | `insert` | boolean | `false` | + button adds the typed text |
-| `type` | string | `''` | '' | default | picker | searchbar | inline | auto |
+| `type` | string | `''` | '' \| default \| picker \| searchbar \| inline \| auto |
 | `placeholder` | string | `''` |  |
 | `aria-label` | string | `''` |  |
 | `width` | number | `0` |  |
@@ -96,7 +96,7 @@ All event names are lowercase (the platform convention — LJS-305 warns otherwi
 - `onsearch` — (results) after a remote search
 - `onbeforesearch` — (query, http) -> false cancels
 - `oninsert` — (item)
-- `onbeforeinsert` — async (item) -> item | false
+- `onbeforeinsert` — async (item) -> item \| false
 - `onload` — data ready (incl. initial url load)
 
 ## API (via `ref`)

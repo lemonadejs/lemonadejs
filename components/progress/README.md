@@ -65,11 +65,11 @@ state for a two-way live wire. Attribute strings are coerced to the declared typ
 | Prop | Type | Default | Description |
 |---|---|---|---|
 | `bind` | number | — | Two-way bound value. `.set()` fires `onchange`; plain assignment is silent. two-way percent 0-100; absent → indeterminate |
-| `type` | string | `''` | '' = linear | 'circular' (data-type variant) |
+| `type` | string | `''` | '' = linear \| 'circular' (data-type variant) |
 | `indeterminate` | boolean | `false` | force the looping animation even with a value |
 | `size` | number | `0` | circular diameter in px (default 40 via CSS) |
 | `thickness` | number | `0` | stroke/bar thickness in px (defaults: 4 linear, 3.6 circular) |
-| `color` | string | `''` | green | orange | red | purple (default blue) |
+| `color` | string | `''` | green \| orange \| red \| purple (default blue) |
 | `label` | boolean | `false` | show the % text: beside linear, centered in circular |
 | `arialabel` | string | `''` | accessible name for the progressbar (aria-label) |
 

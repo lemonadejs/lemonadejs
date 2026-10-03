@@ -84,7 +84,7 @@ state for a two-way live wire. Attribute strings are coerced to the declared typ
 | `controls` | boolean | `true` | built-in ranges + tools + buttons bar |
 | `original` | boolean | `false` | include the source image in saved data (v5) |
 | `aspect` | number | `0` | crop aspect ratio (w/h); 0 = free |
-| `format` | string | `"png"` | export format: png | jpeg | webp |
+| `format` | string | `"png"` | export format: png \| jpeg \| webp |
 | `quality` | number | `0.92` | export quality for jpeg/webp (0..1) |
 | `outputwidth` | number | `0` | export width; 0 = crop box width |
 | `outputheight` | number | `0` | export height; 0 = crop box height |

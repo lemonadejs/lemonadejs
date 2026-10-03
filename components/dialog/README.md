@@ -67,7 +67,7 @@ state for a two-way live wire. Attribute strings are coerced to the declared typ
 | `bind` | string | — | Two-way bound value. `.set()` fires `onchange`; plain assignment is silent. two-way prompt value (v5: input) |
 | `title` | string | `''` | bold first line |
 | `message` | string | `''` | body text under the title |
-| `type` | string | `''` | '' (confirm) | 'alert' | 'input' (v5: 'default') |
+| `type` | string | `''` | '' (confirm) \| 'alert' \| 'input' (v5: 'default') |
 | `confirmlabel` | string | `"OK"` | OK button label (v5: confirmLabel, never rendered — fixed) |
 | `cancellabel` | string | `"Cancel"` | Cancel button label (v5: cancelLabel) |
 | `placeholder` | string | `"Value"` | prompt placeholder (v5: inputPlaceholder) |

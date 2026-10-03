@@ -69,7 +69,7 @@ state for a two-way live wire. Attribute strings are coerced to the declared typ
 
 | Prop | Type | Default | Description |
 |---|---|---|---|
-| `position` | string | `''` | '' = bottom-left | bottom-right | top-left | top-right |
+| `position` | string | `''` | '' = bottom-left \| bottom-right \| top-left \| top-right |
 | `duration` | number | `4000` | default auto-dismiss ms; 0 = sticky |
 | `max` | number | `5` | visible at once; overflow queues |
 | `closable` | boolean | `true` | × button on each toast |

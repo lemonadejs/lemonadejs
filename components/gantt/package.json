@@ -1,6 +1,6 @@
 {
     "name": "@lemonadejs/gantt",
-    "version": "6.0.0-beta.0",
+    "version": "6.0.0-beta.3",
     "description": "LemonadeJS gantt block — %-positioned bars that align across embedded instances; contract-verified, framework-agnostic.",
     "license": "MIT",
     "repository": {
@@ -29,6 +29,6 @@
         "verify.json"
     ],
     "peerDependencies": {
-        "lemonadejs": "^6.0.0-beta.0"
+        "lemonadejs": "^6.0.0-beta.1"
     }
 }

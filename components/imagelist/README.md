@@ -70,7 +70,7 @@ state for a two-way live wire. Attribute strings are coerced to the declared typ
 | `columns` | number | `3` | grid columns (masonry: CSS column count) |
 | `gap` | number | `8` | px between tiles |
 | `rowheight` | number | `164` | px per grid row; 0 = natural heights |
-| `variant` | string | `''` | '' standard | 'masonry' | 'quilted' |
+| `variant` | string | `''` | '' standard \| 'masonry' \| 'quilted' |
 | `bar` | boolean | `false` | overlay title bar on each image |
 
 ## Events

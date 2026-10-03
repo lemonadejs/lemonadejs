@@ -83,7 +83,7 @@ state for a two-way live wire. Attribute strings are coerced to the declared typ
 | `label` | string | `''` | text label above the track |
 | `disabled` | boolean | `false` | blocks interaction |
 | `showvalue` | boolean | `false` | value bubble above the thumb while dragging/focused |
-| `color` | string | `''` | green | orange | red | purple |
+| `color` | string | `''` | green \| orange \| red \| purple |
 
 ## Events
 

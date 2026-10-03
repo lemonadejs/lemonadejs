@@ -67,7 +67,7 @@ state for a two-way live wire. Attribute strings are coerced to the declared typ
 | Prop | Type | Default | Description |
 |---|---|---|---|
 | `title` | string | `''` | the tooltip text (live) |
-| `position` | string | `''` | '' = top | bottom | left | right |
+| `position` | string | `''` | '' = top \| bottom \| left \| right |
 | `delay` | number | `100` | ms before showing |
 | `arrow` | boolean | `true` | small arrow pointing at the wrapper |
 | `disabled` | boolean | `false` | never shows |

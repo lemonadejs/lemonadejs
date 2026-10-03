@@ -58,14 +58,14 @@ state for a two-way live wire. Attribute strings are coerced to the declared typ
 | Prop | Type | Default | Description |
 |---|---|---|---|
 | `label` | string | `''` | text content (children also supported) |
-| `variant` | string | `''` | '' = contained | outlined | text |
-| `color` | string | `''` | '' = primary | secondary | success | error | warning |
-| `size` | string | `''` | small | large (default in between) |
+| `variant` | string | `''` | '' = contained \| outlined \| text |
+| `color` | string | `''` | '' = primary \| secondary \| success \| error \| warning |
+| `size` | string | `''` | small \| large (default in between) |
 | `disabled` | boolean | `false` | blocks interaction (native on <button>) |
 | `loading` | boolean | `false` | spinner replaces the content; disabled while on |
 | `fullwidth` | boolean | `false` | stretch to the container width |
 | `href` | string | `''` | renders a real <a> instead of <button> |
-| `type` | string | `''` | button type: submit | reset ('' = button) |
+| `type` | string | `''` | button type: submit \| reset ('' = button) |
 | `icon` | string | `''` | material icon name shown before the label |
 | `aria-label` | string | `''` |  |
 

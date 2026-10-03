@@ -67,7 +67,7 @@ state for a two-way live wire. Attribute strings are coerced to the declared typ
 | `avataralt` | string | `''` | avatar alt text ('' = decorative) |
 | `content` | string | `''` | body text (children render after it) |
 | `actions` | array | — | CardAction[] — footer buttons, right-aligned |
-| `variant` | string | `''` | '' = elevated | outlined |
+| `variant` | string | `''` | '' = elevated \| outlined |
 | `clickable` | boolean | `false` | whole card hover lift + onclick |
 
 ## Events

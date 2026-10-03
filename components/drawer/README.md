@@ -67,7 +67,7 @@ state for a two-way live wire. Attribute strings are coerced to the declared typ
 | Prop | Type | Default | Description |
 |---|---|---|---|
 | `bind` | boolean | — | Two-way bound value. `.set()` fires `onchange`; plain assignment is silent. two-way open state |
-| `anchor` | string | `''` | '' = left | right | bottom |
+| `anchor` | string | `''` | '' = left \| right \| bottom |
 | `width` | number | `280` | panel width px (left/right) |
 | `backdrop` | boolean | `true` | dimmed overlay |
 | `closable` | boolean | `true` | backdrop click + Escape close |

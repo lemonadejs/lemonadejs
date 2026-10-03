@@ -94,6 +94,9 @@ const main = async function () {
             // navigator is read-only on some node versions — already compatible
         }
     }
+    // jsdom has no 2d context — return null instead of logging "Not implemented"
+    // on every canvas mount (cropper, color). Components already guard a null ctx.
+    w.HTMLCanvasElement.prototype.getContext = () => null;
 
     const registry = [];
     let failed = false;

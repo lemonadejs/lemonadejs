@@ -60,8 +60,8 @@ state for a two-way live wire. Attribute strings are coerced to the declared typ
 | `bind` | boolean | — | Two-way bound value. `.set()` fires `onchange`; plain assignment is silent. two-way state (v5: value) |
 | `checked` | boolean | `false` | initial state when unbound |
 | `label` | string | `''` | label displayed beside the switch |
-| `color` | string | `''` | green | orange | red | purple |
-| `size` | string | `''` | small | large (default in between) |
+| `color` | string | `''` | green \| orange \| red \| purple |
+| `size` | string | `''` | small \| large (default in between) |
 | `name` | string | `''` | form identification name |
 | `value` | string | `''` | form submit value when checked |
 | `required` | boolean | `false` | native form validation |

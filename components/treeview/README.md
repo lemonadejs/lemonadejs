@@ -103,7 +103,7 @@ state for a two-way live wire. Attribute strings are coerced to the declared typ
 
 | Prop | Type | Default | Description |
 |---|---|---|---|
-| `bind` | any | — | Two-way bound value. `.set()` fires `onchange`; plain assignment is silent. two-way selected node id — 'any': ids are string | number |
+| `bind` | any | — | Two-way bound value. `.set()` fires `onchange`; plain assignment is silent. two-way selected node id — 'any': ids are string \| number |
 | `data` | array | — | TreeNode[] — the tree |
 | `draggable` | boolean | `false` | opt-in drag-and-drop reordering |
 

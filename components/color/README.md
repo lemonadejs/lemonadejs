@@ -66,7 +66,7 @@ state for a two-way live wire. Attribute strings are coerced to the declared typ
 | `bind` | string | — | Two-way bound value. `.set()` fires `onchange`; plain assignment is silent. the picked color (v5: value) |
 | `name` | string | `''` | form field name — root reflects el.value (form-associated) |
 | `palette` | array | — | string[][] matrix — a flat string[] becomes one row |
-| `type` | string | `''` | '' (popup via api) | 'input' | 'inline' |
+| `type` | string | `''` | '' (popup via api) \| 'input' \| 'inline' |
 | `placeholder` | string | `''` | input placeholder (v5) |
 | `aria-label` | string | `''` |  |
 | `closeonchange` | boolean | `false` | v5: closeOnChange — picking commits + closes immediately |

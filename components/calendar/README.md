@@ -98,7 +98,7 @@ state for a two-way live wire. Attribute strings are coerced to the declared typ
 | `time` | boolean | `false` | hour/minute picker, value carries time |
 | `numeric` | boolean | `false` | value as Excel serial number(s) |
 | `format` | string | `''` | input display/typing mask (default YYYY-MM-DD) |
-| `type` | string | `''` | '' | default | picker | inline | auto |
+| `type` | string | `''` | '' \| default \| picker \| inline \| auto |
 | `data` | array | — | [{ date: 'YYYY-MM-DD', ... }] event markers |
 | `min` | string | `''` | first selectable date (v5 validRange[0]) |
 | `max` | string | `''` | last selectable date (v5 validRange[1]) |
@@ -121,7 +121,7 @@ All event names are lowercase (the platform convention — LJS-305 warns otherwi
 - `onchange` — (value) on commit
 - `onupdate` — (cursorIso) on every cursor move
 - `onopen`
-- `onclose` — (origin: 'button' | 'escape' | 'focusout')
+- `onclose` — (origin: 'button' \| 'escape' \| 'focusout')
 
 ## API (via `ref`)
 

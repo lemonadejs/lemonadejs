@@ -64,7 +64,7 @@ state for a two-way live wire. Attribute strings are coerced to the declared typ
 | `tooltip` | string | `''` | per-star titles, comma-separated (v5: tooltip) |
 | `name` | string | `''` | form identification name (v5: name) |
 | `size` | string | `''` | small (v5: data-size variant) |
-| `color` | string | `''` | yellow | orange | green | purple (default red, as v5) |
+| `color` | string | `''` | yellow \| orange \| green \| purple (default red, as v5) |
 | `disabled` | boolean | `false` | blocks interaction (new) |
 | `readonly` | boolean | `false` | display-only, full color (new) |
 

@@ -80,8 +80,8 @@ state for a two-way live wire. Attribute strings are coerced to the declared typ
 | `bind` | number | — | Two-way bound value. `.set()` fires `onchange`; plain assignment is silent. two-way selected index (v5: selected) |
 | `data` | array | — | TabItem[] — programmatic tabs |
 | `selected` | number | `0` | initial index when unbound |
-| `position` | string | `''` | center | bottom (v5 data-position) |
-| `variant` | string | `''` | '' | basic | modern (underline) | segmented (inset pill) |
+| `position` | string | `''` | center \| bottom (v5 data-position) |
+| `variant` | string | `''` | '' \| basic \| modern (underline) \| segmented (inset pill) |
 | `round` | boolean | `false` | round borders on the first/last header |
 | `allowcreate` | boolean | `false` | v5: allowCreate — shows the "add" button |
 

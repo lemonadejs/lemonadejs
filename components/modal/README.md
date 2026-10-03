@@ -77,7 +77,7 @@ state for a two-way live wire. Attribute strings are coerced to the declared typ
 | `height` | number | `0` |  |
 | `top` | number | `0` |  |
 | `left` | number | `0` |  |
-| `position` | string | `''` | center | left | right | bottom | fixed (explicit viewport |
+| `position` | string | `''` | center \| left \| right \| bottom \| fixed (explicit viewport |
 | `backdrop` | boolean | `false` |  |
 | `closable` | boolean | `false` |  |
 | `draggable` | boolean | `false` |  |

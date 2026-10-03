@@ -82,7 +82,7 @@ state for a two-way live wire. Attribute strings are coerced to the declared typ
 | Prop | Type | Default | Description |
 |---|---|---|---|
 | `data` | array | — | records BY REFERENCE (mutate + touch()) |
-| `render` | function | — | (item, index) => string | html`` view; default = built-in item |
+| `render` | function | — | (item, index) => string \| html`` view; default = built-in item |
 | `search` | boolean | `false` | built-in search box |
 | `pagination` | number | `0` | items per page; 0 = no pager |
 | `total` | number | `0` | > 0 = remote mode: data is the current page, total drives the pager |
