@@ -34,15 +34,22 @@
  *
  * - a number, one per category: `[3, 5, 2]`
  * - a tuple: `[x, y]` for scatter, `[x, y, z]` for bubble, `[low, high]` for
- *   the range types, `[open, high, low, close]` for candlestick and ohlc,
- *   `[min, q1, median, q3, max]` for boxplot
+ *   the range types, `[open, high, low, close]` (or `[high, low, close]`)
+ *   for candlestick and ohlc, `[min, q1, median, q3, max]` for boxplot, or
+ *   the raw sample of any other size and the box is computed (Excel's
+ *   exclusive median method)
  * - an object: `{ name, value, color? }` for slices, `{ from, to, value }`
  *   for sankey, chord and arcdiagram links, `{ name, parent, value }` for
  *   sunburst and icicle
  * - `null`, a gap in a line
  *
  * A series can set its own `type` (`bar`, `line`, `area` or `scatter`) to
- * build a combo chart, and `axis: 'right'` to use a secondary y-axis.
+ * build a combo chart, and `axis: 'right'` to use a secondary y-axis. Line
+ * series take `width`, `dashed` (`true`, `'dashed'`, `'dotted'` or
+ * `'dashdot'`), `markers`, `markersize`, `marker` and `connectgaps`, and a
+ * `trendline`: `'linear'`, `'exponential'`, `'logarithmic'`, `'power'`,
+ * `'polynomial'` (`order`) or `'movingAverage'` (`period`), as a type or
+ * `{ type, order?, period?, color?, dashed?, width? }`.
  *
  * ### Features
  *
@@ -50,7 +57,8 @@
  *   a crosshair
  * - Value labels, axis titles and number formatting: prefix, suffix,
  *   compact notation, decimals or a custom formatter
- * - Category, datetime and linear x-axes; logarithmic and secondary y-axes
+ * - Category, datetime and linear x-axes; logarithmic, reversed, fixed-step
+ *   and secondary y-axes; trendlines
  * - Reference lines, reference bands and annotations pinned to data points
  * - Zoom by drag selection, a navigator strip and drilldown with a breadcrumb
  * - Sparkline mode for inline charts, and a toolbar with CSV download
@@ -109,7 +117,9 @@ export const Charts = component('charts', {
     series: Array,           // [{ name, data, color? }]; pie uses the first series
     categories: Array,       // x-axis labels (bar/stacked) / slice names (pie)
     title: '',               // optional heading above the plot
+    titleposition: '',       // '' above the plot | 'bottom'
     subtitle: '',            // muted line under the title
+    legendtitle: '',         // heading of the legend
     xtype: '',               // '' category | 'datetime' | 'linear' (continuous x for line/area)
     xformat: Function,       // (x) => string; custom x-axis tick label (datetime/linear)
     xtitle: '',              // x-axis title (bar/stacked)
@@ -141,6 +151,10 @@ export const Charts = component('charts', {
     ymin: Number,            // bar/stacked: force the y-axis lower bound (auto if unset)
     ymax: Number,            // bar/stacked: force the y-axis upper bound (auto if unset)
     ylog: false,             // logarithmic y-axis (positive values only)
+    ystep: Number,           // distance between the y ticks (auto if unset)
+    yreverse: false,         // the y-axis grows downwards
+    xmin: Number,            // scatter/bubble: force the x-axis lower bound (auto if unset)
+    xmax: Number,            // scatter/bubble: force the x-axis upper bound (auto if unset)
     bins: Number,            // histogram only: bin count (unset = Sturges' rule)
     plotlines: Array,        // reference lines [{ value, color?, label?, dashed?, axis? }]
     plotbands: Array,        // reference bands [{ from, to, color?, label?, axis? }]
@@ -190,7 +204,9 @@ export const Charts = component('charts', {
         series: props.series.value as ChartSeries[],
         categories: props.categories.value as string[],
         title: props.title.value,
+        titleposition: props.titleposition.value,
         subtitle: props.subtitle.value,
+        legendtitle: props.legendtitle.value,
         xtype: props.xtype.value,
         xtitle: props.xtitle.value,
         ytitle: props.ytitle.value,
@@ -216,6 +232,10 @@ export const Charts = component('charts', {
         ymin: props.ymin.value as number,
         ymax: props.ymax.value as number,
         ylog: props.ylog.value,
+        ystep: props.ystep.value as number,
+        yreverse: props.yreverse.value,
+        xmin: props.xmin.value as number,
+        xmax: props.xmax.value as number,
         bins: props.bins.value as number,
         plotlines: props.plotlines.value as PlotLine[],
         plotbands: props.plotbands.value as PlotBand[],
@@ -336,8 +356,8 @@ export const Charts = component('charts', {
             shape: shapeOf(s, i),
         }));
     };
-    const legend = (entries: LegendEntry[]): View | false =>
-        html`<div class="lm-chart-legend">${entries.map(
+    const legend = (m: Model, entries: LegendEntry[]): View | false =>
+        html`<div class="lm-chart-legend">${m.legendtitle ? html`<span class="lm-chart-legend-title">${m.legendtitle}</span>` : false}${entries.map(
             (e) => html`<button type="button" class="lm-chart-legend-item"
                 data-hidden="${isHidden(e.key) ? 'true' : false}"
                 data-dim="${hover.value && hover.value !== e.key ? 'true' : false}"
@@ -370,7 +390,7 @@ export const Charts = component('charts', {
             // end instead (cleaner than legend + colour matching)
             || (m.type === 'line' && m.labels && !m.legendposition
                 && m.series.length > 1 && m.series.every((s) => s.type === 'line'));
-        const leg = m.legend && !noLegend ? legend(legendEntries(m)) : false;
+        const leg = m.legend && !noLegend ? legend(m, legendEntries(m)) : false;
         return html`<div class="lm-chart-content" data-legend="${pos}">
             ${pos === 'top' || pos === 'left' ? leg : false}
             <div class="lm-chart-core">${core}</div>
@@ -581,7 +601,7 @@ export const Charts = component('charts', {
         style="${() => css({ height: sparkHeight() })}">${() => dataTable(model.value)}${toolbar}${breadcrumb}${() => {
         const m = model.value;
         return !props.sparkline.value && (m.title || m.subtitle)
-            ? html`<div class="lm-chart-header">
+            ? html`<div class="lm-chart-header" data-position="${m.titleposition || false}">
                 ${m.title ? html`<div class="lm-chart-title">${m.title}</div>` : false}
                 ${m.subtitle ? html`<div class="lm-chart-subtitle">${m.subtitle}</div>` : false}
             </div>`

@@ -1,6 +1,6 @@
 {
     "name": "@lemonadejs/charts",
-    "version": "6.0.0-beta.1",
+    "version": "6.0.0-beta.2",
     "description": "LemonadeJS charts block — 35 chart types from one data definition, responsive with no resize code.",
     "license": "MIT",
     "repository": {

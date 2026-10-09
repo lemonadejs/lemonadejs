@@ -5,6 +5,7 @@
 import { css, html, type View } from 'lemonadejs';
 import { PALETTES, type Model, type NormSeries, type RenderCtx } from './model';
 import { lerpColor, niceExtent, polyPath, smoothPath, squarify, stepPath, textOn } from './helpers';
+import { strokeStyle, trendPath } from './cartesian';
 
 /* ----- scatter / bubble (numeric x + y axes) ----- */
 export const scatterChart = (m: Model, ctx: RenderCtx): View => {
@@ -32,13 +33,21 @@ export const scatterChart = (m: Model, ctx: RenderCtx): View => {
     };
     const [pxlo, pxhi] = pad(xmin, xmax);
     const [pylo, pyhi] = pad(ymin, ymax);
-    const xs = niceExtent(pxlo, pxhi);
-    const ys = niceExtent(pylo, pyhi);
+    // explicit bounds replace the padded extents (ticks every quarter)
+    const bounded = (auto: { lo: number; hi: number; ticks: number[] }, lo: number | null, hi: number | null): { lo: number; hi: number; ticks: number[] } => {
+        if (lo == null && hi == null) return auto;
+        const a = lo != null ? lo : auto.lo;
+        const b = hi != null && hi > a ? hi : a + 1;
+        return { lo: a, hi: b, ticks: [0, 1, 2, 3, 4].map((k) => a + ((b - a) * k) / 4) };
+    };
+    const xs = bounded(niceExtent(pxlo, pxhi), m.xmin, m.xmax);
+    const ys = bounded(niceExtent(pylo, pyhi), m.ymin, m.ymax);
     const xf = (v: number): number => (xs.hi > xs.lo ? (v - xs.lo) / (xs.hi - xs.lo) : 0.5);
     const yf = (v: number): number => (ys.hi > ys.lo ? (v - ys.lo) / (ys.hi - ys.lo) : 0.5);
     // radius in px (the SVG has no viewBox → user units are pixels, so
     // circles stay round; cx/cy are % of the viewport). Scales to many points.
-    const rOf = (z: number): number => bubble && zmax > 0 ? 3 + Math.sqrt(z / zmax) * 15 : 4.5;
+    const rOf = (z: number, s?: NormSeries): number =>
+        bubble && zmax > 0 ? 3 + Math.sqrt(z / zmax) * 15 : (s && s.markersize != null ? s.markersize : 4.5);
 
     // marker shape: explicit per-series `marker` wins; unset cycles the
     // Highcharts symbol order per series so multi-series scatters stay
@@ -57,25 +66,31 @@ export const scatterChart = (m: Model, ctx: RenderCtx): View => {
         const segs: Array<Array<[number, number]>> = [];
         let cur: Array<[number, number]> = [];
         for (const p of s.points) {
-            if (p.gap) { if (cur.length) { segs.push(cur); cur = []; } continue; }
+            if (p.gap) { if (cur.length && !s.connectgaps) { segs.push(cur); cur = []; } continue; }
             cur.push([xf(p.x) * 100, (1 - yf(p.value)) * 100]);
         }
         if (cur.length) segs.push(cur);
         return segs.map((seg) => html`<path class="lm-chart-line"
             d="${s.smooth ? smoothPath(seg) : polyPath(seg)}"
-            style="${css({ stroke: s.color })}" data-dim="${dim}"
-            data-dashed="${s.dashed ? 'true' : false}" />`);
+            style="${strokeStyle(s)}" data-dim="${dim}"
+            data-dashed="${s.dashed || false}" />`);
     });
-    const lineOverlay = linePaths.length
+    // trendlines fitted on the x/y values, in the same stretched viewBox
+    const trendPaths = vis.filter((s) => s.trendline).map((s) => trendPath(s,
+        s.points.filter((p) => !p.gap).map((p) => ({ x: p.x, y: p.value })),
+        (x, y) => [xf(x) * 100, (1 - yf(y)) * 100],
+        ctx.hover.value && ctx.hover.value !== s.name ? 'true' : false)).filter(Boolean);
+    const lineOverlay = linePaths.length || trendPaths.length
         ? html`<div class="lm-chart-lineoverlay">
-            <svg class="lm-chart-linesvg" viewBox="0 0 100 100" preserveAspectRatio="none">${linePaths}</svg>
+            <svg class="lm-chart-linesvg" viewBox="0 0 100 100" preserveAspectRatio="none">${linePaths}${trendPaths}</svg>
         </div>`
         : false;
 
-    const markers = all.filter(({ s }) => s.type !== 'line').map(({ p, s }) => {
+    // a line series draws its markers only when asked (lines and markers)
+    const markers = all.filter(({ s }) => (s.type !== 'line' ? s.markers !== false : s.markers === true)).map(({ p, s }) => {
         const tipVal = ctx.fmt(p.x) + ', ' + ctx.fmt(p.value) + (bubble ? ' · ' + ctx.fmt(p.z) : '');
         const shape = shapeOf(s);
-        const r = rOf(p.z);
+        const r = rOf(p.z, s);
         const cx = (xf(p.x) * 100).toFixed(2) + '%';
         const cy = ((1 - yf(p.value)) * 100).toFixed(2) + '%';
         const dim = ctx.hover.value && ctx.hover.value !== s.name ? 'true' : false;

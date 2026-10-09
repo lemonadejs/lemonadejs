@@ -46,6 +46,20 @@
     text-align: center;
 }
 
+/* the chart is a flex column: the title moves after the plot by order */
+.lm-chart-header[data-position='bottom'] {
+    order: 1;
+    margin: 12px 0 0;
+}
+
+.lm-chart-legend-title {
+    flex-basis: 100%;
+    text-align: center;
+    font-size: 0.8em;
+    font-weight: bold;
+    color: var(--lm-chart-muted);
+}
+
 .lm-chart-title {
     font-size: 1.2em;
     font-weight: bold;
@@ -499,8 +513,24 @@
     opacity: 0.18;
 }
 
-.lm-chart-line[data-dashed='true'] {
+.lm-chart-line[data-dashed='true'],
+.lm-chart-line[data-dashed='dashed'],
+.lm-chart-radar-area[data-dashed='dashed'] {
     stroke-dasharray: 5 4;
+}
+
+.lm-chart-line[data-dashed='dotted'],
+.lm-chart-radar-area[data-dashed='dotted'] {
+    stroke-dasharray: 1 4;
+}
+
+.lm-chart-line[data-dashed='dashdot'],
+.lm-chart-radar-area[data-dashed='dashdot'] {
+    stroke-dasharray: 7 4 1 4;
+}
+
+.lm-chart-radar-area[data-nofill='true'] {
+    fill-opacity: 0;
 }
 
 /* area fill under a line series */

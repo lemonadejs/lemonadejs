@@ -7,6 +7,28 @@
 import { css, html, type View } from 'lemonadejs';
 import { PALETTES, type Model, type NormSeries, type RenderCtx } from './model';
 import { fixedScale, lerpColor, niceExtent, niceScale, parseX, polyPath, smoothPath, stepPath, timeTicks } from './helpers';
+import { fit } from './trend';
+
+/** Per-series stroke overrides on top of the stylesheet (width in px). */
+export const strokeStyle = (s: NormSeries): string =>
+    css(s.width ? { stroke: s.color, 'stroke-width': s.width } : { stroke: s.color });
+
+/** Marker size override: the stylesheet draws a 9px dot (radius 4.5). */
+export const markerStyle = (s: NormSeries, extra: Record<string, string | number>): string =>
+    css(s.markersize != null ? { ...extra, width: s.markersize * 2, height: s.markersize * 2 } : extra);
+
+/**
+ * The trendline of a series as a path in the 0..100 plot space. `pts` are
+ * the data points in value space and `toXY` maps a value pair to the plot.
+ */
+export const trendPath = (s: NormSeries, pts: Array<{ x: number; y: number }>, toXY: (x: number, y: number) => [number, number], dim: string | false): View | false => {
+    const t = s.trendline;
+    const line = t ? fit(pts, t) : null;
+    if (!t || !line) return false;
+    return html`<path class="lm-chart-line lm-chart-trend" d="${polyPath(line.map(([x, y]) => toXY(x, y)))}"
+        style="${css({ stroke: t.color || s.color, 'stroke-width': t.width || 1.5 })}"
+        data-dashed="${t.dashed === false ? false : 'dashed'}" data-dim="${dim}" />`;
+};
 
 /* ----- bar / stacked / line / combo (shared axis; HTML + CSS) ----- */
 interface Scale {
@@ -152,13 +174,15 @@ export const bars = (mFull: Model, ctx: RenderCtx): View => {
             hi = Math.pow(10, Math.max(hiExp, loExp + 1));
             ticks = [];
             for (let e = Math.log10(hi); e >= Math.log10(lo) - 1e-9; e--) ticks.push(Math.pow(10, e));
-        } else if (useY && (m.ymin != null || m.ymax != null)) {
+        } else if (useY && (m.ymin != null || m.ymax != null || m.ystep != null)) {
             const auto = niceScale(dmin, dmax);
             lo = m.ymin != null ? m.ymin : auto.lo;
             hi = m.ymax != null ? m.ymax : auto.hi;
             if (!(hi > lo)) hi = lo + 1;
-            const step = (hi - lo) / 4;
-            ticks = [4, 3, 2, 1, 0].map((k) => lo + step * k);
+            // a fixed tick distance walks up from the lower bound (at most 50 ticks)
+            const step = m.ystep != null && (hi - lo) / m.ystep <= 50 ? m.ystep : (hi - lo) / 4;
+            ticks = [];
+            for (let v = lo; v <= hi + step * 1e-6; v += step) ticks.unshift(Math.round(v * 1e9) / 1e9);
         } else if (fixedK != null) {
             const sc = fixedScale(dmin, dmax, fixedK);
             lo = sc.lo; hi = sc.hi; ticks = sc.ticks;
@@ -176,9 +200,12 @@ export const bars = (mFull: Model, ctx: RenderCtx): View => {
         const baseV = useLog ? lo : Math.max(lo, Math.min(hi, 0));
         const logLo = useLog ? Math.log10(lo) : 0;
         const logSpan = useLog ? Math.log10(hi) - logLo || 1 : 1;
-        const frac = useLog
+        const up = useLog
             ? (v: number): number => (Math.log10(Math.max(lo, Math.min(hi, v))) - logLo) / logSpan
             : (v: number): number => (v - lo) / range;
+        // a reversed axis grows downwards: the fraction flips, the ticks too
+        const frac = m.yreverse ? (v: number): number => 1 - up(v) : up;
+        if (m.yreverse) ticks = [...ticks].reverse();
         return { lo, hi, range, baseV, basePct: frac(baseV) * 100, ticks, frac };
     };
 
@@ -309,7 +336,7 @@ export const bars = (mFull: Model, ctx: RenderCtx): View => {
                 // streams read as soft ribbons: no top stroke, no markers
                 if (!stream) paths.push(html`<path class="lm-chart-line" d="${topD}"
                     style="${css({ stroke: s.color })}" data-dim="${dim}" />`);
-                if (m.markers && !stream) {
+                if ((s.markers != null ? s.markers : m.markers) && !stream) {
                     for (let i = 0; i < n; i++) {
                         const p = s.points[i];
                         if (!p || p.gap) continue;
@@ -343,7 +370,8 @@ export const bars = (mFull: Model, ctx: RenderCtx): View => {
             let cur: Array<[number, number]> = [];
             for (let i = 0; i < n; i++) {
                 const p = s.points[i];
-                if (!p || p.gap) { if (cur.length) { segs.push(cur); cur = []; } continue; }
+                // a gap breaks the line, unless the series bridges its gaps
+                if (!p || p.gap) { if (cur.length && !s.connectgaps) { segs.push(cur); cur = []; } continue; }
                 cur.push(xy(i, p.value));
             }
             if (cur.length) segs.push(cur);
@@ -358,8 +386,8 @@ export const bars = (mFull: Model, ctx: RenderCtx): View => {
                         style="${css({ fill: s.color })}" data-dim="${dim}" />`);
                 }
                 paths.push(html`<path class="lm-chart-line" d="${d}"
-                    style="${css({ stroke: s.color })}" data-dim="${dim}"
-                    data-dashed="${s.dashed ? 'true' : false}" />`);
+                    style="${strokeStyle(s)}" data-dim="${dim}"
+                    data-dashed="${s.dashed || false}" />`);
             }
             // series-name label at the line's end (multi-series pure-line
             // charts; the legend is suppressed for these in layout())
@@ -372,7 +400,7 @@ export const bars = (mFull: Model, ctx: RenderCtx): View => {
                     break;
                 }
             }
-            if (m.markers) {
+            if (s.markers != null ? s.markers : m.markers) {
                 for (let i = 0; i < n; i++) {
                     const p = s.points[i];
                     if (!p || p.gap) continue;
@@ -380,7 +408,7 @@ export const bars = (mFull: Model, ctx: RenderCtx): View => {
                     const cat = m.categories[i] != null ? m.categories[i] : '';
                     const tipName = cat ? cat + ' · ' + s.name : s.name;
                     markers.push(html`<span class="lm-chart-marker" data-shape="${s.marker}"
-                        style="${css({ left: x.toFixed(2) + '%', top: y.toFixed(2) + '%', background: s.color })}"
+                        style="${markerStyle(s, { left: x.toFixed(2) + '%', top: y.toFixed(2) + '%', background: s.color })}"
                         data-dim="${dim}"
                         data-hot="${ctx.hoverCol.value === i ? 'true' : false}"
                         onmousemove="${(e: MouseEvent) => {
@@ -410,6 +438,21 @@ export const bars = (mFull: Model, ctx: RenderCtx): View => {
             <svg class="lm-chart-linesvg" viewBox="0 0 100 100" preserveAspectRatio="none">${areas}${paths}</svg>
             ${markers}
         </div>`;
+    })();
+
+    // trendlines: fitted on the category index (x = i), one path per series
+    const trendOverlay = ((): View | false => {
+        if (horizontal) return false;
+        const trends = vis.filter((s) => s.trendline).map((s) => {
+            const sc = scaleOf(s);
+            const pts = s.points.map((p, i) => ({ x: i, y: p.value })).filter((_, i) => s.points[i] && !s.points[i].gap);
+            return trendPath(s, pts, (x, y) => [colCenter(x), (1 - sc.frac(y)) * 100], ctx.hover.value && ctx.hover.value !== s.name ? 'true' : false);
+        }).filter(Boolean);
+        return trends.length
+            ? html`<div class="lm-chart-lineoverlay">
+                <svg class="lm-chart-linesvg" viewBox="0 0 100 100" preserveAspectRatio="none">${trends}</svg>
+            </div>`
+            : false;
     })();
 
     // too many categories → show only every k-th label so they don't overflow
@@ -661,7 +704,7 @@ export const bars = (mFull: Model, ctx: RenderCtx): View => {
                         onmouseup="${() => { if (zoomable) endDrag(); }}"
                         onmouseleave="${() => { if (ctx.zsel.value) ctx.zsel.value = null; }}">${
                         continuousX ? false : Array.from({ length: n }, (_, i) => column(i))
-                    }${lineOverlay}${kbView}${
+                    }${lineOverlay}${trendOverlay}${kbView}${
                         ctx.zsel.value ? html`<div class="lm-chart-zoomsel" style="${css({ left: Math.min(ctx.zsel.value.a, ctx.zsel.value.b) * 100 + '%', width: Math.abs(ctx.zsel.value.b - ctx.zsel.value.a) * 100 + '%' })}"></div>` : false
                     }</div>
                     ${refLines}${refAnno}

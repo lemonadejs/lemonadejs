@@ -41,15 +41,22 @@ A series is `{ name, data, color? }`. Each entry of `data` is one point:
 
 - a number, one per category: `[3, 5, 2]`
 - a tuple: `[x, y]` for scatter, `[x, y, z]` for bubble, `[low, high]` for
-  the range types, `[open, high, low, close]` for candlestick and ohlc,
-  `[min, q1, median, q3, max]` for boxplot
+  the range types, `[open, high, low, close]` (or `[high, low, close]`)
+  for candlestick and ohlc, `[min, q1, median, q3, max]` for boxplot, or
+  the raw sample of any other size and the box is computed (Excel's
+  exclusive median method)
 - an object: `{ name, value, color? }` for slices, `{ from, to, value }`
   for sankey, chord and arcdiagram links, `{ name, parent, value }` for
   sunburst and icicle
 - `null`, a gap in a line
 
 A series can set its own `type` (`bar`, `line`, `area` or `scatter`) to
-build a combo chart, and `axis: 'right'` to use a secondary y-axis.
+build a combo chart, and `axis: 'right'` to use a secondary y-axis. Line
+series take `width`, `dashed` (`true`, `'dashed'`, `'dotted'` or
+`'dashdot'`), `markers`, `markersize`, `marker` and `connectgaps`, and a
+`trendline`: `'linear'`, `'exponential'`, `'logarithmic'`, `'power'`,
+`'polynomial'` (`order`) or `'movingAverage'` (`period`), as a type or
+`{ type, order?, period?, color?, dashed?, width? }`.
 
 ### Features
 
@@ -57,7 +64,8 @@ build a combo chart, and `axis: 'right'` to use a secondary y-axis.
   a crosshair
 - Value labels, axis titles and number formatting: prefix, suffix,
   compact notation, decimals or a custom formatter
-- Category, datetime and linear x-axes; logarithmic and secondary y-axes
+- Category, datetime and linear x-axes; logarithmic, reversed, fixed-step
+  and secondary y-axes; trendlines
 - Reference lines, reference bands and annotations pinned to data points
 - Zoom by drag selection, a navigator strip and drilldown with a breadcrumb
 - Sparkline mode for inline charts, and a toolbar with CSV download

@@ -1334,3 +1334,73 @@ describe('components/charts', () => {
         expect(handle.queryAll('.lm-chart-slice').length).toBe(2);
     });
 });
+
+describe('components/charts — series options, trendlines and axes', () => {
+    let h: ReturnType<typeof t> | null = null;
+    afterEach(() => { h?.unmount(); h = null; });
+
+    it('trendline: a dashed fitted path per series, on category and numeric axes', () => {
+        h = t(Chart, { type: 'bar', categories: ['A', 'B', 'C'], series: [{ data: [1, 2, 3], trendline: 'linear' }] });
+        const trend = h.query('.lm-chart-trend')!;
+        expect(trend).toBeTruthy();
+        expect(trend.getAttribute('data-dashed')).toBe('dashed');
+        h.unmount();
+        h = t(Chart, { type: 'scatter', series: [{ data: [[1, 2], [2, 4], [3, 6.5]], trendline: { type: 'polynomial', order: 2, color: '#d00', dashed: false } }] });
+        const poly = h.query('.lm-chart-trend')!;
+        expect(poly.getAttribute('style')).toContain('#d00');
+        expect(poly.getAttribute('data-dashed')).toBeNull();
+    });
+
+    it('trendline: none when the data cannot be fitted', () => {
+        h = t(Chart, { type: 'line', categories: ['A'], series: [{ data: [1], trendline: 'linear' }] });
+        expect(h.query('.lm-chart-trend')).toBeNull();
+    });
+
+    it('line options: width, dash style, marker size, per-series markers and bridged gaps', () => {
+        h = t(Chart, {
+            type: 'line', categories: ['A', 'B', 'C'],
+            series: [
+                { name: 'a', data: [1, null, 3], width: 4, dashed: 'dotted', markersize: 6, connectgaps: true },
+                { name: 'b', data: [2, 2, 2], markers: false },
+            ],
+        });
+        const lines = h.queryAll('.lm-chart-line');
+        expect(lines.length).toBe(2); // the gap is bridged: one path for the first series
+        expect(lines[0].getAttribute('style')).toContain('stroke-width: 4px');
+        expect(lines[0].getAttribute('data-dashed')).toBe('dotted');
+        const markers = h.queryAll('.lm-chart-marker');
+        expect(markers.length).toBe(2); // the second series draws none
+        expect(markers[0].getAttribute('style')).toContain('width: 12px');
+    });
+
+    it('title position and legend title', () => {
+        h = t(Chart, { type: 'bar', title: 'T', titleposition: 'bottom', legendtitle: 'Key', categories: ['A'], series: [{ name: 's', data: [1] }] });
+        expect(h.query('.lm-chart-header')!.getAttribute('data-position')).toBe('bottom');
+        expect(h.query('.lm-chart-legend-title')!.textContent).toBe('Key');
+    });
+
+    it('y-axis: a fixed tick step and a reversed axis', () => {
+        h = t(Chart, { type: 'bar', categories: ['A'], series: [{ data: [100] }], ymin: 0, ymax: 100, ystep: 25 });
+        const ticks = h.queryAll('.lm-chart-tick').map((e) => e.textContent);
+        expect(ticks).toEqual(['100', '75', '50', '25', '0']);
+        h.unmount();
+        h = t(Chart, { type: 'bar', categories: ['A'], series: [{ data: [100] }], ymin: 0, ymax: 100, ystep: 50, yreverse: true });
+        expect(h.queryAll('.lm-chart-tick').map((e) => e.textContent)).toEqual(['0', '50', '100']);
+    });
+
+    it('boxplot computes the box from a raw sample; candlestick accepts high-low-close', () => {
+        h = t(Chart, { type: 'boxplot', categories: ['A'], series: [{ data: [[1, 2, 3, 4, 5, 6, 7, 8]] }] });
+        expect(h.text()).toContain('4.5'); // the median in the data table
+        h.unmount();
+        h = t(Chart, { type: 'candlestick', categories: ['A'], series: [{ data: [[12, 8, 10]] }] });
+        expect(h.query('.lm-chart-candle, .lm-chart-ohlc, [class*="candle"]')).toBeTruthy();
+    });
+
+    it('scatter x bounds and radar outline', () => {
+        h = t(Chart, { type: 'scatter', xmin: 0, xmax: 10, series: [{ data: [[2, 2], [4, 4]] }] });
+        expect(h.queryAll('.lm-chart-xval').map((e) => e.textContent)).toEqual(['0', '2.5', '5', '7.5', '10']);
+        h.unmount();
+        h = t(Chart, { type: 'radar', categories: ['A', 'B', 'C'], series: [{ data: [1, 2, 3], type: 'line' }] });
+        expect(h.query('.lm-chart-radar-area')!.getAttribute('data-nofill')).toBe('true');
+    });
+});

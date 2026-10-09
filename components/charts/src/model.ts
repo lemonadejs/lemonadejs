@@ -5,6 +5,7 @@
  */
 import type { State } from 'lemonadejs';
 import { compact } from './helpers';
+import { quartiles } from './trend';
 
 /* ------------------------------------------------------------------ *
  *  Public data shapes (pin the .d.ts for the `series` prop)           *
@@ -52,10 +53,35 @@ export interface ChartSeries {
     smooth?: boolean;
     /** Draw the line as steps (stairs): `true`/`'before'` jumps at each point, `'mid'` at the midpoint. */
     step?: boolean | 'before' | 'mid';
-    /** Dash the line. */
-    dashed?: boolean;
+    /** Dash the line: `true` is dashed; a style picks the pattern. */
+    dashed?: boolean | 'dashed' | 'dotted' | 'dashdot';
     /** Marker shape for line/scatter points. */
     marker?: 'circle' | 'square' | 'triangle' | 'diamond';
+    /** Line stroke width in px (default 2). */
+    width?: number;
+    /** Marker radius in px (default 4.5); 0 hides the markers. */
+    markersize?: number;
+    /** Show markers on this series; overrides the chart `markers` prop. */
+    markers?: boolean;
+    /** Connect the line across gaps (`null` points) instead of breaking it. */
+    connectgaps?: boolean;
+    /** A least-squares trendline through the series: a type, or the options. */
+    trendline?: Trendline['type'] | Trendline;
+}
+
+/** A trendline fitted to a series, the Excel set. */
+export interface Trendline {
+    type: 'linear' | 'exponential' | 'logarithmic' | 'power' | 'polynomial' | 'movingAverage';
+    /** polynomial: the degree (2–6, default 2). */
+    order?: number;
+    /** movingAverage: the window (default 2). */
+    period?: number;
+    /** Defaults to the series colour. */
+    color?: string;
+    /** Default `true`: a dashed line tells the fit from the data. */
+    dashed?: boolean;
+    /** Stroke width in px (default 1.5). */
+    width?: number;
 }
 
 /** The shape `normalize()` collapses the loose props into. */
@@ -64,7 +90,9 @@ export interface ChartOptions {
     series?: ChartSeries[];
     categories?: string[];
     title?: string;
+    titleposition?: string;
     subtitle?: string;
+    legendtitle?: string;
     xtype?: string;
     xtitle?: string;
     ytitle?: string;
@@ -90,6 +118,13 @@ export interface ChartOptions {
     ymin?: number;
     ymax?: number;
     ylog?: boolean;
+    /** the distance between the y ticks (auto if unset) */
+    ystep?: number;
+    /** the y-axis grows downwards */
+    yreverse?: boolean;
+    /** scatter/bubble: the x-axis bounds (auto if unset) */
+    xmin?: number;
+    xmax?: number;
     bins?: number;
     plotlines?: PlotLine[];
     plotbands?: PlotBand[];
@@ -217,8 +252,16 @@ export interface NormSeries {
     axis: 'left' | 'right';
     smooth: boolean;
     step: '' | 'before' | 'mid';
-    dashed: boolean;
+    dashed: '' | 'dashed' | 'dotted' | 'dashdot';
     marker: string;
+    /** 0 = the stylesheet default */
+    width: number;
+    /** null = the stylesheet default */
+    markersize: number | null;
+    /** null = the chart `markers` prop decides */
+    markers: boolean | null;
+    connectgaps: boolean;
+    trendline: Trendline | null;
 }
 export interface Model {
     type: 'bar' | 'stackedbar' | 'line' | 'stackedarea' | 'streamgraph' | 'scatter' | 'bubble'
@@ -227,7 +270,10 @@ export interface Model {
         | 'lollipop' | 'histogram' | 'radialbar' | 'polararea' | 'treemap' | 'pie'
         | 'sankey' | 'chord' | 'arcdiagram' | 'sunburst' | 'icicle' | 'packedbubble' | 'pareto' | 'wordcloud' | 'pictogram';
     title: string;
+    /** '' = above the plot */
+    titleposition: '' | 'bottom';
     subtitle: string;
+    legendtitle: string;
     xtype: '' | 'datetime' | 'linear';
     xtitle: string;
     ytitle: string;
@@ -253,6 +299,10 @@ export interface Model {
     ymin: number | null;
     ymax: number | null;
     ylog: boolean;
+    ystep: number | null;
+    yreverse: boolean;
+    xmin: number | null;
+    xmax: number | null;
     plotlines: PlotLine[];
     plotbands: PlotBand[];
     annotations: Annotation[];
@@ -320,9 +370,11 @@ export const normalize = (def: ChartOptions): Model => {
         let run = 0;
         const cum = items.map((e) => { run += e.v; return Math.round((run / total) * 1000) / 10; });
         categories = items.map((e) => e.name);
+        // a second series carries the options of the line (its colour)
+        const src1 = rawSeries[1];
         rawSeries = [
             { name: (src0 && src0.name) || 'Value', color: src0 && src0.color, type: 'bar', data: items.map((e) => e.v) },
-            { name: 'Cumulative %', type: 'line', axis: 'right', color: '#3f444c', data: cum },
+            { ...(src1 || {}), name: 'Cumulative %', type: 'line', axis: 'right', color: (src1 && src1.color) || '#3f444c', data: cum },
         ];
     }
 
@@ -338,6 +390,21 @@ export const normalize = (def: ChartOptions): Model => {
         return t;
     };
 
+    const TRENDS = ['linear', 'exponential', 'logarithmic', 'power', 'polynomial', 'movingAverage'];
+    const normalizeTrend = (t: ChartSeries['trendline']): Trendline | null => {
+        const o: Partial<Trendline> = typeof t === 'string' ? { type: t } : (t && typeof t === 'object' ? t : {});
+        return TRENDS.includes(o.type as string) ? { ...o, type: o.type as Trendline['type'] } : null;
+    };
+
+    // Multi-value points: a boxplot point of any size but five is the raw
+    // sample (the box is computed), a candlestick/ohlc point of three values
+    // is high, low, close (no open: the close stands in)
+    const tuple = (values: number[]): number[] => {
+        if (chartType === 'boxplot' && values.length !== 5) return quartiles(values) || [];
+        if ((chartType === 'candlestick' || chartType === 'ohlc') && values.length === 3) return [values[2], values[0], values[1], values[2]];
+        return values;
+    };
+
     const series: NormSeries[] = rawSeries.map((s, si) => {
         const data = Array.isArray(s.data) ? s.data : [];
         return {
@@ -346,7 +413,12 @@ export const normalize = (def: ChartOptions): Model => {
             type: resolveType(s),
             axis: s.axis === 'right' ? 'right' : 'left',
             smooth: s.smooth === true || (s.smooth == null && def.smooth === true),
-            dashed: s.dashed === true,
+            dashed: s.dashed === true ? 'dashed' : (s.dashed === 'dashed' || s.dashed === 'dotted' || s.dashed === 'dashdot' ? s.dashed : ''),
+            width: Number(s.width) > 0 ? Number(s.width) : 0,
+            markersize: s.markersize != null && Number.isFinite(Number(s.markersize)) ? Math.max(0, Number(s.markersize)) : null,
+            markers: typeof s.markers === 'boolean' ? s.markers : null,
+            connectgaps: s.connectgaps === true,
+            trendline: normalizeTrend(s.trendline),
             step: s.step === true || s.step === 'mid' || (s.step == null && (def.step === true || def.step === 'mid')) ? (s.step === 'mid' || (s.step == null && def.step === 'mid') ? 'mid' : 'before') : '',
             // '' = not specified (scatter cycles shapes per series, HC-style)
             marker: ['circle', 'square', 'triangle', 'diamond'].includes(s.marker as string) ? (s.marker as string) : '',
@@ -358,7 +430,7 @@ export const normalize = (def: ChartOptions): Model => {
                     x: pointX(p, pi),
                     z: pointZ(p),
                     // multi-value points (OHLC / box / range) keep their raw numbers
-                    extra: Array.isArray(p) ? p.map(num) : [],
+                    extra: Array.isArray(p) ? tuple(p.map(num)) : [],
                     // Pie reads per-point colour first, then walks the palette
                     color: (typeof p === 'object' && !Array.isArray(p) && p && p.color) || palette[pi % palette.length],
                     gap: false,
@@ -374,7 +446,9 @@ export const normalize = (def: ChartOptions): Model => {
     return {
         type: chartType,
         title: def.title != null ? String(def.title) : '',
+        titleposition: def.titleposition === 'bottom' ? 'bottom' : '',
         subtitle: def.subtitle != null ? String(def.subtitle) : '',
+        legendtitle: def.legendtitle != null ? String(def.legendtitle) : '',
         xtype: def.xtype === 'datetime' || def.xtype === 'linear' ? def.xtype : '',
         xtitle: def.xtitle != null ? String(def.xtitle) : '',
         ytitle: def.ytitle != null ? String(def.ytitle) : '',
@@ -402,6 +476,10 @@ export const normalize = (def: ChartOptions): Model => {
         ymin: def.ymin != null && Number.isFinite(Number(def.ymin)) ? Number(def.ymin) : null,
         ymax: def.ymax != null && Number.isFinite(Number(def.ymax)) ? Number(def.ymax) : null,
         ylog: def.ylog === true,
+        ystep: Number(def.ystep) > 0 ? Number(def.ystep) : null,
+        yreverse: def.yreverse === true,
+        xmin: def.xmin != null && Number.isFinite(Number(def.xmin)) ? Number(def.xmin) : null,
+        xmax: def.xmax != null && Number.isFinite(Number(def.xmax)) ? Number(def.xmax) : null,
         plotlines: Array.isArray(def.plotlines) ? def.plotlines : [],
         plotbands: Array.isArray(def.plotbands) ? def.plotbands : [],
         annotations: Array.isArray(def.annotations) ? def.annotations : [],

@@ -49,9 +49,11 @@ export const radarChart = (m: Model, ctx: RenderCtx): View => {
             const v = s.points[i] && !s.points[i].gap ? s.points[i].value : 0;
             return { xy: at(i, (v / top) * RR), v, i };
         });
+        // a 'line' series is the outline only (no fill)
         shapes.push(html`<polygon class="lm-chart-radar-area"
             points="${verts.map((e) => e.xy.map((c) => c.toFixed(2)).join(',')).join(' ')}"
-            style="${css({ fill: s.color, stroke: s.color })}" data-dim="${dim}" />`);
+            style="${css(s.width ? { fill: s.color, stroke: s.color, 'stroke-width': s.width } : { fill: s.color, stroke: s.color })}"
+            data-nofill="${s.type === 'line' ? 'true' : false}" data-dashed="${s.dashed || false}" data-dim="${dim}" />`);
         for (const e of verts) {
             const cat = m.categories[e.i] != null ? m.categories[e.i] : '';
             dots.push(html`<circle class="lm-chart-radar-dot" cx="${e.xy[0].toFixed(2)}" cy="${e.xy[1].toFixed(2)}" r="1.6"
