@@ -48,7 +48,7 @@
    inline height Modal pins from its first-open measurement (the DAYS
    view) — months/years are shorter and must shrink the panel with them
    (v5 was content-sized in every view) */
-.lm-calendar .lm-modal {
+.lm-calendar .lm-modal-root .lm-modal {
     padding: 0;
     min-width: 0;
     min-height: 5px;
@@ -58,7 +58,7 @@
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
 }
 
-.lm-calendar .lm-modal-content {
+.lm-calendar .lm-modal-root .lm-modal-content {
     padding: 0;
 }
 
@@ -350,7 +350,7 @@
 }
 
 /* Picker: bottom sheet (v5 data-type="picker") */
-.lm-calendar[data-type='picker'] .lm-modal {
+.lm-calendar[data-type='picker'] .lm-modal-root .lm-modal {
     width: 100% !important;
     border-radius: 12px 12px 0 0;
     border: 0;

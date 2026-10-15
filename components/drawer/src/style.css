@@ -4,21 +4,21 @@
    anchor and the body chrome, scoped under .lm-drawer; the header
    (title + close) is Modal's own. */
 
-.lm-drawer .lm-modal {
+.lm-drawer .lm-modal-root .lm-modal {
     min-width: 0; /* the width prop is authoritative, not Modal's 280px floor */
 }
 
 /* Slide in from the anchored edge — replays on every open because the
    branch (re)attaches to the document */
-.lm-drawer[data-anchor='left'] .lm-modal {
+.lm-drawer[data-anchor='left'] .lm-modal-root .lm-modal {
     animation: lm-drawer-slide-left 0.25s ease;
 }
 
-.lm-drawer[data-anchor='right'] .lm-modal {
+.lm-drawer[data-anchor='right'] .lm-modal-root .lm-modal {
     animation: lm-drawer-slide-right 0.25s ease;
 }
 
-.lm-drawer[data-anchor='bottom'] .lm-modal {
+.lm-drawer[data-anchor='bottom'] .lm-modal-root .lm-modal {
     animation: lm-drawer-slide-up 0.25s ease;
     width: 100% !important; /* bottom sheet: full width, width prop ignored */
     max-width: 100%;
@@ -41,7 +41,7 @@
 }
 
 /* Modal renders the header; the drawer owns only the scrolling body */
-.lm-drawer .lm-modal-content {
+.lm-drawer .lm-modal-root .lm-modal-content {
     display: flex;
     flex-direction: column;
     padding: 0;

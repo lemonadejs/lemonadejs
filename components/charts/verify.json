@@ -39,11 +39,27 @@
             "pass": true
         },
         {
+            "name": "prop titleposition",
+            "pass": true
+        },
+        {
+            "name": "prop titleposition (live state)",
+            "pass": true
+        },
+        {
             "name": "prop subtitle",
             "pass": true
         },
         {
             "name": "prop subtitle (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop legendtitle",
+            "pass": true
+        },
+        {
+            "name": "prop legendtitle (live state)",
             "pass": true
         },
         {
@@ -292,6 +308,38 @@
         },
         {
             "name": "prop ylog (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop ystep",
+            "pass": true
+        },
+        {
+            "name": "prop ystep (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop yreverse",
+            "pass": true
+        },
+        {
+            "name": "prop yreverse (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop xmin",
+            "pass": true
+        },
+        {
+            "name": "prop xmin (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop xmax",
+            "pass": true
+        },
+        {
+            "name": "prop xmax (live state)",
             "pass": true
         },
         {

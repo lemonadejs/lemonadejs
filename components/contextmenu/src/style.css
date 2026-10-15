@@ -16,14 +16,14 @@
 }
 
 /* Menu chrome scoped onto the Modal panels this component owns */
-.lm-contextmenu .lm-modal {
+.lm-contextmenu .lm-modal-root .lm-modal {
     min-width: 220px;
     border-radius: 10px;
     font: 13px/1.5 system-ui, sans-serif;
     user-select: none;
 }
 
-.lm-contextmenu .lm-modal-content {
+.lm-contextmenu .lm-modal-root .lm-modal-content {
     padding: 6px;
 }
 

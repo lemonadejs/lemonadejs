@@ -8,12 +8,12 @@
 }
 
 /* The popup is a compact panel, not a dialog */
-.lm-color .lm-modal {
+.lm-color .lm-modal-root .lm-modal {
     min-width: initial;
     min-height: initial;
 }
 
-.lm-color .lm-modal-content {
+.lm-color .lm-modal-root .lm-modal-content {
     padding: 0;
 }
 

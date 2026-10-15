@@ -2,7 +2,7 @@
 
 LemonadeJS charts block — 35 chart types from one data definition, responsive with no resize code.
 
-**✓ verified** — 111 contract checks · framework-agnostic · zero dependencies
+**✓ verified** — 123 contract checks · framework-agnostic · zero dependencies
 
 ## Overview
 
@@ -123,7 +123,9 @@ state for a two-way live wire. Attribute strings are coerced to the declared typ
 | `series` | array | — | [{ name, data, color? }]; pie uses the first series |
 | `categories` | array | — | x-axis labels (bar/stacked) / slice names (pie) |
 | `title` | string | `''` | optional heading above the plot |
+| `titleposition` | string | `''` | '' above the plot \| 'bottom' |
 | `subtitle` | string | `''` | muted line under the title |
+| `legendtitle` | string | `''` | heading of the legend |
 | `xtype` | string | `''` | '' category \| 'datetime' \| 'linear' (continuous x for line/area) |
 | `xformat` | function | — | (x) => string; custom x-axis tick label (datetime/linear) |
 | `xtitle` | string | `''` | x-axis title (bar/stacked) |
@@ -155,6 +157,10 @@ state for a two-way live wire. Attribute strings are coerced to the declared typ
 | `ymin` | number | — | bar/stacked: force the y-axis lower bound (auto if unset) |
 | `ymax` | number | — | bar/stacked: force the y-axis upper bound (auto if unset) |
 | `ylog` | boolean | `false` | logarithmic y-axis (positive values only) |
+| `ystep` | number | — | distance between the y ticks (auto if unset) |
+| `yreverse` | boolean | `false` | the y-axis grows downwards |
+| `xmin` | number | — | scatter/bubble: force the x-axis lower bound (auto if unset) |
+| `xmax` | number | — | scatter/bubble: force the x-axis upper bound (auto if unset) |
 | `bins` | number | — | histogram only: bin count (unset = Sturges' rule) |
 | `plotlines` | array | — | reference lines [{ value, color?, label?, dashed?, axis? }] |
 | `plotbands` | array | — | reference bands [{ from, to, color?, label?, axis? }] |

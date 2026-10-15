@@ -1,6 +1,6 @@
 {
     "name": "@lemonadejs/actionsheet",
-    "version": "6.0.0-beta.0",
+    "version": "6.0.0-beta.1",
     "description": "LemonadeJS actionsheet block — contract-verified, framework-agnostic.",
     "license": "MIT",
     "repository": {
@@ -32,6 +32,6 @@
         "lemonadejs": "^6.0.0-beta.0"
     },
     "dependencies": {
-        "@lemonadejs/modal": "^6.0.0-beta.0"
+        "@lemonadejs/modal": "^6.0.0-beta.1"
     }
 }

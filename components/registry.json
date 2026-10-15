@@ -474,7 +474,7 @@
         "name": "charts",
         "path": "components/charts",
         "verified": true,
-        "checks": 111,
+        "checks": 123,
         "contract": {
             "name": "charts",
             "props": {
@@ -492,7 +492,15 @@
                     "type": "string",
                     "default": ""
                 },
+                "titleposition": {
+                    "type": "string",
+                    "default": ""
+                },
                 "subtitle": {
+                    "type": "string",
+                    "default": ""
+                },
+                "legendtitle": {
                     "type": "string",
                     "default": ""
                 },
@@ -614,6 +622,19 @@
                 "ylog": {
                     "type": "boolean",
                     "default": false
+                },
+                "ystep": {
+                    "type": "number"
+                },
+                "yreverse": {
+                    "type": "boolean",
+                    "default": false
+                },
+                "xmin": {
+                    "type": "number"
+                },
+                "xmax": {
+                    "type": "number"
                 },
                 "bins": {
                     "type": "number"
