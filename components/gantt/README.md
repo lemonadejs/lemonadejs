@@ -2,7 +2,7 @@
 
 LemonadeJS gantt block — %-positioned bars that align across embedded instances; contract-verified, framework-agnostic.
 
-**✓ verified** — 30 contract checks · framework-agnostic · zero dependencies
+**✓ verified** — 35 contract checks · framework-agnostic · zero dependencies
 
 ## Overview
 
@@ -28,6 +28,14 @@ shading and the today line — same engine, same percentages.
     accessible name); Ctrl/Alt+Arrow moves a snap step, Shift+Arrow
     resizes the end — the SAME commit path (and onchange) as drag.
     Enter/Space activates (onclick); the header pans with arrows
+  - the viewport: drag the header to pan, Shift + mouse wheel over the
+    timeline to zoom around the date under the cursor; both report
+    through onrangechange(start, end, daywidth) and outlive data
+    refreshes (a data change never snaps the timeline back; a change
+    of the start/end props always wins)
+  - daywidth: a fixed slot width in px — the chart grows with the
+    range instead of fitting the container (scroll the container);
+    zoom then steps the slot width in whole pixels. 0 fits the width.
   - dates are 'YYYY-MM-DD' strings, all math in LOCAL time
   - data BY REFERENCE: mutate + touch() re-renders
 
@@ -36,9 +44,12 @@ TWO MOUNTING MODES:
      (non-headless by default).
   2. OVER A TABLE: set `table` to a CSS selector — the gantt injects
      one lane cell per tbody row (task i ↔ row i), %-aligned, drag
-     editing included, and renders its own element as the timeline
-     header you place above/beside the table. Unmount removes every
-     injected cell — the table returns to its original state.
+     editing, link handles and the dependency connectors included
+     (drawn on an overlay over the table, clipped to the lane column),
+     and renders its own element as the timeline header you place
+     above/beside the table. The lane width is the cell's: the host
+     sizes the column. Unmount removes every injected cell and the
+     overlay — the table returns to its original state.
 
 ## Install
 
@@ -89,6 +100,8 @@ state for a two-way live wire. Attribute strings are coerced to the declared typ
 | `readonly` | boolean | `false` | host override: view-only regardless of `editable` (clicks/pan still work) |
 | `disabled` | boolean | `false` | blocks ALL interaction (clicks, pan, edits) and dims the chart |
 | `snap` | number | `1` | drag snapping, in days |
+| `zoom` | boolean | `true` | Shift + mouse wheel over the timeline zooms around the cursor |
+| `daywidth` | number | `0` | px per day slot: the chart grows with the range (0 = fit the container) |
 | `table` | string | `''` | CSS selector: inject lanes into that table's rows |
 
 ## Events
@@ -99,6 +112,7 @@ All event names are lowercase (the platform convention — LJS-305 warns otherwi
 - `onclick` — (task, event)
 - `onlink` — (fromTask, toTask) a dependency was drawn
 - `onunlink` — (fromTask, toTask) a dependency was removed
+- `onrangechange` — (start, end, daywidth) the viewport moved: pan, keyboard or zoom
 
 ## API (via `ref`)
 

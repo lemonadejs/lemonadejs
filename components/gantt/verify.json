@@ -95,6 +95,22 @@
             "pass": true
         },
         {
+            "name": "prop zoom",
+            "pass": true
+        },
+        {
+            "name": "prop zoom (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop daywidth",
+            "pass": true
+        },
+        {
+            "name": "prop daywidth (live state)",
+            "pass": true
+        },
+        {
             "name": "prop table",
             "pass": true
         },
@@ -116,6 +132,10 @@
         },
         {
             "name": "event onunlink",
+            "pass": true
+        },
+        {
+            "name": "event onrangechange",
             "pass": true
         },
         {

@@ -21,6 +21,14 @@
  *     accessible name); Ctrl/Alt+Arrow moves a snap step, Shift+Arrow
  *     resizes the end — the SAME commit path (and onchange) as drag.
  *     Enter/Space activates (onclick); the header pans with arrows
+ *   - the viewport: drag the header to pan, Shift + mouse wheel over the
+ *     timeline to zoom around the date under the cursor; both report
+ *     through onrangechange(start, end, daywidth) and outlive data
+ *     refreshes (a data change never snaps the timeline back; a change
+ *     of the start/end props always wins)
+ *   - daywidth: a fixed slot width in px — the chart grows with the
+ *     range instead of fitting the container (scroll the container);
+ *     zoom then steps the slot width in whole pixels. 0 fits the width.
  *   - dates are 'YYYY-MM-DD' strings, all math in LOCAL time
  *   - data BY REFERENCE: mutate + touch() re-renders
  *
@@ -29,9 +37,12 @@
  *      (non-headless by default).
  *   2. OVER A TABLE: set `table` to a CSS selector — the gantt injects
  *      one lane cell per tbody row (task i ↔ row i), %-aligned, drag
- *      editing included, and renders its own element as the timeline
- *      header you place above/beside the table. Unmount removes every
- *      injected cell — the table returns to its original state.
+ *      editing, link handles and the dependency connectors included
+ *      (drawn on an overlay over the table, clipped to the lane column),
+ *      and renders its own element as the timeline header you place
+ *      above/beside the table. The lane width is the cell's: the host
+ *      sizes the column. Unmount removes every injected cell and the
+ *      overlay — the table returns to its original state.
  */
 
 import { component, html } from 'lemonadejs';
@@ -72,6 +83,33 @@ const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', '
 // (.lm-gantt-link-arrow: 6px long, 3px gap)
 const ARROW_LEN = 6;
 const ARROW_GAP = 3;
+// Table mode draws in px: the horizontal stub out of the predecessor runs
+// past the link handle (11px dot over the bar edge) so the line leaves it
+const STUB_PX = 14;
+
+// Zoom bounds: the window in days (fit mode) and the slot in px (daywidth mode)
+const ZOOM_MIN_DAYS = 7;
+const ZOOM_MAX_DAYS = 3660;
+const ZOOM_MIN_PX = 2;
+const ZOOM_MAX_PX = 64;
+
+const SVG = 'http://www.w3.org/2000/svg';
+
+const round2 = (n: number) => Math.round(n * 1000) / 1000;
+
+/**
+ * A finish→start connector from (x1, y1) to (x2, y2), in whatever unit
+ * the caller draws in. Forward links take one drop right after the
+ * predecessor; a BACK-link (the successor starts before the predecessor
+ * ends) routes its horizontal leg through `gapY`, between the rows, so
+ * the line never crosses the successor's bar. `tail` is the arrowhead
+ * length plus its gap: the line stops at the arrowhead's base.
+ */
+const elbow = (x1: number, y1: number, x2: number, y2: number, stub: number, tail: number, gapY: number): string =>
+    x2 - stub >= x1 + stub
+        ? 'M ' + round2(x1) + ' ' + y1 + ' H ' + round2(x1 + stub) + ' V ' + y2 + ' H ' + round2(x2 - tail)
+        : 'M ' + round2(x1) + ' ' + y1 + ' H ' + round2(x1 + stub) + ' V ' + gapY +
+          ' H ' + round2(x2 - tail - stub) + ' V ' + y2 + ' H ' + round2(x2 - tail);
 
 let uid = 0; // unique suffix per instance for the visually hidden keyboard hint id
 
@@ -87,11 +125,14 @@ export const Gantt = component('gantt', {
     readonly: false,              // host override: view-only regardless of `editable` (clicks/pan still work)
     disabled: false,              // blocks ALL interaction (clicks, pan, edits) and dims the chart
     snap: 1,                      // drag snapping, in days
+    zoom: true,                   // Shift + mouse wheel over the timeline zooms around the cursor
+    daywidth: 0,                  // px per day slot: the chart grows with the range (0 = fit the container)
     table: '',                    // CSS selector: inject lanes into that table's rows
     onchange: Function,           // (task, start, end) on drag commit
     onclick: Function,            // (task, event)
     onlink: Function,             // (fromTask, toTask) a dependency was drawn
     onunlink: Function,           // (fromTask, toTask) a dependency was removed
+    onrangechange: Function,      // (start, end, daywidth) the viewport moved: pan, keyboard or zoom
     api: { getRange: Function, setRange: Function },
 }, (props, { state, onMount, onUnmount, listen }) => {
     const tasks = () => (props.data.peek() as GanttTask[]) || [];
@@ -112,8 +153,12 @@ export const Gantt = component('gantt', {
     const range = state<{ from: number; to: number }>({ from: 0, to: 1 });
     // Drag preview: task index -> { from, to } in ms, shown live
     const preview = state<{ index: number; from: number; to: number } | null>(null);
-    // Live dependency-link drag: source row + anchor (%/px) + cursor (%/px)
-    const linking = state<{ index: number; ax: number; ay: number; cx: number; cy: number } | null>(null);
+    // Live dependency-link drag: source index, the anchor on the bar's right
+    // edge and the cursor — all in CLIENT px, so both modes draw it
+    const linking = state<{ index: number; sx: number; sy: number; cx: number; cy: number } | null>(null);
+    // The slot width in px (daywidth mode); zoom steps it, the prop resets it
+    const dayPx = state<number>((props.daywidth.peek() as number) || 0);
+    onMount(() => props.daywidth.subscribe(() => { dayPx.value = (props.daywidth.peek() as number) || 0; }));
 
     const computeRange = () => {
         const list = tasks();
@@ -123,10 +168,11 @@ export const Gantt = component('gantt', {
             let lo = Infinity;
             let hi = -Infinity;
             for (const t of list) {
+                if (!t) continue;
                 lo = Math.min(lo, toMs(t.start));
                 hi = Math.max(hi, toMs(t.end || t.start));
             }
-            if (!list.length) {
+            if (lo === Infinity) {
                 lo = hi = toMs(toIso(Date.now()));
             }
             if (Number.isNaN(from)) {
@@ -150,18 +196,35 @@ export const Gantt = component('gantt', {
     // flag makes the next notification keep the current bounds — still
     // assigned fresh, so the lanes pipeline flows as always.
     let keepViewport = false;
-    const refresh = () => {
+    // The viewport the USER set (pan, keyboard, zoom, setRange) outlives
+    // data refreshes too: a host rebuilding its task list must not snap
+    // the timeline back to the start/end props. A change of those props
+    // is the host speaking, and always wins.
+    let userRange = false;
+    const refresh = (fromProps: boolean) => {
         // A data change mid-gesture cancels the drag: its captured geometry
         // (origin, ms-per-px, task) is stale. No-op after our own commits —
         // the gesture has already been released by then.
         releaseGesture?.();
-        if (keepViewport) {
+        if (keepViewport || (userRange && !fromProps)) {
             keepViewport = false;
             range.value = { ...range.value };
         } else {
+            userRange = false;
             computeRange();
         }
         preview.value = null;
+    };
+
+    /** The start/end props changed. The host echoing our own onrangechange
+     *  (the values it was just told) is not a change: nothing to do. */
+    const propsChanged = () => {
+        const s = props.start.peek() as string;
+        const e = props.end.peek() as string;
+        if (s && e && toMs(s) === range.value.from && toMs(e) === range.value.to) {
+            return;
+        }
+        refresh(true);
     };
 
     /** touch() for edits made BY this component: viewport stays put */
@@ -170,9 +233,9 @@ export const Gantt = component('gantt', {
         props.data.touch();
     };
 
-    onMount(() => props.data.subscribe(refresh));
-    onMount(() => props.start.subscribe(refresh));
-    onMount(() => props.end.subscribe(refresh));
+    onMount(() => props.data.subscribe(() => refresh(false)));
+    onMount(() => props.start.subscribe(propsChanged));
+    onMount(() => props.end.subscribe(propsChanged));
     computeRange();
 
     const totalDays = () => Math.round((range.value.to - range.value.from) / DAY) + 1;
@@ -185,13 +248,23 @@ export const Gantt = component('gantt', {
     const widthPct = (fromMs: number, toMs_: number): number =>
         ((toMs_ - fromMs + DAY) / (range.value.to - range.value.from + DAY)) * 100;
 
-    const round2 = (n: number) => Math.round(n * 1000) / 1000;
+    /** daywidth mode: the chart's own width in px, or '' to fit the container */
+    const fixedWidth = (): string => (dayPx.value > 0 ? totalDays() * dayPx.value + 'px' : '');
+
+    /** A viewport change made by the user: pan, keyboard, zoom */
+    const setUserRange = (from: number, to: number) => {
+        userRange = true;
+        range.value = { from, to };
+        props.onrangechange?.(toIso(from), toIso(to), dayPx.peek());
+    };
 
     // Standalone mode: the rows width, so the px arrow tail becomes a %
     // of the x axis (the links re-run when the chart is resized)
     const rowsWidth = state(0);
+    let rowsEl: HTMLElement | null = null;
     let widthObserver: ResizeObserver | null = null;
     const watchWidth = (el: HTMLElement) => {
+        rowsEl = el;
         rowsWidth.value = el.clientWidth;
         if (typeof ResizeObserver !== 'undefined' && !widthObserver) {
             widthObserver = new ResizeObserver(() => {
@@ -223,13 +296,13 @@ export const Gantt = component('gantt', {
                 : { from: toMs(t.start), to: toMs(t.end || t.start) };
         const byId = new Map<string | number, number>();
         tasks.forEach((t, i) => {
-            if (t.id != null) byId.set(t.id, i);
+            if (t && t.id != null) byId.set(t.id, i);
         });
         const out: { d: string; ax: number; ay: number; ti: number; sid: string | number }[] = [];
         // The arrowhead and its gap, in % of the axis (0 before the first layout)
         const tail = rowsWidth.value ? ((ARROW_LEN + ARROW_GAP) * 100) / rowsWidth.value : 0;
         tasks.forEach((b, ib) => {
-            const deps = b.dependencies;
+            const deps = b && b.dependencies;
             if (!Array.isArray(deps) || !deps.length) {
                 return;
             }
@@ -243,30 +316,9 @@ export const Gantt = component('gantt', {
                 const as = span(tasks[ia], ia);
                 const aEndX = pct(as.from) + widthPct(as.from, as.to);
                 const ay = ia * rh + rh / 2;
-                const stub = 1.5; // % horizontal run out of the predecessor
-                let d: string;
-                if (bx - stub >= aEndX + stub) {
-                    // forward link: out of A, down right after it, into B's start
-                    d =
-                        'M ' + round2(aEndX) + ' ' + ay +
-                        ' H ' + round2(aEndX + stub) +
-                        ' V ' + by +
-                        ' H ' + round2(bx - tail);
-                } else {
-                    // BACK-link (B starts before A ends): a drop at A's edge
-                    // would run behind B's bar. Route the horizontal leg
-                    // through the GAP between the rows, then approach B's
-                    // start from the left.
-                    const gapY = ib > ia ? ib * rh : (ib + 1) * rh;
-                    d =
-                        'M ' + round2(aEndX) + ' ' + ay +
-                        ' H ' + round2(aEndX + stub) +
-                        ' V ' + gapY +
-                        ' H ' + round2(bx - tail - stub) +
-                        ' V ' + by +
-                        ' H ' + round2(bx - tail);
-                }
-                out.push({ d, ax: round2(bx), ay: by, ti: ib, sid: depId });
+                // the horizontal leg of a back-link runs through the row gap
+                const gapY = ib > ia ? ib * rh : (ib + 1) * rh;
+                out.push({ d: elbow(aEndX, ay, bx, by, 1.5, tail, gapY), ax: round2(bx), ay: by, ti: ib, sid: depId });
             });
         });
         return out;
@@ -415,9 +467,10 @@ export const Gantt = component('gantt', {
     /**
      * Draw a dependency by dragging from a predecessor's link handle to the
      * task that should depend on it. Uses the same `track()` gesture; the
-     * target is whatever bar the mouse is over on release.
+     * target is whatever bar the mouse is over on release. Geometry in
+     * client px: the same gesture serves the rows and the table lanes.
      */
-    const startLink = (e: MouseEvent, index: number, el: HTMLElement) => {
+    const startLink = (e: MouseEvent, index: number, bar: HTMLElement) => {
         if (!canEditPeek()) {
             return;
         }
@@ -427,25 +480,16 @@ export const Gantt = component('gantt', {
         }
         e.preventDefault();
         e.stopPropagation(); // don't also start a move/resize drag on the bar
-        const area = el.closest('.lm-gantt-rows') as HTMLElement;
-        const areaRect = area.getBoundingClientRect();
-        const rh = props.rowheight.value;
-        const aFrom = toMs(src.start);
-        const ax = pct(aFrom) + widthPct(aFrom, toMs(src.end || src.start));
-        const ay = index * rh + rh / 2;
+        const r = bar.getBoundingClientRect();
+        const sx = r.right;
+        const sy = r.top + r.height / 2;
         let lastX = e.clientX;
         let lastY = e.clientY;
         track(
             (ev) => {
                 lastX = ev.clientX;
                 lastY = ev.clientY;
-                linking.value = {
-                    index,
-                    ax,
-                    ay,
-                    cx: ((ev.clientX - areaRect.left) / (areaRect.width || 1)) * 100,
-                    cy: ev.clientY - areaRect.top,
-                };
+                linking.value = { index, sx, sy, cx: ev.clientX, cy: ev.clientY };
             },
             (commit) => {
                 linking.value = null;
@@ -460,6 +504,9 @@ export const Gantt = component('gantt', {
                     return;
                 }
                 const target = tasks()[ti];
+                if (!target) {
+                    return;
+                }
                 const deps = Array.isArray(target.dependencies) ? target.dependencies.slice() : [];
                 const srcDeps = Array.isArray(src.dependencies) ? src.dependencies : [];
                 // skip duplicates and a direct A→B / B→A reverse loop
@@ -477,6 +524,7 @@ export const Gantt = component('gantt', {
      * Pan the viewport by dragging the timeline header left/right — shifts
      * the whole range by the cursor delta (great for large schedules). The
      * range drives every % binding, so the bars/grid/today all follow.
+     * onrangechange reports the window once, on release.
      */
     const panStart = (e: MouseEvent) => {
         if (!interactive()) {
@@ -493,9 +541,15 @@ export const Gantt = component('gantt', {
         track(
             (ev) => {
                 const deltaMs = Math.round((ev.clientX - origin) * msPerPx);
+                userRange = true;
                 range.value = { from: from0 - deltaMs, to: to0 - deltaMs };
             },
-            () => header.classList.remove('lm-gantt-panning')
+            () => {
+                header.classList.remove('lm-gantt-panning');
+                if (range.value.from !== from0) {
+                    props.onrangechange?.(toIso(range.value.from), toIso(range.value.to), dayPx.peek());
+                }
+            }
         );
     };
 
@@ -507,7 +561,60 @@ export const Gantt = component('gantt', {
         }
         e.preventDefault();
         const step = (e.key === 'ArrowRight' ? 1 : -1) * (e.shiftKey ? 7 : 1) * DAY;
-        range.value = { from: range.value.from + step, to: range.value.to + step };
+        setUserRange(range.value.from + step, range.value.to + step);
+    };
+
+    /**
+     * Shift + wheel over the timeline (the header, or a lane in table
+     * mode): zoom around the date under the cursor, which stays under the
+     * cursor. Fit mode scales the number of days in the window; daywidth
+     * mode steps the slot width in whole px and keeps the window's px
+     * width, so the day count follows. Shift, because a plain wheel over
+     * a chart in a page must keep scrolling the page.
+     */
+    const wheel = (e: WheelEvent, el: HTMLElement) => {
+        if (!props.zoom.peek() || !e.shiftKey || !interactive()) {
+            return;
+        }
+        // With shift held, browsers report the wheel as a horizontal delta
+        const delta = e.deltaY || e.deltaX;
+        if (!delta) {
+            return;
+        }
+        e.preventDefault();
+        e.stopPropagation();
+        const rect = el.getBoundingClientRect();
+        const frac = Math.min(1, Math.max(0, (e.clientX - rect.left) / (rect.width || 1)));
+        const { from } = range.value;
+        const days = totalDays();
+        const zoomIn = delta < 0;
+        let nextDays: number;
+        const px = dayPx.peek();
+        if (px > 0) {
+            let next = Math.round(px * (zoomIn ? 1.25 : 0.8));
+            if (next === px) {
+                next += zoomIn ? 1 : -1;
+            }
+            next = Math.min(ZOOM_MAX_PX, Math.max(ZOOM_MIN_PX, next));
+            if (next === px) {
+                return;
+            }
+            nextDays = Math.max(ZOOM_MIN_DAYS, Math.round((days * px) / next));
+            dayPx.value = next;
+        } else {
+            nextDays = Math.round(days * (zoomIn ? 0.8 : 1.25));
+            if (nextDays === days) {
+                nextDays += zoomIn ? -1 : 1;
+            }
+            nextDays = Math.min(ZOOM_MAX_DAYS, Math.max(ZOOM_MIN_DAYS, nextDays));
+            if (nextDays === days) {
+                return;
+            }
+        }
+        // The date under the cursor, kept there; the window snaps to whole days
+        const anchor = from + frac * days * DAY;
+        const newFrom = toMs(toIso(anchor - frac * nextDays * DAY));
+        setUserRange(newFrom, newFrom + (nextDays - 1) * DAY);
     };
 
     /** Remove dependency `sourceId` from the task at `targetIndex`. */
@@ -519,16 +626,18 @@ export const Gantt = component('gantt', {
         if (!target || !Array.isArray(target.dependencies)) {
             return;
         }
-        const src = tasks().find((t) => t.id === sourceId);
+        const src = tasks().find((t) => t && t.id === sourceId);
         target.dependencies = target.dependencies.filter((d) => d !== sourceId);
         touchKeepingViewport();
         props.onunlink?.(src, target);
     };
 
     props.ref?.({
-        getRange: () => ({ start: toIso(range.value.from), end: toIso(range.value.to) }),
+        getRange: () => ({ start: toIso(range.value.from), end: toIso(range.value.to), daywidth: dayPx.peek() }),
         setRange: (start: string, end: string) => {
-            // The range assignment re-runs every % binding and the lanes
+            // The range assignment re-runs every % binding and the lanes;
+            // a host-set window is kept through data refreshes like a pan
+            userRange = true;
             range.value = { from: toMs(start), to: Math.max(toMs(end), toMs(start) + DAY) };
         },
     });
@@ -537,19 +646,35 @@ export const Gantt = component('gantt', {
     // Imperative by necessity (divs cannot be children of <table>), but
     // contained: cells are tagged, lanes rebuilt through the same
     // refresh pipeline, and unmount removes everything we created.
-    const injectedCells: HTMLTableCellElement[] = [];
+    let injectedCells: HTMLTableCellElement[] = [];
+
+    const tableEl = (): HTMLTableElement | null => {
+        const selector = props.table.peek() as string;
+        return selector ? (document.querySelector(selector) as HTMLTableElement | null) : null;
+    };
+
+    /** The task behind a lane bar: its data-index is the ROW index, read at
+     *  event time — the host may insert, delete or reorder rows under the
+     *  lanes, and the cells move with their rows */
+    const laneTask = (e: Event): { bar: HTMLElement; index: number; task: GanttTask } | null => {
+        const bar = (e.target as Element).closest('.lm-gantt-bar, .lm-gantt-milestone') as HTMLElement | null;
+        if (!bar || bar.dataset.index == null) {
+            return null;
+        }
+        const index = Number(bar.dataset.index);
+        const task = tasks()[index];
+        return task ? { bar, index, task } : null;
+    };
 
     const renderLanes = () => {
-        const selector = props.table.peek() as string;
-        if (!selector) {
+        const table = tableEl();
+        if (!table) {
             return;
         }
-        const tableEl = document.querySelector(selector) as HTMLTableElement | null;
-        if (!tableEl) {
-            return;
-        }
-        const bodyRows = [...tableEl.querySelectorAll(':scope > tbody > tr')] as HTMLTableRowElement[];
+        const bodyRows = [...table.querySelectorAll(':scope > tbody > tr')] as HTMLTableRowElement[];
         const list = tasks();
+        // Rows the host dropped took their lanes with them
+        injectedCells = injectedCells.filter((cell) => cell.isConnected);
         bodyRows.forEach((tr, index) => {
             let cell = tr.querySelector(':scope > td.lm-gantt-cell') as HTMLTableCellElement | null;
             if (!cell) {
@@ -565,30 +690,28 @@ export const Gantt = component('gantt', {
                 cell.textContent = '';
                 cell.appendChild(lane);
                 // Handlers DELEGATE from the persistent lane via listen()
-                // (one pair per created lane, auto-removed on unmount):
+                // (one set per created lane, auto-removed on unmount):
                 // bars are rebuilt per refresh, so per-bar listeners would
                 // either leak registrations or need manual release
                 listen<MouseEvent>(lane, 'mousedown', (e) => {
-                    const bar = (e.target as Element).closest('.lm-gantt-bar, .lm-gantt-milestone');
-                    const task = tasks()[index];
-                    if (bar && task) {
-                        startDrag(e, index, task, bar as HTMLElement);
+                    const hit = laneTask(e);
+                    if (hit) {
+                        startDrag(e, hit.index, hit.task, hit.bar);
                     }
                 });
                 listen<MouseEvent>(lane, 'click', (e) => {
-                    const bar = (e.target as Element).closest('.lm-gantt-bar, .lm-gantt-milestone');
-                    const task = tasks()[index];
-                    if (bar && task && interactive()) {
-                        props.onclick?.(task, e);
+                    const hit = laneTask(e);
+                    if (hit && interactive()) {
+                        props.onclick?.(hit.task, e);
                     }
                 });
                 listen<KeyboardEvent>(lane, 'keydown', (e) => {
-                    const bar = (e.target as Element).closest('.lm-gantt-bar, .lm-gantt-milestone');
-                    const task = tasks()[index];
-                    if (bar && task) {
-                        keyEdit(e, index, task, bar as HTMLElement);
+                    const hit = laneTask(e);
+                    if (hit) {
+                        keyEdit(e, hit.index, hit.task, hit.bar);
                     }
                 });
+                listen<WheelEvent>(lane, 'wheel', (e) => wheel(e, lane as HTMLElement), { passive: false });
             }
             lane.textContent = '';
             // The day grid lines and the today line come from the stylesheet
@@ -604,6 +727,7 @@ export const Gantt = component('gantt', {
                 lane.appendChild(buildLaneBar(task, index));
             }
         });
+        drawTableLinks(table);
     };
 
     /** A lane bar: same % math and drag editing as the declarative bars */
@@ -634,6 +758,17 @@ export const Gantt = component('gantt', {
             label.className = 'lm-gantt-label';
             label.textContent = task.label || '';
             el.appendChild(label);
+            // The link handle, like the declarative bars: drag it onto another
+            // task to draw a dependency. Its own listener stops the lane's
+            // delegated mousedown from starting a move; the element is
+            // rebuilt with the bar, so the listener goes with it
+            if (canEditPeek() && !task.readonly && task.id != null) {
+                const handle = document.createElement('div');
+                handle.className = 'lm-gantt-link-handle';
+                handle.title = 'Drag to a task to link';
+                handle.addEventListener('mousedown', (e) => startLink(e, index, el));
+                el.appendChild(handle);
+            }
         }
         if (task.color) {
             el.style.background = task.color;
@@ -659,6 +794,200 @@ export const Gantt = component('gantt', {
         return el;
     };
 
+    /**
+     * Table mode connectors. The bars live in separate row cells, so the
+     * links are drawn on an overlay over the table — in px, measured from
+     * the lane bars — placed in the table's parent (made the positioning
+     * context when static) and clipped to the lane column. Two layers:
+     * the lines sit UNDER the bars (an elbow never paints across a bar
+     * face; the arrowheads land just outside the target bar) and the live
+     * link preview ABOVE them. Redrawn with the lanes (range, data, drag
+     * preview) and when the table changes size (host row/column resizes).
+     */
+    let overlay: { lines: HTMLElement; top: HTMLElement; host: HTMLElement } | null = null;
+    let tableObserver: ResizeObserver | null = null;
+
+    const ensureOverlay = (table: HTMLTableElement) => {
+        if (overlay) {
+            return overlay;
+        }
+        const host = table.parentElement;
+        if (!host) {
+            return null;
+        }
+        const position = getComputedStyle(host).position;
+        if (!position || position === 'static') {
+            host.style.position = 'relative';
+        }
+        const lines = document.createElement('div');
+        lines.className = 'lm-gantt-link-layer lm-gantt-table-links';
+        const top = document.createElement('div');
+        top.className = 'lm-gantt-link-layer lm-gantt-table-temp';
+        host.appendChild(lines);
+        host.appendChild(top);
+        if (typeof ResizeObserver !== 'undefined') {
+            tableObserver = new ResizeObserver(() => {
+                const t = tableEl();
+                if (t) {
+                    drawTableLinks(t);
+                }
+            });
+            tableObserver.observe(table);
+        }
+        overlay = { lines, top, host };
+        return overlay;
+    };
+
+    const removeOverlay = () => {
+        tableObserver?.disconnect();
+        tableObserver = null;
+        if (overlay) {
+            overlay.lines.remove();
+            overlay.top.remove();
+            overlay = null;
+        }
+    };
+
+    const svgEl = (tag: string, className: string): SVGElement => {
+        const el = document.createElementNS(SVG, tag);
+        el.setAttribute('class', className);
+        return el;
+    };
+
+    const drawTableLinks = (table: HTMLTableElement) => {
+        const list = tasks();
+        const lk = linking.peek();
+        const hasLinks = list.some((t) => t && Array.isArray(t.dependencies) && t.dependencies.length > 0);
+        if (!hasLinks && !lk) {
+            if (overlay) {
+                overlay.lines.textContent = '';
+                overlay.top.textContent = '';
+            }
+            return;
+        }
+        const o = ensureOverlay(table);
+        if (!o) {
+            return;
+        }
+        const lanes = table.querySelectorAll(':scope > tbody > tr > td.lm-gantt-cell');
+        const tRect = table.getBoundingClientRect();
+        const hRect = o.host.getBoundingClientRect();
+        // Clipped to the LANE COLUMN: bar rects ignore the lane cells'
+        // overflow clipping, so a bar outside the date viewport would
+        // otherwise paint connectors over the other columns
+        const laneRect = lanes.length ? lanes[0].getBoundingClientRect() : tRect;
+        // The layers go on WHOLE screen pixels over the table's corner. The
+        // offset is placed, then MEASURED and corrected: the host's border,
+        // padding and scroll position all shift where an absolute child
+        // lands, and a fractional offset would blur every line inside
+        const screenLeft = Math.round(laneRect.left);
+        const screenTop = Math.round(tRect.top);
+        let left = screenLeft - hRect.left + o.host.scrollLeft;
+        let top = screenTop - hRect.top + o.host.scrollTop;
+        const place = () => {
+            [o.lines, o.top].forEach((layer) => {
+                layer.style.left = left + 'px';
+                layer.style.top = top + 'px';
+                layer.style.width = Math.round(laneRect.width) + 'px';
+                layer.style.height = Math.round(tRect.height) + 'px';
+            });
+        };
+        place();
+        const landed = o.lines.getBoundingClientRect();
+        const dx = Math.round(landed.left - screenLeft);
+        const dy = Math.round(landed.top - screenTop);
+        if (dx || dy) {
+            left -= dx;
+            top -= dy;
+            place();
+        }
+        o.lines.textContent = '';
+        o.top.textContent = '';
+        const barOf = (y: number) => lanes[y] && (lanes[y].querySelector('.lm-gantt-bar, .lm-gantt-milestone') as HTMLElement | null);
+        // Positions land on a half pixel: the 1.5px stroke centred there
+        // fills one pixel row, and the arrowhead, centred by its -50%
+        // transform, lands on whole pixels
+        const snap = (v: number) => Math.round(v - 0.5) + 0.5;
+        const X = (v: number) => snap(v - screenLeft);
+        const Y = (v: number) => snap(v - screenTop);
+
+        const svg = svgEl('svg', 'lm-gantt-links');
+        o.lines.appendChild(svg);
+        const byId = new Map<string | number, number>();
+        list.forEach((t, i) => {
+            if (t && t.id != null) byId.set(t.id, i);
+        });
+        const editable = canEditPeek();
+        list.forEach((b, ib) => {
+            const deps = b && b.dependencies;
+            if (!Array.isArray(deps) || !deps.length) {
+                return;
+            }
+            const toBar = barOf(ib);
+            if (!toBar) {
+                return;
+            }
+            const tr = toBar.getBoundingClientRect();
+            deps.forEach((depId) => {
+                const ia = byId.get(depId);
+                const fromBar = ia != null && ia !== ib ? barOf(ia) : null;
+                if (!fromBar) {
+                    return;
+                }
+                const fr = fromBar.getBoundingClientRect();
+                const x1 = X(fr.right);
+                const y1 = Y(fr.top + fr.height / 2);
+                const x2 = X(tr.left);
+                const y2 = Y(tr.top + tr.height / 2);
+                // a back-link's horizontal leg runs midway between the two bars
+                const gapY = ib > ia! ? Y((fr.bottom + tr.top) / 2) : Y((tr.bottom + fr.top) / 2);
+                const d = elbow(x1, y1, x2, y2, STUB_PX, ARROW_LEN + ARROW_GAP, gapY);
+
+                // The visible line and its hit line share a group: the hover
+                // highlight lands on the visible line (stylesheet, :has) while
+                // the hit line keeps its width under the cursor
+                const pair = svgEl('g', 'lm-gantt-link-pair');
+                svg.appendChild(pair);
+                const path = svgEl('path', 'lm-gantt-link');
+                path.setAttribute('d', d);
+                pair.appendChild(path);
+                if (editable) {
+                    const hit = svgEl('path', 'lm-gantt-link-hit');
+                    hit.setAttribute('d', d);
+                    hit.setAttribute('role', 'button');
+                    hit.setAttribute('tabindex', '0');
+                    const name = 'Remove the dependency from ' + (list[ia!]?.label || depId) + ' to ' + (b.label || 'task ' + (ib + 1));
+                    hit.setAttribute('aria-label', name);
+                    const title = document.createElementNS(SVG, 'title');
+                    title.textContent = 'Click to remove this dependency';
+                    hit.appendChild(title);
+                    hit.addEventListener('click', () => removeLink(ib, depId));
+                    hit.addEventListener('keydown', (e: KeyboardEvent) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            removeLink(ib, depId);
+                        }
+                    });
+                    pair.appendChild(hit);
+                }
+                const arrow = document.createElement('div');
+                arrow.className = 'lm-gantt-link-arrow';
+                // A box, not a stroke: its edges on whole pixels
+                arrow.style.left = (x2 + 0.5) + 'px';
+                arrow.style.top = y2 + 'px';
+                o.lines.appendChild(arrow);
+            });
+        });
+
+        if (lk) {
+            const temp = svgEl('svg', 'lm-gantt-links');
+            const line = svgEl('path', 'lm-gantt-link-temp');
+            line.setAttribute('d', 'M ' + (lk.sx - screenLeft) + ' ' + (lk.sy - screenTop) + ' L ' + (lk.cx - screenLeft) + ' ' + (lk.cy - screenTop));
+            temp.appendChild(line);
+            o.top.appendChild(temp);
+        }
+    };
+
     onMount(() => {
         if (props.table.peek()) {
             renderLanes();
@@ -670,12 +999,21 @@ export const Gantt = component('gantt', {
             const stopEdit = props.editable.subscribe(renderLanes);
             const stopRo = props.readonly.subscribe(renderLanes);
             const stopDis = props.disabled.subscribe(renderLanes);
+            // The link preview line follows the cursor on the overlay
+            const stopLinking = linking.subscribe(() => {
+                const t = tableEl();
+                if (t) {
+                    drawTableLinks(t);
+                }
+            });
             return () => {
                 stopRange();
                 stopPreview();
                 stopEdit();
                 stopRo();
                 stopDis();
+                stopLinking();
+                removeOverlay();
                 for (const cell of injectedCells) {
                     cell.remove();
                 }
@@ -816,14 +1154,27 @@ export const Gantt = component('gantt', {
             ${linkable
                 ? html`<div class="lm-gantt-link-handle" title="Drag to a task to link"
                       onmousedown="${(e: MouseEvent) =>
-                          startLink(e, index, (e.currentTarget as HTMLElement).closest('.lm-gantt-rows') as HTMLElement)}"></div>`
+                          startLink(e, index, (e.currentTarget as HTMLElement).closest('.lm-gantt-bar') as HTMLElement)}"></div>`
                 : ''}
         </div>`;
     };
 
+    /** The live link preview in the rows: client px → % of the rows on x, px on y */
+    const tempLine = () => {
+        const lk = linking.value;
+        if (!lk || !rowsEl) {
+            return '';
+        }
+        const r = rowsEl.getBoundingClientRect();
+        const x = (v: number) => round2(((v - r.left) / (r.width || 1)) * 100);
+        return html`<path class="lm-gantt-link-temp"
+            d="M ${x(lk.sx)} ${round2(lk.sy - r.top)} L ${x(lk.cx)} ${round2(lk.cy - r.top)}"></path>`;
+    };
+
     return html`<div class="lm-gantt" data-editable="${() => (canEdit() ? 'true' : false)}"
         data-readonly="${() => (props.readonly.value ? 'true' : false)}"
-        data-disabled="${() => (props.disabled.value ? 'true' : false)}">
+        data-disabled="${() => (props.disabled.value ? 'true' : false)}"
+        data-daywidth="${() => (dayPx.value > 0 ? 'true' : false)}">
         ${() =>
             canEdit()
                 ? html`<span class="lm-gantt-sr" id="${hintId}">Control or Alt with the Left and Right arrow
@@ -834,9 +1185,11 @@ export const Gantt = component('gantt', {
             html`<div class="lm-gantt-header" title="Drag to pan the timeline"
                 role="group"
                 tabindex="${props.disabled.value ? false : '0'}"
-                aria-label="Timeline. Drag, or focus and press the arrow keys, to pan."
+                aria-label="Timeline. Drag, or focus and press the arrow keys, to pan. Shift and the mouse wheel zoom."
+                style="${() => (fixedWidth() ? 'width:' + fixedWidth() : '')}"
                 onmousedown="${(e: MouseEvent) => panStart(e)}"
-                onkeydown="${(e: KeyboardEvent) => panKey(e)}">
+                onkeydown="${(e: KeyboardEvent) => panKey(e)}"
+                onwheel="${(e: WheelEvent) => wheel(e, e.currentTarget as HTMLElement)}">
                 <div class="lm-gantt-months">${() =>
                     weekScale()
                         ? weekSegments().map(
@@ -854,8 +1207,9 @@ export const Gantt = component('gantt', {
         ${() =>
             props.table.value
                 ? '' // table mode: the rows live as lanes inside YOUR table
-                : html`<div class="lm-gantt-rows" style="${() => '--lm-gantt-days:' + totalDays()}"
-                      ref="${(el: HTMLElement) => watchWidth(el)}">
+                : html`<div class="lm-gantt-rows" style="${() => '--lm-gantt-days:' + totalDays() + (fixedWidth() ? ';width:' + fixedWidth() : '')}"
+                      ref="${(el: HTMLElement) => watchWidth(el)}"
+                      onwheel="${(e: WheelEvent) => wheel(e, e.currentTarget as HTMLElement)}">
                       ${() =>
                           props.grid.value &&
                           html`<div class="lm-gantt-grid">${() =>
@@ -876,7 +1230,7 @@ export const Gantt = component('gantt', {
                           // them BY index) and carry no per-row state
                           ((props.data.value as GanttTask[]) || []).map(
                               (task, index) => html`<div class="lm-gantt-row" style="height:${props.rowheight.value}px">
-                                  ${() => barView(task, index)}
+                                  ${() => (task ? barView(task, index) : '')}
                               </div>`
                           )}
                       ${() => {
@@ -892,7 +1246,7 @@ export const Gantt = component('gantt', {
                           // BOTH ends so "which link?" never needs the mouse
                           const linkName = (l: { ti: number; sid: string | number }) =>
                               'Remove the dependency from ' +
-                              (list.find((t) => t.id === l.sid)?.label || l.sid) +
+                              (list.find((t) => t && t.id === l.sid)?.label || l.sid) +
                               ' to ' +
                               (list[l.ti]?.label || 'task ' + (l.ti + 1));
                           // ONE wrapper root so the whole overlay is replaced as
@@ -919,12 +1273,7 @@ export const Gantt = component('gantt', {
                                                 }}"></path>`
                                           : ''
                                   }</g>`
-                              )}${
-                                  lk
-                                      ? html`<path class="lm-gantt-link-temp"
-                                            d="M ${round2(lk.ax)} ${lk.ay} L ${round2(lk.cx)} ${lk.cy}"></path>`
-                                      : ''
-                              }</svg>${ls.map(
+                              )}${tempLine()}</svg>${ls.map(
                                   (l) => html`<div class="lm-gantt-link-arrow" style="left:${l.ax}%;top:${l.ay}px"></div>`
                               )}</div>`;
                       }}

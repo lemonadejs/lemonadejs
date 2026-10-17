@@ -10,13 +10,13 @@ import { store } from 'lemonadejs';
 import { render as t, verify } from 'lemonadejs/test';
 import Gantt, { type GanttTask } from '@lemonadejs/gantt';
 
-type Api = { getRange(): { start: string; end: string }; setRange(s: string, e: string): void };
+type Api = { getRange(): { start: string; end: string; daywidth: number }; setRange(s: string, e: string): void };
 
 let handle: ReturnType<typeof t> | null = null;
 afterEach(() => {
     handle?.unmount();
     handle = null;
-    document.querySelectorAll('table[data-test]').forEach((el) => el.remove());
+    document.querySelectorAll('[data-test]').forEach((el) => el.remove());
 });
 
 const tasks = (): GanttTask[] => [
@@ -84,7 +84,7 @@ describe('components/gantt — %-positioned, table-embeddable', () => {
 
     it('the range fits the data when start/end are omitted (±2 days)', () => {
         const api = open({ start: '', end: '' });
-        expect(api.getRange()).toEqual({ start: '2026-05-30', end: '2026-06-17' });
+        expect(api.getRange()).toEqual({ start: '2026-05-30', end: '2026-06-17', daywidth: 0 });
     });
 
     it('header renders month segments and day ticks; weekends marked', () => {
@@ -305,7 +305,7 @@ describe('components/gantt — %-positioned, table-embeddable', () => {
         // Design now June 1-10 (10 days of the fitted 19-day range)
         expect(styleOf(bars()[0])).toContain('width:5');
         data.value = [{ label: 'Solo', start: '2026-07-01', end: '2026-07-04' }];
-        expect(api.getRange()).toEqual({ start: '2026-06-29', end: '2026-07-06' });
+        expect(api.getRange()).toEqual({ start: '2026-06-29', end: '2026-07-06', daywidth: 0 });
         expect(bars()).toHaveLength(1);
     });
 
@@ -484,9 +484,9 @@ describe('components/gantt — %-positioned, table-embeddable', () => {
         const header = handle!.query('.lm-gantt-header')!;
         expect(header.getAttribute('tabindex')).toBe('0');
         header.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
-        expect(api.getRange()).toEqual({ start: '2026-06-02', end: '2026-06-21' });
+        expect(api.getRange()).toEqual({ start: '2026-06-02', end: '2026-06-21', daywidth: 0 });
         header.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', shiftKey: true, bubbles: true }));
-        expect(api.getRange()).toEqual({ start: '2026-05-26', end: '2026-06-14' });
+        expect(api.getRange()).toEqual({ start: '2026-05-26', end: '2026-06-14', daywidth: 0 });
     });
 
     it('TABLE MODE: lane bars are focusable and keyboard-movable too', () => {
@@ -541,5 +541,159 @@ describe('components/gantt — %-positioned, table-embeddable', () => {
         expect(data[0].start).toBe('2026-06-08');
         expect(data[0].end).toBe('2026-06-12');
         expect(changes).toEqual([[data[0], '2026-06-08', '2026-06-12']]);
+    });
+    // ---- the viewport: zoom, onrangechange, persistence, daywidth
+    const rect = (el: Element, r: Partial<DOMRect> = {}) => {
+        (el as HTMLElement).getBoundingClientRect = () =>
+            ({ left: 0, top: 0, width: 1000, height: 40, right: 1000, bottom: 40, x: 0, y: 0, toJSON: () => '', ...r }) as DOMRect;
+    };
+    const wheelAt = (el: Element, clientX: number, deltaY: number, shiftKey = true) =>
+        el.dispatchEvent(new WheelEvent('wheel', { deltaY, shiftKey, clientX, bubbles: true, cancelable: true }));
+
+    it('ZOOM: Shift + wheel over the header scales the window around the cursor', () => {
+        const api = open();
+        const header = handle!.query('.lm-gantt-header')!;
+        rect(header);
+        // 20 days over 1000px, cursor at 50%: June 11 stays under it
+        wheelAt(header, 500, -100); // zoom in: 20 → 16 days
+        expect(api.getRange()).toEqual({ start: '2026-06-03', end: '2026-06-18', daywidth: 0 });
+        wheelAt(header, 500, 100); // zoom out: 16 → 20 days
+        expect(api.getRange()).toEqual({ start: '2026-06-01', end: '2026-06-20', daywidth: 0 });
+    });
+
+    it('ZOOM: without Shift the wheel keeps scrolling the page; zoom=false disables it', () => {
+        const api = open({ zoom: false });
+        const header = handle!.query('.lm-gantt-header')!;
+        rect(header);
+        wheelAt(header, 500, -100);
+        expect(api.getRange().start).toBe('2026-06-01');
+        handle!.unmount();
+        handle = null;
+        const api2 = open();
+        const h2 = handle!.query('.lm-gantt-header')!;
+        rect(h2);
+        const e = new WheelEvent('wheel', { deltaY: -100, shiftKey: false, clientX: 500, bubbles: true, cancelable: true });
+        h2.dispatchEvent(e);
+        expect(e.defaultPrevented).toBe(false);
+        expect(api2.getRange().start).toBe('2026-06-01');
+    });
+
+    it('onrangechange reports keyboard pan and zoom; a header drag reports once, on release', () => {
+        const ranges: unknown[][] = [];
+        open({ onrangechange: (...a: unknown[]) => ranges.push(a) });
+        const header = handle!.query('.lm-gantt-header')!;
+        rect(header);
+        header.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+        expect(ranges).toEqual([['2026-06-02', '2026-06-21', 0]]);
+        wheelAt(header, 0, -100); // zoom in at the left edge: the start stays
+        expect(ranges[1]).toEqual(['2026-06-02', '2026-06-17', 0]);
+        // drag to pan: 16 days over 1000px; -100px moves the window +1.6 days
+        header.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, clientX: 500 }));
+        document.dispatchEvent(new MouseEvent('mousemove', { bubbles: true, clientX: 400 }));
+        expect(ranges).toHaveLength(2); // nothing mid-drag
+        document.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, clientX: 400 }));
+        expect(ranges[2]).toEqual(['2026-06-04', '2026-06-19', 0]);
+    });
+
+    it('a user-set viewport outlives data refreshes; a start/end prop change wins', () => {
+        const data = store<GanttTask[]>(tasks());
+        const start = store('2026-06-01');
+        const api = open({ data, start });
+        const header = handle!.query('.lm-gantt-header')!;
+        header.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', shiftKey: true, bubbles: true }));
+        expect(api.getRange().start).toBe('2026-06-08');
+        data.value[0].end = '2026-06-06';
+        data.touch(); // the host rebuilt its list
+        expect(api.getRange().start).toBe('2026-06-08'); // still where the user put it
+        start.value = '2026-05-20'; // the host speaks
+        expect(api.getRange().start).toBe('2026-05-20');
+    });
+
+    it('the host echoing the reported window back into start/end is not a change', () => {
+        const start = store('2026-06-01');
+        const end = store('2026-06-20');
+        const ranges: unknown[][] = [];
+        const api = open({ start, end, onrangechange: (...a: unknown[]) => ranges.push(a) });
+        const header = handle!.query('.lm-gantt-header')!;
+        header.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+        start.value = '2026-06-02';
+        end.value = '2026-06-21';
+        expect(api.getRange()).toEqual({ start: '2026-06-02', end: '2026-06-21', daywidth: 0 });
+        expect(ranges).toHaveLength(1);
+    });
+
+    it('daywidth: a fixed slot width sizes the header and rows in px; zoom steps the slot', () => {
+        const api = open({ daywidth: 20 });
+        const header = handle!.query('.lm-gantt-header') as HTMLElement;
+        expect(styleOf(header)).toContain('width:400px'); // 20 days × 20px
+        expect(styleOf(handle!.query('.lm-gantt-rows')!)).toContain('width:400px');
+        expect(handle!.query('.lm-gantt')!.getAttribute('data-daywidth')).toBe('true');
+        rect(header, { width: 400, right: 400 });
+        wheelAt(header, 0, -100); // zoom in: 20 → 25px per day; the window keeps its 400px → 16 days
+        expect(api.getRange()).toEqual({ start: '2026-06-01', end: '2026-06-16', daywidth: 25 });
+        expect(styleOf(handle!.query('.lm-gantt-header')!)).toContain('width:400px');
+    });
+
+    const projectTable = (id: string, rows: string[]) => {
+        const host = document.createElement('div');
+        host.setAttribute('data-test', '1');
+        const table = document.createElement('table');
+        table.id = id;
+        table.innerHTML = '<tbody>' + rows.map((r) => '<tr><td>' + r + '</td></tr>').join('') + '</tbody>';
+        host.appendChild(table);
+        document.body.appendChild(host);
+        return table;
+    };
+
+    it('TABLE MODE: dependency connectors and link handles live on the table too', () => {
+        const table = projectTable('gt3', ['A', 'B', 'C']);
+        const data: GanttTask[] = [
+            { id: 0, label: 'A', start: '2026-06-01', end: '2026-06-03' },
+            { id: 1, label: 'B', start: '2026-06-06', end: '2026-06-09', dependencies: [0] },
+            { id: 2, label: 'C', start: '2026-06-02', end: '2026-06-04', dependencies: [1] }, // a back-link
+        ];
+        const unlinks: unknown[][] = [];
+        open({ data, table: '#gt3', editable: true, onunlink: (...a: unknown[]) => unlinks.push(a) });
+        const host = table.parentElement!;
+        expect(host.style.position).toBe('relative'); // the overlay's positioning context
+        const lines = host.querySelector('.lm-gantt-table-links')!;
+        expect(lines.querySelectorAll('path.lm-gantt-link')).toHaveLength(2);
+        expect(lines.querySelectorAll('.lm-gantt-link-arrow')).toHaveLength(2);
+        expect(lines.querySelectorAll('path.lm-gantt-link-hit')).toHaveLength(2); // editable: removable
+        expect(table.querySelectorAll('td.lm-gantt-cell .lm-gantt-link-handle')).toHaveLength(3);
+        // remove B's dependency by keyboard on its hit line
+        const hit = lines.querySelector('path.lm-gantt-link-hit')!;
+        expect(hit.getAttribute('aria-label')).toBe('Remove the dependency from A to B');
+        hit.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+        expect(data[1].dependencies).toEqual([]);
+        expect(unlinks).toEqual([[data[0], data[1]]]);
+        expect(lines.querySelectorAll('path.lm-gantt-link')).toHaveLength(1);
+        handle!.unmount();
+        handle = null;
+        expect(host.querySelector('.lm-gantt-link-layer')).toBeNull(); // the overlay goes with the lanes
+    });
+
+    it('TABLE MODE: a lane reads its task from the bar at event time, so host row inserts keep edits on the right task', () => {
+        const table = projectTable('gt4', ['A', 'B']);
+        const data = store<GanttTask[]>([
+            { id: 'a', label: 'A', start: '2026-06-01', end: '2026-06-03' },
+            { id: 'b', label: 'B', start: '2026-06-06', end: '2026-06-09' },
+        ]);
+        const changes: unknown[][] = [];
+        open({ data, table: '#gt4', editable: true, onchange: (...a: unknown[]) => changes.push(a) });
+        // the host inserts a row on top and rebuilds its task list to match
+        const tr = document.createElement('tr');
+        tr.innerHTML = '<td>New</td>';
+        const tbody = table.querySelector('tbody')!;
+        tbody.insertBefore(tr, tbody.firstElementChild);
+        data.value = [{ id: 'n', label: 'New', start: '2026-06-10', end: '2026-06-12' }, ...data.value];
+        const lanes = table.querySelectorAll('td.lm-gantt-cell');
+        expect(lanes).toHaveLength(3);
+        // the lane created for the old first row (A) now sits in row 2: its bar says so
+        const bar = lanes[1].querySelector('.lm-gantt-bar') as HTMLElement;
+        expect(bar.dataset.index).toBe('1');
+        bar.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', ctrlKey: true, bubbles: true }));
+        expect(changes[0][0]).toBe(data.value[1]); // A moved, not New
+        expect(data.value[1].start).toBe('2026-06-02');
     });
 });

@@ -1,7 +1,10 @@
 /* <Gantt /> — default styling, lm-gantt-* convention.
    Everything horizontal is %-positioned: instances sharing a range
    align across any containers (the table-row embedding story). */
-.lm-gantt {
+/* The tokens live on the root AND on every table lane: in table mode the
+   lanes sit in the host's rows, outside the component's element */
+.lm-gantt,
+.lm-gantt-lane {
     /* Typography + framing follow the chart's Highcharts standards:
        Helvetica Neue stack on a 1rem base, em-scaled labels (0.8em axis,
        0.7em bold data labels), #333/#666 text, #e6e6e6 rules. Colours
@@ -410,15 +413,45 @@
     user-select: none;
 }
 
+/* daywidth mode: the header and rows carry their own px width (days ×
+   slot); the chart scrolls inside its box instead of fitting it */
+.lm-gantt[data-daywidth='true'] {
+    overflow-x: auto;
+}
+
 /* ---- table mode: the injected lane cell */
 .lm-gantt-cell {
     padding: 0 !important;
 }
 
+/* the row decides the lane height (a grid row is ~24px); the floor keeps
+   a bar grabbable in a table without row heights */
 .lm-gantt-lane {
     position: relative;
     height: 100%;
-    min-height: 32px;
+    min-height: 20px;
     width: 100%;
     overflow: hidden;
+}
+
+/* table mode connectors: two layers over the table, clipped to the lane
+   column. The lines go UNDER the bars (bars are z-index 1): elbow
+   segments never paint across a bar face, while the arrowheads — placed
+   just outside the target bar — stay visible. The link preview drawn
+   while dragging a handle goes above the bars. */
+.lm-gantt-table-links {
+    inset: auto;
+    overflow: hidden;
+    z-index: 0;
+}
+
+.lm-gantt-table-temp {
+    inset: auto;
+    overflow: hidden;
+    z-index: 2;
+}
+
+.lm-gantt-table-links > .lm-gantt-links,
+.lm-gantt-table-temp > .lm-gantt-links {
+    height: 100%;
 }
