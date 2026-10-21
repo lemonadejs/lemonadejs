@@ -2,7 +2,7 @@
 
 /* The v5 jdialog box: a compact 280px centered card (Modal provides the
    backdrop, centering and elevation) */
-.lm-dialog .lm-modal-root .lm-modal {
+.lm-dialog .lm-modal {
     width: 280px;
     min-width: initial;
     min-height: initial;
@@ -10,7 +10,7 @@
     border-radius: 10px;
 }
 
-.lm-dialog .lm-modal-root .lm-modal-content {
+.lm-dialog .lm-modal-content {
     padding: 0;
 }
 

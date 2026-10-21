@@ -1,20 +1,21 @@
 /* <Modal /> — default styling, lm-modal-* convention.
  *
- * COEXISTENCE with lemonade v5 on the same page (jspreadsheet's embedded
- * v5 widgets, a v5 stylesheet linked by the host): every rule is scoped
- * under .lm-modal-root — v6 markup always wraps the panel in the root, v5
- * never does, so v6 styles cannot clobber a v5 modal (unscoped .lm-modal
- * rules once pulled jss's context menu into the layout flow). The scope is
- * a real class, not :where(): v5 ships an unscoped `.lm-modal { position:
- * fixed; min-width: 200px; min-height: 200px; ... }` (0-1-0) and, at equal
- * weight, whichever stylesheet loads last would win — a dropdown panel
- * became a fixed, viewport-sized box when the v5 css came after this one.
- * At 0-2-0 the panel rules beat v5 regardless of load order. Components
- * that compose the Modal override it at 0-3-0 (`.lm-dropdown
- * .lm-modal-root .lm-modal`), above both this file and any v5 twin of
- * their own selector (`.lm-dropdown .lm-modal`). The one v5 selector still
- * heavier than the panel rules (`.lm-modal > div:last-child`, 0-2-1) is
- * beaten by the dedicated content reset below. */
+ * COEXISTENCE: rules are guarded with :where(.lm-modal-root) — v6 markup
+ * always wraps the panel in the root, v5 (and jspreadsheet's embedded v5
+ * widgets) never does, so v6 styles can no longer clobber a v5 modal on
+ * the same page (unscoped .lm-modal rules pulled jss's context menu into
+ * the layout flow). :where() adds ZERO specificity, so consumer overrides
+ * (.lm-contextmenu .lm-modal, .lm-dropdown .lm-modal-content, ...) keep
+ * their existing cascade weight. Against v5 leakage on SHARED class names
+ * (.lm-modal-title header-bar styles, .lm-modal min-height/transition)
+ * the panel/title rules reset those properties explicitly and win by
+ * load order (v6 css links come after the jspreadsheet/jsuites css); the
+ * one v5 selector that outguns that (`.lm-modal > div:last-child`) is
+ * beaten by a dedicated higher-specificity content reset below, and v5's
+ * own unscoped `.lm-modal { position: fixed; min-height: 200px; transition }`
+ * (which ties at 0-1-0 and wins whenever the v5 css loads AFTER this file:
+ * a dropdown panel became a fixed, viewport-sized box) by the panel defense
+ * rule below, pinned at 0-2-0 for those three properties only. */
 .lm-modal-root {
     position: fixed;
     inset: 0;
@@ -56,7 +57,7 @@
 /* radius=false: square panel (anchored panels — a dropdown under a
    4px-radius input reads wrong with 8px corners). The second selector
    outweighs the position variants above; minimized chips keep theirs. */
-.lm-modal-root .lm-modal[data-radius='false'],
+:where(.lm-modal-root) .lm-modal[data-radius='false'],
 .lm-modal-root[data-position] > .lm-modal[data-radius='false']:not(.lm-modal-minimized) {
     border-radius: 0;
 }
@@ -69,7 +70,7 @@
     display: block;
 }
 
-.lm-modal-root .lm-modal-backdrop {
+:where(.lm-modal-root) .lm-modal-backdrop {
     position: absolute;
     inset: 0;
     width: auto;
@@ -79,7 +80,7 @@
     animation: lm-modal-backdrop-in 0.2s ease;
 }
 
-.lm-modal-root .lm-modal {
+:where(.lm-modal-root) .lm-modal {
     /* Elevation lives in a custom prop so the focus/dark variants swap the
        VALUE and every rule that must repaint the shadow reads one source */
     --lm-modal-shadow: 0 8px 24px rgba(0, 0, 0, 0.11);
@@ -126,13 +127,13 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .lm-modal-root .lm-modal,
-    .lm-modal-root .lm-modal-backdrop {
+    :where(.lm-modal-root) .lm-modal,
+    :where(.lm-modal-root) .lm-modal-backdrop {
         animation: none;
     }
 }
 
-.lm-modal-root .lm-modal-header {
+:where(.lm-modal-root) .lm-modal-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -144,7 +145,7 @@
 
 /* explicit width/padding/border resets: v5's .lm-modal-title styles the
    whole HEADER BAR (full width, bottom border) on this same class name */
-.lm-modal-root .lm-modal-title {
+:where(.lm-modal-root) .lm-modal-title {
     display: inline-flex;
     align-items: center;
     gap: 8px;
@@ -158,13 +159,13 @@
 }
 
 /* optional leading icon (`icon` prop — material icon name) */
-.lm-modal-root .lm-modal-icon {
+:where(.lm-modal-root) .lm-modal-icon {
     font-size: 20px;
     line-height: 1;
     color: var(--lm-icon-color, #5f6368);
 }
 
-.lm-modal-root .lm-modal-controls {
+:where(.lm-modal-root) .lm-modal-controls {
     display: flex;
     align-items: center;
     gap: 4px;
@@ -175,8 +176,8 @@
 
 /* classed selectors, not `button` — a host page's element resets must not
    find our controls through a bare tag, and vice versa */
-.lm-modal-root .lm-modal-close,
-.lm-modal-root .lm-modal-minimize {
+:where(.lm-modal-root) .lm-modal-close,
+:where(.lm-modal-root) .lm-modal-minimize {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -194,15 +195,15 @@
 }
 
 /* the chip background is the HOVER highlight only — not a rest state */
-.lm-modal-root .lm-modal-close:hover,
-.lm-modal-root .lm-modal-minimize:hover {
+:where(.lm-modal-root) .lm-modal-close:hover,
+:where(.lm-modal-root) .lm-modal-minimize:hover {
     background: var(--lm-background-color-highlight, #f4f4f5);
     color: var(--lm-font-color, #18181b);
 }
 
 /* inline SVG icons (no icon-font dependency): crisp 2px strokes */
-.lm-modal-root .lm-modal-close svg,
-.lm-modal-root .lm-modal-minimize svg {
+:where(.lm-modal-root) .lm-modal-close svg,
+:where(.lm-modal-root) .lm-modal-minimize svg {
     width: 20px;
     height: 20px;
     display: block;
@@ -213,12 +214,29 @@
     stroke-linejoin: round;
 }
 
-.lm-modal-root .lm-modal-content {
+:where(.lm-modal-root) .lm-modal-content {
     padding: 16px;
     flex: 1;
 }
 
-/* v5 defense: v5's `.lm-modal > div:last-child` (0-2-1) forces width/height
+/* v5 defense, deliberately ABOVE consumer weight for these props only:
+   v5's unscoped `.lm-modal` (0-1-0) sets position: fixed, min-height: 200px
+   and a top/left/width/height transition on the panel, and at the panel
+   rule's own weight it wins whenever the v5 css loads after this file.
+   Everything else v5 sets on the panel is cosmetic and stays at :where()
+   weight, so consumer overrides keep their cascade weight. The inline
+   style of the 'fixed' position mode still wins over this rule. */
+.lm-modal-root > .lm-modal {
+    position: relative;
+    min-height: 0;
+}
+
+.lm-modal-root > .lm-modal:not(.lm-modal-minimized) {
+    transition: none;
+}
+
+/* v5 defense, deliberately ABOVE consumer weight for these three props
+   only: v5's `.lm-modal > div:last-child` (0-2-1) forces width/height
    100% onto the content box and nothing lighter can undo it */
 .lm-modal-root .lm-modal > .lm-modal-content {
     width: auto;
@@ -226,12 +244,12 @@
     box-sizing: border-box;
 }
 
-.lm-modal-root .lm-modal-overflow > .lm-modal-content {
+:where(.lm-modal-root) .lm-modal-overflow > .lm-modal-content {
     overflow: auto;
 }
 
 /* Minimized: docked to the bottom taskbar row (positions set by the dock) */
-.lm-modal-root .lm-modal-minimized {
+:where(.lm-modal-root) .lm-modal-minimized {
     width: 195px !important;
     height: 40px !important;
     min-width: 0;
@@ -239,11 +257,11 @@
     overflow: hidden;
 }
 
-.lm-modal-root .lm-modal-minimized .lm-modal-content {
+:where(.lm-modal-root) .lm-modal-minimized .lm-modal-content {
     display: none;
 }
 
-.lm-modal-root .lm-modal-minimized .lm-modal-header {
+:where(.lm-modal-root) .lm-modal-minimized .lm-modal-header {
     border-bottom: 0;
     cursor: pointer;
     box-sizing: border-box;
@@ -251,22 +269,22 @@
     padding: 0 6px 0 14px;
 }
 
-.lm-modal-root .lm-modal-minimized .lm-modal-title {
+:where(.lm-modal-root) .lm-modal-minimized .lm-modal-title {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
-.lm-modal-root .lm-modal-minimized:hover {
+:where(.lm-modal-root) .lm-modal-minimized:hover {
     box-shadow: 0 6px 24px rgba(0, 0, 0, 0.35);
 }
 
-.lm-modal-root .lm-modal-minimized:hover .lm-modal-header {
+:where(.lm-modal-root) .lm-modal-minimized:hover .lm-modal-header {
     background: var(--lm-background-color-highlight, #f4f4f5);
 }
 
 /* During drag/resize: no transitions, no accidental selection */
-.lm-modal-root .lm-modal-action {
+:where(.lm-modal-root) .lm-modal-action {
     transition: none !important;
     user-select: none;
 }
@@ -278,12 +296,12 @@
 /* Dark mode: a black shadow barely reads on a dark page, so deepen the
    alpha AND add a hairline for separation. Forced-class and OS-driven
    paths share the values (CSS can't share the block). */
-.lm-dark-mode .lm-modal-root .lm-modal {
+.lm-dark-mode :where(.lm-modal-root) .lm-modal {
     --lm-modal-shadow: 0 6px 18px rgba(0, 0, 0, 0.55);
 }
 
 @media (prefers-color-scheme: dark) {
-    :root:not(.lm-light-mode) .lm-modal-root .lm-modal {
+    :root:not(.lm-light-mode) :where(.lm-modal-root) .lm-modal {
         --lm-modal-shadow: 0 6px 18px rgba(0, 0, 0, 0.55);
     }
 }
@@ -292,7 +310,7 @@
    only silences pointer/programmatic focus — :focus-visible paints a ring
    whenever the panel is reached through the keyboard. The `outline` prop
    keeps its stronger always-on catalog ring below. */
-.lm-modal-root .lm-modal:focus-visible {
+:where(.lm-modal-root) .lm-modal:focus-visible {
     outline: 2px solid var(--lm-border-outline, #000);
     outline-offset: -1px;
 }
@@ -302,7 +320,7 @@
     outline-offset: -1px;
 }
 
-.lm-modal-root .lm-modal-fullscreen {
+:where(.lm-modal-root) .lm-modal-fullscreen {
     position: fixed !important;
     inset: 0;
     width: 100% !important;

@@ -1232,7 +1232,7 @@
         "name": "gantt",
         "path": "components/gantt",
         "verified": true,
-        "checks": 30,
+        "checks": 35,
         "contract": {
             "name": "gantt",
             "props": {
@@ -1279,6 +1279,14 @@
                     "type": "number",
                     "default": 1
                 },
+                "zoom": {
+                    "type": "boolean",
+                    "default": true
+                },
+                "daywidth": {
+                    "type": "number",
+                    "default": 0
+                },
                 "table": {
                     "type": "string",
                     "default": ""
@@ -1289,7 +1297,8 @@
                 "onchange",
                 "onclick",
                 "onlink",
-                "onunlink"
+                "onunlink",
+                "onrangechange"
             ],
             "api": [
                 "getRange",

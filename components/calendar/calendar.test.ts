@@ -333,6 +333,26 @@ describe('components/calendar — the date picker on the Modal primitive', () =>
         expect(cell('1').getAttribute('data-selected')).toBe('true');
     });
 
+    it('input mode: committing from a focused panel closes and STAYS closed', async () => {
+        // The Modal hands focus back to the input on close; that focusin
+        // must not reopen the panel (click/Enter on a day used to reopen it)
+        const opens: number[] = [];
+        const api = make({ bind: '2026-06-15', onopen: () => opens.push(1) });
+        input().focus();
+        api.open();
+        await flush();
+        grid().focus(); // keyboard users land here (ArrowDown from the input)
+        expect(document.activeElement).toBe(grid());
+        key(grid(), 'ArrowRight');
+        key(grid(), 'Enter');
+        expect(api.getValue()).toBe('2026-06-16');
+        expect(api.isClosed()).toBe(true);
+        expect(document.activeElement).toBe(input()); // focus returned to the input...
+        await flush();
+        expect(api.isClosed()).toBe(true); // ...without reopening
+        expect(opens).toEqual([1]);
+    });
+
     it('keyboard: Enter on the grid selects the cursor day', () => {
         const changes: unknown[] = [];
         const api = make({ type: 'inline', bind: '2026-06-15', onchange: (v: unknown) => changes.push(v) });

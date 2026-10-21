@@ -847,8 +847,13 @@ export const Calendar = component('calendar', {
     };
 
     // ---- open / close (v5 modal + onopen/onclose semantics)
+    // The Modal hands focus back to the input when it closes (2.4.3). That
+    // focusin is the close itself, not a request to reopen: without the
+    // guard a click/Enter on a day closed the panel and reopened it at once.
+    let restoringFocus = false;
+
     const open = () => {
-        if (inline() || opened.peek()) {
+        if (inline() || opened.peek() || restoringFocus) {
             return;
         }
         if ((props.type.peek() as string) === 'auto') {
@@ -880,7 +885,9 @@ export const Calendar = component('calendar', {
             return;
         }
         opened.value = false;
+        restoringFocus = true;
         modalApi?.close();
+        restoringFocus = false;
         // Anything uncommitted reverts: cursor, range preview, typed text
         syncFromValue(picked.peek());
         props.onclose?.(origin);

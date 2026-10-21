@@ -25,7 +25,7 @@ three deployment forms (by value, by name, custom element).
 | [Dropdown](./dropdown/README.md) | `@lemonadejs/dropdown` | 41 | LemonadeJS dropdown block — select, autocomplete and picker on the Modal primitive; contract-verified, framework-agnostic. |
 | [Editor](./editor/README.md) | `@lemonadejs/editor` | 19 | LemonadeJS editor block — rich text on the Toolbar block, CKEditor-style tables with resize handles, local print/PDF and Word export; contract-verified, framework-agnostic. |
 | [Formify](./formify/README.md) | `@lemonadejs/formify` | 8 | LemonadeJS formify block — smart HTML forms: your markup in, one data object out (get/set/load/save, two-way bind). Contract-verified, framework-agnostic. |
-| [Gantt](./gantt/README.md) | `@lemonadejs/gantt` | 30 | LemonadeJS gantt block — %-positioned bars that align across embedded instances; contract-verified, framework-agnostic. |
+| [Gantt](./gantt/README.md) | `@lemonadejs/gantt` | 35 | LemonadeJS gantt block — %-positioned bars that align across embedded instances; contract-verified, framework-agnostic. |
 | [Imagelist](./imagelist/README.md) | `@lemonadejs/imagelist` | 14 | LemonadeJS imagelist block — contract-verified, framework-agnostic. |
 | [Kanban](./kanban/README.md) | `@lemonadejs/kanban` | 9 | LemonadeJS kanban block — drag-and-drop board whose card DOM identity survives cross-column moves (one flat keyed list, CSS grid placement); contract-verified, framework-agnostic. |
 | [List](./list/README.md) | `@lemonadejs/list` | 26 | LemonadeJS list block — search, pagination, remote mode and MUI-style items, contract-verified, framework-agnostic. |

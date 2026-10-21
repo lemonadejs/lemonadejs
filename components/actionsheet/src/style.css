@@ -3,11 +3,11 @@
    Modal primitive (headerless, position bottom, backdrop). */
 
 /* The Modal shell becomes the full-width transparent bottom sheet */
-.lm-actionsheet .lm-modal-root .lm-modal-backdrop {
+.lm-actionsheet .lm-modal-backdrop {
     background: rgba(0, 0, 0, 0.5); /* v5 overlay */
 }
 
-.lm-actionsheet .lm-modal-root .lm-modal {
+.lm-actionsheet .lm-modal {
     width: 100%;
     max-width: 100%;
     min-width: 0;
@@ -17,7 +17,7 @@
     animation: lm-actionsheet-slide 0.2s ease; /* v5 slide-bottom-in */
 }
 
-.lm-actionsheet .lm-modal-root .lm-modal-content {
+.lm-actionsheet .lm-modal-content {
     padding: 0;
 }
 

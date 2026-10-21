@@ -32,6 +32,6 @@
         "lemonadejs": "^6.0.0-beta.0"
     },
     "dependencies": {
-        "@lemonadejs/modal": "^6.0.0-beta.1"
+        "@lemonadejs/modal": "^6.0.0-beta.2"
     }
 }
