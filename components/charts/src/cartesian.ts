@@ -106,6 +106,9 @@ export const bars = (mFull: Model, ctx: RenderCtx): View => {
     const crosshair = lineSeries.length > 0 && barSeries.length === 0;
     // horizontal bars: only for pure bar/stacked (categories move to the y-axis)
     const horizontal = m.horizontal && lineSeries.length === 0;
+    // yreverse flips the value axis — unless horizontal, where the y axis
+    // holds the categories (their order flips in CSS instead)
+    const valueReverse = m.yreverse && !horizontal;
 
     // continuous x (datetime/linear): line/area points sit at their x VALUE,
     // not evenly by index; ticks are smart date/number boundaries
@@ -210,8 +213,8 @@ export const bars = (mFull: Model, ctx: RenderCtx): View => {
             ? (v: number): number => (Math.log10(Math.max(lo, Math.min(hi, v))) - logLo) / logSpan
             : (v: number): number => (v - lo) / range;
         // a reversed axis grows downwards: the fraction flips, the ticks too
-        const frac = m.yreverse ? (v: number): number => 1 - up(v) : up;
-        if (m.yreverse) ticks = [...ticks].reverse();
+        const frac = valueReverse ? (v: number): number => 1 - up(v) : up;
+        if (valueReverse) ticks = [...ticks].reverse();
         return { lo, hi, range, baseV, basePct: frac(baseV) * 100, ticks, frac };
     };
 
@@ -239,16 +242,20 @@ export const bars = (mFull: Model, ctx: RenderCtx): View => {
                 bottom = accPos;
                 accPos += len;
             } else if (stacked) {
+                // built upwards from the unreversed baseline, flipped below
+                const base = valueReverse ? 100 - sc.basePct : sc.basePct;
                 len = (Math.abs(v) / sc.range) * 100;
-                if (v >= 0) { bottom = sc.basePct + accPos; accPos += len; }
-                else { bottom = sc.basePct - accNeg - len; accNeg += len; }
+                if (v >= 0) { bottom = base + accPos; accPos += len; }
+                else { bottom = base - accNeg - len; accNeg += len; }
             } else {
+                // frac already carries the reversal: order the two ends
                 const cv = Math.max(sc.lo, Math.min(sc.hi, v));
                 const a = sc.frac(Math.min(cv, sc.baseV)) * 100;
                 const b = sc.frac(Math.max(cv, sc.baseV)) * 100;
-                bottom = a;
-                len = b - a;
+                bottom = Math.min(a, b);
+                len = Math.abs(b - a);
             }
+            if (valueReverse && (percent || stacked)) bottom = 100 - bottom - len;
 
             const share = percent ? Math.round(len) : null;
             const tipName = cat ? cat + ' · ' + s.name : s.name;
@@ -261,7 +268,7 @@ export const bars = (mFull: Model, ctx: RenderCtx): View => {
                 : css({ bottom: bottom + '%', height: len + '%', background: s.color, boxShadow: outline(s.bordercolor, s.borderwidth) });
             return html`<div class="lm-chart-bar" data-orient="${horizontal ? 'h' : false}"
                 style="${barStyle}"
-                data-neg="${v < sc.baseV ? 'true' : false}"
+                data-neg="${(v < sc.baseV) !== valueReverse ? 'true' : false}"
                 data-dim="${ctx.hover.value && ctx.hover.value !== s.name ? 'true' : false}"
                 onmousemove="${(e: MouseEvent) => {
                     if (!shared) ctx.showTip(e, tipName, [{ name: s.name, value: tipValue, color: s.color, border: s.bordercolor }]);
@@ -675,14 +682,14 @@ export const bars = (mFull: Model, ctx: RenderCtx): View => {
             style="${css({ '--lm-ycats-w': (m.ylabels ? ycatsW : 0) + 'px' })}">
             <div class="lm-chart-harea">
                 ${m.ytitle ? html`<div class="lm-chart-ytitle"><span>${m.ytitle}</span></div>` : false}
-                ${m.ylabels ? html`<div class="lm-chart-ycats">${Array.from({ length: n }, (_, i) =>
+                ${m.ylabels ? html`<div class="lm-chart-ycats" data-reverse="${m.yreverse ? 'true' : false}">${Array.from({ length: n }, (_, i) =>
                     html`<div class="lm-chart-ycat">${m.categories[i] != null ? m.categories[i] : ''}</div>`)}</div>` : false}
                 <div class="lm-chart-plot" data-orient="h">
                     <div class="lm-chart-grid" data-orient="h" data-off="${m.gridlines ? false : 'true'}">${vticks.map(
                         (t) => html`<div class="lm-chart-gridline" data-zero="${Math.abs(t - baseV) < 1e-9 ? 'true' : false}"></div>`,
                     )}</div>
                     ${refBands}
-                    <div class="lm-chart-cols" data-orient="h">${Array.from({ length: n }, (_, i) => column(i))}</div>
+                    <div class="lm-chart-cols" data-orient="h" data-reverse="${m.yreverse ? 'true' : false}">${Array.from({ length: n }, (_, i) => column(i))}</div>
                     ${refLines}
                 </div>
             </div>

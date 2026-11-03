@@ -109,6 +109,10 @@ overrides `gridlines: false`. A category axis has no lines by default; a
 categories are on `yaxis`. The fields are the CSS variables
 `--lm-chart-xgrid-color`, `-width` and `-style` (and `ygrid`).
 
+`yaxis: { reverse: true }` (or `yreverse`) reverses the left axis: the
+values grow downwards, or with `horizontal` the categories run bottom to
+top (the Excel default). Click and tooltip indices keep the data order.
+
 The plain forms still work: `title: 'Sales'`, `legend: false`, and the
 flat `legendposition`, `legendtitle`, `xtitle`, `ytitle` and `y2title`.
 When both are given, the object wins.
@@ -175,7 +179,7 @@ state for a two-way live wire. Attribute strings are coerced to the declared typ
 | `ytitle` | string | `''` | y-axis (left) title (or yaxis.title) |
 | `y2title` | string | `''` | secondary y-axis (right) title (or y2axis.title) |
 | `xaxis` | object | — | bottom axis { title?, titlefont?, font?, labels?, grid? } — font = its tick labels; labels: false hides them; grid = its vertical lines |
-| `yaxis` | object | — | left axis { title?, titlefont?, font?, labels?, grid? } — grid = the horizontal lines |
+| `yaxis` | object | — | left axis { title?, titlefont?, font?, labels?, grid?, reverse? } — grid = the horizontal lines |
 | `y2axis` | object | — | right axis { title?, titlefont?, font?, labels? } (falls back to yaxis fonts) |
 | `markers` | boolean | `true` | line/area: show point markers |
 | `smooth` | boolean | `false` | line/area: smooth (spline) curves |
@@ -204,7 +208,7 @@ state for a two-way live wire. Attribute strings are coerced to the declared typ
 | `ymax` | number | — | bar/stacked: force the y-axis upper bound (auto if unset) |
 | `ylog` | boolean | `false` | logarithmic y-axis (positive values only) |
 | `ystep` | number | — | distance between the y ticks (auto if unset) |
-| `yreverse` | boolean | `false` | the y-axis grows downwards |
+| `yreverse` | boolean | `false` | reverse the y (left) axis: values grow downwards; horizontal bars: first category at the bottom (or yaxis.reverse) |
 | `xmin` | number | — | scatter/bubble: force the x-axis lower bound (auto if unset) |
 | `xmax` | number | — | scatter/bubble: force the x-axis upper bound (auto if unset) |
 | `bins` | number | — | histogram only: bin count (unset = Sturges' rule) |

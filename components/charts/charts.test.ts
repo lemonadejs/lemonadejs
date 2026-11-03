@@ -142,6 +142,34 @@ describe('components/charts', () => {
         expect(handle.query('.lm-chart-tick')).not.toBeNull(); // ticks stay
     });
 
+    it('yaxis.reverse: vertical values grow downwards; horizontal bars put the first category at the bottom', () => {
+        handle = t(Chart, { type: 'bar', categories: ['A'], series: [{ data: [100] }], ymin: 0, ymax: 100, ystep: 50, yaxis: { reverse: true } });
+        expect(handle.queryAll('.lm-chart-tick').map((e) => e.textContent)).toEqual(['0', '50', '100']);
+        handle.unmount();
+        for (const opt of [{ yaxis: { reverse: true } }, { yreverse: true }]) {
+            handle = t(Chart, { type: 'bar', horizontal: true, categories: ['A', 'B'], series: [{ name: 's', data: [1, 2] }], ...opt });
+            expect(handle.query('.lm-chart-ycats')!.getAttribute('data-reverse')).toBe('true');
+            expect(handle.query('.lm-chart-cols')!.getAttribute('data-reverse')).toBe('true');
+            // the DOM keeps the data order (events, a11y)
+            expect(handle.queryAll('.lm-chart-ycat').map((e) => e.textContent)).toEqual(['A', 'B']);
+            // the value axis (x) is not flipped
+            const vals = handle.queryAll('.lm-chart-xval').map((e) => Number(e.textContent));
+            expect(vals[0]).toBeLessThan(vals[vals.length - 1]);
+            handle.unmount();
+        }
+        // vertical: the bars hang from the top (positive height, not collapsed)
+        handle = t(Chart, { type: 'bar', categories: ['A'], series: [{ name: 's', data: [50] }], ymin: 0, ymax: 100, yreverse: true });
+        expect(styleN(handle.query('.lm-chart-bar')!)).toMatch(/bottom:50%;height:50%/);
+        handle.unmount();
+        handle = t(Chart, { type: 'stackedbar', categories: ['A'], series: [{ name: 's', data: [25] }, { name: 'r', data: [25] }], ymin: 0, ymax: 100, yreverse: true });
+        expect(handle.queryAll('.lm-chart-bar').map((e) => styleN(e).match(/bottom:[\d.]+%;height:[\d.]+%/)![0]))
+            .toEqual(['bottom:75%;height:25%', 'bottom:50%;height:25%']);
+        handle.unmount();
+        // yaxis.reverse: false wins over yreverse
+        handle = t(Chart, { type: 'bar', horizontal: true, yreverse: true, yaxis: { reverse: false }, categories: ['A'], series: [{ name: 's', data: [1] }] });
+        expect(handle.query('.lm-chart-ycats')!.getAttribute('data-reverse')).toBeNull();
+    });
+
     it('legend: false, { show: false } and the "false" attribute all hide it', () => {
         for (const legend of [false, { show: false }, 'false']) {
             handle = t(Chart, { type: 'bar', legend, categories: ['A'], series: [{ name: 's', data: [1] }, { name: 'r', data: [2] }] });

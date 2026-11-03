@@ -676,6 +676,14 @@
     flex-direction: column;
 }
 
+/* yaxis.reverse on horizontal bars: the first category at the bottom.
+   Only the visual order flips; the DOM (and every event index) keeps the
+   data order. */
+.lm-chart-ycats[data-reverse='true'],
+.lm-chart-cols[data-orient='h'][data-reverse='true'] {
+    flex-direction: column-reverse;
+}
+
 .lm-chart-ycat {
     flex: 1 1 0;
     min-height: 0;

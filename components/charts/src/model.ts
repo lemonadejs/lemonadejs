@@ -188,6 +188,9 @@ export interface ChartAxis {
     font?: ChartFont;
     /** `false` hides the tick labels (and frees their gutter) */
     labels?: boolean;
+    /** yaxis only: reverse the axis — values grow downwards, or with
+     *  `horizontal` the first category sits at the bottom (`yreverse`) */
+    reverse?: boolean;
     /** the gridlines this axis draws (x = vertical lines, y = horizontal) */
     grid?: ChartGrid;
 }
@@ -645,7 +648,8 @@ export const normalize = (def: ChartOptions): Model => {
         ymax: def.ymax != null && Number.isFinite(Number(def.ymax)) ? Number(def.ymax) : null,
         ylog: def.ylog === true,
         ystep: Number(def.ystep) > 0 ? Number(def.ystep) : null,
-        yreverse: def.yreverse === true,
+        // physical (the left axis): yaxis.reverse wins over the flat yreverse
+        yreverse: isObj(def.yaxis) && def.yaxis.reverse != null ? def.yaxis.reverse === true : def.yreverse === true,
         xmin: def.xmin != null && Number.isFinite(Number(def.xmin)) ? Number(def.xmin) : null,
         xmax: def.xmax != null && Number.isFinite(Number(def.xmax)) ? Number(def.xmax) : null,
         plotlines: Array.isArray(def.plotlines) ? def.plotlines : [],

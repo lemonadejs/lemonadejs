@@ -102,6 +102,10 @@
  * categories are on `yaxis`. The fields are the CSS variables
  * `--lm-chart-xgrid-color`, `-width` and `-style` (and `ygrid`).
  *
+ * `yaxis: { reverse: true }` (or `yreverse`) reverses the left axis: the
+ * values grow downwards, or with `horizontal` the categories run bottom to
+ * top (the Excel default). Click and tooltip indices keep the data order.
+ *
  * The plain forms still work: `title: 'Sales'`, `legend: false`, and the
  * flat `legendposition`, `legendtitle`, `xtitle`, `ytitle` and `y2title`.
  * When both are given, the object wins.
@@ -169,7 +173,7 @@ export const Charts = component('charts', {
     ytitle: '',              // y-axis (left) title (or yaxis.title)
     y2title: '',             // secondary y-axis (right) title (or y2axis.title)
     xaxis: Object,           // bottom axis { title?, titlefont?, font?, labels?, grid? } — font = its tick labels; labels: false hides them; grid = its vertical lines
-    yaxis: Object,           // left axis { title?, titlefont?, font?, labels?, grid? } — grid = the horizontal lines
+    yaxis: Object,           // left axis { title?, titlefont?, font?, labels?, grid?, reverse? } — grid = the horizontal lines
     y2axis: Object,          // right axis { title?, titlefont?, font?, labels? } (falls back to yaxis fonts)
     markers: true,           // line/area: show point markers
     smooth: false,           // line/area: smooth (spline) curves
@@ -198,7 +202,7 @@ export const Charts = component('charts', {
     ymax: Number,            // bar/stacked: force the y-axis upper bound (auto if unset)
     ylog: false,             // logarithmic y-axis (positive values only)
     ystep: Number,           // distance between the y ticks (auto if unset)
-    yreverse: false,         // the y-axis grows downwards
+    yreverse: false,         // reverse the y (left) axis: values grow downwards; horizontal bars: first category at the bottom (or yaxis.reverse)
     xmin: Number,            // scatter/bubble: force the x-axis lower bound (auto if unset)
     xmax: Number,            // scatter/bubble: force the x-axis upper bound (auto if unset)
     bins: Number,            // histogram only: bin count (unset = Sturges' rule)
