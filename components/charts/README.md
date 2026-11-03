@@ -100,6 +100,15 @@ the values on `xaxis`. `legend: { show: false }` hides the legend, and
 `labels: false` on an axis hides its tick labels and frees their space
 (the gridlines, the title and the scale stay).
 
+`grid` on `xaxis` styles the vertical lines and on `yaxis` the
+horizontal ones: `{ show, color, width, dash }`, with `dash` `'dashed'`,
+`'dotted'` or `'dashdot'` (drawn dashed). On a value axis `show: false`
+hides the lines and keeps the zero line and the ticks, and `show: true`
+overrides `gridlines: false`. A category axis has no lines by default; a
+`grid` on it draws one at each category boundary. With `horizontal` the
+categories are on `yaxis`. The fields are the CSS variables
+`--lm-chart-xgrid-color`, `-width` and `-style` (and `ygrid`).
+
 The plain forms still work: `title: 'Sales'`, `legend: false`, and the
 flat `legendposition`, `legendtitle`, `xtitle`, `ytitle` and `y2title`.
 When both are given, the object wins.
@@ -165,8 +174,8 @@ state for a two-way live wire. Attribute strings are coerced to the declared typ
 | `xtitle` | string | `''` | x-axis title (or xaxis.title) |
 | `ytitle` | string | `''` | y-axis (left) title (or yaxis.title) |
 | `y2title` | string | `''` | secondary y-axis (right) title (or y2axis.title) |
-| `xaxis` | object | — | bottom axis { title?, titlefont?, font?, labels? } — font = its tick labels; labels: false hides them |
-| `yaxis` | object | — | left axis { title?, titlefont?, font?, labels? } |
+| `xaxis` | object | — | bottom axis { title?, titlefont?, font?, labels?, grid? } — font = its tick labels; labels: false hides them; grid = its vertical lines |
+| `yaxis` | object | — | left axis { title?, titlefont?, font?, labels?, grid? } — grid = the horizontal lines |
 | `y2axis` | object | — | right axis { title?, titlefont?, font?, labels? } (falls back to yaxis fonts) |
 | `markers` | boolean | `true` | line/area: show point markers |
 | `smooth` | boolean | `false` | line/area: smooth (spline) curves |

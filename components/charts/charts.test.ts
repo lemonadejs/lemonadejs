@@ -111,6 +111,37 @@ describe('components/charts', () => {
         }
     });
 
+    it('axis grid: color/width/dash become per-axis CSS variables; category lines opt in', () => {
+        handle = t(Chart, { type: 'bar', categories: ['A', 'B'], series: [{ name: 's', data: [1, 2] }],
+            xaxis: { grid: { color: '#ff0000', width: 2, dash: 'dotted' } },
+            yaxis: { grid: { color: 'blue; x', dash: 'dashdot' } } });
+        const root = handle.query('.lm-chart')!;
+        const st = styleN(root);
+        expect(st).toContain('--lm-chart-xgrid-color:#ff0000');
+        expect(st).toContain('--lm-chart-xgrid-width:2px');
+        expect(st).toContain('--lm-chart-xgrid-style:dotted');
+        expect(st).toContain('--lm-chart-ygrid-color:blue x'); // ';' stripped
+        expect(st).toContain('--lm-chart-ygrid-style:dashed'); // no CSS dash-dot
+        expect(root.getAttribute('data-xcatgrid')).toBe('true');
+        expect(root.getAttribute('data-ycatgrid')).toBe('true');
+    });
+
+    it('axis grid: show false hides, show true overrides gridlines: false, unset changes nothing', () => {
+        handle = t(Chart, { type: 'bar', categories: ['A'], series: [{ name: 's', data: [1] }] });
+        let root = handle.query('.lm-chart')!;
+        expect(styleN(root)).not.toContain('grid');
+        expect(root.getAttribute('data-xcatgrid')).toBeNull();
+        handle.unmount();
+        handle = t(Chart, { type: 'bar', gridlines: false, categories: ['A'], series: [{ name: 's', data: [1] }],
+            xaxis: { grid: { show: false, color: 'red' } }, yaxis: { grid: { show: true } } });
+        root = handle.query('.lm-chart')!;
+        expect(styleN(root)).toContain('--lm-chart-xgrid-color:transparent');
+        expect(styleN(root)).toContain('--lm-chart-ygrid-forced:var(--lm-chart-grid)');
+        expect(root.getAttribute('data-xcatgrid')).toBeNull(); // show: false = no category lines
+        expect(handle.query('.lm-chart-grid')!.getAttribute('data-off')).toBe('true');
+        expect(handle.query('.lm-chart-tick')).not.toBeNull(); // ticks stay
+    });
+
     it('legend: false, { show: false } and the "false" attribute all hide it', () => {
         for (const legend of [false, { show: false }, 'false']) {
             handle = t(Chart, { type: 'bar', legend, categories: ['A'], series: [{ name: 's', data: [1] }, { name: 'r', data: [2] }] });

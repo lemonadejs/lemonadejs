@@ -176,18 +176,21 @@
 
 .lm-chart-gridline {
     position: relative;
-    border-top: 1px solid var(--lm-chart-grid);
+    /* per-axis grid (yaxis.grid): --lm-chart-ygrid-width|style|color */
+    border-top: var(--lm-chart-ygrid-width, 1px) var(--lm-chart-ygrid-style, solid) var(--lm-chart-ygrid-color, var(--lm-chart-grid));
     height: 0;
 }
 
-/* the zero baseline is emphasized when the data crosses it */
+/* the zero baseline is emphasized when the data crosses it (and keeps
+   its own look whatever the grid style) */
 .lm-chart-gridline[data-zero='true'] {
-    border-top-color: var(--lm-chart-baseline);
+    border-top: 1px solid var(--lm-chart-baseline);
 }
 
-/* gridlines off: hide the lines but keep the ticks + the zero baseline */
+/* gridlines off: hide the lines but keep the ticks + the zero baseline;
+   yaxis.grid.show: true brings them back (--lm-chart-ygrid-forced) */
 .lm-chart-grid[data-off='true'] .lm-chart-gridline:not([data-zero='true']) {
-    border-top-color: transparent;
+    border-top-color: var(--lm-chart-ygrid-forced, transparent);
 }
 
 /* secondary (right) axis: tick labels only, aligned to the primary gridlines */
@@ -718,13 +721,15 @@
 
 .lm-chart-grid[data-orient='h'] .lm-chart-gridline {
     border-top: none;
-    border-left: 1px solid var(--lm-chart-grid);
+    /* vertical lines: the x axis grid (xaxis.grid) */
+    border-left: var(--lm-chart-xgrid-width, 1px) var(--lm-chart-xgrid-style, solid) var(--lm-chart-xgrid-color, var(--lm-chart-grid));
     height: auto;
     width: 0;
 }
 
 .lm-chart-grid[data-orient='h'] .lm-chart-gridline[data-zero='true'] {
-    border-left-color: var(--lm-chart-baseline);
+    border-top: none;
+    border-left: 1px solid var(--lm-chart-baseline);
 }
 
 /* cols → stacked rows */
@@ -1827,7 +1832,47 @@ button.lm-chart-crumb:hover {
     top: 0;
     bottom: 0;
     width: 0;
-    border-left: 1px solid var(--lm-chart-grid);
+    border-left: var(--lm-chart-xgrid-width, 1px) var(--lm-chart-xgrid-style, solid) var(--lm-chart-xgrid-color, var(--lm-chart-grid));
+}
+
+.lm-chart-xgrid[data-off='true'] .lm-chart-vline {
+    border-left-color: var(--lm-chart-xgrid-forced, transparent);
+}
+
+/* category lines (opt-in via a grid on the category axis): one line at
+   each slot boundary — the left edge of every column plus the right edge
+   of the column box (the cols also hold overlays, so no :last-*); rows
+   for horizontal bars */
+.lm-chart[data-xcatgrid='true'] .lm-chart-cols:not([data-orient='h']) > .lm-chart-col::before,
+.lm-chart[data-xcatgrid='true'] .lm-chart-cols:not([data-orient='h']):not([data-continuous='true'])::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    border-left: var(--lm-chart-xgrid-width, 1px) var(--lm-chart-xgrid-style, solid) var(--lm-chart-xgrid-color, var(--lm-chart-grid));
+    pointer-events: none;
+}
+
+.lm-chart[data-xcatgrid='true'] .lm-chart-cols:not([data-orient='h']):not([data-continuous='true'])::after {
+    left: auto;
+    right: 0;
+}
+
+.lm-chart[data-ycatgrid='true'] .lm-chart-cols[data-orient='h'] > .lm-chart-col::before,
+.lm-chart[data-ycatgrid='true'] .lm-chart-cols[data-orient='h']::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    border-top: var(--lm-chart-ygrid-width, 1px) var(--lm-chart-ygrid-style, solid) var(--lm-chart-ygrid-color, var(--lm-chart-grid));
+    pointer-events: none;
+}
+
+.lm-chart[data-ycatgrid='true'] .lm-chart-cols[data-orient='h']::after {
+    top: auto;
+    bottom: 0;
 }
 
 .lm-chart-xtime {

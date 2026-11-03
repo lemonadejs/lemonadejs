@@ -488,8 +488,9 @@ export const bars = (mFull: Model, ctx: RenderCtx): View => {
             .filter((tk) => tk.v >= xmin - 1e-6 && tk.v <= xmax + 1e-6)
             .map((tk) => ({ pos: ((tk.v - xmin) / xspan) * 100, label: typeof xfmtFn === 'function' ? String(xfmtFn(tk.v)) : tk.label }))
         : [];
-    const xGrid = continuousX && m.gridlines
-        ? html`<div class="lm-chart-xgrid">${xTicks.map(
+    // always rendered: gridlines: false hides it in CSS, where xaxis.grid.show can override
+    const xGrid = continuousX
+        ? html`<div class="lm-chart-xgrid" data-off="${m.gridlines ? false : 'true'}">${xTicks.map(
             (tk) => html`<div class="lm-chart-vline" style="${css({ left: tk.pos.toFixed(2) + '%' })}"></div>`)}</div>`
         : false;
     const xTimeAxis = continuousX
@@ -709,7 +710,7 @@ export const bars = (mFull: Model, ctx: RenderCtx): View => {
                         }</div>`,
                     )}</div>
                     ${refBands}${xGrid}
-                    <div class="lm-chart-cols" data-zoom="${zoomable ? 'true' : false}"
+                    <div class="lm-chart-cols" data-zoom="${zoomable ? 'true' : false}" data-continuous="${continuousX ? 'true' : false}"
                         tabindex="${kbEnabled ? '0' : false}" role="${kbEnabled ? 'application' : false}"
                         aria-label="${kbEnabled ? kbLabel : false}"
                         onkeydown="${kbKey}"

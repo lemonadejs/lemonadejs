@@ -188,6 +188,21 @@ export interface ChartAxis {
     font?: ChartFont;
     /** `false` hides the tick labels (and frees their gutter) */
     labels?: boolean;
+    /** the gridlines this axis draws (x = vertical lines, y = horizontal) */
+    grid?: ChartGrid;
+}
+
+/** Gridline style of one physical axis. On a value axis it styles the
+ *  tick gridlines (`show: false` hides them, keeping the zero line); on a
+ *  category axis it opts into lines between the categories, which are off
+ *  by default. y2axis has no grid of its own (its ticks share y's lines). */
+export interface ChartGrid {
+    show?: boolean;
+    color?: string;
+    /** px when a number */
+    width?: number | string;
+    /** CSS borders have no dash-dot: 'dashdot' draws dashed */
+    dash?: 'dashed' | 'dotted' | 'dashdot' | boolean;
 }
 
 /** The internal per-element font map behind the CSS variables
@@ -238,6 +253,34 @@ export const fontVars = (fonts: ChartFonts | null | undefined): Record<string, s
         if (f.italic != null) out[pre + 'style'] = f.italic ? 'italic' : 'normal';
     }
     return out;
+};
+
+/** The custom properties behind the per-axis grid (--lm-chart-xgrid-*,
+ *  --lm-chart-ygrid-*), plus which axes opt into category lines. */
+export const gridVars = (xaxis: unknown, yaxis: unknown): { vars: Record<string, string>; xcat: boolean; ycat: boolean } => {
+    const vars: Record<string, string> = {};
+    const one = (ax: unknown, a: 'x' | 'y'): boolean => {
+        const g = isObj(ax) && isObj(ax.grid) ? ax.grid as ChartGrid : null;
+        if (!g) return false;
+        const pre = '--lm-chart-' + a + 'grid-';
+        const color = g.color ? cssValue(g.color) : '';
+        if (color) vars[pre + 'color'] = color;
+        if (g.width != null && g.width !== '') {
+            const n = Number(g.width);
+            vars[pre + 'width'] = Number.isFinite(n) ? (n >= 0 ? n + 'px' : '') : cssValue(g.width);
+        }
+        if (g.dash) vars[pre + 'style'] = g.dash === 'dotted' ? 'dotted' : 'dashed';
+        if (g.show === false) {
+            vars[pre + 'color'] = 'transparent';
+            return false;
+        }
+        // an explicit show: true outranks the global gridlines: false
+        if (g.show === true) vars[pre + 'forced'] = color || 'var(--lm-chart-grid)';
+        return Object.keys(g).some((k) => (g as Record<string, unknown>)[k] != null);
+    };
+    const xcat = one(xaxis, 'x');
+    const ycat = one(yaxis, 'y');
+    return { vars, xcat, ycat };
 };
 
 /** The pixel size of an element's font, for layout estimates; `fallback`

@@ -93,6 +93,15 @@
  * `labels: false` on an axis hides its tick labels and frees their space
  * (the gridlines, the title and the scale stay).
  *
+ * `grid` on `xaxis` styles the vertical lines and on `yaxis` the
+ * horizontal ones: `{ show, color, width, dash }`, with `dash` `'dashed'`,
+ * `'dotted'` or `'dashdot'` (drawn dashed). On a value axis `show: false`
+ * hides the lines and keeps the zero line and the ticks, and `show: true`
+ * overrides `gridlines: false`. A category axis has no lines by default; a
+ * `grid` on it draws one at each category boundary. With `horizontal` the
+ * categories are on `yaxis`. The fields are the CSS variables
+ * `--lm-chart-xgrid-color`, `-width` and `-style` (and `ygrid`).
+ *
  * The plain forms still work: `title: 'Sales'`, `legend: false`, and the
  * flat `legendposition`, `legendtitle`, `xtitle`, `ytitle` and `y2title`.
  * When both are given, the object wins.
@@ -130,7 +139,7 @@
 
 import { component, css, html, type View } from 'lemonadejs';
 import {
-    fontsOf, fontVars, normalize, outline, textOf, type Annotation, type ChartAxis, type ChartLegend, type ChartText, type ChartOptions, type ChartSeries, type Model,
+    fontsOf, fontVars, gridVars, normalize, outline, textOf, type Annotation, type ChartAxis, type ChartLegend, type ChartText, type ChartOptions, type ChartSeries, type Model,
     type NormPoint, type NormSeries, type PlotBand, type PlotLine, type RenderCtx, type TipRow,
 } from './model';
 import { compact, plain } from './helpers';
@@ -140,7 +149,7 @@ import { bulletChart, heatmapChart, packedbubbleChart, pictogramChart, scatterCh
 import { arcChart, chordChart, sankeyChart } from './flow';
 import { icicleChart, sunburstChart } from './hierarchy';
 
-export type { ChartPoint, ChartSeries, PlotBand, PlotLine, Annotation, ChartFont, ChartText, ChartLegend, ChartAxis } from './model';
+export type { ChartPoint, ChartSeries, PlotBand, PlotLine, Annotation, ChartFont, ChartText, ChartLegend, ChartAxis, ChartGrid } from './model';
 
 /* ------------------------------------------------------------------ *
  *  The component                                                      *
@@ -159,8 +168,8 @@ export const Charts = component('charts', {
     xtitle: '',              // x-axis title (or xaxis.title)
     ytitle: '',              // y-axis (left) title (or yaxis.title)
     y2title: '',             // secondary y-axis (right) title (or y2axis.title)
-    xaxis: Object,           // bottom axis { title?, titlefont?, font?, labels? } — font = its tick labels; labels: false hides them
-    yaxis: Object,           // left axis { title?, titlefont?, font?, labels? }
+    xaxis: Object,           // bottom axis { title?, titlefont?, font?, labels?, grid? } — font = its tick labels; labels: false hides them; grid = its vertical lines
+    yaxis: Object,           // left axis { title?, titlefont?, font?, labels?, grid? } — grid = the horizontal lines
     y2axis: Object,          // right axis { title?, titlefont?, font?, labels? } (falls back to yaxis fonts)
     markers: true,           // line/area: show point markers
     smooth: false,           // line/area: smooth (spline) curves
@@ -237,6 +246,8 @@ export const Charts = component('charts', {
         });
         return { ...sub, fonts: { ...fontsOf(base), ...sub.fonts } };
     });
+    /** Per-axis grid: pure CSS (variables + category-line switches on the root). */
+    const grid = computed(() => gridVars(props.xaxis.value, props.yaxis.value));
     /** Assemble the loose props into one options bag (shared base for drilldown). */
     function baseOptions(): ChartOptions { return {
         type: props.type.value,
@@ -643,7 +654,9 @@ export const Charts = component('charts', {
         data-spark="${() => (props.sparkline.value ? 'true' : false)}"
         role="figure" aria-label="${() => describeChart(model.value)}"
         data-animate="${() => (props.animate.value === false ? false : 'true')}"
-        style="${() => css({ height: sparkHeight(), ...fontVars(model.value.fonts) })}">${() => dataTable(model.value)}${toolbar}${breadcrumb}${() => {
+        data-xcatgrid="${() => (grid.value.xcat ? 'true' : false)}"
+        data-ycatgrid="${() => (grid.value.ycat ? 'true' : false)}"
+        style="${() => css({ height: sparkHeight(), ...fontVars(model.value.fonts), ...grid.value.vars })}">${() => dataTable(model.value)}${toolbar}${breadcrumb}${() => {
         const m = model.value;
         return !props.sparkline.value && (m.title || m.subtitle)
             ? html`<div class="lm-chart-header" data-position="${m.titleposition || false}">
