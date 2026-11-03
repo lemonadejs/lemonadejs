@@ -41,6 +41,11 @@ export interface ChartSeries {
     data: Array<number | number[] | ChartPoint | null>;
     /** Series colour; defaults to the palette slot. */
     color?: string;
+    /** Bar outline colour (bar/stackedbar, histogram, pareto). Pair with
+     *  `color: 'transparent'` for hollow bars. */
+    bordercolor?: string;
+    /** Bar outline width in px (default 1 when `bordercolor` is set). */
+    borderwidth?: number;
     /** Per-series render type for combo charts (overrides the chart `type`).
      *  `'scatter'` (points only) and `'line'` combine in a scatter base chart
      *  for a line+scatter overlay on the shared numeric x/y axes. */
@@ -247,6 +252,10 @@ export interface NormPoint {
 export interface NormSeries {
     name: string;
     color: string;
+    /** '' = no outline */
+    bordercolor: string;
+    /** px; 0 when there is no outline */
+    borderwidth: number;
     points: NormPoint[];
     type: 'bar' | 'line' | 'area' | 'scatter';
     axis: 'left' | 'right';
@@ -353,7 +362,8 @@ export const normalize = (def: ChartOptions): Model => {
         const counts = new Array(k).fill(0);
         for (const v of samples) counts[Math.min(k - 1, Math.floor((v - lo) / w))]++;
         categories = counts.map((_, i) => compact(lo + i * w, null) + '–' + compact(lo + (i + 1) * w, null));
-        rawSeries = [{ name: (rawSeries[0] && rawSeries[0].name) || 'Frequency', color: rawSeries[0] && rawSeries[0].color, data: counts }];
+        rawSeries = [{ name: (rawSeries[0] && rawSeries[0].name) || 'Frequency', color: rawSeries[0] && rawSeries[0].color,
+            bordercolor: rawSeries[0] && rawSeries[0].bordercolor, borderwidth: rawSeries[0] && rawSeries[0].borderwidth, data: counts }];
     }
 
     // Pareto: sort the first series descending and derive a cumulative-%
@@ -373,7 +383,8 @@ export const normalize = (def: ChartOptions): Model => {
         // a second series carries the options of the line (its colour)
         const src1 = rawSeries[1];
         rawSeries = [
-            { name: (src0 && src0.name) || 'Value', color: src0 && src0.color, type: 'bar', data: items.map((e) => e.v) },
+            { name: (src0 && src0.name) || 'Value', color: src0 && src0.color,
+                bordercolor: src0 && src0.bordercolor, borderwidth: src0 && src0.borderwidth, type: 'bar', data: items.map((e) => e.v) },
             { ...(src1 || {}), name: 'Cumulative %', type: 'line', axis: 'right', color: (src1 && src1.color) || '#3f444c', data: cum },
         ];
     }
@@ -410,6 +421,8 @@ export const normalize = (def: ChartOptions): Model => {
         return {
             name: s.name != null ? String(s.name) : 'Series ' + (si + 1),
             color: s.color || palette[si % palette.length],
+            bordercolor: s.bordercolor ? String(s.bordercolor) : '',
+            borderwidth: s.bordercolor ? (Number(s.borderwidth) >= 0 && s.borderwidth != null && Number.isFinite(Number(s.borderwidth)) ? Number(s.borderwidth) : 1) : 0,
             type: resolveType(s),
             axis: s.axis === 'right' ? 'right' : 'left',
             smooth: s.smooth === true || (s.smooth == null && def.smooth === true),
@@ -500,7 +513,15 @@ export const normalize = (def: ChartOptions): Model => {
  * ------------------------------------------------------------------ */
 
 /** One row of the shared tooltip pill. */
-export interface TipRow { name: string; value: string; color: string; }
+export interface TipRow {
+    name: string; value: string; color: string;
+    /** swatch outline (bar series with `bordercolor`) */
+    border?: string;
+}
+
+/** Inset outline for a bar / swatch: drawn inside the box, so geometry is unchanged. */
+export const outline = (color: string | undefined, width = 1): string | undefined =>
+    color && width > 0 ? 'inset 0 0 0 ' + width + 'px ' + color : undefined;
 
 /**
  * Everything a renderer needs from the component scope. The renderers in

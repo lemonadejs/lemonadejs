@@ -51,7 +51,9 @@ A series is `{ name, data, color? }`. Each entry of `data` is one point:
 - `null`, a gap in a line
 
 A series can set its own `type` (`bar`, `line`, `area` or `scatter`) to
-build a combo chart, and `axis: 'right'` to use a secondary y-axis. Line
+build a combo chart, and `axis: 'right'` to use a secondary y-axis. Bar
+series take `bordercolor` and `borderwidth` (px, default 1) for an
+outline; with `color: 'transparent'` they draw hollow bars. Line
 series take `width`, `dashed` (`true`, `'dashed'`, `'dotted'` or
 `'dashdot'`), `markers`, `markersize`, `marker` and `connectgaps`, and a
 `trendline`: `'linear'`, `'exponential'`, `'logarithmic'`, `'power'`,

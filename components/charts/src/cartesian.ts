@@ -5,7 +5,7 @@
  * boxplot, arearange/columnrange/dumbbell, lollipop.
  */
 import { css, html, type View } from 'lemonadejs';
-import { PALETTES, type Model, type NormSeries, type RenderCtx } from './model';
+import { PALETTES, outline, type Model, type NormSeries, type RenderCtx } from './model';
 import { fixedScale, lerpColor, niceExtent, niceScale, parseX, polyPath, smoothPath, stepPath, timeTicks } from './helpers';
 import { fit } from './trend';
 
@@ -251,14 +251,14 @@ export const bars = (mFull: Model, ctx: RenderCtx): View => {
             const labelText = share != null ? share + '%' : fmt(v);
             // bottom/height map to the value axis; horizontal swaps them to left/width
             const barStyle = horizontal
-                ? css({ left: bottom + '%', width: len + '%', background: s.color })
-                : css({ bottom: bottom + '%', height: len + '%', background: s.color });
+                ? css({ left: bottom + '%', width: len + '%', background: s.color, boxShadow: outline(s.bordercolor, s.borderwidth) })
+                : css({ bottom: bottom + '%', height: len + '%', background: s.color, boxShadow: outline(s.bordercolor, s.borderwidth) });
             return html`<div class="lm-chart-bar" data-orient="${horizontal ? 'h' : false}"
                 style="${barStyle}"
                 data-neg="${v < sc.baseV ? 'true' : false}"
                 data-dim="${ctx.hover.value && ctx.hover.value !== s.name ? 'true' : false}"
                 onmousemove="${(e: MouseEvent) => {
-                    if (!shared) ctx.showTip(e, tipName, [{ name: s.name, value: tipValue, color: s.color }]);
+                    if (!shared) ctx.showTip(e, tipName, [{ name: s.name, value: tipValue, color: s.color, border: s.bordercolor }]);
                 }}"
                 onmouseleave="${() => { if (!shared) ctx.hideTip(); }}"
                 onclick="${() => ctx.fire({ ...pt, color: s.color }, sIndex(s), i)}">${
@@ -275,6 +275,7 @@ export const bars = (mFull: Model, ctx: RenderCtx): View => {
             ctx.hoverCol.value = i;
             ctx.showTip(e, cat || 'Series', vis.filter((s) => s.points[i] && !s.points[i].gap).map((s) => ({
                 name: s.name, value: fmt(s.points[i].value), color: s.color,
+                border: barSeries.includes(s) ? s.bordercolor : '',
             })));
         };
         return html`<div class="lm-chart-col"

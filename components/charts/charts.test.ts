@@ -25,6 +25,34 @@ describe('components/charts', () => {
         expect(verify(Chart).pass).toBe(true);
     });
 
+    it('bar: bordercolor/borderwidth outline the bars and the legend swatch', () => {
+        handle = t(Chart, {
+            type: 'bar', categories: ['A', 'B'], horizontal: true,
+            series: [
+                { name: 'Hollow', color: 'transparent', bordercolor: '#000000', borderwidth: 2, data: [3, 5] },
+                { name: 'Plain', data: [1, 2] },
+            ],
+        });
+        const bars = handle.queryAll('.lm-chart-bar');
+        expect(styleN(bars[0])).toContain('box-shadow:');
+        expect(styleN(bars[0])).toMatch(/inset 0(px)? 0(px)? 0(px)? 2px/);
+        expect(styleN(bars[1])).not.toContain('box-shadow');
+        const sw = handle.queryAll('.lm-chart-swatch');
+        expect(styleN(sw[0])).toContain('box-shadow:');
+        expect(styleN(sw[1])).not.toContain('box-shadow');
+    });
+
+    it('histogram and pareto carry the series outline onto their bars', () => {
+        for (const type of ['histogram', 'pareto'] as const) {
+            handle = t(Chart, { type, series: [{ name: 'S', bordercolor: '#000', data: [1, 2, 2, 3, 5, 8] }] });
+            const bars = handle.queryAll('.lm-chart-bar');
+            expect(bars.length).toBeGreaterThan(0);
+            expect(styleN(bars[0])).toContain('box-shadow:');
+            handle.unmount();
+            handle = null;
+        }
+    });
+
     it('mounts empty without throwing', () => {
         handle = t(Chart, {});
         expect(handle.query('.lm-chart')).toBeTruthy();

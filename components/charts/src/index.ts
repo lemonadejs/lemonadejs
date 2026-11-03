@@ -96,7 +96,7 @@
 
 import { component, css, html, type View } from 'lemonadejs';
 import {
-    normalize, type Annotation, type ChartOptions, type ChartSeries, type Model,
+    normalize, outline, type Annotation, type ChartOptions, type ChartSeries, type Model,
     type NormPoint, type NormSeries, type PlotBand, type PlotLine, type RenderCtx, type TipRow,
 } from './model';
 import { compact, plain } from './helpers';
@@ -335,7 +335,7 @@ export const Charts = component('charts', {
     };
 
     /* ----- legend (shared by all types) — real <button>s, toggle + highlight --- */
-    interface LegendEntry { name: string; color: string; key: string; line: boolean; shape: string; }
+    interface LegendEntry { name: string; color: string; key: string; line: boolean; shape: string; border?: string; width?: number; }
     const legendEntries = (m: Model): LegendEntry[] => {
         // multi-series radialbar (stacked polar) legends by SERIES like bars;
         // waffle legends by CATEGORY (its cells are palette-partitioned)
@@ -354,6 +354,9 @@ export const Charts = component('charts', {
             // scatter base: only 'line' series show a line swatch (the rest are points)
             line: m.type === 'scatter' ? s.type === 'line' : s.type !== 'bar',
             shape: shapeOf(s, i),
+            // bar outline (hollow bars stay visible in the legend)
+            border: m.type !== 'scatter' && s.type === 'bar' ? s.bordercolor : '',
+            width: s.borderwidth,
         }));
     };
     const legend = (m: Model, entries: LegendEntry[]): View | false =>
@@ -367,7 +370,7 @@ export const Charts = component('charts', {
                 onmouseleave="${() => (hover.value = null)}">
                 <span class="lm-chart-swatch" data-line="${e.line ? 'true' : false}"
                     data-shape="${e.shape || false}"
-                    style="${css({ background: e.color })}"></span>
+                    style="${css({ background: e.color, boxShadow: e.line ? undefined : outline(e.border, Math.min(e.width || 1, 3)) })}"></span>
                 <span class="lm-chart-legend-name">${e.name}</span>
             </button>`,
         )}</div>`;
@@ -575,7 +578,7 @@ export const Charts = component('charts', {
                 data-custom="true" style="${css({ left: tp.x, top: tp.y })}">${String(tf({ title: tp.title, rows: tp.rows }))}</div>`;
         }
         const row = (r: TipRow): View => html`<div class="lm-chart-tip-row">
-            <span class="lm-chart-tip-swatch" style="${css({ background: r.color })}"></span>
+            <span class="lm-chart-tip-swatch" style="${css({ background: r.color, boxShadow: outline(r.border) })}"></span>
             ${r.name ? html`<span class="lm-chart-tip-name">${r.name}</span>` : false}
             <span class="lm-chart-tip-value">${r.value}</span>
         </div>`;
