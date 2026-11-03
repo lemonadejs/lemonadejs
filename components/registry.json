@@ -474,7 +474,7 @@
         "name": "charts",
         "path": "components/charts",
         "verified": true,
-        "checks": 123,
+        "checks": 129,
         "contract": {
             "name": "charts",
             "props": {
@@ -489,16 +489,14 @@
                     "type": "array"
                 },
                 "title": {
-                    "type": "string",
-                    "default": ""
+                    "type": "any"
                 },
                 "titleposition": {
                     "type": "string",
                     "default": ""
                 },
                 "subtitle": {
-                    "type": "string",
-                    "default": ""
+                    "type": "any"
                 },
                 "legendtitle": {
                     "type": "string",
@@ -522,6 +520,15 @@
                 "y2title": {
                     "type": "string",
                     "default": ""
+                },
+                "xaxis": {
+                    "type": "object"
+                },
+                "yaxis": {
+                    "type": "object"
+                },
+                "y2axis": {
+                    "type": "object"
                 },
                 "markers": {
                     "type": "boolean",
@@ -571,8 +578,7 @@
                     "type": "number"
                 },
                 "legend": {
-                    "type": "boolean",
-                    "default": true
+                    "type": "any"
                 },
                 "legendposition": {
                     "type": "string",

@@ -2,7 +2,7 @@
 
 LemonadeJS charts block — 35 chart types from one data definition, responsive with no resize code.
 
-**✓ verified** — 123 contract checks · framework-agnostic · zero dependencies
+**✓ verified** — 129 contract checks · framework-agnostic · zero dependencies
 
 ## Overview
 
@@ -77,6 +77,35 @@ series take `width`, `dashed` (`true`, `'dashed'`, `'dotted'` or
 - Accessible: a text summary and a hidden data table for screen readers,
   and animations that respect reduced motion
 
+### Title, legend and axes
+
+`title`, `subtitle`, `legend`, `xaxis`, `yaxis` and `y2axis` take an
+object that groups the text with its font:
+
+```js
+title: { text: 'Sales', font: { size: 35, color: '#595959' } },
+subtitle: { text: '2026', font: { italic: true } },
+legend: { position: 'bottom', title: 'Products', font: { size: 12 }, titlefont: { bold: true } },
+xaxis: { title: 'Month', titlefont: { size: 13 }, font: { size: 12, color: '#595959' } },
+yaxis: { title: 'Revenue', font: { size: 12 } },
+```
+
+A font is `{ size, color, family, bold, italic }`; `size` is px when a
+number, or any CSS length as a string. On an axis, `font` styles its tick
+labels and `titlefont` its title. The axes are physical: `xaxis` is the
+bottom one, `yaxis` the left and `y2axis` the right, which falls back to
+the `yaxis` fonts. With `horizontal` the categories are on `yaxis` and
+the values on `xaxis`. `legend: { show: false }` hides the legend.
+
+The plain forms still work: `title: 'Sales'`, `legend: false`, and the
+flat `legendposition`, `legendtitle`, `xtitle`, `ytitle` and `y2title`.
+When both are given, the object wins.
+
+Each font field is the CSS variable `--lm-chart-<el>-size`, `-color`,
+`-family`, `-weight` or `-style`, for `<el>` = `title`, `subtitle`,
+`legend`, `legendtitle`, `xtitle`, `ytitle`, `y2title`, `xlabels`,
+`ylabels` or `y2labels`, so a stylesheet can set them too.
+
 ### Updating
 
 The chart is derived from its props. Assign a new array to `series` or
@@ -124,15 +153,18 @@ state for a two-way live wire. Attribute strings are coerced to the declared typ
 | `type` | string | `"bar"` | bar \| stackedbar \| line \| stackedarea \| streamgraph \| pie \| scatter \| bubble \| radar \| radialbar \| polararea \| gauge \| funnel \| pyramid \| waterfall \| bullet \| lollipop \| dumbbell \| histogram \| heatmap \| candlestick \| ohlc \| boxplot \| arearange \| columnrange \| treemap \| sunburst \| icicle \| sankey \| chord \| arcdiagram \| packedbubble \| pareto \| wordcloud \| pictogram (aka pictorial/isotype/waffle) |
 | `series` | array | — | [{ name, data, color? }]; pie uses the first series |
 | `categories` | array | — | x-axis labels (bar/stacked) / slice names (pie) |
-| `title` | string | `''` | optional heading above the plot |
+| `title` | any | — | heading above the plot: string \| { text, font } |
 | `titleposition` | string | `''` | '' above the plot \| 'bottom' |
-| `subtitle` | string | `''` | muted line under the title |
-| `legendtitle` | string | `''` | heading of the legend |
+| `subtitle` | any | — | muted line under the title: string \| { text, font } |
+| `legendtitle` | string | `''` | heading of the legend (or legend.title) |
 | `xtype` | string | `''` | '' category \| 'datetime' \| 'linear' (continuous x for line/area) |
 | `xformat` | function | — | (x) => string; custom x-axis tick label (datetime/linear) |
-| `xtitle` | string | `''` | x-axis title (bar/stacked) |
-| `ytitle` | string | `''` | y-axis (left) title |
-| `y2title` | string | `''` | secondary y-axis (right) title |
+| `xtitle` | string | `''` | x-axis title (or xaxis.title) |
+| `ytitle` | string | `''` | y-axis (left) title (or yaxis.title) |
+| `y2title` | string | `''` | secondary y-axis (right) title (or y2axis.title) |
+| `xaxis` | object | — | bottom axis { title?, titlefont?, font? } — font = its tick labels |
+| `yaxis` | object | — | left axis { title?, titlefont?, font? } |
+| `y2axis` | object | — | right axis { title?, titlefont?, font? } (falls back to yaxis fonts) |
 | `markers` | boolean | `true` | line/area: show point markers |
 | `smooth` | boolean | `false` | line/area: smooth (spline) curves |
 | `step` | boolean | `false` | line/area: step (stairs) — true/'before' or 'mid' |
@@ -145,8 +177,8 @@ state for a two-way live wire. Attribute strings are coerced to the declared typ
 | `valueprefix` | string | `''` | unit prefix on values (e.g. '$') |
 | `valuesuffix` | string | `''` | unit suffix on values (e.g. ' USD') |
 | `labelrotation` | number | — | x-label angle in deg (unset = auto-rotate when crowded) |
-| `legend` | boolean | `true` | show the series/slice legend |
-| `legendposition` | string | `''` | '' auto \| 'top' \| 'bottom' \| 'left' \| 'right' |
+| `legend` | any | — | show the legend (default on): boolean \| { show?, position?, title?, font?, titlefont? } |
+| `legendposition` | string | `''` | '' auto \| 'top' \| 'bottom' \| 'left' \| 'right' (or legend.position) |
 | `labels` | boolean | `true` | value labels on bars / % on slices (set false to hide) |
 | `horizontal` | boolean | `false` | bar/stacked: horizontal bars (categories on the y-axis) |
 | `mirror` | boolean | `false` | horizontal bars: population pyramid — series[0] grows leftward, abs labels |

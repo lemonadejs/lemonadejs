@@ -103,6 +103,30 @@
             "pass": true
         },
         {
+            "name": "prop xaxis",
+            "pass": true
+        },
+        {
+            "name": "prop xaxis (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop yaxis",
+            "pass": true
+        },
+        {
+            "name": "prop yaxis (live state)",
+            "pass": true
+        },
+        {
+            "name": "prop y2axis",
+            "pass": true
+        },
+        {
+            "name": "prop y2axis (live state)",
+            "pass": true
+        },
+        {
             "name": "prop markers",
             "pass": true
         },

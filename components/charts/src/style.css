@@ -5,6 +5,11 @@
        on a 1rem base, with every text size in em so the whole chart scales
        from --lm-chart-font-size (title 1.2em bold, labels 0.8em, data
        labels 0.7em bold). */
+    /* Per-element typography: --lm-chart-<el>-size|color|family|weight|style
+       for <el> = title, subtitle, legend, legendtitle, xtitle, ytitle,
+       y2title, xlabels, ylabels, y2labels (physical axes: x bottom, y
+       left, y2 right; y2* fall back to y*). Unset = the defaults below.
+       The title/subtitle/legend/xaxis/yaxis/y2axis props write them here. */
     --lm-chart-font: 'Helvetica Neue', Helvetica, Arial, sans-serif;
     --lm-chart-font-size: 1rem;
     /* Framing colours read the shared template tokens but KEEP their
@@ -55,20 +60,27 @@
 .lm-chart-legend-title {
     flex-basis: 100%;
     text-align: center;
-    font-size: 0.8em;
-    font-weight: bold;
-    color: var(--lm-chart-muted);
+    font-size: var(--lm-chart-legendtitle-size, 0.8em);
+    font-weight: var(--lm-chart-legendtitle-weight, bold);
+    color: var(--lm-chart-legendtitle-color, var(--lm-chart-muted));
+    font-family: var(--lm-chart-legendtitle-family, inherit);
+    font-style: var(--lm-chart-legendtitle-style, normal);
 }
 
 .lm-chart-title {
-    font-size: 1.2em;
-    font-weight: bold;
-    color: var(--lm-chart-title);
+    font-size: var(--lm-chart-title-size, 1.2em);
+    font-weight: var(--lm-chart-title-weight, bold);
+    color: var(--lm-chart-title-color, var(--lm-chart-title));
+    font-family: var(--lm-chart-title-family, inherit);
+    font-style: var(--lm-chart-title-style, normal);
 }
 
 .lm-chart-subtitle {
-    font-size: 0.8em;
-    color: var(--lm-chart-muted);
+    font-size: var(--lm-chart-subtitle-size, 0.8em);
+    color: var(--lm-chart-subtitle-color, var(--lm-chart-muted));
+    font-family: var(--lm-chart-subtitle-family, inherit);
+    font-style: var(--lm-chart-subtitle-style, normal);
+    font-weight: var(--lm-chart-subtitle-weight, normal);
     margin-top: 3px;
 }
 
@@ -123,15 +135,21 @@
     justify-content: center;
     writing-mode: vertical-rl;
     transform: rotate(180deg);
-    font-size: 0.8em;
-    color: var(--lm-chart-muted);
+    font-size: var(--lm-chart-ytitle-size, 0.8em);
+    color: var(--lm-chart-ytitle-color, var(--lm-chart-muted));
+    font-family: var(--lm-chart-ytitle-family, inherit);
+    font-style: var(--lm-chart-ytitle-style, normal);
+    font-weight: var(--lm-chart-ytitle-weight, normal);
     padding: 0 2px 18px 0;
 }
 
 .lm-chart-xtitle {
     text-align: center;
-    font-size: 0.8em;
-    color: var(--lm-chart-muted);
+    font-size: var(--lm-chart-xtitle-size, 0.8em);
+    color: var(--lm-chart-xtitle-color, var(--lm-chart-muted));
+    font-family: var(--lm-chart-xtitle-family, inherit);
+    font-style: var(--lm-chart-xtitle-style, normal);
+    font-weight: var(--lm-chart-xtitle-weight, normal);
     margin-top: 4px;
     padding-left: var(--lm-chart-gutter);
 }
@@ -198,14 +216,22 @@
     position: absolute;
     left: 8px;
     top: -0.6em;
-    font-size: 0.8em;
-    color: var(--lm-chart-axis);
+    font-size: var(--lm-chart-y2labels-size, var(--lm-chart-ylabels-size, 0.8em));
+    color: var(--lm-chart-y2labels-color, var(--lm-chart-ylabels-color, var(--lm-chart-axis)));
+    font-family: var(--lm-chart-y2labels-family, var(--lm-chart-ylabels-family, inherit));
+    font-style: var(--lm-chart-y2labels-style, var(--lm-chart-ylabels-style, normal));
+    font-weight: var(--lm-chart-y2labels-weight, var(--lm-chart-ylabels-weight, normal));
     white-space: nowrap;
 }
 
 /* right-axis title mirrors the left one on the other side */
 .lm-chart-y2title {
     padding: 0 0 18px 2px;
+    font-size: var(--lm-chart-y2title-size, var(--lm-chart-ytitle-size, 0.8em));
+    color: var(--lm-chart-y2title-color, var(--lm-chart-ytitle-color, var(--lm-chart-muted)));
+    font-family: var(--lm-chart-y2title-family, var(--lm-chart-ytitle-family, inherit));
+    font-style: var(--lm-chart-y2title-style, var(--lm-chart-ytitle-style, normal));
+    font-weight: var(--lm-chart-y2title-weight, var(--lm-chart-ytitle-weight, normal));
     transform: rotate(0deg);
     writing-mode: vertical-rl;
 }
@@ -215,8 +241,11 @@
     left: -8px;
     top: -0.6em;
     transform: translateX(-100%);
-    font-size: 0.8em;
-    color: var(--lm-chart-axis);
+    font-size: var(--lm-chart-ylabels-size, 0.8em);
+    color: var(--lm-chart-ylabels-color, var(--lm-chart-axis));
+    font-family: var(--lm-chart-ylabels-family, inherit);
+    font-style: var(--lm-chart-ylabels-style, normal);
+    font-weight: var(--lm-chart-ylabels-weight, normal);
     white-space: nowrap;
 }
 
@@ -454,8 +483,11 @@
 }
 
 .lm-chart-cat-label {
-    font-size: 0.8em;
-    color: var(--lm-chart-axis);
+    font-size: var(--lm-chart-xlabels-size, 0.8em);
+    color: var(--lm-chart-xlabels-color, var(--lm-chart-axis));
+    font-family: var(--lm-chart-xlabels-family, inherit);
+    font-style: var(--lm-chart-xlabels-style, normal);
+    font-weight: var(--lm-chart-xlabels-weight, normal);
 }
 
 /* unrotated: clip + ellipsis when a label is too wide */
@@ -648,8 +680,11 @@
     align-items: center;
     justify-content: flex-end;
     padding-right: 8px;
-    font-size: 0.8em;
-    color: var(--lm-chart-axis);
+    font-size: var(--lm-chart-ylabels-size, 0.8em);
+    color: var(--lm-chart-ylabels-color, var(--lm-chart-axis));
+    font-family: var(--lm-chart-ylabels-family, inherit);
+    font-style: var(--lm-chart-ylabels-style, normal);
+    font-weight: var(--lm-chart-ylabels-weight, normal);
     text-align: right;
     overflow: hidden;
     white-space: nowrap;
@@ -801,8 +836,11 @@
     left: 0;
     top: 0;
     transform: translateX(-50%);
-    font-size: 0.8em;
-    color: var(--lm-chart-axis);
+    font-size: var(--lm-chart-xlabels-size, 0.8em);
+    color: var(--lm-chart-xlabels-color, var(--lm-chart-axis));
+    font-family: var(--lm-chart-xlabels-family, inherit);
+    font-style: var(--lm-chart-xlabels-style, normal);
+    font-weight: var(--lm-chart-xlabels-weight, normal);
     white-space: nowrap;
 }
 
@@ -1296,8 +1334,11 @@
     align-items: center;
     justify-content: flex-end;
     padding-right: 8px;
-    font-size: 11px;
-    color: var(--lm-chart-muted);
+    font-size: var(--lm-chart-ylabels-size, 11px);
+    color: var(--lm-chart-ylabels-color, var(--lm-chart-muted));
+    font-family: var(--lm-chart-ylabels-family, inherit);
+    font-style: var(--lm-chart-ylabels-style, normal);
+    font-weight: var(--lm-chart-ylabels-weight, normal);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -1806,8 +1847,11 @@ button.lm-chart-crumb:hover {
     left: 0;
     transform: translateX(-50%);
     white-space: nowrap;
-    font-size: 0.8em;
-    color: var(--lm-chart-axis);
+    font-size: var(--lm-chart-xlabels-size, 0.8em);
+    color: var(--lm-chart-xlabels-color, var(--lm-chart-axis));
+    font-family: var(--lm-chart-xlabels-family, inherit);
+    font-style: var(--lm-chart-xlabels-style, normal);
+    font-weight: var(--lm-chart-xlabels-weight, normal);
 }
 
 /* ---- empty / no-data placeholder ---- */
@@ -1961,15 +2005,16 @@ button.lm-chart-crumb:hover {
     align-items: center;
     gap: 6px;
     /* Highcharts legend type: 0.8em bold */
-    font-size: 0.8em;
-    font-weight: bold;
-    color: var(--lm-chart-text);
+    font-size: var(--lm-chart-legend-size, 0.8em);
+    font-weight: var(--lm-chart-legend-weight, bold);
+    color: var(--lm-chart-legend-color, var(--lm-chart-text));
     /* reset native <button> chrome */
     margin: 0;
     padding: 2px 4px;
     border: 0;
     background: none;
-    font-family: inherit;
+    font-family: var(--lm-chart-legend-family, inherit);
+    font-style: var(--lm-chart-legend-style, normal);
     cursor: pointer;
     border-radius: var(--lm-radius, 6px);
     transition: opacity 0.12s ease, background 0.12s ease;

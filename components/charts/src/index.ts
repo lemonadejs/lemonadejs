@@ -44,7 +44,9 @@
  * - `null`, a gap in a line
  *
  * A series can set its own `type` (`bar`, `line`, `area` or `scatter`) to
- * build a combo chart, and `axis: 'right'` to use a secondary y-axis. Line
+ * build a combo chart, and `axis: 'right'` to use a secondary y-axis. Bar
+ * series take `bordercolor` and `borderwidth` (px, default 1) for an
+ * outline; with `color: 'transparent'` they draw hollow bars. Line
  * series take `width`, `dashed` (`true`, `'dashed'`, `'dotted'` or
  * `'dashdot'`), `markers`, `markersize`, `marker` and `connectgaps`, and a
  * `trendline`: `'linear'`, `'exponential'`, `'logarithmic'`, `'power'`,
@@ -67,6 +69,35 @@
  *   through CSS and the SVG viewBox, with no resize listeners
  * - Accessible: a text summary and a hidden data table for screen readers,
  *   and animations that respect reduced motion
+ *
+ * ### Title, legend and axes
+ *
+ * `title`, `subtitle`, `legend`, `xaxis`, `yaxis` and `y2axis` take an
+ * object that groups the text with its font:
+ *
+ * ```js
+ * title: { text: 'Sales', font: { size: 35, color: '#595959' } },
+ * subtitle: { text: '2026', font: { italic: true } },
+ * legend: { position: 'bottom', title: 'Products', font: { size: 12 }, titlefont: { bold: true } },
+ * xaxis: { title: 'Month', titlefont: { size: 13 }, font: { size: 12, color: '#595959' } },
+ * yaxis: { title: 'Revenue', font: { size: 12 } },
+ * ```
+ *
+ * A font is `{ size, color, family, bold, italic }`; `size` is px when a
+ * number, or any CSS length as a string. On an axis, `font` styles its tick
+ * labels and `titlefont` its title. The axes are physical: `xaxis` is the
+ * bottom one, `yaxis` the left and `y2axis` the right, which falls back to
+ * the `yaxis` fonts. With `horizontal` the categories are on `yaxis` and
+ * the values on `xaxis`. `legend: { show: false }` hides the legend.
+ *
+ * The plain forms still work: `title: 'Sales'`, `legend: false`, and the
+ * flat `legendposition`, `legendtitle`, `xtitle`, `ytitle` and `y2title`.
+ * When both are given, the object wins.
+ *
+ * Each font field is the CSS variable `--lm-chart-<el>-size`, `-color`,
+ * `-family`, `-weight` or `-style`, for `<el>` = `title`, `subtitle`,
+ * `legend`, `legendtitle`, `xtitle`, `ytitle`, `y2title`, `xlabels`,
+ * `ylabels` or `y2labels`, so a stylesheet can set them too.
  *
  * ### Updating
  *
@@ -96,7 +127,7 @@
 
 import { component, css, html, type View } from 'lemonadejs';
 import {
-    normalize, outline, type Annotation, type ChartOptions, type ChartSeries, type Model,
+    fontsOf, fontVars, normalize, outline, textOf, type Annotation, type ChartAxis, type ChartLegend, type ChartText, type ChartOptions, type ChartSeries, type Model,
     type NormPoint, type NormSeries, type PlotBand, type PlotLine, type RenderCtx, type TipRow,
 } from './model';
 import { compact, plain } from './helpers';
@@ -106,7 +137,7 @@ import { bulletChart, heatmapChart, packedbubbleChart, pictogramChart, scatterCh
 import { arcChart, chordChart, sankeyChart } from './flow';
 import { icicleChart, sunburstChart } from './hierarchy';
 
-export type { ChartPoint, ChartSeries, PlotBand, PlotLine, Annotation } from './model';
+export type { ChartPoint, ChartSeries, PlotBand, PlotLine, Annotation, ChartFont, ChartText, ChartLegend, ChartAxis } from './model';
 
 /* ------------------------------------------------------------------ *
  *  The component                                                      *
@@ -116,15 +147,18 @@ export const Charts = component('charts', {
     type: 'bar',             // bar | stackedbar | line | stackedarea | streamgraph | pie | scatter | bubble | radar | radialbar | polararea | gauge | funnel | pyramid | waterfall | bullet | lollipop | dumbbell | histogram | heatmap | candlestick | ohlc | boxplot | arearange | columnrange | treemap | sunburst | icicle | sankey | chord | arcdiagram | packedbubble | pareto | wordcloud | pictogram (aka pictorial/isotype/waffle)
     series: Array,           // [{ name, data, color? }]; pie uses the first series
     categories: Array,       // x-axis labels (bar/stacked) / slice names (pie)
-    title: '',               // optional heading above the plot
+    title: null,             // heading above the plot: string | { text, font }
     titleposition: '',       // '' above the plot | 'bottom'
-    subtitle: '',            // muted line under the title
-    legendtitle: '',         // heading of the legend
+    subtitle: null,          // muted line under the title: string | { text, font }
+    legendtitle: '',         // heading of the legend (or legend.title)
     xtype: '',               // '' category | 'datetime' | 'linear' (continuous x for line/area)
     xformat: Function,       // (x) => string; custom x-axis tick label (datetime/linear)
-    xtitle: '',              // x-axis title (bar/stacked)
-    ytitle: '',              // y-axis (left) title
-    y2title: '',             // secondary y-axis (right) title
+    xtitle: '',              // x-axis title (or xaxis.title)
+    ytitle: '',              // y-axis (left) title (or yaxis.title)
+    y2title: '',             // secondary y-axis (right) title (or y2axis.title)
+    xaxis: Object,           // bottom axis { title?, titlefont?, font? } — font = its tick labels
+    yaxis: Object,           // left axis { title?, titlefont?, font? }
+    y2axis: Object,          // right axis { title?, titlefont?, font? } (falls back to yaxis fonts)
     markers: true,           // line/area: show point markers
     smooth: false,           // line/area: smooth (spline) curves
     step: false,             // line/area: step (stairs) — true/'before' or 'mid'
@@ -137,8 +171,8 @@ export const Charts = component('charts', {
     valueprefix: '',         // unit prefix on values (e.g. '$')
     valuesuffix: '',         // unit suffix on values (e.g. ' USD')
     labelrotation: Number,   // x-label angle in deg (unset = auto-rotate when crowded)
-    legend: true,            // show the series/slice legend
-    legendposition: '',      // '' auto | 'top' | 'bottom' | 'left' | 'right'
+    legend: null,            // show the legend (default on): boolean | { show?, position?, title?, font?, titlefont? }
+    legendposition: '',      // '' auto | 'top' | 'bottom' | 'left' | 'right' (or legend.position)
     labels: true,            // value labels on bars / % on slices (set false to hide)
     horizontal: false,       // bar/stacked: horizontal bars (categories on the y-axis)
     mirror: false,           // horizontal bars: population pyramid — series[0] grows leftward, abs labels
@@ -189,7 +223,8 @@ export const Charts = component('charts', {
         const path = drillPath.value;
         if (!path.length) return normalize(base);
         const top = path[path.length - 1];
-        return normalize({
+        // the sub-chart keeps the base typography unless its own title/subtitle carry a font
+        const sub = normalize({
             ...base,
             type: top.def.type != null ? top.def.type : base.type,
             categories: top.def.categories != null ? top.def.categories : [],
@@ -197,20 +232,24 @@ export const Charts = component('charts', {
             title: top.def.title != null ? top.def.title : top.label,
             subtitle: top.def.subtitle != null ? top.def.subtitle : '',
         });
+        return { ...sub, fonts: { ...fontsOf(base), ...sub.fonts } };
     });
     /** Assemble the loose props into one options bag (shared base for drilldown). */
     function baseOptions(): ChartOptions { return {
         type: props.type.value,
         series: props.series.value as ChartSeries[],
         categories: props.categories.value as string[],
-        title: props.title.value,
+        title: props.title.value as string | ChartText,
         titleposition: props.titleposition.value,
-        subtitle: props.subtitle.value,
+        subtitle: props.subtitle.value as string | ChartText,
         legendtitle: props.legendtitle.value,
         xtype: props.xtype.value,
         xtitle: props.xtitle.value,
         ytitle: props.ytitle.value,
         y2title: props.y2title.value,
+        xaxis: props.xaxis.value as ChartAxis,
+        yaxis: props.yaxis.value as ChartAxis,
+        y2axis: props.y2axis.value as ChartAxis,
         markers: props.markers.value,
         smooth: props.smooth.value,
         step: props.step.value as boolean | 'before' | 'mid',
@@ -219,7 +258,7 @@ export const Charts = component('charts', {
         valueprefix: props.valueprefix.value,
         valuesuffix: props.valuesuffix.value,
         labelrotation: props.labelrotation.value as number,
-        legend: props.legend.value,
+        legend: props.legend.value as boolean | string | ChartLegend,
         legendposition: props.legendposition.value,
         labels: props.labels.value,
         horizontal: props.horizontal.value,
@@ -558,7 +597,7 @@ export const Charts = component('charts', {
     const breadcrumb = (): View | false => {
         const path = drillPath.value;
         if (!path.length || props.sparkline.value) return false;
-        const home = (props.title.value as string) || 'Home';
+        const home = textOf(props.title.value) || 'Home';
         return html`<nav class="lm-chart-crumbs" aria-label="Drilldown">
             <button type="button" class="lm-chart-crumb" onclick="${() => drillTo(0)}">${home}</button>
             ${path.map((f, i) => i < path.length - 1
@@ -601,7 +640,7 @@ export const Charts = component('charts', {
         data-spark="${() => (props.sparkline.value ? 'true' : false)}"
         role="figure" aria-label="${() => describeChart(model.value)}"
         data-animate="${() => (props.animate.value === false ? false : 'true')}"
-        style="${() => css({ height: sparkHeight() })}">${() => dataTable(model.value)}${toolbar}${breadcrumb}${() => {
+        style="${() => css({ height: sparkHeight(), ...fontVars(model.value.fonts) })}">${() => dataTable(model.value)}${toolbar}${breadcrumb}${() => {
         const m = model.value;
         return !props.sparkline.value && (m.title || m.subtitle)
             ? html`<div class="lm-chart-header" data-position="${m.titleposition || false}">

@@ -5,7 +5,7 @@
  * boxplot, arearange/columnrange/dumbbell, lollipop.
  */
 import { css, html, type View } from 'lemonadejs';
-import { PALETTES, outline, type Model, type NormSeries, type RenderCtx } from './model';
+import { PALETTES, fontPx, outline, type Model, type NormSeries, type RenderCtx } from './model';
 import { fixedScale, lerpColor, niceExtent, niceScale, parseX, polyPath, smoothPath, stepPath, timeTicks } from './helpers';
 import { fit } from './trend';
 
@@ -467,7 +467,9 @@ export const bars = (mFull: Model, ctx: RenderCtx): View => {
     const rotate = angle !== 0;
     // reserve row height for the rotated labels (estimate from longest label)
     const maxChars = Math.max(0, ...m.categories.map((c) => String(c).length));
-    const estW = Math.min(maxChars * 7 + 6, 130); // ~0.55em/char at the 0.8em label size
+    // label sizes scale the layout estimates (defaults: 0.8em = 12.8px)
+    const xK = fontPx(m.fonts, 'xlabels', 12.8) / 12.8;
+    const estW = Math.min(maxChars * 7 * xK + 6, 130 * xK); // ~0.55em/char at the 0.8em label size
     const xh = rotate ? Math.ceil(estW * Math.sin((Math.abs(angle) * Math.PI) / 180)) + 12 : 0;
     const xaxisStyle = rotate
         ? css({ '--lm-cat-angle': -angle + 'deg', minHeight: xh })
@@ -659,7 +661,8 @@ export const bars = (mFull: Model, ctx: RenderCtx): View => {
 
     // ---- horizontal orientation: categories on the y-axis, values on x ----
     if (horizontal) {
-        const ycatsW = Math.min(150, Math.max(48, maxChars * 7.5 + 14));
+        const yK = fontPx(m.fonts, 'ylabels', 12.8) / 12.8;
+        const ycatsW = Math.min(150 * yK, Math.max(48, maxChars * 7.5 * yK + 14));
         const vticks = [...ticks].reverse(); // lo → hi, left to right
         return html`<div class="lm-chart-plotblock" data-orient="h"
             style="${css({ '--lm-ycats-w': ycatsW + 'px' })}">
@@ -682,7 +685,12 @@ export const bars = (mFull: Model, ctx: RenderCtx): View => {
         </div>`;
     }
 
-    return html`<div class="lm-chart-plotblock">
+    // a custom y-label size widens the left gutter to fit the longest tick
+    const valPx = fontPx(m.fonts, 'ylabels', 0);
+    const gutter = valPx > 0
+        ? Math.max(44, Math.ceil(Math.max(...ticks.map((t) => (percent ? Math.round(t) + '%' : fmt(t)).length)) * 0.6 * valPx) + 12)
+        : 0;
+    return html`<div class="lm-chart-plotblock" style="${gutter ? css({ '--lm-chart-gutter': gutter + 'px' }) : false}">
         <div class="lm-chart-area">
             ${m.ytitle ? html`<div class="lm-chart-ytitle"><span>${m.ytitle}</span></div>` : false}
             <div class="lm-chart-plotcol">

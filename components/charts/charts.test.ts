@@ -25,6 +25,62 @@ describe('components/charts', () => {
         expect(verify(Chart).pass).toBe(true);
     });
 
+    it('element objects: title/subtitle/legend/axes carry their text and font', () => {
+        handle = t(Chart, {
+            type: 'bar', categories: ['A', 'B'], series: [{ name: 's', data: [1, 2] }],
+            title: { text: 'Sales', font: { size: 35, color: '#595959', bold: false } },
+            subtitle: { text: '2026', font: { italic: true } },
+            legend: { position: 'top', title: 'Key', font: { size: '12px', family: 'Georgia; color:red' }, titlefont: { color: 'teal' } },
+            xaxis: { title: 'Month', titlefont: { size: 13 }, font: { color: 'blue' } },
+            yaxis: { title: 'Revenue', font: { size: 20 } },
+            y2axis: { titlefont: { color: '#111111' } },
+        });
+        expect(handle.query('.lm-chart-title')!.textContent).toBe('Sales');
+        expect(handle.query('.lm-chart-subtitle')!.textContent).toBe('2026');
+        expect(handle.query('.lm-chart-legend-title')!.textContent).toBe('Key');
+        expect(handle.query('.lm-chart-content')!.getAttribute('data-legend')).toBe('top');
+        expect(handle.query('.lm-chart-xtitle')!.textContent).toBe('Month');
+        expect(handle.query('.lm-chart-ytitle')!.textContent).toBe('Revenue');
+        const st = styleN(handle.query('.lm-chart')!);
+        expect(st).toContain('--lm-chart-title-size:35px');
+        expect(st).toContain('--lm-chart-title-color:#595959');
+        expect(st).toContain('--lm-chart-title-weight:normal');
+        expect(st).toContain('--lm-chart-subtitle-style:italic');
+        expect(st).toContain('--lm-chart-legend-size:12px');
+        expect(st).toContain('--lm-chart-legend-family:Georgia color:red'); // ';' stripped
+        expect(st).toContain('--lm-chart-legendtitle-color:teal');
+        expect(st).toContain('--lm-chart-xtitle-size:13px');
+        expect(st).toContain('--lm-chart-xlabels-color:blue');
+        expect(st).toContain('--lm-chart-ylabels-size:20px');
+        expect(st).toContain('--lm-chart-y2title-color:#111111');
+        // the y-label size widens the left gutter
+        expect(styleN(handle.query('.lm-chart-plotblock')!)).toMatch(/--lm-chart-gutter:\d+px/);
+    });
+
+    it('element objects: the plain forms and the flat props still work', () => {
+        handle = t(Chart, {
+            type: 'bar', title: 'T', subtitle: 'S', legendtitle: 'K', legendposition: 'left',
+            xtitle: 'X', ytitle: 'Y', categories: ['A'], series: [{ name: 's', data: [1] }],
+        });
+        expect(handle.query('.lm-chart-title')!.textContent).toBe('T');
+        expect(handle.query('.lm-chart-subtitle')!.textContent).toBe('S');
+        expect(handle.query('.lm-chart-legend-title')!.textContent).toBe('K');
+        expect(handle.query('.lm-chart-content')!.getAttribute('data-legend')).toBe('left');
+        expect(handle.query('.lm-chart-xtitle')!.textContent).toBe('X');
+        expect(styleN(handle.query('.lm-chart')!)).not.toContain('--lm-chart-');
+        expect(handle.query('.lm-chart-plotblock')!.getAttribute('style') || '').not.toContain('gutter');
+    });
+
+    it('legend: false, { show: false } and the "false" attribute all hide it', () => {
+        for (const legend of [false, { show: false }, 'false']) {
+            handle = t(Chart, { type: 'bar', legend, categories: ['A'], series: [{ name: 's', data: [1] }, { name: 'r', data: [2] }] });
+            expect(handle.query('.lm-chart-legend')).toBeNull();
+            handle.unmount();
+        }
+        handle = t(Chart, { type: 'bar', categories: ['A'], series: [{ name: 's', data: [1] }, { name: 'r', data: [2] }] });
+        expect(handle.query('.lm-chart-legend')).not.toBeNull();
+    });
+
     it('bar: bordercolor/borderwidth outline the bars and the legend swatch', () => {
         handle = t(Chart, {
             type: 'bar', categories: ['A', 'B'], horizontal: true,

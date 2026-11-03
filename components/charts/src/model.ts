@@ -94,19 +94,23 @@ export interface ChartOptions {
     type?: string;
     series?: ChartSeries[];
     categories?: string[];
-    title?: string;
+    title?: string | ChartText;
     titleposition?: string;
-    subtitle?: string;
+    subtitle?: string | ChartText;
     legendtitle?: string;
     xtype?: string;
     xtitle?: string;
     ytitle?: string;
     y2title?: string;
+    /** physical axes: x = bottom, y = left, y2 = right */
+    xaxis?: ChartAxis;
+    yaxis?: ChartAxis;
+    y2axis?: ChartAxis;
     gridlines?: boolean;
     valueprefix?: string;
     valuesuffix?: string;
     labelrotation?: number;
-    legend?: boolean;
+    legend?: boolean | string | ChartLegend;
     legendposition?: string;
     labels?: boolean;
     horizontal?: boolean;
@@ -146,6 +150,102 @@ export interface ChartOptions {
     /** pictogram: the value that fills every glyph (default 100 → values read as percentages). */
     total?: number;
 }
+
+/** The typography of one chart element. `size` is px when a number (or any
+ *  CSS length as a string); unset fields keep the stylesheet default. */
+export interface ChartFont {
+    size?: number | string;
+    color?: string;
+    family?: string;
+    bold?: boolean;
+    italic?: boolean;
+}
+
+/** `title` / `subtitle` as an object: the text plus its font. */
+export interface ChartText {
+    text?: string;
+    font?: ChartFont;
+}
+
+/** `legend` as an object. `show: false` hides it (as `legend: false`). */
+export interface ChartLegend {
+    show?: boolean;
+    position?: string;
+    title?: string;
+    /** the legend items */
+    font?: ChartFont;
+    /** the legend title */
+    titlefont?: ChartFont;
+}
+
+/** One PHYSICAL axis (x = bottom, y = left, y2 = right): its title and the
+ *  font of its tick labels, whatever they show. With `horizontal` the
+ *  categories are on y and the values on x. */
+export interface ChartAxis {
+    title?: string;
+    titlefont?: ChartFont;
+    /** the tick labels */
+    font?: ChartFont;
+}
+
+/** The internal per-element font map behind the CSS variables
+ *  --lm-chart-<key>-size|color|family|weight|style. y2title and y2labels
+ *  fall back to their y counterparts in the stylesheet. */
+export const FONT_KEYS = ['title', 'subtitle', 'legend', 'legendtitle', 'xtitle', 'ytitle', 'y2title', 'xlabels', 'ylabels', 'y2labels'] as const;
+export type ChartFontKey = typeof FONT_KEYS[number];
+export type ChartFonts = Partial<Record<ChartFontKey, ChartFont>>;
+
+const isObj = (v: unknown): v is Record<string, unknown> => !!v && typeof v === 'object' && !Array.isArray(v);
+const fontOf = (v: unknown): ChartFont | undefined => (isObj(v) && isObj(v.font) ? v.font as ChartFont : undefined);
+
+/** The text of a `string | { text }` prop. */
+export const textOf = (v: unknown): string =>
+    v == null ? '' : isObj(v) ? (v.text != null ? String(v.text) : '') : String(v);
+
+/** Collect the fonts the element objects carry into one map. */
+export const fontsOf = (def: ChartOptions): ChartFonts => {
+    const out: ChartFonts = {};
+    const put = (k: ChartFontKey, f: unknown): void => { if (isObj(f)) out[k] = f as ChartFont; };
+    put('title', fontOf(def.title));
+    put('subtitle', fontOf(def.subtitle));
+    if (isObj(def.legend)) { put('legend', def.legend.font); put('legendtitle', def.legend.titlefont); }
+    const axes: Array<[unknown, ChartFontKey, ChartFontKey]> = [
+        [def.xaxis, 'xtitle', 'xlabels'], [def.yaxis, 'ytitle', 'ylabels'], [def.y2axis, 'y2title', 'y2labels']];
+    for (const [ax, t, l] of axes) if (isObj(ax)) { put(t, ax.titlefont); put(l, ax.font); }
+    return out;
+};
+
+/** Keep a font value from breaking out of its style declaration. */
+const cssValue = (v: unknown): string => String(v).replace(/[;{}<>]/g, '').trim();
+
+/** The custom properties the stylesheet reads, e.g. --lm-chart-title-size. */
+export const fontVars = (fonts: ChartFonts | null | undefined): Record<string, string> => {
+    const out: Record<string, string> = {};
+    if (!fonts || typeof fonts !== 'object') return out;
+    for (const key of FONT_KEYS) {
+        const f = fonts[key];
+        if (!f || typeof f !== 'object') continue;
+        const pre = '--lm-chart-' + key + '-';
+        if (f.size != null && f.size !== '') {
+            const n = Number(f.size);
+            out[pre + 'size'] = Number.isFinite(n) ? (n > 0 ? n + 'px' : '') : cssValue(f.size);
+        }
+        if (f.color) out[pre + 'color'] = cssValue(f.color);
+        if (f.family) out[pre + 'family'] = cssValue(f.family);
+        if (f.bold != null) out[pre + 'weight'] = f.bold ? 'bold' : 'normal';
+        if (f.italic != null) out[pre + 'style'] = f.italic ? 'italic' : 'normal';
+    }
+    return out;
+};
+
+/** The pixel size of an element's font, for layout estimates; `fallback`
+ *  (the stylesheet default) when unset or not a px/number value. */
+export const fontPx = (fonts: ChartFonts | null | undefined, key: ChartFontKey, fallback: number): number => {
+    const f = fonts && fonts[key];
+    if (!f || f.size == null) return fallback;
+    const n = typeof f.size === 'number' ? f.size : /^\s*[\d.]+\s*(px)?\s*$/.test(String(f.size)) ? parseFloat(String(f.size)) : NaN;
+    return n > 0 ? n : fallback;
+};
 
 /** A reference line drawn across the plot at a value on the y-axis. */
 export interface PlotLine {
@@ -325,6 +425,7 @@ export interface Model {
     columns: number;
     iconcount: number;
     total: number;
+    fonts: ChartFonts;
     /** waffle mode: one palette-partitioned grid per series (type="waffle") */
     waffle: boolean;
 }
@@ -455,23 +556,28 @@ export const normalize = (def: ChartOptions): Model => {
         };
     });
 
-    const pos = def.legendposition;
+    // the element objects win over the flat props they group
+    const lg = isObj(def.legend) ? def.legend as ChartLegend : null;
+    const pos = lg && lg.position != null ? lg.position : def.legendposition;
+    const axisTitle = (ax: ChartAxis | undefined, flat: string | undefined): string =>
+        isObj(ax) && ax.title != null ? String(ax.title) : flat != null ? String(flat) : '';
     return {
         type: chartType,
-        title: def.title != null ? String(def.title) : '',
+        title: textOf(def.title),
         titleposition: def.titleposition === 'bottom' ? 'bottom' : '',
-        subtitle: def.subtitle != null ? String(def.subtitle) : '',
-        legendtitle: def.legendtitle != null ? String(def.legendtitle) : '',
+        subtitle: textOf(def.subtitle),
+        legendtitle: lg && lg.title != null ? String(lg.title) : def.legendtitle != null ? String(def.legendtitle) : '',
         xtype: def.xtype === 'datetime' || def.xtype === 'linear' ? def.xtype : '',
-        xtitle: def.xtitle != null ? String(def.xtitle) : '',
-        ytitle: def.ytitle != null ? String(def.ytitle) : '',
-        y2title: def.y2title != null ? String(def.y2title) : '',
+        xtitle: axisTitle(def.xaxis, def.xtitle),
+        ytitle: axisTitle(def.yaxis, def.ytitle),
+        y2title: axisTitle(def.y2axis, def.y2title),
         gridlines: def.gridlines !== false,
         valueprefix: def.valueprefix != null ? String(def.valueprefix) : '',
         valuesuffix: def.valuesuffix != null ? String(def.valuesuffix) : '',
         labelrotation: def.labelrotation != null && Number.isFinite(Number(def.labelrotation))
             ? Number(def.labelrotation) : null,
-        legend: def.legend !== false,
+        // attribute strings: present = on, "false"/"0" = off
+        legend: lg ? lg.show !== false : !(def.legend === false || def.legend === 'false' || def.legend === '0'),
         legendposition: pos === 'top' || pos === 'bottom' || pos === 'left' || pos === 'right' ? pos : '',
         labels: def.labels !== false,
         horizontal: def.horizontal === true,
@@ -505,6 +611,7 @@ export const normalize = (def: ChartOptions): Model => {
         columns: Number(def.columns) > 0 ? Math.round(Number(def.columns)) : 10,
         iconcount: Number(def.iconcount) > 0 ? Math.round(Number(def.iconcount)) : (isWaffle ? 100 : 0),
         total: Number(def.total) > 0 ? Number(def.total) : 100,
+        fonts: fontsOf(def),
         waffle: isWaffle,
     };
 };
