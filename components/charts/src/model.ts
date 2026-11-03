@@ -186,6 +186,8 @@ export interface ChartAxis {
     titlefont?: ChartFont;
     /** the tick labels */
     font?: ChartFont;
+    /** `false` hides the tick labels (and frees their gutter) */
+    labels?: boolean;
 }
 
 /** The internal per-element font map behind the CSS variables
@@ -426,6 +428,10 @@ export interface Model {
     iconcount: number;
     total: number;
     fonts: ChartFonts;
+    /** tick labels shown per physical axis (ChartAxis.labels) */
+    xlabels: boolean;
+    ylabels: boolean;
+    y2labels: boolean;
     /** waffle mode: one palette-partitioned grid per series (type="waffle") */
     waffle: boolean;
 }
@@ -612,6 +618,9 @@ export const normalize = (def: ChartOptions): Model => {
         iconcount: Number(def.iconcount) > 0 ? Math.round(Number(def.iconcount)) : (isWaffle ? 100 : 0),
         total: Number(def.total) > 0 ? Number(def.total) : 100,
         fonts: fontsOf(def),
+        xlabels: !(isObj(def.xaxis) && def.xaxis.labels === false),
+        ylabels: !(isObj(def.yaxis) && def.yaxis.labels === false),
+        y2labels: !(isObj(def.y2axis) && def.y2axis.labels === false),
         waffle: isWaffle,
     };
 };

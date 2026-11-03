@@ -71,6 +71,46 @@ describe('components/charts', () => {
         expect(handle.query('.lm-chart-plotblock')!.getAttribute('style') || '').not.toContain('gutter');
     });
 
+    it('axis labels: false hides the tick labels per physical axis', () => {
+        const series = [{ name: 'a', data: [1, 2] }, { name: 'b', type: 'line', axis: 'right', data: [5, 9] }];
+        handle = t(Chart, { type: 'bar', categories: ['A', 'B'], series,
+            xaxis: { labels: false }, yaxis: { labels: false, title: 'Y' }, y2axis: { labels: false } });
+        expect(handle.query('.lm-chart-xaxis')).toBeNull();
+        expect(handle.query('.lm-chart-tick')).toBeNull();
+        expect(handle.query('.lm-chart-grid-right')).toBeNull();
+        expect(handle.query('.lm-chart-plot')!.getAttribute('data-right')).toBeNull();
+        expect(handle.query('.lm-chart-gridline')).not.toBeNull(); // the grid stays
+        expect(handle.query('.lm-chart-ytitle')!.textContent).toBe('Y'); // the title stays
+        expect(styleN(handle.query('.lm-chart-plotblock')!)).toContain('--lm-chart-gutter:var(--lm-chart-pad-r)');
+        handle.unmount();
+        // y2 labels on: the right axis is back
+        handle = t(Chart, { type: 'bar', categories: ['A', 'B'], series, yaxis: { labels: false } });
+        expect(handle.query('.lm-chart-grid-right')).not.toBeNull();
+        expect(handle.query('.lm-chart-xaxis')).not.toBeNull();
+    });
+
+    it('axis labels: horizontal bars hide the categories (y) and values (x)', () => {
+        handle = t(Chart, { type: 'bar', horizontal: true, categories: ['A', 'B'], series: [{ name: 'a', data: [1, 2] }],
+            xaxis: { labels: false }, yaxis: { labels: false } });
+        expect(handle.query('.lm-chart-ycats')).toBeNull();
+        expect(handle.query('.lm-chart-xvalues')).toBeNull();
+        expect(styleN(handle.query('.lm-chart-plotblock')!)).toContain('--lm-ycats-w:0px');
+    });
+
+    it('axis labels: scatter, waterfall and boxplot honour labels: false', () => {
+        for (const def of [
+            { type: 'scatter', series: [{ name: 's', data: [[0, 1], [5, 3]] }] },
+            { type: 'waterfall', categories: ['A', 'B'], series: [{ name: 's', data: [3, -1] }] },
+            { type: 'boxplot', categories: ['A'], series: [{ name: 's', data: [[1, 2, 3, 4, 5]] }] },
+        ]) {
+            handle = t(Chart, { ...def, xaxis: { labels: false }, yaxis: { labels: false } });
+            expect(handle.query('.lm-chart-tick'), def.type).toBeNull();
+            expect(handle.query('.lm-chart-xaxis') || handle.query('.lm-chart-xvalues'), def.type).toBeNull();
+            handle.unmount();
+            handle = null;
+        }
+    });
+
     it('legend: false, { show: false } and the "false" attribute all hide it', () => {
         for (const legend of [false, { show: false }, 'false']) {
             handle = t(Chart, { type: 'bar', legend, categories: ['A'], series: [{ name: 's', data: [1] }, { name: 'r', data: [2] }] });

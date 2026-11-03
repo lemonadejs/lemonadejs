@@ -5,7 +5,7 @@
 import { css, html, type View } from 'lemonadejs';
 import { PALETTES, type Model, type NormSeries, type RenderCtx } from './model';
 import { lerpColor, niceExtent, polyPath, smoothPath, squarify, stepPath, textOn } from './helpers';
-import { strokeStyle, trendPath } from './cartesian';
+import { strokeStyle, trendPath, yGutter } from './cartesian';
 
 /* ----- scatter / bubble (numeric x + y axes) ----- */
 export const scatterChart = (m: Model, ctx: RenderCtx): View => {
@@ -126,13 +126,13 @@ export const scatterChart = (m: Model, ctx: RenderCtx): View => {
         </div>`
         : false;
 
-    return html`<div class="lm-chart-plotblock">
+    return html`<div class="lm-chart-plotblock" style="${yGutter(m)}">
         <div class="lm-chart-area">
             ${m.ytitle ? html`<div class="lm-chart-ytitle"><span>${m.ytitle}</span></div>` : false}
             <div class="lm-chart-plotcol">
                 <div class="lm-chart-plot">
                     <div class="lm-chart-grid" data-off="${m.gridlines ? false : 'true'}">${[...ys.ticks].reverse().map(
-                        (t) => html`<div class="lm-chart-gridline"><span class="lm-chart-tick">${ctx.fmt(t)}</span></div>`,
+                        (t) => html`<div class="lm-chart-gridline">${m.ylabels ? html`<span class="lm-chart-tick">${ctx.fmt(t)}</span>` : false}</div>`,
                     )}</div>
                     <div class="lm-chart-grid" data-orient="h" data-off="${m.gridlines ? false : 'true'}">${xs.ticks.map(
                         () => html`<div class="lm-chart-gridline"></div>`,
@@ -142,11 +142,11 @@ export const scatterChart = (m: Model, ctx: RenderCtx): View => {
                     ${bubbleNames}
                     ${sizeLegend}
                 </div>
-                <div class="lm-chart-xvalues">${xs.ticks.map(
+                ${m.xlabels ? html`<div class="lm-chart-xvalues">${xs.ticks.map(
                     (t) => {
                         const xfmt = ctx.xformat();
                         return html`<div class="lm-chart-xval"><span>${typeof xfmt === 'function' ? String(xfmt(t)) : ctx.fmt(t)}</span></div>`;
-                    })}</div>
+                    })}</div>` : false}
                 ${m.xtitle ? html`<div class="lm-chart-xtitle">${m.xtitle}</div>` : false}
             </div>
         </div>

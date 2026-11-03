@@ -9,6 +9,10 @@ import { PALETTES, fontPx, outline, type Model, type NormSeries, type RenderCtx 
 import { fixedScale, lerpColor, niceExtent, niceScale, parseX, polyPath, smoothPath, stepPath, timeTicks } from './helpers';
 import { fit } from './trend';
 
+/** Hidden y tick labels: shrink the left gutter to the right-hand spacing. */
+export const yGutter = (m: Model): string | false =>
+    m.ylabels ? false : css({ '--lm-chart-gutter': 'var(--lm-chart-pad-r)' });
+
 /** Per-series stroke overrides on top of the stylesheet (width in px). */
 export const strokeStyle = (s: NormSeries): string =>
     css(s.width ? { stroke: s.color, 'stroke-width': s.width } : { stroke: s.color });
@@ -96,6 +100,8 @@ export const bars = (mFull: Model, ctx: RenderCtx): View => {
     const barSeries = vis.filter((s) => stacked || s.type === 'bar');
     const lineSeries = stacked ? [] : vis.filter((s) => s.type !== 'bar');
     const hasRight = !stacked && vis.some((s) => s.axis === 'right');
+    // the right gutter is reserved only while its tick labels show (the scale stays)
+    const rightGap = hasRight && m.y2labels;
     // pure line/area chart → a thin vertical crosshair instead of a column band
     const crosshair = lineSeries.length > 0 && barSeries.length === 0;
     // horizontal bars: only for pure bar/stacked (categories move to the y-axis)
@@ -638,7 +644,7 @@ export const bars = (mFull: Model, ctx: RenderCtx): View => {
         };
         const release = (): void => { if (ctx.navDrag.value) ctx.navDrag.value = null; };
         return html`<div class="lm-chart-nav">
-            <div class="lm-chart-nav-inner" data-right="${hasRight ? 'true' : false}"
+            <div class="lm-chart-nav-inner" data-right="${rightGap ? 'true' : false}"
                 onmousemove="${move}" onmouseup="${release}" onmouseleave="${release}">
                 <svg class="lm-chart-nav-svg" viewBox="0 0 100 100" preserveAspectRatio="none">${spark}</svg>
                 <div class="lm-chart-nav-mask" style="${css({ left: 0, width: winL + '%' })}"></div>
@@ -653,7 +659,7 @@ export const bars = (mFull: Model, ctx: RenderCtx): View => {
     })();
 
     // secondary (right) axis tick labels, aligned to the primary gridlines
-    const rightAxis = secondary
+    const rightAxis = secondary && rightGap
         ? html`<div class="lm-chart-grid-right">${secondary.ticks.map(
             (t) => html`<div class="lm-chart-gridline-r"><span class="lm-chart-tick-r">${fmt(t)}</span></div>`,
         )}</div>`
@@ -665,11 +671,11 @@ export const bars = (mFull: Model, ctx: RenderCtx): View => {
         const ycatsW = Math.min(150 * yK, Math.max(48, maxChars * 7.5 * yK + 14));
         const vticks = [...ticks].reverse(); // lo → hi, left to right
         return html`<div class="lm-chart-plotblock" data-orient="h"
-            style="${css({ '--lm-ycats-w': ycatsW + 'px' })}">
+            style="${css({ '--lm-ycats-w': (m.ylabels ? ycatsW : 0) + 'px' })}">
             <div class="lm-chart-harea">
                 ${m.ytitle ? html`<div class="lm-chart-ytitle"><span>${m.ytitle}</span></div>` : false}
-                <div class="lm-chart-ycats">${Array.from({ length: n }, (_, i) =>
-                    html`<div class="lm-chart-ycat">${m.categories[i] != null ? m.categories[i] : ''}</div>`)}</div>
+                ${m.ylabels ? html`<div class="lm-chart-ycats">${Array.from({ length: n }, (_, i) =>
+                    html`<div class="lm-chart-ycat">${m.categories[i] != null ? m.categories[i] : ''}</div>`)}</div>` : false}
                 <div class="lm-chart-plot" data-orient="h">
                     <div class="lm-chart-grid" data-orient="h" data-off="${m.gridlines ? false : 'true'}">${vticks.map(
                         (t) => html`<div class="lm-chart-gridline" data-zero="${Math.abs(t - baseV) < 1e-9 ? 'true' : false}"></div>`,
@@ -679,28 +685,28 @@ export const bars = (mFull: Model, ctx: RenderCtx): View => {
                     ${refLines}
                 </div>
             </div>
-            <div class="lm-chart-xvalues">${vticks.map(
-                (t) => html`<div class="lm-chart-xval"><span>${percent ? Math.round(t) + '%' : fmt(t)}</span></div>`)}</div>
+            ${m.xlabels ? html`<div class="lm-chart-xvalues">${vticks.map(
+                (t) => html`<div class="lm-chart-xval"><span>${percent ? Math.round(t) + '%' : fmt(t)}</span></div>`)}</div>` : false}
             ${m.xtitle ? html`<div class="lm-chart-xtitle lm-chart-xtitle-h">${m.xtitle}</div>` : false}
         </div>`;
     }
 
     // a custom y-label size widens the left gutter to fit the longest tick
     const valPx = fontPx(m.fonts, 'ylabels', 0);
-    const gutter = valPx > 0
+    const gutter = valPx > 0 && m.ylabels
         ? Math.max(44, Math.ceil(Math.max(...ticks.map((t) => (percent ? Math.round(t) + '%' : fmt(t)).length)) * 0.6 * valPx) + 12)
         : 0;
-    return html`<div class="lm-chart-plotblock" style="${gutter ? css({ '--lm-chart-gutter': gutter + 'px' }) : false}">
+    return html`<div class="lm-chart-plotblock" style="${gutter ? css({ '--lm-chart-gutter': gutter + 'px' }) : yGutter(m)}">
         <div class="lm-chart-area">
             ${m.ytitle ? html`<div class="lm-chart-ytitle"><span>${m.ytitle}</span></div>` : false}
             <div class="lm-chart-plotcol">
-                <div class="lm-chart-plot" data-right="${hasRight ? 'true' : false}">
+                <div class="lm-chart-plot" data-right="${rightGap ? 'true' : false}">
                     <div class="lm-chart-grid" data-off="${m.gridlines ? false : 'true'}"
-                        style="${hasRight ? css({ right: 40 }) : false}">${ticks.map(
+                        style="${rightGap ? css({ right: 40 }) : false}">${ticks.map(
                         (t) => html`<div class="lm-chart-gridline"
-                            data-zero="${Math.abs(t - baseV) < 1e-9 ? 'true' : false}">
-                            <span class="lm-chart-tick">${percent ? Math.round(t) + '%' : fmt(t)}</span>
-                        </div>`,
+                            data-zero="${Math.abs(t - baseV) < 1e-9 ? 'true' : false}">${
+                            m.ylabels ? html`<span class="lm-chart-tick">${percent ? Math.round(t) + '%' : fmt(t)}</span>` : false
+                        }</div>`,
                     )}</div>
                     ${refBands}${xGrid}
                     <div class="lm-chart-cols" data-zoom="${zoomable ? 'true' : false}"
@@ -720,7 +726,7 @@ export const bars = (mFull: Model, ctx: RenderCtx): View => {
                     ${zr ? html`<button type="button" class="lm-chart-zoomreset" title="Reset zoom" onclick="${() => { ctx.zoomRange.value = null; }}">⤢</button>` : false}
                     ${rightAxis}
                 </div>
-                ${continuousX ? xTimeAxis : html`<div class="lm-chart-xaxis" data-rotate="${rotate ? 'true' : false}"
+                ${!m.xlabels ? false : continuousX ? xTimeAxis : html`<div class="lm-chart-xaxis" data-rotate="${rotate ? 'true' : false}"
                     style="${xaxisStyle}">${cats}</div>`}
                 ${navView}
             </div>
@@ -774,20 +780,20 @@ export const waterfallChart = (m: Model, ctx: RenderCtx): View => {
             left: (((i + 0.74) / n) * 100).toFixed(2) + '%',
             width: ((0.52 / n) * 100).toFixed(2) + '%',
         })}"></div>`);
-    return html`<div class="lm-chart-plotblock">
+    return html`<div class="lm-chart-plotblock" style="${yGutter(m)}">
         <div class="lm-chart-area">
             ${m.ytitle ? html`<div class="lm-chart-ytitle"><span>${m.ytitle}</span></div>` : false}
             <div class="lm-chart-plotcol">
                 <div class="lm-chart-plot">
                     <div class="lm-chart-grid" data-off="${m.gridlines ? false : 'true'}">${sc.ticks.map(
-                        (t) => html`<div class="lm-chart-gridline" data-zero="${Math.abs(t) < 1e-9 ? 'true' : false}">
-                            <span class="lm-chart-tick">${ctx.fmt(t)}</span></div>`,
+                        (t) => html`<div class="lm-chart-gridline" data-zero="${Math.abs(t) < 1e-9 ? 'true' : false}">${
+                            m.ylabels ? html`<span class="lm-chart-tick">${ctx.fmt(t)}</span>` : false}</div>`,
                     )}</div>
                     <div class="lm-chart-cols">${cols}</div>
                     <div class="lm-chart-refs">${links}</div>
                 </div>
-                <div class="lm-chart-xaxis">${steps.map((s) =>
-                    html`<div class="lm-chart-cat"><span class="lm-chart-cat-label">${s.name || ''}</span></div>`)}</div>
+                ${m.xlabels ? html`<div class="lm-chart-xaxis">${steps.map((s) =>
+                    html`<div class="lm-chart-cat"><span class="lm-chart-cat-label">${s.name || ''}</span></div>`)}</div>` : false}
             </div>
         </div>
     </div>`;
@@ -798,19 +804,19 @@ const cartesianFrame = (m: Model, ticksDesc: number[], n: number, colMark: (i: n
     const labelStep = Math.ceil(n / 18) || 1;
     const cats = Array.from({ length: n }, (_, i) =>
         html`<div class="lm-chart-cat"><span class="lm-chart-cat-label">${i % labelStep === 0 && m.categories[i] != null ? m.categories[i] : ''}</span></div>`);
-    return html`<div class="lm-chart-plotblock">
+    return html`<div class="lm-chart-plotblock" style="${yGutter(m)}">
         <div class="lm-chart-area">
             ${m.ytitle ? html`<div class="lm-chart-ytitle"><span>${m.ytitle}</span></div>` : false}
             <div class="lm-chart-plotcol">
                 <div class="lm-chart-plot">
                     <div class="lm-chart-grid" data-off="${m.gridlines ? false : 'true'}">${ticksDesc.map(
-                        (t) => html`<div class="lm-chart-gridline" data-zero="${Math.abs(t) < 1e-9 ? 'true' : false}">
-                            <span class="lm-chart-tick">${ctx.fmt(t)}</span></div>`,
+                        (t) => html`<div class="lm-chart-gridline" data-zero="${Math.abs(t) < 1e-9 ? 'true' : false}">${
+                            m.ylabels ? html`<span class="lm-chart-tick">${ctx.fmt(t)}</span>` : false}</div>`,
                     )}</div>
                     <div class="lm-chart-cols">${Array.from({ length: n }, (_, i) =>
                         html`<div class="lm-chart-col">${colMark(i)}</div>`)}${overlay || false}</div>
                 </div>
-                <div class="lm-chart-xaxis">${cats}</div>
+                ${m.xlabels ? html`<div class="lm-chart-xaxis">${cats}</div>` : false}
             </div>
         </div>
         ${m.xtitle ? html`<div class="lm-chart-xtitle">${m.xtitle}</div>` : false}

@@ -81,6 +81,7 @@
  * legend: { position: 'bottom', title: 'Products', font: { size: 12 }, titlefont: { bold: true } },
  * xaxis: { title: 'Month', titlefont: { size: 13 }, font: { size: 12, color: '#595959' } },
  * yaxis: { title: 'Revenue', font: { size: 12 } },
+ * y2axis: { labels: false },               // hide the right-axis tick labels
  * ```
  *
  * A font is `{ size, color, family, bold, italic }`; `size` is px when a
@@ -88,7 +89,9 @@
  * labels and `titlefont` its title. The axes are physical: `xaxis` is the
  * bottom one, `yaxis` the left and `y2axis` the right, which falls back to
  * the `yaxis` fonts. With `horizontal` the categories are on `yaxis` and
- * the values on `xaxis`. `legend: { show: false }` hides the legend.
+ * the values on `xaxis`. `legend: { show: false }` hides the legend, and
+ * `labels: false` on an axis hides its tick labels and frees their space
+ * (the gridlines, the title and the scale stay).
  *
  * The plain forms still work: `title: 'Sales'`, `legend: false`, and the
  * flat `legendposition`, `legendtitle`, `xtitle`, `ytitle` and `y2title`.
@@ -156,9 +159,9 @@ export const Charts = component('charts', {
     xtitle: '',              // x-axis title (or xaxis.title)
     ytitle: '',              // y-axis (left) title (or yaxis.title)
     y2title: '',             // secondary y-axis (right) title (or y2axis.title)
-    xaxis: Object,           // bottom axis { title?, titlefont?, font? } — font = its tick labels
-    yaxis: Object,           // left axis { title?, titlefont?, font? }
-    y2axis: Object,          // right axis { title?, titlefont?, font? } (falls back to yaxis fonts)
+    xaxis: Object,           // bottom axis { title?, titlefont?, font?, labels? } — font = its tick labels; labels: false hides them
+    yaxis: Object,           // left axis { title?, titlefont?, font?, labels? }
+    y2axis: Object,          // right axis { title?, titlefont?, font?, labels? } (falls back to yaxis fonts)
     markers: true,           // line/area: show point markers
     smooth: false,           // line/area: smooth (spline) curves
     step: false,             // line/area: step (stairs) — true/'before' or 'mid'

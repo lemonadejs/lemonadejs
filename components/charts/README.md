@@ -88,6 +88,7 @@ subtitle: { text: '2026', font: { italic: true } },
 legend: { position: 'bottom', title: 'Products', font: { size: 12 }, titlefont: { bold: true } },
 xaxis: { title: 'Month', titlefont: { size: 13 }, font: { size: 12, color: '#595959' } },
 yaxis: { title: 'Revenue', font: { size: 12 } },
+y2axis: { labels: false },               // hide the right-axis tick labels
 ```
 
 A font is `{ size, color, family, bold, italic }`; `size` is px when a
@@ -95,7 +96,9 @@ number, or any CSS length as a string. On an axis, `font` styles its tick
 labels and `titlefont` its title. The axes are physical: `xaxis` is the
 bottom one, `yaxis` the left and `y2axis` the right, which falls back to
 the `yaxis` fonts. With `horizontal` the categories are on `yaxis` and
-the values on `xaxis`. `legend: { show: false }` hides the legend.
+the values on `xaxis`. `legend: { show: false }` hides the legend, and
+`labels: false` on an axis hides its tick labels and frees their space
+(the gridlines, the title and the scale stay).
 
 The plain forms still work: `title: 'Sales'`, `legend: false`, and the
 flat `legendposition`, `legendtitle`, `xtitle`, `ytitle` and `y2title`.
@@ -162,9 +165,9 @@ state for a two-way live wire. Attribute strings are coerced to the declared typ
 | `xtitle` | string | `''` | x-axis title (or xaxis.title) |
 | `ytitle` | string | `''` | y-axis (left) title (or yaxis.title) |
 | `y2title` | string | `''` | secondary y-axis (right) title (or y2axis.title) |
-| `xaxis` | object | — | bottom axis { title?, titlefont?, font? } — font = its tick labels |
-| `yaxis` | object | — | left axis { title?, titlefont?, font? } |
-| `y2axis` | object | — | right axis { title?, titlefont?, font? } (falls back to yaxis fonts) |
+| `xaxis` | object | — | bottom axis { title?, titlefont?, font?, labels? } — font = its tick labels; labels: false hides them |
+| `yaxis` | object | — | left axis { title?, titlefont?, font?, labels? } |
+| `y2axis` | object | — | right axis { title?, titlefont?, font?, labels? } (falls back to yaxis fonts) |
 | `markers` | boolean | `true` | line/area: show point markers |
 | `smooth` | boolean | `false` | line/area: smooth (spline) curves |
 | `step` | boolean | `false` | line/area: step (stairs) — true/'before' or 'mid' |
