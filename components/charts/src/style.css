@@ -1077,13 +1077,19 @@
 
 .lm-chart-radar-ring {
     fill: none;
-    stroke: var(--lm-chart-grid);
-    stroke-width: 0.5;
+    /* raxis.grid: colour, px width (then non-scaling), dasharray */
+    stroke: var(--lm-chart-rgrid-color, var(--lm-chart-grid));
+    stroke-width: var(--lm-chart-rgrid-width, 0.5);
+    stroke-dasharray: var(--lm-chart-rgrid-dash, none);
+    vector-effect: var(--lm-chart-rgrid-ve, none);
 }
 
 .lm-chart-radar-spoke {
-    stroke: var(--lm-chart-grid);
-    stroke-width: 0.5;
+    /* raxis.spokes */
+    stroke: var(--lm-chart-rspokes-color, var(--lm-chart-grid));
+    stroke-width: var(--lm-chart-rspokes-width, 0.5);
+    stroke-dasharray: var(--lm-chart-rspokes-dash, none);
+    vector-effect: var(--lm-chart-rspokes-ve, none);
 }
 
 .lm-chart-radar-area {
@@ -1120,8 +1126,11 @@
 .lm-chart-radar-tickval {
     position: absolute;
     transform: translate(3px, -50%);
-    font-size: 0.65em;
-    color: var(--lm-chart-muted);
+    font-size: var(--lm-chart-rticks-size, 0.65em);
+    color: var(--lm-chart-rticks-color, var(--lm-chart-muted));
+    font-family: var(--lm-chart-rticks-family, inherit);
+    font-style: var(--lm-chart-rticks-style, normal);
+    font-weight: var(--lm-chart-rticks-weight, normal);
     white-space: nowrap;
     pointer-events: none;
 }
@@ -1129,8 +1138,11 @@
 .lm-chart-radar-label {
     position: absolute;
     transform: translate(-50%, -50%);
-    font-size: 10px;
-    color: var(--lm-chart-muted);
+    font-size: var(--lm-chart-rlabels-size, 10px);
+    color: var(--lm-chart-rlabels-color, var(--lm-chart-muted));
+    font-family: var(--lm-chart-rlabels-family, inherit);
+    font-style: var(--lm-chart-rlabels-style, normal);
+    font-weight: var(--lm-chart-rlabels-weight, normal);
     white-space: nowrap;
 }
 

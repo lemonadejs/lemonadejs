@@ -494,6 +494,43 @@ describe('components/charts', () => {
         expect(sw[1].getAttribute('data-shape')).toBe('x');
     });
 
+    it('raxis: radar scale, rings, labels, ticks, fonts, grid and spokes', () => {
+        const series = [{ name: 's', data: [2, 4, 8] }];
+        const cats = ['A', 'B', 'C'];
+        // default: 4 rings, labels on, ticks only with the chart labels
+        handle = t(Chart, { type: 'radar', categories: cats, series });
+        expect(handle.queryAll('.lm-chart-radar-ring').length).toBe(4);
+        expect(handle.queryAll('.lm-chart-radar-label').length).toBe(3);
+        expect(handle.queryAll('.lm-chart-radar-tickval').map((e) => e.textContent)).toEqual(['2', '4', '6', '8']); // nice max of 8
+        handle.unmount();
+        // min/max/step: rings every 5 from 0 to 20; ticks forced on with labels off
+        handle = t(Chart, { type: 'radar', categories: cats, series, labels: false,
+            raxis: { min: 0, max: 20, step: 5, ticks: true, labels: false, font: { size: 14, color: 'red' }, tickfont: { color: 'blue' },
+                grid: { color: '#ff0000', width: 2, dash: 'dashed' }, spokes: { show: false } } });
+        expect(handle.queryAll('.lm-chart-radar-ring').length).toBe(4);
+        expect(handle.queryAll('.lm-chart-radar-tickval').map((e) => e.textContent)).toEqual(['5', '10', '15', '20']);
+        expect(handle.queryAll('.lm-chart-radar-label').length).toBe(0);
+        const st = styleN(handle.query('.lm-chart')!);
+        expect(st).toContain('--lm-chart-rlabels-size:14px');
+        expect(st).toContain('--lm-chart-rticks-color:blue');
+        expect(st).toContain('--lm-chart-rgrid-color:#ff0000');
+        expect(st).toContain('--lm-chart-rgrid-width:2px');
+        expect(st).toContain('--lm-chart-rgrid-dash:4 3');
+        expect(st).toContain('--lm-chart-rspokes-color:transparent');
+        // the vertex for 8 sits at 8/20 of the radius (38): 15.2 from the centre, straight up
+        const pts = handle.query('.lm-chart-radar-area')!.getAttribute('points')!.split(' ');
+        expect(Number(pts[0].split(',')[1])).toBeCloseTo(50 - 38 * 0.1, 1); // A = 2 → 2/20
+        handle.unmount();
+        // reverse: the maximum at the centre; ticks run downwards; ticks: false hides them
+        handle = t(Chart, { type: 'radar', categories: cats, series, raxis: { max: 10, reverse: true } });
+        expect(handle.queryAll('.lm-chart-radar-tickval').map((e) => e.textContent)).toEqual(['7.5', '5', '2.5', '0']);
+        const rp = handle.query('.lm-chart-radar-area')!.getAttribute('points')!.split(' ');
+        expect(Number(rp[0].split(',')[1])).toBeCloseTo(50 - 38 * 0.8, 1); // A = 2 → (1 − 0.2)
+        handle.unmount();
+        handle = t(Chart, { type: 'radar', categories: cats, series, raxis: { ticks: false } });
+        expect(handle.queryAll('.lm-chart-radar-tickval').length).toBe(0);
+    });
+
     it('legend: false, { show: false } and the "false" attribute all hide it', () => {
         for (const legend of [false, { show: false }, 'false']) {
             handle = t(Chart, { type: 'bar', legend, categories: ['A'], series: [{ name: 's', data: [1] }, { name: 'r', data: [2] }] });

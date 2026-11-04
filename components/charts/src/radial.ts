@@ -28,13 +28,23 @@ export const radarChart = (m: Model, ctx: RenderCtx): View => {
     const vis = m.series.filter((s) => !ctx.isHidden(s.name));
     let max = 0;
     for (const s of vis) for (const p of s.points) if (!p.gap) max = Math.max(max, p.value);
-    const top = niceScale(0, max).hi || 1;
+    // the radial scale (raxis): min/max, else 0 to a nice maximum; `step`
+    // spaces the rings (at most 50), else 4 rings; reversed, the maximum
+    // sits at the centre
+    const ra = m.raxis;
+    const lo = ra.min != null ? ra.min : 0;
+    let hi = ra.max != null ? ra.max : (niceScale(Math.min(0, lo), max).hi || 1);
+    if (hi <= lo) hi = lo + 1;
+    const span = hi - lo;
+    const nR = ra.step != null ? Math.max(1, Math.min(50, Math.round(span / ra.step))) : 4;
+    const frac = (v: number): number => Math.max(0, Math.min(1, (v - lo) / span));
+    const rOf = (v: number): number => (ra.reverse ? 1 - frac(v) : frac(v)) * RR;
     const ang = (i: number): number => (i * 360) / (cats || 1); // 0 at top, clockwise
     const at = (i: number, r: number): [number, number] => polar(ang(i), r);
 
     // concentric grid rings + spokes
-    const rings = [1, 2, 3, 4].map((k) => {
-        const pts = Array.from({ length: cats }, (_, i) => at(i, (RR * k) / 4).map((c) => c.toFixed(2)).join(',')).join(' ');
+    const rings = Array.from({ length: nR }, (_, j) => j + 1).map((k) => {
+        const pts = Array.from({ length: cats }, (_, i) => at(i, (RR * k) / nR).map((c) => c.toFixed(2)).join(',')).join(' ');
         return html`<polygon class="lm-chart-radar-ring" points="${pts}" />`;
     });
     const spokes = Array.from({ length: cats }, (_, i) => {
@@ -55,7 +65,7 @@ export const radarChart = (m: Model, ctx: RenderCtx): View => {
         const dim = ctx.hover.value && ctx.hover.value !== s.name ? 'true' : false;
         const verts = Array.from({ length: cats }, (_, i) => {
             const v = s.points[i] && !s.points[i].gap ? s.points[i].value : 0;
-            return { xy: at(i, (v / top) * RR), v, i };
+            return { xy: at(i, rOf(v)), v, i };
         });
         // a 'line' series is the outline only (no fill)
         shapes.push(html`<polygon class="lm-chart-radar-area"
@@ -78,16 +88,19 @@ export const radarChart = (m: Model, ctx: RenderCtx): View => {
                 onmousemove="${tip}" onmouseleave="${ctx.hideTip}" />`);
         }
     });
-    // category labels (HTML overlay, fixed px)
-    const labels = Array.from({ length: cats }, (_, i) => {
+    // category labels (HTML overlay, fixed px) unless raxis.labels is off
+    const labels = ra.labels ? Array.from({ length: cats }, (_, i) => {
         const [x, y] = at(i, RR + 8);
         return html`<span class="lm-chart-radar-label" style="${css({ left: x.toFixed(2) + '%', top: y.toFixed(2) + '%' })}"
             >${m.categories[i] != null ? m.categories[i] : ''}</span>`;
-    });
-    // value tick labels up the 12-o'clock spoke (Highcharts yAxis labels)
-    const tickLabels = m.labels
-        ? [1, 2, 3, 4].map((k) => html`<span class="lm-chart-radar-tickval"
-            style="${css({ left: '50.5%', top: (50 - (RR * k) / 4).toFixed(2) + '%' })}">${ctx.fmt((top * k) / 4)}</span>`)
+    }) : [];
+    // ring values up the 12-o'clock spoke (Highcharts yAxis labels):
+    // raxis.ticks decides, else they come with the chart's value labels
+    const showTicks = ra.ticks != null ? ra.ticks : m.labels;
+    const tickLabels = showTicks
+        ? Array.from({ length: nR }, (_, j) => j + 1).map((k) => html`<span class="lm-chart-radar-tickval"
+            style="${css({ left: '50.5%', top: (50 - (RR * k) / nR).toFixed(2) + '%' })}">${
+            ctx.fmt(ra.reverse ? hi - (span * k) / nR : lo + (span * k) / nR)}</span>`)
         : [];
 
     return html`<div class="lm-chart-pie-core">

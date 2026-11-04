@@ -117,6 +117,8 @@ export interface ChartOptions {
     y2axis?: ChartAxis;
     /** horizontal bars: the top axis, for the series with axis: 'right' */
     x2axis?: ChartAxis;
+    /** radar: the radial (value) axis */
+    raxis?: ChartRAxis;
     gridlines?: boolean;
     valueprefix?: string;
     valuesuffix?: string;
@@ -210,6 +212,35 @@ export interface ChartAxis {
     grid?: ChartGrid;
 }
 
+/** The radar's radial axis: its scale (`min`/`max`, else 0 to a nice
+ *  maximum; `step` sets the ring spacing, else 4 rings; `reverse` puts
+ *  the maximum at the centre), the category labels around it (`labels`,
+ *  `font`), the ring values (`ticks`: true always, false never, unset =
+ *  with the chart `labels`; `tickfont`), and the rings (`grid`) and
+ *  spokes (`spokes`) as grid styles. */
+export interface ChartRAxis {
+    min?: number;
+    max?: number;
+    step?: number;
+    reverse?: boolean;
+    labels?: boolean;
+    font?: ChartFont;
+    ticks?: boolean;
+    tickfont?: ChartFont;
+    grid?: ChartGrid;
+    spokes?: ChartGrid;
+}
+
+/** The normalized radial axis (Model.raxis). */
+export interface RAxis {
+    min: number | null;
+    max: number | null;
+    step: number | null;
+    reverse: boolean;
+    labels: boolean;
+    ticks: boolean | null;
+}
+
 /** Gridline style of one physical axis. On a value axis it styles the
  *  tick gridlines (`show: false` hides them, keeping the zero line); on a
  *  category axis it opts into lines between the categories, which are off
@@ -226,7 +257,7 @@ export interface ChartGrid {
 /** The internal per-element font map behind the CSS variables
  *  --lm-chart-<key>-size|color|family|weight|style. The y2 and x2 keys (right/top)
  *  fall back to their y counterparts in the stylesheet. */
-export const FONT_KEYS = ['title', 'subtitle', 'legend', 'legendtitle', 'xtitle', 'ytitle', 'y2title', 'x2title', 'xlabels', 'ylabels', 'y2labels', 'x2labels'] as const;
+export const FONT_KEYS = ['title', 'subtitle', 'legend', 'legendtitle', 'xtitle', 'ytitle', 'y2title', 'x2title', 'xlabels', 'ylabels', 'y2labels', 'x2labels', 'rlabels', 'rticks'] as const;
 export type ChartFontKey = typeof FONT_KEYS[number];
 export type ChartFonts = Partial<Record<ChartFontKey, ChartFont>>;
 
@@ -247,6 +278,7 @@ export const fontsOf = (def: ChartOptions): ChartFonts => {
     const axes: Array<[unknown, ChartFontKey, ChartFontKey]> = [
         [def.xaxis, 'xtitle', 'xlabels'], [def.yaxis, 'ytitle', 'ylabels'], [def.y2axis, 'y2title', 'y2labels'], [def.x2axis, 'x2title', 'x2labels']];
     for (const [ax, t, l] of axes) if (isObj(ax)) { put(t, ax.titlefont); put(l, ax.font); }
+    if (isObj(def.raxis)) { put('rlabels', def.raxis.font); put('rticks', def.raxis.tickfont); }
     return out;
 };
 
@@ -327,6 +359,26 @@ export const gridVars = (xaxis: unknown, yaxis: unknown): { vars: Record<string,
     const xcat = one(xaxis, 'x');
     const ycat = one(yaxis, 'y');
     return { vars, xcat, ycat };
+};
+
+/** The custom properties behind the radar's rings (--lm-chart-rgrid-*) and
+ *  spokes (--lm-chart-rspokes-*): SVG strokes, so the dash is a dasharray
+ *  and a px width switches the stroke to non-scaling. */
+export const radialGridVars = (raxis: unknown): Record<string, string> => {
+    const vars: Record<string, string> = {};
+    const one = (g0: unknown, pre: string): void => {
+        const g = isObj(g0) ? g0 as ChartGrid : null;
+        if (!g) return;
+        if (g.show === false) { vars[pre + 'color'] = 'transparent'; return; }
+        if (g.color) vars[pre + 'color'] = cssValue(g.color);
+        if (g.width != null && g.width !== '') {
+            const n = Number(g.width);
+            if (Number.isFinite(n) && n >= 0) { vars[pre + 'width'] = n + 'px'; vars[pre + 've'] = 'non-scaling-stroke'; }
+        }
+        if (g.dash) vars[pre + 'dash'] = g.dash === 'dotted' ? '1 3' : '4 3';
+    };
+    if (isObj(raxis)) { one(raxis.grid, '--lm-chart-rgrid-'); one(raxis.spokes, '--lm-chart-rspokes-'); }
+    return vars;
 };
 
 /** The pixel size of an element's font, for layout estimates; `fallback`
@@ -532,6 +584,8 @@ export interface Model {
     x2reverse: boolean;
     /** vertical: the right axis is reversed (y2axis.reverse, else as yreverse) */
     y2reverse: boolean;
+    /** radar: the radial axis */
+    raxis: RAxis;
     /** waffle mode: one palette-partitioned grid per series (type="waffle") */
     waffle: boolean;
 }
@@ -740,6 +794,17 @@ export const normalize = (def: ChartOptions): Model => {
         y2labels: !(isObj(def.y2axis) && def.y2axis.labels === false),
         x2labels: !(isObj(def.x2axis) && def.x2axis.labels === false),
         x2reverse: isObj(def.x2axis) && def.x2axis.reverse === true,
+        raxis: ((): RAxis => {
+            const r = isObj(def.raxis) ? def.raxis as ChartRAxis : {};
+            const num = (v: unknown): number | null => (v != null && Number.isFinite(Number(v)) ? Number(v) : null);
+            return {
+                min: num(r.min), max: num(r.max),
+                step: num(r.step) != null && Number(r.step) > 0 ? Number(r.step) : null,
+                reverse: r.reverse === true,
+                labels: r.labels !== false,
+                ticks: r.ticks == null ? null : r.ticks === true,
+            };
+        })(),
         // the right axis follows the left one unless it says otherwise
         y2reverse: isObj(def.y2axis) && def.y2axis.reverse != null ? def.y2axis.reverse === true
             : isObj(def.yaxis) && def.yaxis.reverse != null ? def.yaxis.reverse === true : def.yreverse === true,

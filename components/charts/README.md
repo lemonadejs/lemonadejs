@@ -2,7 +2,7 @@
 
 LemonadeJS charts block — 35 chart types from one data definition, responsive with no resize code.
 
-**✓ verified** — 133 contract checks · framework-agnostic · zero dependencies
+**✓ verified** — 135 contract checks · framework-agnostic · zero dependencies
 
 ## Overview
 
@@ -148,6 +148,15 @@ stack sums on one axis, a pyramid shares one centred at zero): every
 series uses the bottom one. A stack whose series are all secondary is a
 single stack on the top axis.
 
+The radar's radial axis is `raxis`: `min`/`max` and `step` set the scale
+and the ring spacing (else 0 to a nice maximum, 4 rings), `reverse` puts
+the maximum at the centre, `labels: false` hides the category labels
+(`font` styles them), `ticks` shows the ring values always (`true`) or
+never (`false`; unset, they follow the chart `labels`; `tickfont`), and
+`grid` and `spokes` style the rings and the spokes like a grid
+(`{ show, color, width, dash }`; variables `--lm-chart-rgrid-*` and
+`--lm-chart-rspokes-*`, fonts `--lm-chart-rlabels-*` and `--lm-chart-rticks-*`).
+
 `reverse: true` reverses an axis, physically like the rest:
 `yaxis.reverse` (or `yreverse`) makes the values grow downwards, or with
 `horizontal` runs the categories bottom to top (the Excel default);
@@ -225,6 +234,7 @@ state for a two-way live wire. Attribute strings are coerced to the declared typ
 | `yaxis` | object | — | left axis { title?, titlefont?, font?, labels?, grid?, reverse? } — grid = the horizontal lines |
 | `y2axis` | object | — | right axis { title?, titlefont?, font?, labels?, reverse? } (falls back to yaxis fonts and reverse) |
 | `x2axis` | object | — | top axis of horizontal bars (the axis: 'right' series) { title?, titlefont?, font?, labels?, reverse? } (falls back to xaxis fonts) |
+| `raxis` | object | — | radar: the radial axis { min?, max?, step?, reverse?, labels?, font?, ticks?, tickfont?, grid?, spokes? } |
 | `markers` | boolean | `true` | line/area: show point markers |
 | `smooth` | boolean | `false` | line/area: smooth (spline) curves |
 | `step` | boolean | `false` | line/area: step (stairs) — true/'before' or 'mid' |

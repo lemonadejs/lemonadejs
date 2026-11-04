@@ -141,6 +141,15 @@
  * series uses the bottom one. A stack whose series are all secondary is a
  * single stack on the top axis.
  *
+ * The radar's radial axis is `raxis`: `min`/`max` and `step` set the scale
+ * and the ring spacing (else 0 to a nice maximum, 4 rings), `reverse` puts
+ * the maximum at the centre, `labels: false` hides the category labels
+ * (`font` styles them), `ticks` shows the ring values always (`true`) or
+ * never (`false`; unset, they follow the chart `labels`; `tickfont`), and
+ * `grid` and `spokes` style the rings and the spokes like a grid
+ * (`{ show, color, width, dash }`; variables `--lm-chart-rgrid-*` and
+ * `--lm-chart-rspokes-*`, fonts `--lm-chart-rlabels-*` and `--lm-chart-rticks-*`).
+ *
  * `reverse: true` reverses an axis, physically like the rest:
  * `yaxis.reverse` (or `yreverse`) makes the values grow downwards, or with
  * `horizontal` runs the categories bottom to top (the Excel default);
@@ -186,7 +195,7 @@
 
 import { component, css, html, type View } from 'lemonadejs';
 import {
-    categoryCount, fontsOf, fontVars, isStrokeMarker, markerStroke, gridVars, normalize, reverseCategories, outline, textOf, type Annotation, type ChartAxis, type ChartLegend, type ChartText, type ChartOptions, type ChartSeries, type Model,
+    categoryCount, fontsOf, fontVars, isStrokeMarker, markerStroke, gridVars, normalize, radialGridVars, reverseCategories, outline, textOf, type Annotation, type ChartAxis, type ChartLegend, type ChartRAxis, type ChartText, type ChartOptions, type ChartSeries, type Model,
     type NormPoint, type NormSeries, type PlotBand, type PlotLine, type RenderCtx, type TipRow,
 } from './model';
 import { compact, plain } from './helpers';
@@ -196,7 +205,7 @@ import { bulletChart, heatmapChart, packedbubbleChart, pictogramChart, scatterCh
 import { arcChart, chordChart, sankeyChart } from './flow';
 import { icicleChart, sunburstChart } from './hierarchy';
 
-export type { ChartPoint, ChartSeries, PlotBand, PlotLine, Annotation, ChartFont, ChartText, ChartLegend, ChartAxis, ChartGrid } from './model';
+export type { ChartPoint, ChartSeries, PlotBand, PlotLine, Annotation, ChartFont, ChartText, ChartLegend, ChartAxis, ChartGrid, ChartRAxis } from './model';
 
 /* ------------------------------------------------------------------ *
  *  The component                                                      *
@@ -219,6 +228,7 @@ export const Charts = component('charts', {
     yaxis: Object,           // left axis { title?, titlefont?, font?, labels?, grid?, reverse? } — grid = the horizontal lines
     y2axis: Object,          // right axis { title?, titlefont?, font?, labels?, reverse? } (falls back to yaxis fonts and reverse)
     x2axis: Object,          // top axis of horizontal bars (the axis: 'right' series) { title?, titlefont?, font?, labels?, reverse? } (falls back to xaxis fonts)
+    raxis: Object,           // radar: the radial axis { min?, max?, step?, reverse?, labels?, font?, ticks?, tickfont?, grid?, spokes? }
     markers: true,           // line/area: show point markers
     smooth: false,           // line/area: smooth (spline) curves
     step: false,             // line/area: step (stairs) — true/'before' or 'mid'
@@ -296,7 +306,10 @@ export const Charts = component('charts', {
         return { ...sub, fonts: { ...fontsOf(base), ...sub.fonts } };
     });
     /** Per-axis grid: pure CSS (variables + category-line switches on the root). */
-    const grid = computed(() => gridVars(props.xaxis.value, props.yaxis.value));
+    const grid = computed(() => {
+        const g = gridVars(props.xaxis.value, props.yaxis.value);
+        return { ...g, vars: { ...g.vars, ...radialGridVars(props.raxis.value) } };
+    });
     /** Assemble the loose props into one options bag (shared base for drilldown). */
     function baseOptions(): ChartOptions { return {
         type: props.type.value,
@@ -314,6 +327,7 @@ export const Charts = component('charts', {
         yaxis: props.yaxis.value as ChartAxis,
         y2axis: props.y2axis.value as ChartAxis,
         x2axis: props.x2axis.value as ChartAxis,
+        raxis: props.raxis.value as ChartRAxis,
         markers: props.markers.value,
         smooth: props.smooth.value,
         step: props.step.value as boolean | 'before' | 'mid',
