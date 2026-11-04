@@ -129,16 +129,20 @@ export const bars = (mFull: Model, ctx0: RenderCtx): View => {
     // (a stack sums on one axis, a pyramid shares one centred at zero), but
     // a stack whose series are ALL secondary is one stack on the top axis:
     // only-secondary horizontal bars, stacked or not, draw the top axis alone.
-    const hasRight = !horizontal && !stacked && anyRight;
+    // two value axes (one scale each): vertical left + right, horizontal
+    // bottom + top; one-sided secondary series (stacked too) use their own
+    // side alone — the other axis is not drawn
+    const hasRight = !horizontal && !stacked && anyRight && anyLeft;
+    const rightOnly = !horizontal && anyRight && !anyLeft;
     const topOnly = horizontal && !mirror && anyRight && !anyLeft;
     const dualH = horizontal && !stacked && !mirror && anyRight && anyLeft;
     // the right gutter is reserved only while its tick labels show (the scale stays)
-    const rightGap = hasRight && m.y2labels;
+    const rightGap = (hasRight || rightOnly) && m.y2labels;
     // reversed axes are physical: vertical → yreverse flips the values;
     // horizontal → the values are on x (xreverse), while yreverse flips the
     // category order in CSS. A reversed category x arrives as reversed data
     // (index.ts), a continuous x flips its positions here.
-    const valueReverse = horizontal ? (topOnly ? m.x2reverse : m.xreverse) : m.yreverse;
+    const valueReverse = horizontal ? (topOnly ? m.x2reverse : m.xreverse) : (rightOnly ? m.y2reverse : m.yreverse);
 
     // continuous x (datetime/linear): line/area points sit at their x VALUE,
     // not evenly by index; ticks are smart date/number boundaries
@@ -255,10 +259,10 @@ export const bars = (mFull: Model, ctx0: RenderCtx): View => {
         return { lo, hi, range, baseV, basePct: frac(baseV) * 100, ticks, frac, rev };
     };
 
-    const primarySet = dualH || (!horizontal && !(stacked || stackedArea)) ? vis.filter((s) => s.axis !== 'right') : vis;
+    const primarySet = dualH || (hasRight && !stackedArea) ? vis.filter((s) => s.axis !== 'right') : vis;
     const primary = buildScale(primarySet, true, null, valueReverse);
     const secondary = hasRight || dualH
-        ? buildScale(vis.filter((s) => s.axis === 'right'), false, primary.ticks.length - 1, horizontal ? m.x2reverse : valueReverse)
+        ? buildScale(vis.filter((s) => s.axis === 'right'), false, primary.ticks.length - 1, horizontal ? m.x2reverse : m.y2reverse)
         : null;
     const scaleOf = (s: NormSeries): Scale => (s.axis === 'right' && secondary ? secondary : primary);
     const ticks = primary.ticks;
@@ -711,9 +715,11 @@ export const bars = (mFull: Model, ctx0: RenderCtx): View => {
     })();
 
     // secondary (right) axis tick labels, aligned to the primary gridlines
-    const rightAxis = secondary && rightGap
-        ? html`<div class="lm-chart-grid-right">${secondary.ticks.map(
-            (t) => html`<div class="lm-chart-gridline-r"><span class="lm-chart-tick-r">${fmt(t)}</span></div>`,
+    // (all series on the right: the one scale is drawn there instead)
+    const rightScale = rightOnly ? primary : secondary;
+    const rightAxis = rightScale && rightGap
+        ? html`<div class="lm-chart-grid-right">${rightScale.ticks.map(
+            (t) => html`<div class="lm-chart-gridline-r"><span class="lm-chart-tick-r">${percent ? Math.round(t) + '%' : fmt(t)}</span></div>`,
         )}</div>`
         : false;
 
@@ -753,20 +759,23 @@ export const bars = (mFull: Model, ctx0: RenderCtx): View => {
     }
 
     // a custom y-label size widens the left gutter to fit the longest tick
+    // (no left axis when every series is on the right: its gutter collapses)
+    const leftLabels = m.ylabels && !rightOnly;
     const valPx = fontPx(m.fonts, 'ylabels', 0);
-    const gutter = valPx > 0 && m.ylabels
+    const gutter = valPx > 0 && leftLabels
         ? Math.max(44, Math.ceil(Math.max(...ticks.map((t) => (percent ? Math.round(t) + '%' : fmt(t)).length)) * 0.6 * valPx) + 12)
         : 0;
-    return html`<div class="lm-chart-plotblock" style="${gutter ? css({ '--lm-chart-gutter': gutter + 'px' }) : yGutter(m)}">
+    return html`<div class="lm-chart-plotblock" style="${gutter ? css({ '--lm-chart-gutter': gutter + 'px' })
+        : leftLabels ? false : css({ '--lm-chart-gutter': 'var(--lm-chart-pad-r)' })}">
         <div class="lm-chart-area">
-            ${m.ytitle ? html`<div class="lm-chart-ytitle"><span>${m.ytitle}</span></div>` : false}
+            ${m.ytitle && !rightOnly ? html`<div class="lm-chart-ytitle"><span>${m.ytitle}</span></div>` : false}
             <div class="lm-chart-plotcol">
                 <div class="lm-chart-plot" data-right="${rightGap ? 'true' : false}">
                     <div class="lm-chart-grid" data-off="${m.gridlines ? false : 'true'}"
                         style="${rightGap ? css({ right: 40 }) : false}">${ticks.map(
                         (t) => html`<div class="lm-chart-gridline"
                             data-zero="${Math.abs(t - baseV) < 1e-9 ? 'true' : false}">${
-                            m.ylabels ? html`<span class="lm-chart-tick">${percent ? Math.round(t) + '%' : fmt(t)}</span>` : false
+                            leftLabels ? html`<span class="lm-chart-tick">${percent ? Math.round(t) + '%' : fmt(t)}</span>` : false
                         }</div>`,
                     )}</div>
                     ${refBands}${xGrid}
@@ -791,7 +800,7 @@ export const bars = (mFull: Model, ctx0: RenderCtx): View => {
                     style="${xaxisStyle}">${cats}</div>`}
                 ${navView}
             </div>
-            ${m.y2title && hasRight ? html`<div class="lm-chart-ytitle lm-chart-y2title"><span>${m.y2title}</span></div>` : false}
+            ${m.y2title && (hasRight || rightOnly) ? html`<div class="lm-chart-ytitle lm-chart-y2title"><span>${m.y2title}</span></div>` : false}
         </div>
         ${m.xtitle ? html`<div class="lm-chart-xtitle">${m.xtitle}</div>` : false}
     </div>`;

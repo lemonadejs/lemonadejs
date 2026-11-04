@@ -524,6 +524,8 @@ export interface Model {
     x2labels: boolean;
     /** horizontal bars: the top axis is reversed (x2axis.reverse) */
     x2reverse: boolean;
+    /** vertical: the right axis is reversed (y2axis.reverse, else as yreverse) */
+    y2reverse: boolean;
     /** waffle mode: one palette-partitioned grid per series (type="waffle") */
     waffle: boolean;
 }
@@ -718,6 +720,9 @@ export const normalize = (def: ChartOptions): Model => {
         y2labels: !(isObj(def.y2axis) && def.y2axis.labels === false),
         x2labels: !(isObj(def.x2axis) && def.x2axis.labels === false),
         x2reverse: isObj(def.x2axis) && def.x2axis.reverse === true,
+        // the right axis follows the left one unless it says otherwise
+        y2reverse: isObj(def.y2axis) && def.y2axis.reverse != null ? def.y2axis.reverse === true
+            : isObj(def.yaxis) && def.yaxis.reverse != null ? def.yaxis.reverse === true : def.yreverse === true,
         waffle: isWaffle,
     };
 };

@@ -300,6 +300,32 @@ describe('components/charts', () => {
         expect(handle.query('.lm-chart-swatch')!.getAttribute('data-shape')).toBe('plus');
     });
 
+    it('vertical: every series on the right draws the right axis alone (stacked too)', () => {
+        const right = [{ name: 'a', axis: 'right', data: [100, 250] }, { name: 'b', axis: 'right', data: [50, 80] }];
+        for (const type of ['line', 'bar', 'stackedbar']) {
+            handle = t(Chart, { type, categories: ['A', 'B'], series: right, ytitle: 'Left', y2title: 'Right' });
+            expect(handle.query('.lm-chart-tick'), type).toBeNull(); // no left ticks
+            const r = handle.queryAll('.lm-chart-tick-r').map((e) => Number(e.textContent));
+            expect(Math.max(...r), type).toBeGreaterThanOrEqual(type === 'stackedbar' ? 330 : 250); // the real scale
+            expect(handle.queryAll('.lm-chart-ytitle').map((e) => e.textContent), type).toEqual(['Right']);
+            expect(styleN(handle.query('.lm-chart-plotblock')!), type).toContain('--lm-chart-gutter:var(--lm-chart-pad-r)');
+            handle.unmount();
+        }
+        // percent: the right ticks read as percentages
+        handle = t(Chart, { type: 'stackedbar', stackmode: 'percent', categories: ['A'], series: right });
+        expect(handle.queryAll('.lm-chart-tick-r').map((e) => e.textContent)).toEqual(['100%', '75%', '50%', '25%', '0%']);
+        handle.unmount();
+        // y2axis.reverse reverses the lone right axis
+        handle = t(Chart, { type: 'line', categories: ['A', 'B'], series: right, y2axis: { reverse: true } });
+        const rv = handle.queryAll('.lm-chart-tick-r').map((e) => Number(e.textContent));
+        expect(rv[0]).toBeLessThan(rv[rv.length - 1]);
+        handle.unmount();
+        // mixed: both axes as before
+        handle = t(Chart, { type: 'bar', categories: ['A'], series: [{ name: 'l', data: [5] }, right[0]] });
+        expect(handle.query('.lm-chart-tick')).not.toBeNull();
+        expect(handle.query('.lm-chart-tick-r')).not.toBeNull();
+    });
+
     it('legend: false, { show: false } and the "false" attribute all hide it', () => {
         for (const legend of [false, { show: false }, 'false']) {
             handle = t(Chart, { type: 'bar', legend, categories: ['A'], series: [{ name: 's', data: [1] }, { name: 'r', data: [2] }] });

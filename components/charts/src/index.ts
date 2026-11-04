@@ -111,6 +111,11 @@
  * categories are on `yaxis`. The fields are the CSS variables
  * `--lm-chart-xgrid-color`, `-width` and `-style` (and `ygrid`).
  *
+ * In vertical charts the `axis: 'right'` series use the right axis
+ * (`y2axis`, whose `reverse` and fonts fall back to `yaxis`). When every
+ * visible series is on the right, stacked included, only the right axis
+ * is drawn: the left one, its title and its gutter go.
+ *
  * In horizontal bars the `axis: 'right'` series (the secondary axis) get
  * a value axis of their own at the top, configured by `x2axis` (`title`,
  * `titlefont`, `font`, `labels`, `reverse`; fonts fall back to `xaxis`).
@@ -197,7 +202,7 @@ export const Charts = component('charts', {
     y2title: '',             // secondary y-axis (right) title (or y2axis.title)
     xaxis: Object,           // bottom axis { title?, titlefont?, font?, labels?, grid?, reverse? } — font = its tick labels; labels: false hides them; grid = its vertical lines
     yaxis: Object,           // left axis { title?, titlefont?, font?, labels?, grid?, reverse? } — grid = the horizontal lines
-    y2axis: Object,          // right axis { title?, titlefont?, font?, labels? } (falls back to yaxis fonts)
+    y2axis: Object,          // right axis { title?, titlefont?, font?, labels?, reverse? } (falls back to yaxis fonts and reverse)
     x2axis: Object,          // top axis of horizontal bars (the axis: 'right' series) { title?, titlefont?, font?, labels?, reverse? } (falls back to xaxis fonts)
     markers: true,           // line/area: show point markers
     smooth: false,           // line/area: smooth (spline) curves
