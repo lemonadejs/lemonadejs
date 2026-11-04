@@ -3,7 +3,7 @@
  * treemap and the sparkline mode.
  */
 import { css, html, type View } from 'lemonadejs';
-import { PALETTES, type Model, type NormSeries, type RenderCtx } from './model';
+import { PALETTES, isStrokeMarker, markerStroke, type Model, type NormSeries, type RenderCtx } from './model';
 import { lerpColor, niceExtent, polyPath, smoothPath, squarify, stepPath, textOn } from './helpers';
 import { strokeStyle, trendPath, yGutter } from './cartesian';
 
@@ -109,6 +109,21 @@ export const scatterChart = (m: Model, ctx: RenderCtx): View => {
         // non-circles are <rect>s anchored by x/y in % and centred/reshaped
         // via CSS (transform-box: fill-box + clip-path), so % positioning
         // keeps working inside the unscaled (viewBox-less) svg
+        // stroked shapes (x/plus/dash/star): a px path inside a nested svg
+        // placed at the % position (paths take no % coordinates), with an
+        // invisible disc so the thin lines stay easy to hover
+        if (isStrokeMarker(shape)) {
+            const st = markerStroke(s);
+            const a = r * Math.SQRT1_2;
+            const plus = 'M' + -r + ',0H' + r + 'M0,' + -r + 'V' + r;
+            const x = 'M' + -a + ',' + -a + 'L' + a + ',' + a + 'M' + -a + ',' + a + 'L' + a + ',' + -a;
+            const d = shape === 'plus' ? plus : shape === 'x' ? x : shape === 'dash' ? 'M' + -r + ',0H' + r : plus + x;
+            return html`<svg class="lm-chart-dot" data-stroke="${shape}" x="${cx}" y="${cy}" width="1" height="1" overflow="visible"
+                data-dim="${dim}" onmousemove="${tip}" ontouchstart="${tip}" onmouseleave="${ctx.hideTip}" onclick="${click}">
+                <circle r="${r}" fill="transparent" />
+                <path d="${d}" style="${css({ fill: 'none', stroke: st.color, 'stroke-width': st.width, 'stroke-linecap': 'round' })}" />
+            </svg>`;
+        }
         return shape === 'circle'
             ? html`<circle class="lm-chart-dot" cx="${cx}" cy="${cy}" r="${r}"
                 style="${dotStyle}" data-dim="${dim}"

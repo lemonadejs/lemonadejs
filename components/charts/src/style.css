@@ -617,6 +617,44 @@
     clip-path: polygon(50% 0, 100% 100%, 0 100%);
 }
 
+/* stroked markers (x / plus / dash / star, Excel's x + − *): no fill or
+   ring; the lines are gradients in --lm-mk-c, --lm-mk-w wide (set inline
+   by markerStyle); the x is a plus rotated in ::before, the star both */
+.lm-chart-marker[data-shape='x'],
+.lm-chart-marker[data-shape='plus'],
+.lm-chart-marker[data-shape='dash'],
+.lm-chart-marker[data-shape='star'] {
+    border: 0;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+}
+
+.lm-chart-marker[data-shape='plus'],
+.lm-chart-marker[data-shape='star'],
+.lm-chart-marker[data-shape='x']::before,
+.lm-chart-marker[data-shape='star']::before {
+    background: linear-gradient(var(--lm-mk-c), var(--lm-mk-c)) center / 100% var(--lm-mk-w) no-repeat,
+        linear-gradient(var(--lm-mk-c), var(--lm-mk-c)) center / var(--lm-mk-w) 100% no-repeat;
+}
+
+.lm-chart-marker[data-shape='dash'] {
+    background: linear-gradient(var(--lm-mk-c), var(--lm-mk-c)) center / 100% var(--lm-mk-w) no-repeat;
+}
+
+.lm-chart-marker[data-shape='x']::before,
+.lm-chart-marker[data-shape='star']::before {
+    content: '';
+    position: absolute;
+    transform: rotate(45deg);
+    pointer-events: none;
+}
+
+.lm-chart-marker[data-shape='x']::before,
+.lm-chart-marker[data-shape='star']::before {
+    inset: 0;
+}
+
 /* enlarge the markers in the hovered column (shared tooltip) */
 .lm-chart-marker[data-hot='true'] {
     width: 13px;
@@ -2174,6 +2212,66 @@ button.lm-chart-crumb:hover {
 .lm-chart-swatch[data-line='true'][data-dot='true']::after {
     background: var(--lm-swatch-dot);
     box-shadow: 0 0 0 1px var(--lm-swatch-line);
+}
+
+/* stroked shapes in the legend: the swatch itself (points), or the dot of
+   a line swatch (its ::after, with the x layer in ::before) */
+.lm-chart-swatch[data-shape='x']:not([data-line='true']),
+.lm-chart-swatch[data-shape='plus']:not([data-line='true']),
+.lm-chart-swatch[data-shape='dash']:not([data-line='true']),
+.lm-chart-swatch[data-shape='star']:not([data-line='true']) {
+    position: relative;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+}
+
+.lm-chart-swatch[data-shape='plus']:not([data-line='true']),
+.lm-chart-swatch[data-shape='star']:not([data-line='true']),
+.lm-chart-swatch[data-shape='x']::before,
+.lm-chart-swatch[data-shape='star']::before,
+.lm-chart-swatch[data-line='true'][data-shape='plus']::after,
+.lm-chart-swatch[data-line='true'][data-shape='star']::after {
+    background: linear-gradient(var(--lm-mk-c), var(--lm-mk-c)) center / 100% var(--lm-mk-w) no-repeat,
+        linear-gradient(var(--lm-mk-c), var(--lm-mk-c)) center / var(--lm-mk-w) 100% no-repeat;
+}
+
+.lm-chart-swatch[data-shape='dash']:not([data-line='true']),
+.lm-chart-swatch[data-line='true'][data-shape='dash']::after {
+    background: linear-gradient(var(--lm-mk-c), var(--lm-mk-c)) center / 100% var(--lm-mk-w) no-repeat;
+}
+
+.lm-chart-swatch[data-shape='x']::before,
+.lm-chart-swatch[data-shape='star']::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    transform: rotate(45deg);
+}
+
+/* on a line swatch the shape replaces the centre dot (8px box) */
+.lm-chart-swatch[data-line='true'][data-shape='x']::after,
+.lm-chart-swatch[data-line='true'][data-shape='plus']::after,
+.lm-chart-swatch[data-line='true'][data-shape='dash']::after,
+.lm-chart-swatch[data-line='true'][data-shape='star']::after {
+    width: 8px;
+    height: 8px;
+    border-radius: 0;
+    box-shadow: none;
+}
+
+.lm-chart-swatch[data-line='true'][data-shape='x']::after {
+    background: none;
+}
+
+.lm-chart-swatch[data-line='true'][data-shape='x']::before,
+.lm-chart-swatch[data-line='true'][data-shape='star']::before {
+    inset: auto;
+    left: 50%;
+    top: 50%;
+    width: 8px;
+    height: 8px;
+    margin: -4px 0 0 -4px;
 }
 
 /* ---- cursor-following tooltip ---- */

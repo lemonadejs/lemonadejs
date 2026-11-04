@@ -5,7 +5,7 @@
  * boxplot, arearange/columnrange/dumbbell, lollipop.
  */
 import { css, html, type View } from 'lemonadejs';
-import { PALETTES, fontPx, outline, type Model, type NormSeries, type RenderCtx } from './model';
+import { PALETTES, fontPx, isStrokeMarker, markerStroke, outline, type Model, type NormSeries, type RenderCtx } from './model';
 import { fixedScale, lerpColor, niceExtent, niceScale, parseX, polyPath, smoothPath, stepPath, timeTicks } from './helpers';
 import { fit } from './trend';
 
@@ -25,8 +25,14 @@ export const strokeStyle = (s: NormSeries): string =>
  *  colour (`borderwidth` px) instead of the surface; the stylesheet draws a
  *  9px dot (radius 4.5) unless `markersize` overrides it. */
 export const markerStyle = (s: NormSeries, extra: Record<string, string | number>): string => {
-    const ring = s.bordercolor ? { borderColor: s.bordercolor, borderWidth: s.borderwidth } : {};
     const size = s.markersize != null ? { width: s.markersize * 2, height: s.markersize * 2 } : {};
+    // stroked shapes (x/plus/dash/star): no fill, the stylesheet draws the
+    // lines from these two variables
+    if (isStrokeMarker(s.marker)) {
+        const st = markerStroke(s);
+        return css({ ...extra, '--lm-mk-c': st.color, '--lm-mk-w': st.width + 'px', ...size });
+    }
+    const ring = s.bordercolor ? { borderColor: s.bordercolor, borderWidth: s.borderwidth } : {};
     return css({ ...extra, background: s.color, ...ring, ...size });
 };
 
@@ -391,7 +397,7 @@ export const bars = (mFull: Model, ctx0: RenderCtx): View => {
                         const [x, y] = topPts[i];
                         const cat = m.categories[i] != null ? m.categories[i] : '';
                         const tipName = cat ? cat + ' · ' + s.name : s.name;
-                        markers.push(html`<span class="lm-chart-marker"
+                        markers.push(html`<span class="lm-chart-marker" data-shape="${s.marker || false}"
                             style="${markerStyle(s, { left: x.toFixed(2) + '%', top: y.toFixed(2) + '%' })}"
                             data-dim="${dim}" data-hot="${ctx.hoverCol.value === i ? 'true' : false}"
                             onmousemove="${(e: MouseEvent) => { if (!shared) ctx.showTip(e, tipName, [{ name: s.name, value: fmt(p.value), color: s.color, border: s.bordercolor }]); }}"

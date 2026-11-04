@@ -55,6 +55,13 @@
  * `'polynomial'` (`order`) or `'movingAverage'` (`period`), as a type or
  * `{ type, order?, period?, color?, dashed?, width? }`.
  *
+ * `marker` (line and scatter points) is a filled `'circle'`, `'square'`,
+ * `'triangle'` or `'diamond'`, or a stroked `'x'`, `'plus'`, `'dash'` or
+ * `'star'` (the Excel asterisk, plus and x together): no fill, drawn in
+ * `bordercolor` (else `color`), `borderwidth` px wide (at least 1.5; 2
+ * without a `bordercolor`). `markersize` is the radius in px. Unset, scatter
+ * series cycle circle, diamond, square, triangle.
+ *
  * ### Features
  *
  * - Legend that shows and hides series, hover tooltip, shared tooltip with
@@ -159,7 +166,7 @@
 
 import { component, css, html, type View } from 'lemonadejs';
 import {
-    categoryCount, fontsOf, fontVars, gridVars, normalize, reverseCategories, outline, textOf, type Annotation, type ChartAxis, type ChartLegend, type ChartText, type ChartOptions, type ChartSeries, type Model,
+    categoryCount, fontsOf, fontVars, isStrokeMarker, markerStroke, gridVars, normalize, reverseCategories, outline, textOf, type Annotation, type ChartAxis, type ChartLegend, type ChartText, type ChartOptions, type ChartSeries, type Model,
     type NormPoint, type NormSeries, type PlotBand, type PlotLine, type RenderCtx, type TipRow,
 } from './model';
 import { compact, plain } from './helpers';
@@ -410,7 +417,7 @@ export const Charts = component('charts', {
     };
 
     /* ----- legend (shared by all types) — real <button>s, toggle + highlight --- */
-    interface LegendEntry { name: string; color: string; key: string; line: boolean; shape: string; border?: string; width?: number; dot?: string; }
+    interface LegendEntry { name: string; color: string; key: string; line: boolean; shape: string; border?: string; width?: number; dot?: string; stroke?: { color: string; width: number }; }
     const legendEntries = (m: Model): LegendEntry[] => {
         // multi-series radialbar (stacked polar) legends by SERIES like bars;
         // waffle legends by CATEGORY (its cells are palette-partitioned)
@@ -424,9 +431,17 @@ export const Charts = component('charts', {
         const cycle = ['circle', 'diamond', 'square', 'triangle'];
         // scatter base: only 'line' series show a line swatch (the rest are points)
         const lineSwatch = (s: NormSeries): boolean => (m.type === 'scatter' ? s.type === 'line' : s.type !== 'bar');
+        // line swatches keep their centre dot, except for a stroked marker
+        // (x/plus/dash/star), which replaces it
         const shapeOf = (s: NormSeries, i: number): string =>
-            m.type === 'scatter' && s.type !== 'line' ? s.marker || cycle[i % cycle.length] : '';
-        return m.series.map((s, i) => ({
+            !lineSwatch(s) && m.type === 'scatter' ? s.marker || cycle[i % cycle.length]
+                : lineSwatch(s) && isStrokeMarker(s.marker) ? s.marker : '';
+        return m.series.map((s, i) => isStrokeMarker(shapeOf(s, i)) ? {
+            name: s.name, key: s.name, line: lineSwatch(s), shape: shapeOf(s, i),
+            // a line swatch still draws its line in the line colour
+            color: s.bordercolor || s.color,
+            stroke: markerStroke(s),
+        } : {
             // a line swatch draws the LINE colour (bordercolor when set)
             name: s.name, color: lineSwatch(s) ? s.bordercolor || s.color : s.color, key: s.name,
             line: lineSwatch(s),
@@ -436,7 +451,7 @@ export const Charts = component('charts', {
             width: s.borderwidth,
             // a line with bordercolor: its marker dot keeps the fill colour
             dot: lineSwatch(s) && s.bordercolor ? s.color : '',
-        }));
+        });
     };
     const legend = (m: Model, entries: LegendEntry[]): View | false =>
         html`<div class="lm-chart-legend">${m.legendtitle ? html`<span class="lm-chart-legend-title">${m.legendtitle}</span>` : false}${entries.map(
@@ -449,8 +464,11 @@ export const Charts = component('charts', {
                 onmouseleave="${() => (hover.value = null)}">
                 <span class="lm-chart-swatch" data-line="${e.line ? 'true' : false}"
                     data-shape="${e.shape || false}" data-dot="${e.dot ? 'true' : false}"
-                    style="${css({ background: e.color, '--lm-swatch-dot': e.dot || undefined, '--lm-swatch-line': e.dot ? e.color : undefined,
-                        boxShadow: e.line ? undefined : outline(e.border, Math.min(e.width || 1, 3)) })}"></span>
+                    style="${css(e.stroke
+                        // stroked shape: no fill; a line swatch keeps its line
+                        ? { background: e.line ? e.color : undefined, '--lm-mk-c': e.stroke.color, '--lm-mk-w': Math.min(e.stroke.width, 2) + 'px' }
+                        : { background: e.color, '--lm-swatch-dot': e.dot || undefined, '--lm-swatch-line': e.dot ? e.color : undefined,
+                            boxShadow: e.line ? undefined : outline(e.border, Math.min(e.width || 1, 3)) })}"></span>
                 <span class="lm-chart-legend-name">${e.name}</span>
             </button>`,
         )}</div>`;

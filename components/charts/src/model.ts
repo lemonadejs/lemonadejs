@@ -64,8 +64,11 @@ export interface ChartSeries {
     step?: boolean | 'before' | 'mid';
     /** Dash the line: `true` is dashed; a style picks the pattern. */
     dashed?: boolean | 'dashed' | 'dotted' | 'dashdot';
-    /** Marker shape for line/scatter points. */
-    marker?: 'circle' | 'square' | 'triangle' | 'diamond';
+    /** Marker shape for line/scatter points. Filled: circle, square,
+     *  triangle, diamond. Stroked (no fill; drawn in `bordercolor`, else
+     *  `color`, `borderwidth` px wide, at least 1.5): x, plus, dash, star (the
+     *  Excel asterisk: plus + x). */
+    marker?: 'circle' | 'square' | 'triangle' | 'diamond' | 'x' | 'plus' | 'dash' | 'star';
     /** Line stroke width in px (default 2). */
     width?: number;
     /** Marker radius in px (default 4.5); 0 hides the markers. */
@@ -265,6 +268,17 @@ export const fontVars = (fonts: ChartFonts | null | undefined): Record<string, s
     }
     return out;
 };
+
+/** Marker shapes drawn as strokes (no fill), like Excel's x / + / − / *. */
+export const STROKE_MARKERS = ['x', 'plus', 'dash', 'star'];
+export const isStrokeMarker = (shape: string): boolean => STROKE_MARKERS.includes(shape);
+/** A stroke marker's line: the outline colour, else the series colour, and
+ *  the outline width — at least 1.5px so the thin shapes stay visible
+ *  (2px when the series has no outline). */
+export const markerStroke = (s: NormSeries): { color: string; width: number } => ({
+    color: s.bordercolor || s.color,
+    width: s.bordercolor ? Math.max(1.5, s.borderwidth) : 2,
+});
 
 /** The category count the cartesian renderers draw. */
 export const categoryCount = (m: Model): number =>
@@ -619,7 +633,7 @@ export const normalize = (def: ChartOptions): Model => {
             trendline: normalizeTrend(s.trendline),
             step: s.step === true || s.step === 'mid' || (s.step == null && (def.step === true || def.step === 'mid')) ? (s.step === 'mid' || (s.step == null && def.step === 'mid') ? 'mid' : 'before') : '',
             // '' = not specified (scatter cycles shapes per series, HC-style)
-            marker: ['circle', 'square', 'triangle', 'diamond'].includes(s.marker as string) ? (s.marker as string) : '',
+            marker: ['circle', 'square', 'triangle', 'diamond', ...STROKE_MARKERS].includes(s.marker as string) ? (s.marker as string) : '',
             points: data.map((p, pi) => p == null
                 ? { name: categories[pi] != null ? categories[pi] : '', value: 0, x: pi, z: 0, extra: [], color: palette[pi % palette.length], gap: true, from: '', to: '', parent: '' }
                 : {

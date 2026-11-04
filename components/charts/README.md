@@ -62,6 +62,13 @@ series take `width`, `dashed` (`true`, `'dashed'`, `'dotted'` or
 `'polynomial'` (`order`) or `'movingAverage'` (`period`), as a type or
 `{ type, order?, period?, color?, dashed?, width? }`.
 
+`marker` (line and scatter points) is a filled `'circle'`, `'square'`,
+`'triangle'` or `'diamond'`, or a stroked `'x'`, `'plus'`, `'dash'` or
+`'star'` (the Excel asterisk, plus and x together): no fill, drawn in
+`bordercolor` (else `color`), `borderwidth` px wide (at least 1.5; 2
+without a `bordercolor`). `markersize` is the radius in px. Unset, scatter
+series cycle circle, diamond, square, triangle.
+
 ### Features
 
 - Legend that shows and hides series, hover tooltip, shared tooltip with

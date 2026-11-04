@@ -276,6 +276,30 @@ describe('components/charts', () => {
         expect(styleN(sw)).toMatch(/--lm-swatch-dot:#FF0000/i);
     });
 
+    it('stroke markers (x/plus/dash/star): no fill, drawn in bordercolor (else color)', () => {
+        handle = t(Chart, { type: 'line', categories: ['A', 'B'], legendposition: 'bottom', series: [
+            { name: 'x', marker: 'x', color: '#ff0000', bordercolor: '#00aa00', data: [1, 2] },
+            { name: 's', marker: 'star', color: '#0000ff', data: [2, 1] },
+        ] });
+        const mk = handle.queryAll('.lm-chart-marker');
+        expect(mk[0].getAttribute('data-shape')).toBe('x');
+        expect(styleN(mk[0])).toContain('--lm-mk-c:#00aa00');
+        expect(styleN(mk[0])).toContain('--lm-mk-w:1.5px'); // at least 1.5px
+        expect(styleN(mk[0])).not.toContain('background');
+        expect(styleN(mk[2])).toContain('--lm-mk-c:#0000ff'); // no bordercolor: the series colour, 2px
+        expect(styleN(mk[2])).toContain('--lm-mk-w:2px');
+        // legend: the shape replaces the line swatch dot
+        const sw = handle.queryAll('.lm-chart-swatch');
+        expect(sw.map((e) => e.getAttribute('data-shape'))).toEqual(['x', 'star']);
+        handle.unmount();
+        // scatter: a stroked path in a nested svg, plus a hit disc
+        handle = t(Chart, { type: 'scatter', series: [{ name: 'p', marker: 'plus', color: '#123456', data: [[1, 1], [2, 2]] }] });
+        const dots = handle.queryAll('svg.lm-chart-dot[data-stroke="plus"]');
+        expect(dots.length).toBe(2);
+        expect(dots[0].querySelector('path')!.getAttribute('d')).toMatch(/^M-?[\d.]+,0H[\d.]+M0,-?[\d.]+V[\d.]+$/);
+        expect(handle.query('.lm-chart-swatch')!.getAttribute('data-shape')).toBe('plus');
+    });
+
     it('legend: false, { show: false } and the "false" attribute all hide it', () => {
         for (const legend of [false, { show: false }, 'false']) {
             handle = t(Chart, { type: 'bar', legend, categories: ['A'], series: [{ name: 's', data: [1] }, { name: 'r', data: [2] }] });
