@@ -438,11 +438,22 @@ export const pie = (m: Model, ctx: RenderCtx): View => {
     const drawn: Slice[] = rings.flatMap((r) => r.drawn);
 
     const dim = (key: string): string | false => (ctx.hover.value && ctx.hover.value !== key ? 'true' : false);
+    // the slice border: the point's bordercolor, else the series' one, the
+    // series borderwidth wide (0 = none); nothing set → the stylesheet's
+    // surface-coloured 1px seam
+    const borderOf = (sl: Slice): string => sl.p.bordercolor || m.series[sl.si].bordercolor;
+    const sliceStyle = (sl: Slice): string => {
+        const color = borderOf(sl);
+        const w = m.series[sl.si].borderwidth;
+        return css(color || w !== 1
+            ? { fill: sl.p.color, stroke: w > 0 ? color || 'var(--lm-chart-surface)' : 'none', 'stroke-width': w > 0 ? w : undefined }
+            : { fill: sl.p.color });
+    };
     const tipText = (sl: { p: NormPoint; percent: number }): string =>
         sl.p.value + ' (' + sl.percent + '%)';
     // several rings: the tooltip names the ring (series) as the row
     const sliceTip = (e: MouseEvent, sl: Slice): void =>
-        ctx.showTip(e, sl.p.name || '—', [{ name: multi ? m.series[sl.si].name : '', value: tipText(sl), color: sl.p.color }]);
+        ctx.showTip(e, sl.p.name || '—', [{ name: multi ? m.series[sl.si].name : '', value: tipText(sl), color: sl.p.color, border: borderOf(sl) }]);
 
     // ---- keyboard navigation: arrows roam slices (outer ring first), Enter/Space activates ----
     // (the cartesian roving model; the focusable container sits OUTSIDE the
@@ -460,7 +471,7 @@ export const pie = (m: Model, ctx: RenderCtx): View => {
             const k = drawn.indexOf(sl);
             const common = (d: string): View => html`<path class="lm-chart-slice" d="${d}" fill-rule="evenodd"
                 data-donut="${disc ? false : 'true'}"
-                style="${css({ fill: sl.p.color })}" data-dim="${dim(sl.key)}"
+                style="${sliceStyle(sl)}" data-dim="${dim(sl.key)}"
                 data-kb="${kbi === k ? 'true' : false}"
                 onmousemove="${(e: MouseEvent) => sliceTip(e, sl)}"
                 ontouchstart="${(e: MouseEvent) => sliceTip(e, sl)}"
@@ -471,7 +482,7 @@ export const pie = (m: Model, ctx: RenderCtx): View => {
             if (r.single) {
                 return disc
                     ? html`<circle class="lm-chart-slice" cx="50" cy="50" r="${f(r.rOut)}"
-                        style="${css({ fill: sl.p.color })}" data-dim="${dim(sl.key)}"
+                        style="${sliceStyle(sl)}" data-dim="${dim(sl.key)}"
                         data-kb="${kbi === k ? 'true' : false}"
                         onmousemove="${(e: MouseEvent) => sliceTip(e, sl)}"
                         ontouchstart="${(e: MouseEvent) => sliceTip(e, sl)}"

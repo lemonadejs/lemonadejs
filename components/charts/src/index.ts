@@ -27,6 +27,10 @@
  * | Text | `wordcloud` |
  *
  * A donut is a `pie` with `innerradius`. An area chart is a `line` with `area`.
+ * Pie slices take a `bordercolor` per point (`{ name, value, color,
+ * bordercolor }`), with the series `bordercolor` as the fallback and its
+ * `borderwidth` (px, default 1; 0 = no border); unset, a thin
+ * surface-coloured seam separates the slices.
  * A `pie` with several series draws one ring per series, the first
  * outermost (a solid pie keeps a disc in the middle); slice k of every
  * ring shares colour k, the legend lists the slices once, and the
@@ -434,7 +438,10 @@ export const Charts = component('charts', {
         if (m.type === 'pie' || m.type === 'polararea' || (m.type === 'radialbar' && m.series.length < 2)
             || (m.type === 'pictogram' && m.waffle)) {
             const points = m.series[0] ? m.series[0].points : [];
-            return points.map((p, i) => ({ name: p.name || '—', color: p.color, key: p.name || '#' + i, line: false, shape: '' }));
+            // slice swatches carry the slice border (point, else series)
+            const s0 = m.series[0];
+            return points.map((p, i) => ({ name: p.name || '—', color: p.color, key: p.name || '#' + i, line: false, shape: '',
+                border: m.type === 'pie' && s0 ? p.bordercolor || s0.bordercolor : '', width: s0 ? s0.borderwidth : 1 }));
         }
         // scatter swatches mirror the marker shape (explicit or the cycled
         // default — keep the order in sync with scatterChart's CYCLE)

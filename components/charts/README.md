@@ -34,6 +34,10 @@ html`<${Charts} type="bar" title="Sales" categories="${categories}" series="${se
 | Text | `wordcloud` |
 
 A donut is a `pie` with `innerradius`. An area chart is a `line` with `area`.
+Pie slices take a `bordercolor` per point (`{ name, value, color,
+bordercolor }`), with the series `bordercolor` as the fallback and its
+`borderwidth` (px, default 1; 0 = no border); unset, a thin
+surface-coloured seam separates the slices.
 A `pie` with several series draws one ring per series, the first
 outermost (a solid pie keeps a disc in the middle); slice k of every
 ring shares colour k, the legend lists the slices once, and the

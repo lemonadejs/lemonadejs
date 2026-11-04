@@ -393,6 +393,32 @@ describe('components/charts', () => {
         expect(handle.query('path.lm-chart-slice')!.getAttribute('d')).toMatch(/^M 50 50 L/);
     });
 
+    it('pie: slice borders from point.bordercolor / series bordercolor + borderwidth', () => {
+        const data = [{ name: 'A', value: 1, bordercolor: '#375623' }, { name: 'B', value: 2 }];
+        // point border, series width; the second slice falls back to the series colour
+        handle = t(Chart, { type: 'pie', legendposition: 'right', series: [{ data, bordercolor: '#ff0000', borderwidth: 2 }] });
+        let sl = handle.queryAll('path.lm-chart-slice');
+        expect(styleN(sl[0])).toMatch(/stroke:(#375623|rgb\(55, 86, 35\))/i);
+        expect(styleN(sl[0])).toContain('stroke-width:2');
+        expect(styleN(sl[1])).toMatch(/stroke:(#ff0000|rgb\(255, 0, 0\))/i);
+        const sw = handle.queryAll('.lm-chart-swatch');
+        expect(styleN(sw[0])).toMatch(/inset 0(px)? 0(px)? 0(px)? 2px (#375623|rgb\(55, 86, 35\))/i);
+        handle.unmount();
+        // nothing set: the stylesheet seam (no inline stroke)
+        handle = t(Chart, { type: 'pie', series: [{ data: [{ name: 'A', value: 1 }, { name: 'B', value: 2 }] }] });
+        expect(styleN(handle.query('path.lm-chart-slice')!)).not.toContain('stroke');
+        handle.unmount();
+        // borderwidth 0: no stroke at all
+        handle = t(Chart, { type: 'pie', series: [{ data, borderwidth: 0 }] });
+        expect(styleN(handle.query('path.lm-chart-slice')!)).toContain('stroke:none');
+        handle.unmount();
+        // rings and the single-slice circle take the border too
+        handle = t(Chart, { type: 'pie', innerradius: 0.4, series: [{ data, bordercolor: '#00f' }, { data: [3], bordercolor: '#0f0' }] });
+        sl = handle.queryAll('.lm-chart-slice');
+        expect(styleN(sl[2])).toMatch(/stroke:(#0f0|#00ff00|rgb\(0, 255, 0\))/i);
+        expect(sl[2].tagName.toLowerCase()).toBe('path'); // the lone inner slice is a full annulus
+    });
+
     it('legend: false, { show: false } and the "false" attribute all hide it', () => {
         for (const legend of [false, { show: false }, 'false']) {
             handle = t(Chart, { type: 'bar', legend, categories: ['A'], series: [{ name: 's', data: [1] }, { name: 'r', data: [2] }] });

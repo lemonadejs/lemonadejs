@@ -25,6 +25,8 @@ export interface ChartPoint {
     z?: number;
     /** Per-point colour override (mainly useful for pie slices). */
     color?: string;
+    /** Per-point outline colour (pie slices); the series `bordercolor` is the fallback. */
+    bordercolor?: string;
     /** Link source node (sankey / chord). */
     from?: string;
     /** Link target node (sankey / chord). */
@@ -46,9 +48,9 @@ export interface ChartSeries {
      *  line and the marker ring, the markers keep `color` as fill (Chart.js
      *  borderColor/backgroundColor). Scatter: the point outline. */
     bordercolor?: string;
-    /** Outline width in px (default 1 when `bordercolor` is set): the bar
-     *  outline, the marker ring, the scatter point stroke. The line width is
-     *  `width`. */
+    /** Outline width in px (default 1): the bar outline, the marker ring,
+     *  the scatter point stroke, the pie slice border (0 = no border). The
+     *  line width is `width`. */
     borderwidth?: number;
     /** Per-series render type for combo charts (overrides the chart `type`).
      *  `'scatter'` (points only) and `'line'` combine in a scatter base chart
@@ -289,7 +291,7 @@ export const categoryCount = (m: Model): number =>
  *  to right. Missing points become gaps so the slots stay aligned. */
 export const reverseCategories = (m: Model): Model => {
     const n = categoryCount(m);
-    const gap: NormPoint = { name: '', value: 0, x: 0, z: 0, extra: [], color: '', gap: true, from: '', to: '', parent: '' };
+    const gap: NormPoint = { name: '', value: 0, x: 0, z: 0, extra: [], color: '', bordercolor: '', gap: true, from: '', to: '', parent: '' };
     return {
         ...m,
         categories: m.categories.length ? Array.from({ length: n }, (_, i) => m.categories[n - 1 - i]) : [],
@@ -433,6 +435,8 @@ const pointName = (p: RawPoint, i: number, categories: string[]): string => {
 
 export interface NormPoint {
     name: string; value: number; x: number; z: number; extra: number[]; color: string; gap: boolean;
+    /** '' = the series outline (pie slices) */
+    bordercolor: string;
     /** link endpoints (sankey/chord) and tree parent (sunburst/icicle) */
     from: string; to: string; parent: string;
 }
@@ -441,7 +445,7 @@ export interface NormSeries {
     color: string;
     /** '' = no outline */
     bordercolor: string;
-    /** px; 0 when there is no outline */
+    /** px (default 1); drawn only with an outline colour, pie slices aside */
     borderwidth: number;
     points: NormPoint[];
     type: 'bar' | 'line' | 'area' | 'scatter';
@@ -623,7 +627,9 @@ export const normalize = (def: ChartOptions): Model => {
             name: s.name != null ? String(s.name) : 'Series ' + (si + 1),
             color: s.color || palette[si % palette.length],
             bordercolor: s.bordercolor ? String(s.bordercolor) : '',
-            borderwidth: s.bordercolor ? (Number(s.borderwidth) >= 0 && s.borderwidth != null && Number.isFinite(Number(s.borderwidth)) ? Number(s.borderwidth) : 1) : 0,
+            // the outline width stands on its own (pie slices may colour their
+            // borders per point): an explicit px value, else 1
+            borderwidth: s.borderwidth != null && Number.isFinite(Number(s.borderwidth)) && Number(s.borderwidth) >= 0 ? Number(s.borderwidth) : 1,
             type: resolveType(s),
             axis: s.axis === 'right' ? 'right' : 'left',
             smooth: s.smooth === true || (s.smooth == null && def.smooth === true),
@@ -637,7 +643,7 @@ export const normalize = (def: ChartOptions): Model => {
             // '' = not specified (scatter cycles shapes per series, HC-style)
             marker: ['circle', 'square', 'triangle', 'diamond', ...STROKE_MARKERS].includes(s.marker as string) ? (s.marker as string) : '',
             points: data.map((p, pi) => p == null
-                ? { name: categories[pi] != null ? categories[pi] : '', value: 0, x: pi, z: 0, extra: [], color: palette[pi % palette.length], gap: true, from: '', to: '', parent: '' }
+                ? { name: categories[pi] != null ? categories[pi] : '', value: 0, x: pi, z: 0, extra: [], color: palette[pi % palette.length], bordercolor: '', gap: true, from: '', to: '', parent: '' }
                 : {
                     name: pointName(p, pi, categories),
                     value: pointValue(p),
@@ -647,6 +653,7 @@ export const normalize = (def: ChartOptions): Model => {
                     extra: Array.isArray(p) ? tuple(p.map(num)) : [],
                     // Pie reads per-point colour first, then walks the palette
                     color: (typeof p === 'object' && !Array.isArray(p) && p && p.color) || palette[pi % palette.length],
+                    bordercolor: typeof p === 'object' && !Array.isArray(p) && p && p.bordercolor ? String(p.bordercolor) : '',
                     gap: false,
                     // link/tree fields (sankey/chord/sunburst/icicle)
                     from: typeof p === 'object' && !Array.isArray(p) && p.from != null ? String(p.from) : '',
