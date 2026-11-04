@@ -358,6 +358,41 @@ describe('components/charts', () => {
         expect(handle.query('.lm-chart-plot')!.getAttribute('data-right')).toBeNull();
     });
 
+    it('pie with several series: one ring per series, slices keyed by category', () => {
+        const series = [
+            { name: '2024', data: [{ name: 'A', value: 1 }, { name: 'B', value: 1 }, { name: 'C', value: 2 }] },
+            { name: '2025', data: [3, 1, 1] },
+        ];
+        handle = t(Chart, { type: 'pie', innerradius: 0.5, series, legendposition: 'right' });
+        const slices = handle.queryAll('path.lm-chart-slice');
+        expect(slices.length).toBe(6);
+        // the inner ring's slices share the outer ring's colours by index
+        expect(styleN(slices[3])).toBe(styleN(slices[0]));
+        // the outer ring reaches R; the inner one stays inside it
+        expect(slices[0].getAttribute('d')).toContain('A 49');
+        expect(slices[3].getAttribute('d')).not.toContain('A 49');
+        // the legend lists the categories once
+        expect(handle.queryAll('.lm-chart-legend-name').map((e) => e.textContent)).toEqual(['A', 'B', 'C']);
+        // hiding a category hides it in every ring
+        (handle.queryAll('.lm-chart-legend-item')[0] as HTMLElement).click();
+        expect(handle.queryAll('path.lm-chart-slice').length).toBe(4);
+        // an unnamed inner slice carries the outer ring's category name
+        expect(handle.queryAll('path.lm-chart-slice')[2].querySelector('title')!.textContent).toMatch(/^B: 1 /);
+        // the a11y table reads as series × category
+        expect(handle.queryAll('.lm-chart-a11y thead th').map((e) => e.textContent)).toEqual(['Series', 'A', 'B', 'C']);
+        handle.unmount();
+        // a solid pie: the inner ring is a disc (wedges from the centre)
+        handle = t(Chart, { type: 'pie', series });
+        const inner = handle.queryAll('path.lm-chart-slice')[3];
+        expect(inner.getAttribute('d')).toMatch(/^M 50 50 L/);
+        expect(inner.getAttribute('data-donut')).toBeNull();
+        handle.unmount();
+        // one series: unchanged (a plain pie, no ring gap)
+        handle = t(Chart, { type: 'pie', series: [series[0]] });
+        expect(handle.queryAll('path.lm-chart-slice').length).toBe(3);
+        expect(handle.query('path.lm-chart-slice')!.getAttribute('d')).toMatch(/^M 50 50 L/);
+    });
+
     it('legend: false, { show: false } and the "false" attribute all hide it', () => {
         for (const legend of [false, { show: false }, 'false']) {
             handle = t(Chart, { type: 'bar', legend, categories: ['A'], series: [{ name: 's', data: [1] }, { name: 'r', data: [2] }] });

@@ -283,12 +283,12 @@ export const polar = (angle: number, r = R): [number, number] => {
 
 export const f = (n: number): string => n.toFixed(3);
 
-/** SVG path for a solid wedge between two angles (degrees). */
-export const wedge = (start: number, end: number): string => {
-    const [x1, y1] = polar(end);
-    const [x2, y2] = polar(start);
+/** SVG path for a solid wedge between two angles (degrees), radius `r`. */
+export const wedge = (start: number, end: number, r = R): string => {
+    const [x1, y1] = polar(end, r);
+    const [x2, y2] = polar(start, r);
     const large = end - start <= 180 ? 0 : 1;
-    return `M 50 50 L ${f(x1)} ${f(y1)} A ${R} ${R} 0 ${large} 0 ${f(x2)} ${f(y2)} Z`;
+    return `M 50 50 L ${f(x1)} ${f(y1)} A ${f(r)} ${f(r)} 0 ${large} 0 ${f(x2)} ${f(y2)} Z`;
 };
 
 /** SVG path for an annular (donut) segment between two angles. */

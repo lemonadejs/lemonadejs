@@ -34,6 +34,10 @@ html`<${Charts} type="bar" title="Sales" categories="${categories}" series="${se
 | Text | `wordcloud` |
 
 A donut is a `pie` with `innerradius`. An area chart is a `line` with `area`.
+A `pie` with several series draws one ring per series, the first
+outermost (a solid pie keeps a disc in the middle); slice k of every
+ring shares colour k, the legend lists the slices once, and the
+tooltip names the ring.
 
 ### Data
 
@@ -196,7 +200,7 @@ state for a two-way live wire. Attribute strings are coerced to the declared typ
 | Prop | Type | Default | Description |
 |---|---|---|---|
 | `type` | string | `"bar"` | bar \| stackedbar \| line \| stackedarea \| streamgraph \| pie \| scatter \| bubble \| radar \| radialbar \| polararea \| gauge \| funnel \| pyramid \| waterfall \| bullet \| lollipop \| dumbbell \| histogram \| heatmap \| candlestick \| ohlc \| boxplot \| arearange \| columnrange \| treemap \| sunburst \| icicle \| sankey \| chord \| arcdiagram \| packedbubble \| pareto \| wordcloud \| pictogram (aka pictorial/isotype/waffle) |
-| `series` | array | — | [{ name, data, color? }]; pie uses the first series |
+| `series` | array | — | [{ name, data, color? }]; pie: one ring per series (the first outermost) |
 | `categories` | array | — | x-axis labels (bar/stacked) / slice names (pie) |
 | `title` | any | — | heading above the plot: string \| { text, font } |
 | `titleposition` | string | `''` | '' above the plot \| 'bottom' |

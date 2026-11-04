@@ -4,7 +4,7 @@
  */
 import { css, html, type View } from 'lemonadejs';
 import { PALETTES, type Model, type NormPoint, type RenderCtx } from './model';
-import { R, f, fullRing, kbKeydown, niceScale, polar, roundedRing, textOn, wedge } from './helpers';
+import { R, annulus, f, kbKeydown, niceScale, polar, roundedRing, textOn, wedge } from './helpers';
 
 /** Inline tip for the keyboard-active mark (the radial twin of the
  *  cartesian .lm-chart-kbtip; state-driven, survives rebuilds). */
@@ -392,122 +392,148 @@ export const funnelChart = (m: Model, ctx: RenderCtx): View => {
 
 /* ----- pie (SVG) ----- */
 export const pie = (m: Model, ctx: RenderCtx): View => {
-    const points = m.series[0] ? m.series[0].points : [];
-    const pkey = (p: NormPoint, i: number): string => p.name || '#' + i;
-    // Hidden slices drop out and the pie renormalises over what's left
-    const vis = points.map((p, i) => ({ p, i, key: pkey(p, i) }))
-        .filter((e) => !ctx.isHidden(e.key));
-    const total = vis.reduce((s, e) => s + Math.max(0, e.p.value), 0);
-
-    // One full-circle slice can't be expressed as a single arc → draw a circle
-    const single = vis.filter((e) => e.p.value > 0).length === 1;
-
-    // Donut hole (0 = solid pie); labels sit at the slice's mid-radius
-    const rInner = m.innerRadius * R;
-    const labelR = m.innerRadius > 0 ? (R + rInner) / 2 : R * 0.62;
-
-    let angle = 0;
-    const slices = vis.map((e) => {
-        const frac = total > 0 ? Math.max(0, e.p.value) / total : 0;
-        const start = angle;
-        const end = angle + frac * 360;
-        angle = end;
-        const [lx, ly] = polar((start + end) / 2, labelR); // label anchor at mid-radius
-        return { p: e.p, i: e.i, key: e.key, frac, start, end, lx, ly, percent: Math.round(frac * 100) };
-    });
-
-    // A single 100% slice cannot be one SVG arc → draw a full circle instead
-    const drawn = slices.filter((s) => s.frac > 0);
-    const dim = (key: string): string | false => (ctx.hover.value && ctx.hover.value !== key ? 'true' : false);
-    const tipText = (s: { p: NormPoint; percent: number }): string =>
-        s.p.value + ' (' + s.percent + '%)';
-    const sliceTip = (e: MouseEvent, s: { p: NormPoint; percent: number }): void =>
-        ctx.showTip(e, s.p.name || '—', [{ name: '', value: tipText(s), color: s.p.color }]);
+    // Every series is a ring: series[0] outermost, the next ones inside it
+    // (Chart.js / Excel multi-dataset doughnut). The slices are keyed by
+    // CATEGORY (the first series' point names), so hiding one in the legend
+    // hides it in every ring, and the slice k of every ring has the colour k.
+    const first = m.series[0] ? m.series[0].points : [];
+    const keyAt = (ring: NormPoint[], i: number): string =>
+        (first[i] && first[i].name) || ring[i].name || '#' + i;
+    const nRings = Math.max(1, m.series.length);
+    const multi = nRings > 1;
     const donut = m.innerRadius > 0;
+    // the radial room: from the hole (or the centre) out to R, one band per
+    // ring with a hairline gap between bands; a solid pie's innermost ring
+    // is a full disc
+    const rHole = m.innerRadius * R;
+    const gap = multi ? 0.8 : 0;
+    const band = (R - rHole) / nRings;
+    const q = m.borderRadius != null ? m.borderRadius : 1.5;
 
-    // ---- keyboard navigation: arrows roam slices, Enter/Space activates ----
+    interface Slice { p: NormPoint; i: number; si: number; key: string; frac: number; start: number; end: number; percent: number; rOut: number; rIn: number; }
+    const rings = m.series.map((ser, si) => {
+        const rOut = R - band * si;
+        const rIn = Math.max(0, rOut - band + (si < nRings - 1 ? gap : 0));
+        // an unnamed point (plain numbers) takes the category name of the
+        // first ring, for the tooltip, the labels and the click payload
+        const vis = ser.points.map((p, i) => ({
+            p: !p.name && first[i] && first[i].name ? { ...p, name: first[i].name } : p,
+            i, key: keyAt(ser.points, i),
+        })).filter((e) => !ctx.isHidden(e.key));
+        const total = vis.reduce((sum, e) => sum + Math.max(0, e.p.value), 0);
+        let angle = 0;
+        const slices: Slice[] = vis.map((e) => {
+            const frac = total > 0 ? Math.max(0, e.p.value) / total : 0;
+            const start = angle;
+            const end = angle + frac * 360;
+            angle = end;
+            return { p: e.p, i: e.i, si, key: e.key, frac, start, end, percent: Math.round(frac * 100), rOut, rIn };
+        });
+        // one 100% slice cannot be one SVG arc → a full disc / annulus
+        const drawn = slices.filter((sl) => sl.frac > 0);
+        return { ser, si, rOut, rIn, total, drawn, single: drawn.length === 1 };
+    });
+    const total = rings[0] ? rings[0].total : 0;
+    const anyData = rings.some((r) => r.total > 0);
+    const drawn: Slice[] = rings.flatMap((r) => r.drawn);
+
+    const dim = (key: string): string | false => (ctx.hover.value && ctx.hover.value !== key ? 'true' : false);
+    const tipText = (sl: { p: NormPoint; percent: number }): string =>
+        sl.p.value + ' (' + sl.percent + '%)';
+    // several rings: the tooltip names the ring (series) as the row
+    const sliceTip = (e: MouseEvent, sl: Slice): void =>
+        ctx.showTip(e, sl.p.name || '—', [{ name: multi ? m.series[sl.si].name : '', value: tipText(sl), color: sl.p.color }]);
+
+    // ---- keyboard navigation: arrows roam slices (outer ring first), Enter/Space activates ----
     // (the cartesian roving model; the focusable container sits OUTSIDE the
     // aria-hidden svg, so no focusable element lands in a hidden subtree)
     const nKb = drawn.length;
     const kbi = kbIndex(ctx.kb.value, nKb);
-    const kbKey = kbKeydown(ctx.kb, nKb, (i) => ctx.fire(drawn[i].p, 0, drawn[i].i));
+    const kbKey = kbKeydown(ctx.kb, nKb, (i) => ctx.fire(drawn[i].p, drawn[i].si, drawn[i].i));
     const kbLabel = kbi == null
         ? (nKb ? 'Pie chart, ' + nKb + ' slices. Use arrow keys to explore.' : '')
-        : (drawn[kbi].p.name || '—') + ': ' + tipText(drawn[kbi]) + '. Slice ' + (kbi + 1) + ' of ' + nKb + '.';
+        : (drawn[kbi].p.name || '—') + (multi ? ' (' + m.series[drawn[kbi].si].name + ')' : '') + ': ' + tipText(drawn[kbi]) + '. Slice ' + (kbi + 1) + ' of ' + nKb + '.';
 
-    const wedges: View[] = single
-        ? [donut
-            ? html`<path class="lm-chart-slice" d="${fullRing(rInner)}" fill-rule="evenodd"
-                style="${css({ fill: drawn[0].p.color })}" data-dim="${dim(drawn[0].key)}"
-                data-kb="${kbi === 0 ? 'true' : false}"
-                onmousemove="${(e: MouseEvent) => sliceTip(e, drawn[0])}"
-            ontouchstart="${(e: MouseEvent) => sliceTip(e, drawn[0])}"
-                onmouseleave="${ctx.hideTip}" />`
-            : html`<circle class="lm-chart-slice" cx="50" cy="50" r="${String(R)}"
-                style="${css({ fill: drawn[0].p.color })}" data-dim="${dim(drawn[0].key)}"
-                data-kb="${kbi === 0 ? 'true' : false}"
-                onmousemove="${(e: MouseEvent) => sliceTip(e, drawn[0])}"
-            ontouchstart="${(e: MouseEvent) => sliceTip(e, drawn[0])}"
-                onmouseleave="${ctx.hideTip}" />`]
-        : drawn.map((s, k) => {
-            // donut segments: real ring paths with rounded corners — the
+    const wedges: View[] = rings.flatMap((r) => {
+        const disc = r.rIn <= 0; // the solid centre of a pie
+        return r.drawn.map((sl) => {
+            const k = drawn.indexOf(sl);
+            const common = (d: string): View => html`<path class="lm-chart-slice" d="${d}" fill-rule="evenodd"
+                data-donut="${disc ? false : 'true'}"
+                style="${css({ fill: sl.p.color })}" data-dim="${dim(sl.key)}"
+                data-kb="${kbi === k ? 'true' : false}"
+                onmousemove="${(e: MouseEvent) => sliceTip(e, sl)}"
+                ontouchstart="${(e: MouseEvent) => sliceTip(e, sl)}"
+                onmouseleave="${ctx.hideTip}"
+                onclick="${() => ctx.fire(sl.p, sl.si, sl.i)}">
+                <title>${sl.p.name + ': ' + sl.p.value + ' (' + sl.percent + '%)'}</title>
+            </path>`;
+            if (r.single) {
+                return disc
+                    ? html`<circle class="lm-chart-slice" cx="50" cy="50" r="${f(r.rOut)}"
+                        style="${css({ fill: sl.p.color })}" data-dim="${dim(sl.key)}"
+                        data-kb="${kbi === k ? 'true' : false}"
+                        onmousemove="${(e: MouseEvent) => sliceTip(e, sl)}"
+                        ontouchstart="${(e: MouseEvent) => sliceTip(e, sl)}"
+                        onmouseleave="${ctx.hideTip}"
+                        onclick="${() => ctx.fire(sl.p, sl.si, sl.i)}" />`
+                    : common(annulus(r.rOut, r.rIn));
+            }
+            // ring segments: real ring paths with rounded corners — the
             // radius comes from `borderradius` (default a subtle 1.5 units,
             // Highcharts-like; crank it up for the fully-round pill look).
             // A small angular gap separates the segments.
-            const q = m.borderRadius != null ? m.borderRadius : 1.5;
-            const a0 = s.start + (donut ? 0.4 : 0);
-            const a1 = donut ? Math.max(a0 + 0.3, s.end - 0.4) : s.end;
-            return html`<path
-            d="${donut ? roundedRing(a0, a1, R, rInner, q) : wedge(s.start, s.end)}"
-            class="lm-chart-slice"
-            data-donut="${donut ? 'true' : false}"
-            style="${css({ fill: s.p.color })}"
-            data-dim="${dim(s.key)}"
-            data-kb="${kbi === k ? 'true' : false}"
-            onmousemove="${(e: MouseEvent) => sliceTip(e, s)}"
-            ontouchstart="${(e: MouseEvent) => sliceTip(e, s)}"
-            onmouseleave="${ctx.hideTip}"
-            onclick="${() => ctx.fire(s.p, 0, s.i)}">
-            <title>${s.p.name + ': ' + s.p.value + ' (' + s.percent + '%)'}</title>
-        </path>`;
+            if (disc) return common(wedge(sl.start, sl.end, r.rOut));
+            const a0 = sl.start + 0.4;
+            const a1 = Math.max(a0 + 0.3, sl.end - 0.4);
+            return common(roundedRing(a0, a1, r.rOut, r.rIn, q));
         });
+    });
 
     // Labels as fixed-px HTML overlays (consistent across pie sizes, unlike
     // SVG <text> which scales with the viewBox). Highcharts-pie style:
-    // EVERY labelled slice gets its NAME outside on an elbow connector;
-    // big-enough slices also carry a percentage CHIP at mid-radius whose
-    // colours invert against the slice (dark chip on dark, white on light).
+    // EVERY labelled slice of the OUTER ring gets its NAME outside on an
+    // elbow connector; big-enough slices of every ring also carry a
+    // percentage CHIP at the ring's mid-radius whose colours invert against
+    // the slice (dark chip on dark, white on light).
     const insideLabels: View[] = [];
     const outsideLabels: View[] = [];
     const leaders: View[] = [];
     if (m.labels) {
-        for (const s of drawn) {
-            if (s.frac < 0.015) continue; // invisible sliver: no label
-            const mid = (s.start + s.end) / 2;
-            const chip = s.frac >= 0.05;
-            if (chip) {
-                const darkSlice = textOn(s.p.color) === '#ffffff';
-                insideLabels.push(html`<span class="lm-chart-pie-label" style="${css({
-                    left: s.lx.toFixed(2) + '%',
-                    top: s.ly.toFixed(2) + '%',
-                    background: darkSlice ? '#1f2329' : '#ffffff',
-                    color: darkSlice ? '#ffffff' : '#333333',
-                })}">${s.percent + '%'}</span>`);
+        for (const r of rings) {
+            // chips need room: a thin ring (several of them) goes without
+            const chips = r.rOut - r.rIn >= 9;
+            const labelR = r.rIn > 0 ? (r.rOut + r.rIn) / 2 : r.rOut * 0.62;
+            for (const sl of r.drawn) {
+                if (sl.frac < 0.015) continue; // invisible sliver: no label
+                const mid = (sl.start + sl.end) / 2;
+                const chip = chips && sl.frac >= 0.05;
+                if (chip) {
+                    const [lx, ly] = polar(mid, labelR);
+                    const darkSlice = textOn(sl.p.color) === '#ffffff';
+                    insideLabels.push(html`<span class="lm-chart-pie-label" style="${css({
+                        left: lx.toFixed(2) + '%',
+                        top: ly.toFixed(2) + '%',
+                        background: darkSlice ? '#1f2329' : '#ffffff',
+                        color: darkSlice ? '#ffffff' : '#333333',
+                    })}">${sl.percent + '%'}</span>`);
+                }
+                if (r.si !== 0) continue;
+                const [ax, ay] = polar(mid, R - 1);   // connector start (slice edge)
+                const [bx, by] = polar(mid, R + 5);   // radial elbow
+                const side = bx < 50 ? -1 : 1;        // horizontal stub direction
+                const ex = bx + side * 3.5;
+                leaders.push(html`<polyline class="lm-chart-leader"
+                    points="${ax.toFixed(2)},${ay.toFixed(2)} ${bx.toFixed(2)},${by.toFixed(2)} ${ex.toFixed(2)},${by.toFixed(2)}" />`);
+                outsideLabels.push(html`<span class="lm-chart-pie-olabel" data-side="${side < 0 ? 'l' : 'r'}"
+                    style="${css({ left: (ex + side).toFixed(2) + '%', top: by.toFixed(2) + '%' })}"
+                    >${(sl.p.name || ctx.fmt(sl.p.value)) + (chip ? '' : ' · ' + sl.percent + '%')}</span>`);
             }
-            const [ax, ay] = polar(mid, R - 1);   // connector start (slice edge)
-            const [bx, by] = polar(mid, R + 5);   // radial elbow
-            const side = bx < 50 ? -1 : 1;        // horizontal stub direction
-            const ex = bx + side * 3.5;
-            leaders.push(html`<polyline class="lm-chart-leader"
-                points="${ax.toFixed(2)},${ay.toFixed(2)} ${bx.toFixed(2)},${by.toFixed(2)} ${ex.toFixed(2)},${by.toFixed(2)}" />`);
-            outsideLabels.push(html`<span class="lm-chart-pie-olabel" data-side="${side < 0 ? 'l' : 'r'}"
-                style="${css({ left: (ex + side).toFixed(2) + '%', top: by.toFixed(2) + '%' })}"
-                >${(s.p.name || ctx.fmt(s.p.value)) + (chip ? '' : ' · ' + s.percent + '%')}</span>`);
         }
     }
 
-    // Donut centre shows the total (only when there is a hole to fill)
-    const center = donut && m.labels
+    // Donut centre shows the total (one ring only: with several, whose?)
+    const center = donut && m.labels && !multi
         ? html`<div class="lm-chart-donut-center">${ctx.fmt(total)}</div>`
         : false;
 
@@ -518,10 +544,10 @@ export const pie = (m: Model, ctx: RenderCtx): View => {
             onkeydown="${kbKey}"
             onblur="${() => { if (ctx.kb.value != null) ctx.kb.value = null; }}">${center}
             <svg class="lm-chart-pie" viewBox="0 0 100 100" aria-hidden="true">${
-                total <= 0 ? false : wedges
-            }${total <= 0 ? false : leaders}</svg>${
-                total <= 0 ? false : insideLabels
-            }${total <= 0 ? false : outsideLabels}
+                !anyData ? false : wedges
+            }${!anyData ? false : leaders}</svg>${
+                !anyData ? false : insideLabels
+            }${!anyData ? false : outsideLabels}
             ${kbi != null ? kbTip(drawn[kbi].p.name || '—', tipText(drawn[kbi]), drawn[kbi].p.color) : false}
         </div>
     </div>`;

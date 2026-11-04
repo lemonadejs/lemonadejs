@@ -27,6 +27,10 @@
  * | Text | `wordcloud` |
  *
  * A donut is a `pie` with `innerradius`. An area chart is a `line` with `area`.
+ * A `pie` with several series draws one ring per series, the first
+ * outermost (a solid pie keeps a disc in the middle); slice k of every
+ * ring shares colour k, the legend lists the slices once, and the
+ * tooltip names the ring.
  *
  * ### Data
  *
@@ -190,7 +194,7 @@ export type { ChartPoint, ChartSeries, PlotBand, PlotLine, Annotation, ChartFont
 
 export const Charts = component('charts', {
     type: 'bar',             // bar | stackedbar | line | stackedarea | streamgraph | pie | scatter | bubble | radar | radialbar | polararea | gauge | funnel | pyramid | waterfall | bullet | lollipop | dumbbell | histogram | heatmap | candlestick | ohlc | boxplot | arearange | columnrange | treemap | sunburst | icicle | sankey | chord | arcdiagram | packedbubble | pareto | wordcloud | pictogram (aka pictorial/isotype/waffle)
-    series: Array,           // [{ name, data, color? }]; pie uses the first series
+    series: Array,           // [{ name, data, color? }]; pie: one ring per series (the first outermost)
     categories: Array,       // x-axis labels (bar/stacked) / slice names (pie)
     title: null,             // heading above the plot: string | { text, font }
     titleposition: '',       // '' above the plot | 'bottom'
@@ -535,8 +539,10 @@ export const Charts = component('charts', {
     /** True when there is at least one visible, non-zero data point to draw. */
     const hasData = (m: Model): boolean => {
         if (m.type === 'pie') {
-            const pts = m.series[0] ? m.series[0].points : [];
-            return pts.some((p, i) => !isHidden(p.name || '#' + i) && p.value !== 0);
+            // slices are keyed by the first ring's names (shared across rings)
+            const first = m.series[0] ? m.series[0].points : [];
+            return m.series.some((s) => s.points.some((p, i) =>
+                !isHidden((first[i] && first[i].name) || p.name || '#' + i) && p.value !== 0));
         }
         if (m.type === 'gauge' || m.type === 'bullet') return !!(m.series[0] && m.series[0].points[0]);
         // link diagrams need at least one complete positive link
@@ -561,7 +567,7 @@ export const Charts = component('charts', {
         const ttl = m.title ? ', titled "' + m.title + '"' : '';
         if (m.type === 'pie') {
             const pts = m.series[0] ? m.series[0].points : [];
-            return 'Pie chart' + ttl + ', ' + pts.length + ' slices.';
+            return 'Pie chart' + ttl + ', ' + pts.length + ' slices' + (m.series.length > 1 ? ', ' + m.series.length + ' rings' : '') + '.';
         }
         const ns = m.series.length;
         const nc = m.categories.length;
@@ -581,9 +587,9 @@ export const Charts = component('charts', {
                     html`<tr><td>${p.from}</td><td>${p.to}</td><td>${fmt(p.value)}</td></tr>`)}</tbody>
             </table>`;
         }
-        // multi-series waffles read as a Series × Category matrix instead
+        // multi-series waffles and pies (rings) read as a Series × Category matrix instead
         const nameVal = ['pie', 'funnel', 'treemap', 'polararea', 'radialbar', 'sunburst', 'icicle', 'packedbubble', 'wordcloud', 'pictogram'].includes(m.type)
-            && !(m.waffle && m.series.length > 1);
+            && !((m.waffle || m.type === 'pie') && m.series.length > 1);
         const head = nameVal
             ? html`<tr><th>Name</th><th>Value</th></tr>`
             : html`<tr><th>Series</th>${cols.map((c) => html`<th>${String(c)}</th>`)}</tr>`;
@@ -617,7 +623,7 @@ export const Charts = component('charts', {
             (m.series[0] ? m.series[0].points : []).filter((p) => !p.gap)
                 .forEach((p, i) => lines.push([p.name || String(i + 1), p.parent, String(p.value)].map(esc).join(',')));
         } else if (['pie', 'funnel', 'pyramid', 'treemap', 'polararea', 'radialbar', 'packedbubble', 'wordcloud', 'pictogram'].includes(m.type)
-            && !(m.waffle && m.series.length > 1)) {
+            && !((m.waffle || m.type === 'pie') && m.series.length > 1)) {
             lines.push('Name,Value');
             (m.series[0] ? m.series[0].points : []).forEach((p, i) => lines.push(esc(p.name || String(i + 1)) + ',' + p.value));
         } else if (ext[m.type]) {
