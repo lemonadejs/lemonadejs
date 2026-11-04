@@ -445,6 +445,23 @@ describe('components/charts', () => {
         expect(handle.queryAll('.lm-chart-cat-label').map((e) => e.textContent).filter(Boolean).length).toBe(4);
     });
 
+    it('histogram: shows the series legend (name, bar colour) and toggles the bars', () => {
+        handle = t(Chart, { type: 'histogram', bins: 2, series: [{ name: 'Valor', color: '#123456', bordercolor: '#000', data: [1, 2, 3, 4] }] });
+        const items = handle.queryAll('.lm-chart-legend-item');
+        expect(items.map((e) => e.textContent!.trim())).toEqual(['Valor']);
+        expect(styleN(handle.query('.lm-chart-swatch')!)).toMatch(/background:(#123456|rgb\(18, 52, 86\))/i);
+        expect(handle.queryAll('.lm-chart-bar').length).toBe(2);
+        (items[0] as HTMLElement).click();
+        expect(handle.queryAll('.lm-chart-bar').length).toBe(0);
+        handle.unmount();
+        // no name: the "Frequency" fallback; legend: false hides it
+        handle = t(Chart, { type: 'histogram', series: [{ data: [1, 2, 3] }] });
+        expect(handle.query('.lm-chart-legend-name')!.textContent).toBe('Frequency');
+        handle.unmount();
+        handle = t(Chart, { type: 'histogram', legend: false, series: [{ data: [1, 2, 3] }] });
+        expect(handle.query('.lm-chart-legend')).toBeNull();
+    });
+
     it('legend: false, { show: false } and the "false" attribute all hide it', () => {
         for (const legend of [false, { show: false }, 'false']) {
             handle = t(Chart, { type: 'bar', legend, categories: ['A'], series: [{ name: 's', data: [1] }, { name: 'r', data: [2] }] });
@@ -574,8 +591,8 @@ describe('components/charts', () => {
         expect(handle.queryAll('.lm-chart-value').map((l) => l.textContent)).toEqual(['4', '1', '2', '3']);
         // bin labels are intervals
         expect(handle.query('.lm-chart-cat-label')!.textContent).toBe('[1, 3]');
-        // no legend for a frequency chart
-        expect(handle.query('.lm-chart-legend')).toBeNull();
+        // the legend names the series (the "Frequency" fallback here)
+        expect(handle.query('.lm-chart-legend-name')!.textContent).toBe('Frequency');
     });
 
     it('histogram: unset bins falls back to Sturges’ rule', () => {

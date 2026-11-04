@@ -500,7 +500,7 @@ export const Charts = component('charts', {
         const pos = m.legendposition
             || (['pie', 'radar', 'polararea', 'radialbar'].includes(m.type) ? 'right' : 'bottom');
         const noLegend = ['gauge', 'funnel', 'pyramid', 'waterfall', 'bullet', 'heatmap',
-            'candlestick', 'ohlc', 'boxplot', 'arearange', 'columnrange', 'dumbbell', 'histogram', 'treemap',
+            'candlestick', 'ohlc', 'boxplot', 'arearange', 'columnrange', 'dumbbell', 'treemap',
             'sankey', 'chord', 'arcdiagram', 'sunburst', 'icicle', 'wordcloud'].includes(m.type)
             // pictogram rows carry their own labels; the WAFFLE variant needs
             // the category legend (its colours aren't labelled anywhere else)
