@@ -188,8 +188,10 @@ export interface ChartAxis {
     font?: ChartFont;
     /** `false` hides the tick labels (and frees their gutter) */
     labels?: boolean;
-    /** yaxis only: reverse the axis — values grow downwards, or with
-     *  `horizontal` the first category sits at the bottom (`yreverse`) */
+    /** reverse the axis (physical): on yaxis the values grow downwards, or
+     *  with `horizontal` the first category sits at the bottom (`yreverse`);
+     *  on xaxis the first category sits at the right, or the values (and a
+     *  continuous / scatter x) grow leftwards */
     reverse?: boolean;
     /** the gridlines this axis draws (x = vertical lines, y = horizontal) */
     grid?: ChartGrid;
@@ -256,6 +258,23 @@ export const fontVars = (fonts: ChartFonts | null | undefined): Record<string, s
         if (f.italic != null) out[pre + 'style'] = f.italic ? 'italic' : 'normal';
     }
     return out;
+};
+
+/** The category count the cartesian renderers draw. */
+export const categoryCount = (m: Model): number =>
+    m.categories.length || (m.series[0] ? m.series[0].points.length : 0);
+
+/** The model with its categories (and every series' points) in reverse
+ *  order: a reversed category axis drawn by renderers that only know left
+ *  to right. Missing points become gaps so the slots stay aligned. */
+export const reverseCategories = (m: Model): Model => {
+    const n = categoryCount(m);
+    const gap: NormPoint = { name: '', value: 0, x: 0, z: 0, extra: [], color: '', gap: true, from: '', to: '', parent: '' };
+    return {
+        ...m,
+        categories: m.categories.length ? Array.from({ length: n }, (_, i) => m.categories[n - 1 - i]) : [],
+        series: m.series.map((s) => ({ ...s, points: Array.from({ length: n }, (_, i) => s.points[n - 1 - i] || gap) })),
+    };
 };
 
 /** The custom properties behind the per-axis grid (--lm-chart-xgrid-*,
@@ -458,6 +477,8 @@ export interface Model {
     ylog: boolean;
     ystep: number | null;
     yreverse: boolean;
+    /** the bottom axis is reversed (xaxis.reverse) */
+    xreverse: boolean;
     xmin: number | null;
     xmax: number | null;
     plotlines: PlotLine[];
@@ -650,6 +671,7 @@ export const normalize = (def: ChartOptions): Model => {
         ystep: Number(def.ystep) > 0 ? Number(def.ystep) : null,
         // physical (the left axis): yaxis.reverse wins over the flat yreverse
         yreverse: isObj(def.yaxis) && def.yaxis.reverse != null ? def.yaxis.reverse === true : def.yreverse === true,
+        xreverse: isObj(def.xaxis) && def.xaxis.reverse === true,
         xmin: def.xmin != null && Number.isFinite(Number(def.xmin)) ? Number(def.xmin) : null,
         xmax: def.xmax != null && Number.isFinite(Number(def.xmax)) ? Number(def.xmax) : null,
         plotlines: Array.isArray(def.plotlines) ? def.plotlines : [],

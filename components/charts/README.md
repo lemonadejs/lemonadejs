@@ -109,9 +109,13 @@ overrides `gridlines: false`. A category axis has no lines by default; a
 categories are on `yaxis`. The fields are the CSS variables
 `--lm-chart-xgrid-color`, `-width` and `-style` (and `ygrid`).
 
-`yaxis: { reverse: true }` (or `yreverse`) reverses the left axis: the
-values grow downwards, or with `horizontal` the categories run bottom to
-top (the Excel default). Click and tooltip indices keep the data order.
+`reverse: true` reverses an axis, physically like the rest:
+`yaxis.reverse` (or `yreverse`) makes the values grow downwards, or with
+`horizontal` runs the categories bottom to top (the Excel default);
+`xaxis.reverse` runs the categories right to left, or with `horizontal`
+(and on a continuous or scatter x) makes the values grow leftwards. The
+waterfall keeps its running total in data order, trendlines are fitted
+in data order and mirrored, and click indices stay data indices.
 
 The plain forms still work: `title: 'Sales'`, `legend: false`, and the
 flat `legendposition`, `legendtitle`, `xtitle`, `ytitle` and `y2title`.
@@ -178,7 +182,7 @@ state for a two-way live wire. Attribute strings are coerced to the declared typ
 | `xtitle` | string | `''` | x-axis title (or xaxis.title) |
 | `ytitle` | string | `''` | y-axis (left) title (or yaxis.title) |
 | `y2title` | string | `''` | secondary y-axis (right) title (or y2axis.title) |
-| `xaxis` | object | — | bottom axis { title?, titlefont?, font?, labels?, grid? } — font = its tick labels; labels: false hides them; grid = its vertical lines |
+| `xaxis` | object | — | bottom axis { title?, titlefont?, font?, labels?, grid?, reverse? } — font = its tick labels; labels: false hides them; grid = its vertical lines |
 | `yaxis` | object | — | left axis { title?, titlefont?, font?, labels?, grid?, reverse? } — grid = the horizontal lines |
 | `y2axis` | object | — | right axis { title?, titlefont?, font?, labels? } (falls back to yaxis fonts) |
 | `markers` | boolean | `true` | line/area: show point markers |

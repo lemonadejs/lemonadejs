@@ -170,6 +170,47 @@ describe('components/charts', () => {
         expect(handle.query('.lm-chart-ycats')!.getAttribute('data-reverse')).toBeNull();
     });
 
+    it('xaxis.reverse: vertical categories run right to left; clicks keep the data index', () => {
+        const clicks: number[] = [];
+        handle = t(Chart, { type: 'bar', categories: ['A', 'B', 'C'], series: [{ name: 's', data: [1, 2, 3] }],
+            xaxis: { reverse: true }, onpointclick: (_p: unknown, at: { pointIndex: number }) => clicks.push(at.pointIndex) });
+        expect(handle.queryAll('.lm-chart-cat-label').map((e) => e.textContent)).toEqual(['C', 'B', 'A']);
+        const bars = handle.queryAll('.lm-chart-bar');
+        (bars[0] as HTMLElement).click(); // the leftmost bar is C
+        expect(clicks).toEqual([2]);
+        // the hidden a11y table keeps the data order
+        expect(handle.queryAll('.lm-chart-a11y thead th').map((e) => e.textContent)).toEqual(['Series', 'A', 'B', 'C']);
+    });
+
+    it('xaxis.reverse: horizontal bars grow leftwards; boxplot and waterfall reverse too', () => {
+        handle = t(Chart, { type: 'bar', horizontal: true, categories: ['A'], series: [{ name: 's', data: [50] }], xmin: 0, ymin: 0, ymax: 100, xaxis: { reverse: true } });
+        const vals = handle.queryAll('.lm-chart-xval').map((e) => Number(e.textContent));
+        expect(vals[0]).toBeGreaterThan(vals[vals.length - 1]);
+        expect(handle.queryAll('.lm-chart-ycat').map((e) => e.textContent)).toEqual(['A']); // categories untouched
+        handle.unmount();
+        handle = t(Chart, { type: 'boxplot', categories: ['A', 'B'], series: [{ name: 's', data: [[1, 2, 3, 4, 5], [2, 3, 4, 5, 6]] }], xaxis: { reverse: true } });
+        expect(handle.queryAll('.lm-chart-cat-label').map((e) => e.textContent)).toEqual(['B', 'A']);
+        handle.unmount();
+        handle = t(Chart, { type: 'waterfall', categories: ['A', 'B', 'C'], series: [{ name: 's', data: [5, -2, 4] }], xaxis: { reverse: true } });
+        expect(handle.queryAll('.lm-chart-cat-label').map((e) => e.textContent)).toEqual(['C', 'B', 'A']);
+        // running total in data order: C ends at 7 (5 − 2 + 4)
+        expect(handle.queryAll('.lm-chart-value').map((e) => e.textContent)).toEqual(['+4', '-2', '+5']);
+    });
+
+    it('xaxis.reverse on a linear x: ticks right to left, points keep their x values', () => {
+        handle = t(Chart, { type: 'line', xtype: 'linear', categories: [0, 2, 4, 6, 8], series: [{ name: 's', data: [1, 3, 2, 5, 4] }], xaxis: { reverse: true } });
+        const ticks = handle.queryAll('.lm-chart-xtick').map((e) => ({ v: Number(e.textContent), left: parseFloat((e as HTMLElement).style.left) }));
+        expect(ticks.find((k) => k.v === 0)!.left).toBeCloseTo(100);
+        expect(ticks.find((k) => k.v === 8)!.left).toBeCloseTo(0);
+    });
+
+    it('xaxis/yaxis.reverse on scatter: x labels right to left, y labels top to bottom ascending', () => {
+        handle = t(Chart, { type: 'scatter', series: [{ name: 's', data: [[0, 0], [10, 10]] }], xmin: 0, xmax: 8, ymin: 0, ymax: 8,
+            xaxis: { reverse: true }, yaxis: { reverse: true } });
+        expect(handle.queryAll('.lm-chart-xval').map((e) => e.textContent)).toEqual(['8', '6', '4', '2', '0']);
+        expect(handle.queryAll('.lm-chart-tick').map((e) => e.textContent)).toEqual(['0', '2', '4', '6', '8']);
+    });
+
     it('legend: false, { show: false } and the "false" attribute all hide it', () => {
         for (const legend of [false, { show: false }, 'false']) {
             handle = t(Chart, { type: 'bar', legend, categories: ['A'], series: [{ name: 's', data: [1] }, { name: 'r', data: [2] }] });

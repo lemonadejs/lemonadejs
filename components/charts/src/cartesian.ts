@@ -42,16 +42,18 @@ interface Scale {
     frac: (v: number) => number;
 }
 
-export const bars = (mFull: Model, ctx: RenderCtx): View => {
+export const bars = (mFull: Model, ctx0: RenderCtx): View => {
     // zoom: slice the data to the active category window (bar/line only).
     // Either drag-select (zoom) or the navigator strip can drive the window.
     const rangeType = ['bar', 'stackedbar', 'line', 'stackedarea', 'streamgraph', 'histogram'].includes(mFull.type);
-    const zoomable = ctx.zoom() && rangeType; // drag-select on the plot
-    const zr = (zoomable || (ctx.navigator() && rangeType)) ? ctx.zoomRange.value : null;
+    const zoomable = ctx0.zoom() && rangeType; // drag-select on the plot
+    const zr = (zoomable || (ctx0.navigator() && rangeType)) ? ctx0.zoomRange.value : null;
     const fullN = mFull.categories.length || (mFull.series[0] ? mFull.series[0].points.length : 0);
     const mz: Model = zr
         ? { ...mFull, categories: mFull.categories.slice(zr[0], zr[1] + 1), series: mFull.series.map((s) => ({ ...s, points: s.points.slice(zr[0], zr[1] + 1) })) }
         : mFull;
+    // events report the index in the full data, not in the zoom window
+    const ctx: RenderCtx = zr ? { ...ctx0, fire: (p, si, i) => ctx0.fire(p, si, zr[0] + i) } : ctx0;
 
     // population pyramid (`mirror`, horizontal only): series[0] grows
     // leftward — negate its values here and read ABSOLUTE numbers in every
@@ -106,9 +108,11 @@ export const bars = (mFull: Model, ctx: RenderCtx): View => {
     const crosshair = lineSeries.length > 0 && barSeries.length === 0;
     // horizontal bars: only for pure bar/stacked (categories move to the y-axis)
     const horizontal = m.horizontal && lineSeries.length === 0;
-    // yreverse flips the value axis — unless horizontal, where the y axis
-    // holds the categories (their order flips in CSS instead)
-    const valueReverse = m.yreverse && !horizontal;
+    // reversed axes are physical: vertical → yreverse flips the values;
+    // horizontal → the values are on x (xreverse), while yreverse flips the
+    // category order in CSS. A reversed category x arrives as reversed data
+    // (index.ts), a continuous x flips its positions here.
+    const valueReverse = horizontal ? m.xreverse : m.yreverse;
 
     // continuous x (datetime/linear): line/area points sit at their x VALUE,
     // not evenly by index; ticks are smart date/number boundaries
@@ -126,8 +130,15 @@ export const bars = (mFull: Model, ctx: RenderCtx): View => {
 
     // Columns + x-labels are evenly distributed (no percentage gap — that
     // breaks past ~25 columns); continuous x positions by value instead.
+    // continuous x position (0..100), mirrored by xaxis.reverse
+    const xAt = (v: number): number => {
+        const p = ((v - xmin) / xspan) * 100;
+        return m.xreverse ? 100 - p : p;
+    };
     const colCenter = (i: number): number =>
-        continuousX ? ((xvals[i] - xmin) / xspan) * 100 : ((i + 0.5) / n) * 100;
+        continuousX ? xAt(xvals[i]) : ((i + 0.5) / n) * 100;
+    // the data of a reversed category x is reversed (index.ts): i → original
+    const catFlip = m.xreverse && !horizontal && !continuousX;
 
     // continuous x has no evenly-spaced columns → per-marker tooltips, not shared
     const shared = m.tooltip && m.sharedtooltip && !continuousX;
@@ -459,8 +470,11 @@ export const bars = (mFull: Model, ctx: RenderCtx): View => {
         if (horizontal) return false;
         const trends = vis.filter((s) => s.trendline).map((s) => {
             const sc = scaleOf(s);
-            const pts = s.points.map((p, i) => ({ x: i, y: p.value })).filter((_, i) => s.points[i] && !s.points[i].gap);
-            return trendPath(s, pts, (x, y) => [colCenter(x), (1 - sc.frac(y)) * 100], ctx.hover.value && ctx.hover.value !== s.name ? 'true' : false);
+            // reversed x: fit in the data order and mirror the curve (a fit on
+            // the reversed index would differ for log/power/moving averages)
+            const ix = (i: number): number => (catFlip ? n - 1 - i : i);
+            const pts = s.points.map((p, i) => ({ x: ix(i), y: p.value })).filter((_, i) => s.points[i] && !s.points[i].gap);
+            return trendPath(s, pts, (x, y) => [colCenter(ix(x)), (1 - sc.frac(y)) * 100], ctx.hover.value && ctx.hover.value !== s.name ? 'true' : false);
         }).filter(Boolean);
         return trends.length
             ? html`<div class="lm-chart-lineoverlay">
@@ -493,7 +507,7 @@ export const bars = (mFull: Model, ctx: RenderCtx): View => {
     const xTicks = continuousX
         ? (m.xtype === 'datetime' ? timeTicks(xmin, xmax) : niceExtent(xmin, xmax).ticks.map((v) => ({ v, label: fmt(v) })))
             .filter((tk) => tk.v >= xmin - 1e-6 && tk.v <= xmax + 1e-6)
-            .map((tk) => ({ pos: ((tk.v - xmin) / xspan) * 100, label: typeof xfmtFn === 'function' ? String(xfmtFn(tk.v)) : tk.label }))
+            .map((tk) => ({ pos: xAt(tk.v), label: typeof xfmtFn === 'function' ? String(xfmtFn(tk.v)) : tk.label }))
         : [];
     // always rendered: gridlines: false hides it in CSS, where xaxis.grid.show can override
     const xGrid = continuousX
@@ -515,9 +529,10 @@ export const bars = (mFull: Model, ctx: RenderCtx): View => {
         return Math.round(p * 1000) / 1000;
     };
     // x-axis reference position: continuous value, or a category index
+    // (a category index is in the data order, so a reversed x maps it)
     const xPos = (v: number): number => continuousX
-        ? Math.round(((v - xmin) / xspan) * 1000) / 10
-        : colCenter(Math.max(0, Math.min(n - 1, v)));
+        ? Math.round(xAt(v) * 10) / 10
+        : colCenter(Math.max(0, Math.min(n - 1, catFlip ? n - 1 - v : v)));
     const bandViews: View[] = (m.plotbands || []).filter((b) => b && b.from != null && b.to != null).map((b) => {
         const isX = b.axis === 'x';
         const sc = axScale(b.axis);
@@ -765,7 +780,10 @@ export const waterfallChart = (m: Model, ctx: RenderCtx): View => {
     const frac = (v: number): number => (v - sc.lo) / range;
     const up = 'var(--lm-chart-up)';
     const down = 'var(--lm-chart-down)';
-    const cols = steps.map((s, i) => {
+    // xaxis.reverse: the running total keeps the data order, only the
+    // drawing runs right to left
+    const shown = m.xreverse ? [...steps].reverse() : steps;
+    const cols = shown.map((s) => {
         const a = frac(Math.min(s.base, s.top)) * 100;
         const b = frac(Math.max(s.base, s.top)) * 100;
         const color = s.delta >= 0 ? up : down;
@@ -785,7 +803,7 @@ export const waterfallChart = (m: Model, ctx: RenderCtx): View => {
     const links = steps.slice(0, -1).map((s, i) => html`<div class="lm-chart-wf-link"
         style="${css({
             top: (100 - frac(s.top) * 100).toFixed(2) + '%',
-            left: (((i + 0.74) / n) * 100).toFixed(2) + '%',
+            left: ((((m.xreverse ? n - 2 - i : i) + 0.74) / n) * 100).toFixed(2) + '%',
             width: ((0.52 / n) * 100).toFixed(2) + '%',
         })}"></div>`);
     return html`<div class="lm-chart-plotblock" style="${yGutter(m)}">
@@ -800,7 +818,7 @@ export const waterfallChart = (m: Model, ctx: RenderCtx): View => {
                     <div class="lm-chart-cols">${cols}</div>
                     <div class="lm-chart-refs">${links}</div>
                 </div>
-                ${m.xlabels ? html`<div class="lm-chart-xaxis">${steps.map((s) =>
+                ${m.xlabels ? html`<div class="lm-chart-xaxis">${shown.map((s) =>
                     html`<div class="lm-chart-cat"><span class="lm-chart-cat-label">${s.name || ''}</span></div>`)}</div>` : false}
             </div>
         </div>

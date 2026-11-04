@@ -42,8 +42,14 @@ export const scatterChart = (m: Model, ctx: RenderCtx): View => {
     };
     const xs = bounded(niceExtent(pxlo, pxhi), m.xmin, m.xmax);
     const ys = bounded(niceExtent(pylo, pyhi), m.ymin, m.ymax);
-    const xf = (v: number): number => (xs.hi > xs.lo ? (v - xs.lo) / (xs.hi - xs.lo) : 0.5);
-    const yf = (v: number): number => (ys.hi > ys.lo ? (v - ys.lo) / (ys.hi - ys.lo) : 0.5);
+    // reversed axes (physical): x grows leftwards, y downwards
+    const xf0 = (v: number): number => (xs.hi > xs.lo ? (v - xs.lo) / (xs.hi - xs.lo) : 0.5);
+    const yf0 = (v: number): number => (ys.hi > ys.lo ? (v - ys.lo) / (ys.hi - ys.lo) : 0.5);
+    const xf = (v: number): number => (m.xreverse ? 1 - xf0(v) : xf0(v));
+    const yf = (v: number): number => (m.yreverse ? 1 - yf0(v) : yf0(v));
+    // tick labels in screen order (left → right, top → bottom)
+    const xTicks = m.xreverse ? [...xs.ticks].reverse() : xs.ticks;
+    const yTicks = m.yreverse ? ys.ticks : [...ys.ticks].reverse();
     // radius in px (the SVG has no viewBox → user units are pixels, so
     // circles stay round; cx/cy are % of the viewport). Scales to many points.
     const rOf = (z: number, s?: NormSeries): number =>
@@ -131,7 +137,7 @@ export const scatterChart = (m: Model, ctx: RenderCtx): View => {
             ${m.ytitle ? html`<div class="lm-chart-ytitle"><span>${m.ytitle}</span></div>` : false}
             <div class="lm-chart-plotcol">
                 <div class="lm-chart-plot">
-                    <div class="lm-chart-grid" data-off="${m.gridlines ? false : 'true'}">${[...ys.ticks].reverse().map(
+                    <div class="lm-chart-grid" data-off="${m.gridlines ? false : 'true'}">${yTicks.map(
                         (t) => html`<div class="lm-chart-gridline">${m.ylabels ? html`<span class="lm-chart-tick">${ctx.fmt(t)}</span>` : false}</div>`,
                     )}</div>
                     <div class="lm-chart-grid" data-orient="h" data-off="${m.gridlines ? false : 'true'}">${xs.ticks.map(
@@ -142,7 +148,7 @@ export const scatterChart = (m: Model, ctx: RenderCtx): View => {
                     ${bubbleNames}
                     ${sizeLegend}
                 </div>
-                ${m.xlabels ? html`<div class="lm-chart-xvalues">${xs.ticks.map(
+                ${m.xlabels ? html`<div class="lm-chart-xvalues">${xTicks.map(
                     (t) => {
                         const xfmt = ctx.xformat();
                         return html`<div class="lm-chart-xval"><span>${typeof xfmt === 'function' ? String(xfmt(t)) : ctx.fmt(t)}</span></div>`;

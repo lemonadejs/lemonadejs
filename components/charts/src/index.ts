@@ -102,9 +102,13 @@
  * categories are on `yaxis`. The fields are the CSS variables
  * `--lm-chart-xgrid-color`, `-width` and `-style` (and `ygrid`).
  *
- * `yaxis: { reverse: true }` (or `yreverse`) reverses the left axis: the
- * values grow downwards, or with `horizontal` the categories run bottom to
- * top (the Excel default). Click and tooltip indices keep the data order.
+ * `reverse: true` reverses an axis, physically like the rest:
+ * `yaxis.reverse` (or `yreverse`) makes the values grow downwards, or with
+ * `horizontal` runs the categories bottom to top (the Excel default);
+ * `xaxis.reverse` runs the categories right to left, or with `horizontal`
+ * (and on a continuous or scatter x) makes the values grow leftwards. The
+ * waterfall keeps its running total in data order, trendlines are fitted
+ * in data order and mirrored, and click indices stay data indices.
  *
  * The plain forms still work: `title: 'Sales'`, `legend: false`, and the
  * flat `legendposition`, `legendtitle`, `xtitle`, `ytitle` and `y2title`.
@@ -143,7 +147,7 @@
 
 import { component, css, html, type View } from 'lemonadejs';
 import {
-    fontsOf, fontVars, gridVars, normalize, outline, textOf, type Annotation, type ChartAxis, type ChartLegend, type ChartText, type ChartOptions, type ChartSeries, type Model,
+    categoryCount, fontsOf, fontVars, gridVars, normalize, reverseCategories, outline, textOf, type Annotation, type ChartAxis, type ChartLegend, type ChartText, type ChartOptions, type ChartSeries, type Model,
     type NormPoint, type NormSeries, type PlotBand, type PlotLine, type RenderCtx, type TipRow,
 } from './model';
 import { compact, plain } from './helpers';
@@ -172,7 +176,7 @@ export const Charts = component('charts', {
     xtitle: '',              // x-axis title (or xaxis.title)
     ytitle: '',              // y-axis (left) title (or yaxis.title)
     y2title: '',             // secondary y-axis (right) title (or y2axis.title)
-    xaxis: Object,           // bottom axis { title?, titlefont?, font?, labels?, grid? } — font = its tick labels; labels: false hides them; grid = its vertical lines
+    xaxis: Object,           // bottom axis { title?, titlefont?, font?, labels?, grid?, reverse? } — font = its tick labels; labels: false hides them; grid = its vertical lines
     yaxis: Object,           // left axis { title?, titlefont?, font?, labels?, grid?, reverse? } — grid = the horizontal lines
     y2axis: Object,          // right axis { title?, titlefont?, font?, labels? } (falls back to yaxis fonts)
     markers: true,           // line/area: show point markers
@@ -467,6 +471,24 @@ export const Charts = component('charts', {
         xformat: () => props.xformat.value as ((x: number) => unknown) | undefined,
     };
 
+    /** xaxis.reverse on a category x axis: the renderers draw left to right,
+     *  so they get the data reversed (and fire() maps the index back). Not
+     *  horizontal bars (their x is the value axis, reversed in bars()), nor
+     *  the waterfall (its running total depends on the order). */
+    const CATEGORY_X = ['bar', 'stackedbar', 'line', 'stackedarea', 'streamgraph', 'histogram', 'pareto',
+        'candlestick', 'ohlc', 'boxplot', 'arearange', 'columnrange', 'dumbbell', 'lollipop'];
+    const flipsCategories = (m: Model): boolean => {
+        if (!m.xreverse || !CATEGORY_X.includes(m.type)) return false;
+        // mirror bars()' own decisions (visible series): horizontal only for
+        // pure bars; a continuous x (line-only datetime/linear) flips its
+        // positions there and must keep its data order (p.x vs index)
+        const vis = m.series.filter((s) => !isHidden(s.name));
+        const horizontalBars = m.horizontal && (m.type === 'stackedbar' || vis.every((s) => s.type === 'bar'));
+        const continuousX = (m.xtype === 'datetime' || m.xtype === 'linear') && m.type !== 'stackedbar'
+            && vis.some((s) => s.type !== 'bar') && vis.every((s) => s.type !== 'bar');
+        return !horizontalBars && !continuousX;
+    };
+
     /** True when there is at least one visible, non-zero data point to draw. */
     const hasData = (m: Model): boolean => {
         if (m.type === 'pie') {
@@ -672,31 +694,35 @@ export const Charts = component('charts', {
         const m = model.value;
         if (props.sparkline.value) return hasData(m) ? sparkline(m, ctx) : empty();
         const t = m.type;
+        const flip = flipsCategories(m);
+        const n = categoryCount(m);
+        const rm = flip ? reverseCategories(m) : m;
+        const rctx: RenderCtx = flip ? { ...ctx, fire: (p, si, i) => fire(p, si, n - 1 - i) } : ctx;
         const core = !hasData(m) ? empty()
-            : t === 'pie' ? pie(m, ctx)
-                : t === 'scatter' || t === 'bubble' ? scatterChart(m, ctx)
-                    : t === 'sankey' ? sankeyChart(m, ctx)
-                    : t === 'arcdiagram' ? arcChart(m, ctx)
-                    : t === 'chord' ? chordChart(m, ctx)
-                    : t === 'sunburst' ? sunburstChart(m, ctx)
-                    : t === 'icicle' ? icicleChart(m, ctx)
-                    : t === 'packedbubble' ? packedbubbleChart(m, ctx)
-                    : t === 'wordcloud' ? wordcloudChart(m, ctx)
-                    : t === 'radar' ? radarChart(m, ctx)
-                        : t === 'radialbar' ? radialbarChart(m, ctx)
-                            : t === 'polararea' ? polarareaChart(m, ctx)
-                                : t === 'gauge' ? gaugeChart(m, ctx)
-                                    : t === 'funnel' || t === 'pyramid' ? funnelChart(m, ctx)
-                                        : t === 'waterfall' ? waterfallChart(m, ctx)
-                                            : t === 'bullet' ? bulletChart(m, ctx)
-                                                : t === 'lollipop' ? lollipopChart(m, ctx)
-                                                    : t === 'heatmap' ? heatmapChart(m, ctx)
-                                                        : t === 'candlestick' || t === 'ohlc' ? ohlcChart(m, ctx)
-                                                            : t === 'boxplot' ? boxplotChart(m, ctx)
-                                                                : t === 'arearange' || t === 'columnrange' || t === 'dumbbell' ? rangeChart(m, ctx)
-                                                                    : t === 'treemap' ? treemapChart(m, ctx)
-                                                                        : t === 'pictogram' ? (m.waffle ? waffleChart(m, ctx) : pictogramChart(m, ctx))
-                                                                        : bars(m, ctx);
+            : t === 'pie' ? pie(rm, rctx)
+                : t === 'scatter' || t === 'bubble' ? scatterChart(rm, rctx)
+                    : t === 'sankey' ? sankeyChart(rm, rctx)
+                    : t === 'arcdiagram' ? arcChart(rm, rctx)
+                    : t === 'chord' ? chordChart(rm, rctx)
+                    : t === 'sunburst' ? sunburstChart(rm, rctx)
+                    : t === 'icicle' ? icicleChart(rm, rctx)
+                    : t === 'packedbubble' ? packedbubbleChart(rm, rctx)
+                    : t === 'wordcloud' ? wordcloudChart(rm, rctx)
+                    : t === 'radar' ? radarChart(rm, rctx)
+                        : t === 'radialbar' ? radialbarChart(rm, rctx)
+                            : t === 'polararea' ? polarareaChart(rm, rctx)
+                                : t === 'gauge' ? gaugeChart(rm, rctx)
+                                    : t === 'funnel' || t === 'pyramid' ? funnelChart(rm, rctx)
+                                        : t === 'waterfall' ? waterfallChart(rm, rctx)
+                                            : t === 'bullet' ? bulletChart(rm, rctx)
+                                                : t === 'lollipop' ? lollipopChart(rm, rctx)
+                                                    : t === 'heatmap' ? heatmapChart(rm, rctx)
+                                                        : t === 'candlestick' || t === 'ohlc' ? ohlcChart(rm, rctx)
+                                                            : t === 'boxplot' ? boxplotChart(rm, rctx)
+                                                                : t === 'arearange' || t === 'columnrange' || t === 'dumbbell' ? rangeChart(rm, rctx)
+                                                                    : t === 'treemap' ? treemapChart(rm, rctx)
+                                                                        : t === 'pictogram' ? (m.waffle ? waffleChart(rm, rctx) : pictogramChart(rm, rctx))
+                                                                        : bars(rm, rctx);
         return layout(m, core);
     }}${tooltip}</div>`;
 });
