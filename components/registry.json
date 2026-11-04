@@ -474,7 +474,7 @@
         "name": "charts",
         "path": "components/charts",
         "verified": true,
-        "checks": 135,
+        "checks": 137,
         "contract": {
             "name": "charts",
             "props": {
@@ -535,6 +535,9 @@
                 },
                 "raxis": {
                     "type": "object"
+                },
+                "fillopacity": {
+                    "type": "number"
                 },
                 "markers": {
                     "type": "boolean",

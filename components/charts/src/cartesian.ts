@@ -5,7 +5,7 @@
  * boxplot, arearange/columnrange/dumbbell, lollipop.
  */
 import { css, html, type View } from 'lemonadejs';
-import { PALETTES, fontPx, isStrokeMarker, markerStroke, outline, type Model, type NormSeries, type RenderCtx } from './model';
+import { PALETTES, fillVar, fontPx, isStrokeMarker, markerStroke, outline, type Model, type NormSeries, type RenderCtx } from './model';
 import { fixedScale, lerpColor, niceExtent, niceScale, parseX, polyPath, smoothPath, stepPath, timeTicks } from './helpers';
 import { fit } from './trend';
 
@@ -353,6 +353,9 @@ export const bars = (mFull: Model, ctx0: RenderCtx): View => {
     // series plots against its own axis; gaps (null points) break the line.
     const lineOverlay = ((): View | false => {
         if (lineSeries.length === 0) return false;
+        // drawing order: a filled series is drawn whole (its fill, then its
+        // stroke) in series order, so a later area covers an earlier one's
+        // stroke as in Excel; unfilled lines go on top of every area
         const areas: View[] = [];
         const paths: View[] = [];
         const markers: View[] = [];
@@ -412,9 +415,9 @@ export const bars = (mFull: Model, ctx0: RenderCtx): View => {
                         areaD += ' Z';
                     }
                     areas.push(html`<path class="lm-chart-areafill" d="${areaD}" data-stacked="true"
-                        style="${css({ fill: s.color })}" data-dim="${dim}" data-stream="${stream ? 'true' : false}" />`);
+                        style="${css({ fill: s.color, ...fillVar(s) })}" data-dim="${dim}" data-stream="${stream ? 'true' : false}" />`);
                     // streams read as soft ribbons: no top stroke, no markers
-                    if (!stream) paths.push(html`<path class="lm-chart-line" d="${topD}"
+                    if (!stream) areas.push(html`<path class="lm-chart-line" d="${topD}"
                         style="${css({ stroke: lineColor(s) })}" data-dim="${dim}" />`);
                 }
                 if ((s.markers != null ? s.markers : m.markers) && !stream) {
@@ -464,9 +467,9 @@ export const bars = (mFull: Model, ctx0: RenderCtx): View => {
                     const areaD = d + ' L ' + seg[seg.length - 1][0].toFixed(2) + ',' + baseY.toFixed(2) +
                         ' L ' + seg[0][0].toFixed(2) + ',' + baseY.toFixed(2) + ' Z';
                     areas.push(html`<path class="lm-chart-areafill" d="${areaD}"
-                        style="${css({ fill: s.color })}" data-dim="${dim}" />`);
+                        style="${css({ fill: s.color, ...fillVar(s) })}" data-dim="${dim}" />`);
                 }
-                paths.push(html`<path class="lm-chart-line" d="${d}"
+                (s.type === 'area' ? areas : paths).push(html`<path class="lm-chart-line" d="${d}"
                     style="${strokeStyle(s)}" data-dim="${dim}"
                     data-dashed="${s.dashed || false}" />`);
             }
@@ -1039,7 +1042,7 @@ export const rangeChart = (m: Model, ctx: RenderCtx): View => {
         const d = 'M ' + hiPts.join(' L ') + ' L ' + [...loPts].reverse().join(' L ') + ' Z';
         overlay = html`<div class="lm-chart-lineoverlay">
             <svg class="lm-chart-linesvg" viewBox="0 0 100 100" preserveAspectRatio="none">
-                <path class="lm-chart-areafill" d="${d}" style="${css({ fill: color })}" />
+                <path class="lm-chart-areafill" d="${d}" style="${css({ fill: color, ...(m.series[0] ? fillVar(m.series[0]) : {}) })}" />
                 <polyline class="lm-chart-line" points="${hiPts.join(' ')}" style="${css({ stroke: color })}" />
                 <polyline class="lm-chart-line" points="${loPts.join(' ')}" style="${css({ stroke: color })}" />
             </svg></div>`;

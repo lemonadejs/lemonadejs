@@ -66,6 +66,9 @@ export interface ChartSeries {
     step?: boolean | 'before' | 'mid';
     /** Dash the line: `true` is dashed; a style picks the pattern. */
     dashed?: boolean | 'dashed' | 'dotted' | 'dashdot';
+    /** Opacity (0–1) of this series' fill: an area, a stacked area, a
+     *  filled radar, an arearange band. Wins over the chart `fillopacity`. */
+    fillopacity?: number;
     /** Marker shape for line/scatter points. Filled: circle, square,
      *  triangle, diamond. Stroked (no fill; drawn in `bordercolor`, else
      *  `color`, `borderwidth` px wide, at least 1.5): x, plus, dash, star (the
@@ -117,6 +120,9 @@ export interface ChartOptions {
     y2axis?: ChartAxis;
     /** horizontal bars: the top axis, for the series with axis: 'right' */
     x2axis?: ChartAxis;
+    /** opacity (0–1) of every fill (areas, filled radar, range bands);
+     *  unset = the stylesheet defaults (0.16, stacked 0.85) */
+    fillopacity?: number;
     /** radar: the radial (value) axis */
     raxis?: ChartRAxis;
     gridlines?: boolean;
@@ -315,6 +321,11 @@ export const markerStroke = (s: NormSeries): { color: string; width: number } =>
     color: s.bordercolor || s.color,
     width: s.bordercolor ? Math.max(1.5, s.borderwidth) : 2,
 });
+
+/** The inline fill-opacity override of a series (its own `fillopacity`),
+ *  as the custom property the fills read; nothing when unset. */
+export const fillVar = (s: NormSeries): Record<string, string> =>
+    (s.fillopacity != null ? { '--lm-chart-fill-opacity': String(s.fillopacity) } : {});
 
 /** The category count the cartesian renderers draw. */
 export const categoryCount = (m: Model): number =>
@@ -515,6 +526,8 @@ export interface NormSeries {
     /** null = the chart `markers` prop decides */
     markers: boolean | null;
     connectgaps: boolean;
+    /** null = the chart's fillopacity / the stylesheet default */
+    fillopacity: number | null;
     trendline: Trendline | null;
 }
 export interface Model {
@@ -586,6 +599,8 @@ export interface Model {
     y2reverse: boolean;
     /** radar: the radial axis */
     raxis: RAxis;
+    /** null = the stylesheet defaults */
+    fillopacity: number | null;
     /** waffle mode: one palette-partitioned grid per series (type="waffle") */
     waffle: boolean;
 }
@@ -705,6 +720,7 @@ export const normalize = (def: ChartOptions): Model => {
             markersize: s.markersize != null && Number.isFinite(Number(s.markersize)) ? Math.max(0, Number(s.markersize)) : null,
             markers: typeof s.markers === 'boolean' ? s.markers : null,
             connectgaps: s.connectgaps === true,
+            fillopacity: s.fillopacity != null && Number.isFinite(Number(s.fillopacity)) ? Math.max(0, Math.min(1, Number(s.fillopacity))) : null,
             trendline: normalizeTrend(s.trendline),
             step: s.step === true || s.step === 'mid' || (s.step == null && (def.step === true || def.step === 'mid')) ? (s.step === 'mid' || (s.step == null && def.step === 'mid') ? 'mid' : 'before') : '',
             // '' = not specified (scatter cycles shapes per series, HC-style)
@@ -794,6 +810,7 @@ export const normalize = (def: ChartOptions): Model => {
         y2labels: !(isObj(def.y2axis) && def.y2axis.labels === false),
         x2labels: !(isObj(def.x2axis) && def.x2axis.labels === false),
         x2reverse: isObj(def.x2axis) && def.x2axis.reverse === true,
+        fillopacity: def.fillopacity != null && Number.isFinite(Number(def.fillopacity)) ? Math.max(0, Math.min(1, Number(def.fillopacity))) : null,
         raxis: ((): RAxis => {
             const r = isObj(def.raxis) ? def.raxis as ChartRAxis : {};
             const num = (v: unknown): number | null => (v != null && Number.isFinite(Number(v)) ? Number(v) : null);

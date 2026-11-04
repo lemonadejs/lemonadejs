@@ -565,6 +565,37 @@ describe('components/charts', () => {
         expect(handle.queryAll('.lm-chart-marker').length).toBe(7); // no marker at the gap
     });
 
+    it('fillopacity: the chart prop sets the fill variable on the root, a series overrides inline', () => {
+        const cats = ['A', 'B'];
+        handle = t(Chart, { type: 'line', area: true, categories: cats, series: [{ name: 'a', data: [1, 2] }] });
+        expect(styleN(handle.query('.lm-chart')!)).not.toContain('fill-opacity');
+        expect(styleN(handle.query('.lm-chart-areafill')!)).not.toContain('fill-opacity');
+        handle.unmount();
+        handle = t(Chart, { type: 'stackedarea', fillopacity: 1, categories: cats, series: [{ name: 'a', data: [1, 2] }, { name: 'b', fillopacity: 0.3, data: [1, 1] }] });
+        expect(styleN(handle.query('.lm-chart')!)).toContain('--lm-chart-fill-opacity:1');
+        const fills = handle.queryAll('.lm-chart-areafill');
+        expect(styleN(fills[0])).not.toContain('fill-opacity');
+        expect(styleN(fills[1])).toContain('--lm-chart-fill-opacity:0.3');
+        handle.unmount();
+        // radar and arearange carry it too; values are clamped to 0–1
+        handle = t(Chart, { type: 'radar', fillopacity: 5, categories: cats, series: [{ name: 'a', fillopacity: -1, data: [1, 2] }] });
+        expect(styleN(handle.query('.lm-chart')!)).toContain('--lm-chart-fill-opacity:1');
+        expect(styleN(handle.query('.lm-chart-radar-area')!)).toContain('--lm-chart-fill-opacity:0');
+        handle.unmount();
+        handle = t(Chart, { type: 'arearange', categories: cats, series: [{ name: 'r', fillopacity: 0.5, data: [[1, 2], [2, 3]] }] });
+        expect(styleN(handle.query('.lm-chart-areafill')!)).toContain('--lm-chart-fill-opacity:0.5');
+    });
+
+    it('areas: each filled series draws fill then stroke in series order; plain lines on top', () => {
+        const cats = ['A', 'B'];
+        const order = (): string[] => Array.from(handle!.query('.lm-chart-linesvg')!.children).map((e) => e.getAttribute('class')!);
+        handle = t(Chart, { type: 'line', categories: cats, series: [{ name: 'a', area: true, data: [1, 2] }, { name: 'b', area: true, data: [2, 3] }, { name: 'l', data: [3, 3] }] });
+        expect(order()).toEqual(['lm-chart-areafill', 'lm-chart-line', 'lm-chart-areafill', 'lm-chart-line', 'lm-chart-line']);
+        handle.unmount();
+        handle = t(Chart, { type: 'stackedarea', categories: cats, series: [{ name: 'a', data: [1, 2] }, { name: 'b', data: [2, 3] }] });
+        expect(order()).toEqual(['lm-chart-areafill', 'lm-chart-line', 'lm-chart-areafill', 'lm-chart-line']);
+    });
+
     it('legend: false, { show: false } and the "false" attribute all hide it', () => {
         for (const legend of [false, { show: false }, 'false']) {
             handle = t(Chart, { type: 'bar', legend, categories: ['A'], series: [{ name: 's', data: [1] }, { name: 'r', data: [2] }] });

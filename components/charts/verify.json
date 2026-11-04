@@ -143,6 +143,14 @@
             "pass": true
         },
         {
+            "name": "prop fillopacity",
+            "pass": true
+        },
+        {
+            "name": "prop fillopacity (live state)",
+            "pass": true
+        },
+        {
             "name": "prop markers",
             "pass": true
         },

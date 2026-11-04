@@ -63,6 +63,11 @@
  * `'polynomial'` (`order`) or `'movingAverage'` (`period`), as a type or
  * `{ type, order?, period?, color?, dashed?, width? }`.
  *
+ * Fills (an area, a stacked area, a filled radar, a range band) are
+ * translucent by default (0.16; stacked 0.85). `fillopacity` (0–1) on the
+ * chart sets them all, and a series' own `fillopacity` wins for it; the
+ * CSS variable `--lm-chart-fill-opacity` carries the value.
+ *
  * `marker` (line, radar and scatter points) is a filled `'circle'`, `'square'`,
  * `'triangle'` or `'diamond'`, or a stroked `'x'`, `'plus'`, `'dash'` or
  * `'star'` (the Excel asterisk, plus and x together): no fill, drawn in
@@ -229,6 +234,7 @@ export const Charts = component('charts', {
     y2axis: Object,          // right axis { title?, titlefont?, font?, labels?, reverse? } (falls back to yaxis fonts and reverse)
     x2axis: Object,          // top axis of horizontal bars (the axis: 'right' series) { title?, titlefont?, font?, labels?, reverse? } (falls back to xaxis fonts)
     raxis: Object,           // radar: the radial axis { min?, max?, step?, reverse?, labels?, font?, ticks?, tickfont?, grid?, spokes? }
+    fillopacity: Number,     // opacity (0–1) of the fills: areas, filled radar, range bands (unset = 0.16, stacked 0.85); a series' own fillopacity wins
     markers: true,           // line/area: show point markers
     smooth: false,           // line/area: smooth (spline) curves
     step: false,             // line/area: step (stairs) — true/'before' or 'mid'
@@ -328,6 +334,7 @@ export const Charts = component('charts', {
         y2axis: props.y2axis.value as ChartAxis,
         x2axis: props.x2axis.value as ChartAxis,
         raxis: props.raxis.value as ChartRAxis,
+        fillopacity: props.fillopacity.value as number,
         markers: props.markers.value,
         smooth: props.smooth.value,
         step: props.step.value as boolean | 'before' | 'mid',
@@ -761,7 +768,8 @@ export const Charts = component('charts', {
         data-animate="${() => (props.animate.value === false ? false : 'true')}"
         data-xcatgrid="${() => (grid.value.xcat ? 'true' : false)}"
         data-ycatgrid="${() => (grid.value.ycat ? 'true' : false)}"
-        style="${() => css({ height: sparkHeight(), ...fontVars(model.value.fonts), ...grid.value.vars })}">${() => dataTable(model.value)}${toolbar}${breadcrumb}${() => {
+        style="${() => css({ height: sparkHeight(), ...fontVars(model.value.fonts), ...grid.value.vars,
+            '--lm-chart-fill-opacity': model.value.fillopacity != null ? String(model.value.fillopacity) : undefined })}">${() => dataTable(model.value)}${toolbar}${breadcrumb}${() => {
         const m = model.value;
         return !props.sparkline.value && (m.title || m.subtitle)
             ? html`<div class="lm-chart-header" data-position="${m.titleposition || false}">

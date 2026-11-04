@@ -2,7 +2,7 @@
 
 LemonadeJS charts block — 35 chart types from one data definition, responsive with no resize code.
 
-**✓ verified** — 135 contract checks · framework-agnostic · zero dependencies
+**✓ verified** — 137 contract checks · framework-agnostic · zero dependencies
 
 ## Overview
 
@@ -69,6 +69,11 @@ series take `width`, `dashed` (`true`, `'dashed'`, `'dotted'` or
 `trendline`: `'linear'`, `'exponential'`, `'logarithmic'`, `'power'`,
 `'polynomial'` (`order`) or `'movingAverage'` (`period`), as a type or
 `{ type, order?, period?, color?, dashed?, width? }`.
+
+Fills (an area, a stacked area, a filled radar, a range band) are
+translucent by default (0.16; stacked 0.85). `fillopacity` (0–1) on the
+chart sets them all, and a series' own `fillopacity` wins for it; the
+CSS variable `--lm-chart-fill-opacity` carries the value.
 
 `marker` (line, radar and scatter points) is a filled `'circle'`, `'square'`,
 `'triangle'` or `'diamond'`, or a stroked `'x'`, `'plus'`, `'dash'` or
@@ -235,6 +240,7 @@ state for a two-way live wire. Attribute strings are coerced to the declared typ
 | `y2axis` | object | — | right axis { title?, titlefont?, font?, labels?, reverse? } (falls back to yaxis fonts and reverse) |
 | `x2axis` | object | — | top axis of horizontal bars (the axis: 'right' series) { title?, titlefont?, font?, labels?, reverse? } (falls back to xaxis fonts) |
 | `raxis` | object | — | radar: the radial axis { min?, max?, step?, reverse?, labels?, font?, ticks?, tickfont?, grid?, spokes? } |
+| `fillopacity` | number | — | opacity (0–1) of the fills: areas, filled radar, range bands (unset = 0.16, stacked 0.85); a series' own fillopacity wins |
 | `markers` | boolean | `true` | line/area: show point markers |
 | `smooth` | boolean | `false` | line/area: smooth (spline) curves |
 | `step` | boolean | `false` | line/area: step (stairs) — true/'before' or 'mid' |

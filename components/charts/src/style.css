@@ -570,21 +570,23 @@
 
 /* area fill under a line series */
 .lm-chart-areafill {
-    opacity: 0.16;
+    /* --lm-chart-fill-opacity: the chart `fillopacity` (on the root) or a
+       series' own (inline); unset = these defaults. Dimmed: a third of it. */
+    opacity: var(--lm-chart-fill-opacity, 0.16);
     stroke: none;
 }
 
 .lm-chart-areafill[data-dim='true'] {
-    opacity: 0.05;
+    opacity: calc(var(--lm-chart-fill-opacity, 0.16) * 0.3);
 }
 
 /* stacked areas tile on top of each other → render them more solid */
 .lm-chart-areafill[data-stacked='true'] {
-    opacity: 0.85;
+    opacity: var(--lm-chart-fill-opacity, 0.85);
 }
 
 .lm-chart-areafill[data-stacked='true'][data-dim='true'] {
-    opacity: 0.25;
+    opacity: calc(var(--lm-chart-fill-opacity, 0.85) * 0.3);
 }
 
 .lm-chart-marker {
@@ -1093,7 +1095,7 @@
 }
 
 .lm-chart-radar-area {
-    fill-opacity: 0.16;
+    fill-opacity: var(--lm-chart-fill-opacity, 0.16);
     stroke-width: 1.5;
     stroke-linejoin: round;
     vector-effect: non-scaling-stroke;

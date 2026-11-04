@@ -3,7 +3,7 @@
  * gauge, radialbar, polararea and funnel/pyramid.
  */
 import { css, html, type View } from 'lemonadejs';
-import { PALETTES, type Model, type NormPoint, type RenderCtx } from './model';
+import { PALETTES, fillVar, type Model, type NormPoint, type RenderCtx } from './model';
 import { R, annulus, f, kbKeydown, niceScale, polar, roundedRing, textOn, wedge } from './helpers';
 import { lineColor, markerStyle } from './cartesian';
 
@@ -75,7 +75,7 @@ export const radarChart = (m: Model, ctx: RenderCtx): View => {
         });
         const solid = verts.filter((e) => !e.gap);
         const pt = (e: { xy: [number, number] }): string => e.xy.map((c) => c.toFixed(2)).join(',');
-        const shapeStyle = css(s.width ? { fill: s.color, stroke, 'stroke-width': s.width } : { fill: s.color, stroke });
+        const shapeStyle = css(s.width ? { fill: s.color, stroke, 'stroke-width': s.width, ...fillVar(s) } : { fill: s.color, stroke, ...fillVar(s) });
         const nofill = s.type === 'line' ? 'true' : false; // a 'line' series is the outline only
         if (solid.length === verts.length || s.connectgaps) {
             if (solid.length) shapes.push(html`<polygon class="lm-chart-radar-area"
@@ -94,7 +94,7 @@ export const radarChart = (m: Model, ctx: RenderCtx): View => {
             for (const run of runs) {
                 if (s.type !== 'line' && run.length > 1) shapes.push(html`<path class="lm-chart-radar-area"
                     d="${'M 50,50 L ' + run.map(pt).join(' L ') + ' Z'}"
-                    style="${css({ fill: s.color, stroke: 'none' })}" data-dim="${dim}" />`);
+                    style="${css({ fill: s.color, stroke: 'none', ...fillVar(s) })}" data-dim="${dim}" />`);
                 if (run.length > 1) shapes.push(html`<polyline class="lm-chart-radar-area"
                     points="${run.map(pt).join(' ')}"
                     style="${css(s.width ? { fill: 'none', stroke, 'stroke-width': s.width } : { fill: 'none', stroke })}"

@@ -59,6 +59,9 @@
         "raxis": {
             "type": "object"
         },
+        "fillopacity": {
+            "type": "number"
+        },
         "markers": {
             "type": "boolean",
             "default": true
