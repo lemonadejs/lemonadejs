@@ -259,6 +259,23 @@ describe('components/charts', () => {
         expect(tv[0]).toBeGreaterThan(tv[tv.length - 1]);
     });
 
+    it('line series: bordercolor is the line and marker ring, color the marker fill', () => {
+        handle = t(Chart, { type: 'line', categories: ['A', 'B'], legendposition: 'bottom',
+            series: [{ name: 'g', bordercolor: '#00B050', color: '#FF0000', data: [1, 2] }, { name: 'p', color: '#123456', data: [2, 1] }] });
+        const lines = handle.queryAll('.lm-chart-line');
+        expect(styleN(lines[0])).toMatch(/stroke:(#00b050|rgb\(0, 176, 80\))/i);
+        expect(styleN(lines[1])).toMatch(/stroke:(#123456|rgb\(18, 52, 86\))/i); // no bordercolor: unchanged
+        const mk = handle.queryAll('.lm-chart-marker');
+        expect(styleN(mk[0])).toMatch(/background:(#ff0000|rgb\(255, 0, 0\))/i);
+        expect(styleN(mk[0])).toMatch(/border-color:(#00b050|rgb\(0, 176, 80\))/i);
+        expect(styleN(mk[0])).toContain('border-width:1px');
+        expect(styleN(mk[mk.length - 1])).not.toContain('border-color'); // the default white ring
+        // legend: line in the border colour, dot in the fill
+        const sw = handle.queryAll('.lm-chart-swatch')[0];
+        expect(sw.getAttribute('data-dot')).toBe('true');
+        expect(styleN(sw)).toMatch(/--lm-swatch-dot:#FF0000/i);
+    });
+
     it('legend: false, { show: false } and the "false" attribute all hide it', () => {
         for (const legend of [false, { show: false }, 'false']) {
             handle = t(Chart, { type: 'bar', legend, categories: ['A'], series: [{ name: 's', data: [1] }, { name: 'r', data: [2] }] });

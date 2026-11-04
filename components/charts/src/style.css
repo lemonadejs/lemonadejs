@@ -2169,6 +2169,13 @@ button.lm-chart-crumb:hover {
     transform: translate(-50%, -50%);
 }
 
+/* a line series with bordercolor: the line (and the dot's ring) take the
+   border colour, the dot keeps the fill colour — like its markers */
+.lm-chart-swatch[data-line='true'][data-dot='true']::after {
+    background: var(--lm-swatch-dot);
+    box-shadow: 0 0 0 1px var(--lm-swatch-line);
+}
+
 /* ---- cursor-following tooltip ---- */
 
 .lm-chart-tooltip {

@@ -44,9 +44,11 @@
  * - `null`, a gap in a line
  *
  * A series can set its own `type` (`bar`, `line`, `area` or `scatter`) to
- * build a combo chart, and `axis: 'right'` to use a secondary y-axis. Bar
- * series take `bordercolor` and `borderwidth` (px, default 1) for an
- * outline; with `color: 'transparent'` they draw hollow bars. Line
+ * build a combo chart, and `axis: 'right'` to use a secondary y-axis.
+ * `color` is the fill and `bordercolor` the outline, with `borderwidth`
+ * (px, default 1): on bars the outline (`color: 'transparent'` draws hollow
+ * bars), on lines the line and the marker ring while the markers keep
+ * `color` as their fill, on scatter the point outline. Line
  * series take `width`, `dashed` (`true`, `'dashed'`, `'dotted'` or
  * `'dashdot'`), `markers`, `markersize`, `marker` and `connectgaps`, and a
  * `trendline`: `'linear'`, `'exponential'`, `'logarithmic'`, `'power'`,
@@ -408,7 +410,7 @@ export const Charts = component('charts', {
     };
 
     /* ----- legend (shared by all types) — real <button>s, toggle + highlight --- */
-    interface LegendEntry { name: string; color: string; key: string; line: boolean; shape: string; border?: string; width?: number; }
+    interface LegendEntry { name: string; color: string; key: string; line: boolean; shape: string; border?: string; width?: number; dot?: string; }
     const legendEntries = (m: Model): LegendEntry[] => {
         // multi-series radialbar (stacked polar) legends by SERIES like bars;
         // waffle legends by CATEGORY (its cells are palette-partitioned)
@@ -420,16 +422,20 @@ export const Charts = component('charts', {
         // scatter swatches mirror the marker shape (explicit or the cycled
         // default — keep the order in sync with scatterChart's CYCLE)
         const cycle = ['circle', 'diamond', 'square', 'triangle'];
+        // scatter base: only 'line' series show a line swatch (the rest are points)
+        const lineSwatch = (s: NormSeries): boolean => (m.type === 'scatter' ? s.type === 'line' : s.type !== 'bar');
         const shapeOf = (s: NormSeries, i: number): string =>
             m.type === 'scatter' && s.type !== 'line' ? s.marker || cycle[i % cycle.length] : '';
         return m.series.map((s, i) => ({
-            name: s.name, color: s.color, key: s.name,
-            // scatter base: only 'line' series show a line swatch (the rest are points)
-            line: m.type === 'scatter' ? s.type === 'line' : s.type !== 'bar',
+            // a line swatch draws the LINE colour (bordercolor when set)
+            name: s.name, color: lineSwatch(s) ? s.bordercolor || s.color : s.color, key: s.name,
+            line: lineSwatch(s),
             shape: shapeOf(s, i),
-            // bar outline (hollow bars stay visible in the legend)
-            border: m.type !== 'scatter' && s.type === 'bar' ? s.bordercolor : '',
+            // the outline: bars (hollow bars stay visible) and scatter points
+            border: !lineSwatch(s) ? s.bordercolor : '',
             width: s.borderwidth,
+            // a line with bordercolor: its marker dot keeps the fill colour
+            dot: lineSwatch(s) && s.bordercolor ? s.color : '',
         }));
     };
     const legend = (m: Model, entries: LegendEntry[]): View | false =>
@@ -442,8 +448,9 @@ export const Charts = component('charts', {
                 onmouseenter="${() => (hover.value = e.key)}"
                 onmouseleave="${() => (hover.value = null)}">
                 <span class="lm-chart-swatch" data-line="${e.line ? 'true' : false}"
-                    data-shape="${e.shape || false}"
-                    style="${css({ background: e.color, boxShadow: e.line ? undefined : outline(e.border, Math.min(e.width || 1, 3)) })}"></span>
+                    data-shape="${e.shape || false}" data-dot="${e.dot ? 'true' : false}"
+                    style="${css({ background: e.color, '--lm-swatch-dot': e.dot || undefined, '--lm-swatch-line': e.dot ? e.color : undefined,
+                        boxShadow: e.line ? undefined : outline(e.border, Math.min(e.width || 1, 3)) })}"></span>
                 <span class="lm-chart-legend-name">${e.name}</span>
             </button>`,
         )}</div>`;

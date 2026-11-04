@@ -13,13 +13,22 @@ import { fit } from './trend';
 export const yGutter = (m: Model): string | false =>
     m.ylabels ? false : css({ '--lm-chart-gutter': 'var(--lm-chart-pad-r)' });
 
+/** The line of a series: `bordercolor` when set (as on bars, the outline
+ *  colour), else its `color`. `color` stays the fill (markers, areas). */
+export const lineColor = (s: NormSeries): string => s.bordercolor || s.color;
+
 /** Per-series stroke overrides on top of the stylesheet (width in px). */
 export const strokeStyle = (s: NormSeries): string =>
-    css(s.width ? { stroke: s.color, 'stroke-width': s.width } : { stroke: s.color });
+    css(s.width ? { stroke: lineColor(s), 'stroke-width': s.width } : { stroke: lineColor(s) });
 
-/** Marker size override: the stylesheet draws a 9px dot (radius 4.5). */
-export const markerStyle = (s: NormSeries, extra: Record<string, string | number>): string =>
-    css(s.markersize != null ? { ...extra, width: s.markersize * 2, height: s.markersize * 2 } : extra);
+/** A marker: filled with `color`; with `bordercolor` its ring takes that
+ *  colour (`borderwidth` px) instead of the surface; the stylesheet draws a
+ *  9px dot (radius 4.5) unless `markersize` overrides it. */
+export const markerStyle = (s: NormSeries, extra: Record<string, string | number>): string => {
+    const ring = s.bordercolor ? { borderColor: s.bordercolor, borderWidth: s.borderwidth } : {};
+    const size = s.markersize != null ? { width: s.markersize * 2, height: s.markersize * 2 } : {};
+    return css({ ...extra, background: s.color, ...ring, ...size });
+};
 
 /**
  * The trendline of a series as a path in the 0..100 plot space. `pts` are
@@ -30,7 +39,7 @@ export const trendPath = (s: NormSeries, pts: Array<{ x: number; y: number }>, t
     const line = t ? fit(pts, t) : null;
     if (!t || !line) return false;
     return html`<path class="lm-chart-line lm-chart-trend" d="${polyPath(line.map(([x, y]) => toXY(x, y)))}"
-        style="${css({ stroke: t.color || s.color, 'stroke-width': t.width || 1.5 })}"
+        style="${css({ stroke: t.color || lineColor(s), 'stroke-width': t.width || 1.5 })}"
         data-dashed="${t.dashed === false ? false : 'dashed'}" data-dim="${dim}" />`;
 };
 
@@ -313,7 +322,7 @@ export const bars = (mFull: Model, ctx0: RenderCtx): View => {
             ctx.hoverCol.value = i;
             ctx.showTip(e, cat || 'Series', vis.filter((s) => s.points[i] && !s.points[i].gap).map((s) => ({
                 name: s.name, value: fmt(s.points[i].value), color: s.color,
-                border: barSeries.includes(s) ? s.bordercolor : '',
+                border: s.bordercolor,
             })));
         };
         return html`<div class="lm-chart-col"
@@ -374,7 +383,7 @@ export const bars = (mFull: Model, ctx0: RenderCtx): View => {
                     style="${css({ fill: s.color })}" data-dim="${dim}" data-stream="${stream ? 'true' : false}" />`);
                 // streams read as soft ribbons: no top stroke, no markers
                 if (!stream) paths.push(html`<path class="lm-chart-line" d="${topD}"
-                    style="${css({ stroke: s.color })}" data-dim="${dim}" />`);
+                    style="${css({ stroke: lineColor(s) })}" data-dim="${dim}" />`);
                 if ((s.markers != null ? s.markers : m.markers) && !stream) {
                     for (let i = 0; i < n; i++) {
                         const p = s.points[i];
@@ -383,9 +392,9 @@ export const bars = (mFull: Model, ctx0: RenderCtx): View => {
                         const cat = m.categories[i] != null ? m.categories[i] : '';
                         const tipName = cat ? cat + ' · ' + s.name : s.name;
                         markers.push(html`<span class="lm-chart-marker"
-                            style="${css({ left: x.toFixed(2) + '%', top: y.toFixed(2) + '%', background: s.color })}"
+                            style="${markerStyle(s, { left: x.toFixed(2) + '%', top: y.toFixed(2) + '%' })}"
                             data-dim="${dim}" data-hot="${ctx.hoverCol.value === i ? 'true' : false}"
-                            onmousemove="${(e: MouseEvent) => { if (!shared) ctx.showTip(e, tipName, [{ name: s.name, value: fmt(p.value), color: s.color }]); }}"
+                            onmousemove="${(e: MouseEvent) => { if (!shared) ctx.showTip(e, tipName, [{ name: s.name, value: fmt(p.value), color: s.color, border: s.bordercolor }]); }}"
                             onmouseleave="${() => { if (!shared) ctx.hideTip(); }}"
                             onclick="${() => ctx.fire({ ...p, color: s.color }, sIndex(s), i)}"></span>`);
                     }
@@ -435,7 +444,7 @@ export const bars = (mFull: Model, ctx0: RenderCtx): View => {
                     const p = s.points[i];
                     if (!p || p.gap) continue;
                     const [ex, ey] = xy(i, p.value);
-                    endLabels.push({ x: ex, y: ey, name: s.name, color: s.color, dim });
+                    endLabels.push({ x: ex, y: ey, name: s.name, color: lineColor(s), dim });
                     break;
                 }
             }
@@ -447,11 +456,11 @@ export const bars = (mFull: Model, ctx0: RenderCtx): View => {
                     const cat = m.categories[i] != null ? m.categories[i] : '';
                     const tipName = cat ? cat + ' · ' + s.name : s.name;
                     markers.push(html`<span class="lm-chart-marker" data-shape="${s.marker}"
-                        style="${markerStyle(s, { left: x.toFixed(2) + '%', top: y.toFixed(2) + '%', background: s.color })}"
+                        style="${markerStyle(s, { left: x.toFixed(2) + '%', top: y.toFixed(2) + '%' })}"
                         data-dim="${dim}"
                         data-hot="${ctx.hoverCol.value === i ? 'true' : false}"
                         onmousemove="${(e: MouseEvent) => {
-                            if (!shared) ctx.showTip(e, tipName, [{ name: s.name, value: fmt(p.value), color: s.color }]);
+                            if (!shared) ctx.showTip(e, tipName, [{ name: s.name, value: fmt(p.value), color: s.color, border: s.bordercolor }]);
                         }}"
                         onmouseleave="${() => { if (!shared) ctx.hideTip(); }}"
                         onclick="${() => ctx.fire({ ...p, color: s.color }, sIndex(s), i)}">${

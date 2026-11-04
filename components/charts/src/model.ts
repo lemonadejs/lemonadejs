@@ -41,10 +41,14 @@ export interface ChartSeries {
     data: Array<number | number[] | ChartPoint | null>;
     /** Series colour; defaults to the palette slot. */
     color?: string;
-    /** Bar outline colour (bar/stackedbar, histogram, pareto). Pair with
-     *  `color: 'transparent'` for hollow bars. */
+    /** The outline colour; `color` stays the fill. Bars: their outline
+     *  (pair with `color: 'transparent'` for hollow bars). Lines/areas: the
+     *  line and the marker ring, the markers keep `color` as fill (Chart.js
+     *  borderColor/backgroundColor). Scatter: the point outline. */
     bordercolor?: string;
-    /** Bar outline width in px (default 1 when `bordercolor` is set). */
+    /** Outline width in px (default 1 when `bordercolor` is set): the bar
+     *  outline, the marker ring, the scatter point stroke. The line width is
+     *  `width`. */
     borderwidth?: number;
     /** Per-series render type for combo charts (overrides the chart `type`).
      *  `'scatter'` (points only) and `'line'` combine in a scatter base chart

@@ -100,18 +100,22 @@ export const scatterChart = (m: Model, ctx: RenderCtx): View => {
         const cx = (xf(p.x) * 100).toFixed(2) + '%';
         const cy = ((1 - yf(p.value)) * 100).toFixed(2) + '%';
         const dim = ctx.hover.value && ctx.hover.value !== s.name ? 'true' : false;
-        const tip = (e: MouseEvent): void => ctx.showTip(e, s.name, [{ name: '', value: tipVal, color: s.color }]);
+        const tip = (e: MouseEvent): void => ctx.showTip(e, s.name, [{ name: '', value: tipVal, color: s.color, border: s.bordercolor }]);
+        // the point: filled with color, outlined with bordercolor when set
+        const dotStyle = css(s.bordercolor
+            ? { fill: s.color, stroke: s.bordercolor, 'stroke-width': s.borderwidth }
+            : { fill: s.color });
         const click = (): void => ctx.fire(p, m.series.indexOf(s), s.points.indexOf(p));
         // non-circles are <rect>s anchored by x/y in % and centred/reshaped
         // via CSS (transform-box: fill-box + clip-path), so % positioning
         // keeps working inside the unscaled (viewBox-less) svg
         return shape === 'circle'
             ? html`<circle class="lm-chart-dot" cx="${cx}" cy="${cy}" r="${r}"
-                style="${css({ fill: s.color })}" data-dim="${dim}"
+                style="${dotStyle}" data-dim="${dim}"
                 onmousemove="${tip}" ontouchstart="${tip}" onmouseleave="${ctx.hideTip}" onclick="${click}" />`
             : html`<rect class="lm-chart-dot" data-shape="${shape}"
                 x="${cx}" y="${cy}" width="${(r * 2).toFixed(1)}" height="${(r * 2).toFixed(1)}"
-                style="${css({ fill: s.color })}" data-dim="${dim}"
+                style="${dotStyle}" data-dim="${dim}"
                 onmousemove="${tip}" ontouchstart="${tip}" onmouseleave="${ctx.hideTip}" onclick="${click}" />`;
     });
 
