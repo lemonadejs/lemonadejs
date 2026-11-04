@@ -895,6 +895,7 @@ export const waterfallChart = (m: Model, ctx: RenderCtx): View => {
                     html`<div class="lm-chart-cat"><span class="lm-chart-cat-label">${s.name || ''}</span></div>`)}</div>` : false}
             </div>
         </div>
+        ${m.xtitle ? html`<div class="lm-chart-xtitle">${m.xtitle}</div>` : false}
     </div>`;
 };
 

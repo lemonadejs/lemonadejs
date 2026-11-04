@@ -596,6 +596,23 @@ describe('components/charts', () => {
         expect(order()).toEqual(['lm-chart-areafill', 'lm-chart-line', 'lm-chart-areafill', 'lm-chart-line']);
     });
 
+    it('axis titles: every cartesian renderer shows xtitle and ytitle', () => {
+        const cases: Array<Record<string, unknown>> = [
+            { type: 'waterfall', categories: ['A', 'B'], series: [{ data: [3, -1] }] },
+            { type: 'boxplot', categories: ['A'], series: [{ data: [[1, 2, 3, 4, 5]] }] },
+            { type: 'histogram', series: [{ data: [1, 2, 3] }] },
+            { type: 'scatter', series: [{ data: [[1, 2]] }] },
+            { type: 'bar', categories: ['A'], series: [{ data: [1] }] },
+        ];
+        for (const def of cases) {
+            handle = t(Chart, { ...def, xaxis: { title: 'X title' }, yaxis: { title: 'Y title' } });
+            expect(handle.query('.lm-chart-xtitle')?.textContent, String(def.type)).toBe('X title');
+            expect(handle.query('.lm-chart-ytitle')?.textContent, String(def.type)).toBe('Y title');
+            handle.unmount();
+            handle = null;
+        }
+    });
+
     it('legend: false, { show: false } and the "false" attribute all hide it', () => {
         for (const legend of [false, { show: false }, 'false']) {
             handle = t(Chart, { type: 'bar', legend, categories: ['A'], series: [{ name: 's', data: [1] }, { name: 'r', data: [2] }] });
