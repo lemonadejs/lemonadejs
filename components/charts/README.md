@@ -2,7 +2,7 @@
 
 LemonadeJS charts block — 35 chart types from one data definition, responsive with no resize code.
 
-**✓ verified** — 129 contract checks · framework-agnostic · zero dependencies
+**✓ verified** — 131 contract checks · framework-agnostic · zero dependencies
 
 ## Overview
 
@@ -109,6 +109,16 @@ overrides `gridlines: false`. A category axis has no lines by default; a
 categories are on `yaxis`. The fields are the CSS variables
 `--lm-chart-xgrid-color`, `-width` and `-style` (and `ygrid`).
 
+In horizontal bars the `axis: 'right'` series (the secondary axis) get
+a value axis of their own at the top, configured by `x2axis` (`title`,
+`titlefont`, `font`, `labels`, `reverse`; fonts fall back to `xaxis`).
+Its ticks share the bottom axis' gridlines, and an axis with no visible
+series is not drawn: only secondary series show only the top axis.
+Mirrored bars, and stacks that mix both axes, have no secondary axis (a
+stack sums on one axis, a pyramid shares one centred at zero): every
+series uses the bottom one. A stack whose series are all secondary is a
+single stack on the top axis.
+
 `reverse: true` reverses an axis, physically like the rest:
 `yaxis.reverse` (or `yreverse`) makes the values grow downwards, or with
 `horizontal` runs the categories bottom to top (the Excel default);
@@ -185,6 +195,7 @@ state for a two-way live wire. Attribute strings are coerced to the declared typ
 | `xaxis` | object | — | bottom axis { title?, titlefont?, font?, labels?, grid?, reverse? } — font = its tick labels; labels: false hides them; grid = its vertical lines |
 | `yaxis` | object | — | left axis { title?, titlefont?, font?, labels?, grid?, reverse? } — grid = the horizontal lines |
 | `y2axis` | object | — | right axis { title?, titlefont?, font?, labels? } (falls back to yaxis fonts) |
+| `x2axis` | object | — | top axis of horizontal bars (the axis: 'right' series) { title?, titlefont?, font?, labels?, reverse? } (falls back to xaxis fonts) |
 | `markers` | boolean | `true` | line/area: show point markers |
 | `smooth` | boolean | `false` | line/area: smooth (spline) curves |
 | `step` | boolean | `false` | line/area: step (stairs) — true/'before' or 'mid' |

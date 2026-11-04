@@ -40,6 +40,8 @@ interface Scale {
     ticks: number[];
     /** value → 0..1 fraction up the axis (handles log). */
     frac: (v: number) => number;
+    /** the axis is reversed (frac and ticks already carry it) */
+    rev: boolean;
 }
 
 export const bars = (mFull: Model, ctx0: RenderCtx): View => {
@@ -101,18 +103,27 @@ export const bars = (mFull: Model, ctx0: RenderCtx): View => {
     // Combo split (stacked forces all to bars on one axis)
     const barSeries = vis.filter((s) => stacked || s.type === 'bar');
     const lineSeries = stacked ? [] : vis.filter((s) => s.type !== 'bar');
-    const hasRight = !stacked && vis.some((s) => s.axis === 'right');
-    // the right gutter is reserved only while its tick labels show (the scale stays)
-    const rightGap = hasRight && m.y2labels;
+    const anyRight = vis.some((s) => s.axis === 'right');
+    const anyLeft = vis.some((s) => s.axis !== 'right');
     // pure line/area chart → a thin vertical crosshair instead of a column band
     const crosshair = lineSeries.length > 0 && barSeries.length === 0;
     // horizontal bars: only for pure bar/stacked (categories move to the y-axis)
     const horizontal = m.horizontal && lineSeries.length === 0;
+    // the secondary (axis: 'right') series: vertical → the right axis;
+    // horizontal → the TOP axis (x2axis). Two scales never stack or mirror
+    // (a stack sums on one axis, a pyramid shares one centred at zero), but
+    // a stack whose series are ALL secondary is one stack on the top axis:
+    // only-secondary horizontal bars, stacked or not, draw the top axis alone.
+    const hasRight = !horizontal && !stacked && anyRight;
+    const topOnly = horizontal && !mirror && anyRight && !anyLeft;
+    const dualH = horizontal && !stacked && !mirror && anyRight && anyLeft;
+    // the right gutter is reserved only while its tick labels show (the scale stays)
+    const rightGap = hasRight && m.y2labels;
     // reversed axes are physical: vertical → yreverse flips the values;
     // horizontal → the values are on x (xreverse), while yreverse flips the
     // category order in CSS. A reversed category x arrives as reversed data
     // (index.ts), a continuous x flips its positions here.
-    const valueReverse = horizontal ? m.xreverse : m.yreverse;
+    const valueReverse = horizontal ? (topOnly ? m.x2reverse : m.xreverse) : m.yreverse;
 
     // continuous x (datetime/linear): line/area points sit at their x VALUE,
     // not evenly by index; ticks are smart date/number boundaries
@@ -145,7 +156,7 @@ export const bars = (mFull: Model, ctx0: RenderCtx): View => {
 
     // Build a scale for a set of series (one per y-axis); fixedK aligns the
     // secondary axis to the primary's interval count so gridlines line up.
-    const buildScale = (sset: NormSeries[], useY: boolean, fixedK: number | null): Scale => {
+    const buildScale = (sset: NormSeries[], useY: boolean, fixedK: number | null, rev: boolean): Scale => {
         let dmin = 0;
         let dmax = 0;
         if (percent) { dmax = 100; }
@@ -224,13 +235,16 @@ export const bars = (mFull: Model, ctx0: RenderCtx): View => {
             ? (v: number): number => (Math.log10(Math.max(lo, Math.min(hi, v))) - logLo) / logSpan
             : (v: number): number => (v - lo) / range;
         // a reversed axis grows downwards: the fraction flips, the ticks too
-        const frac = valueReverse ? (v: number): number => 1 - up(v) : up;
-        if (valueReverse) ticks = [...ticks].reverse();
-        return { lo, hi, range, baseV, basePct: frac(baseV) * 100, ticks, frac };
+        const frac = rev ? (v: number): number => 1 - up(v) : up;
+        if (rev) ticks = [...ticks].reverse();
+        return { lo, hi, range, baseV, basePct: frac(baseV) * 100, ticks, frac, rev };
     };
 
-    const primary = buildScale(stacked || stackedArea ? vis : vis.filter((s) => s.axis !== 'right'), true, null);
-    const secondary = hasRight ? buildScale(vis.filter((s) => s.axis === 'right'), false, primary.ticks.length - 1) : null;
+    const primarySet = dualH || (!horizontal && !(stacked || stackedArea)) ? vis.filter((s) => s.axis !== 'right') : vis;
+    const primary = buildScale(primarySet, true, null, valueReverse);
+    const secondary = hasRight || dualH
+        ? buildScale(vis.filter((s) => s.axis === 'right'), false, primary.ticks.length - 1, horizontal ? m.x2reverse : valueReverse)
+        : null;
     const scaleOf = (s: NormSeries): Scale => (s.axis === 'right' && secondary ? secondary : primary);
     const ticks = primary.ticks;
     const baseV = primary.baseV;
@@ -254,7 +268,7 @@ export const bars = (mFull: Model, ctx0: RenderCtx): View => {
                 accPos += len;
             } else if (stacked) {
                 // built upwards from the unreversed baseline, flipped below
-                const base = valueReverse ? 100 - sc.basePct : sc.basePct;
+                const base = sc.rev ? 100 - sc.basePct : sc.basePct;
                 len = (Math.abs(v) / sc.range) * 100;
                 if (v >= 0) { bottom = base + accPos; accPos += len; }
                 else { bottom = base - accNeg - len; accNeg += len; }
@@ -266,7 +280,7 @@ export const bars = (mFull: Model, ctx0: RenderCtx): View => {
                 bottom = Math.min(a, b);
                 len = Math.abs(b - a);
             }
-            if (valueReverse && (percent || stacked)) bottom = 100 - bottom - len;
+            if (sc.rev && (percent || stacked)) bottom = 100 - bottom - len;
 
             const share = percent ? Math.round(len) : null;
             const tipName = cat ? cat + ' · ' + s.name : s.name;
@@ -279,7 +293,7 @@ export const bars = (mFull: Model, ctx0: RenderCtx): View => {
                 : css({ bottom: bottom + '%', height: len + '%', background: s.color, boxShadow: outline(s.bordercolor, s.borderwidth) });
             return html`<div class="lm-chart-bar" data-orient="${horizontal ? 'h' : false}"
                 style="${barStyle}"
-                data-neg="${(v < sc.baseV) !== valueReverse ? 'true' : false}"
+                data-neg="${(v < sc.baseV) !== sc.rev ? 'true' : false}"
                 data-dim="${ctx.hover.value && ctx.hover.value !== s.name ? 'true' : false}"
                 onmousemove="${(e: MouseEvent) => {
                     if (!shared) ctx.showTip(e, tipName, [{ name: s.name, value: tipValue, color: s.color, border: s.bordercolor }]);
@@ -693,8 +707,18 @@ export const bars = (mFull: Model, ctx0: RenderCtx): View => {
         const yK = fontPx(m.fonts, 'ylabels', 12.8) / 12.8;
         const ycatsW = Math.min(150 * yK, Math.max(48, maxChars * 7.5 * yK + 14));
         const vticks = [...ticks].reverse(); // lo → hi, left to right
+        // value tick row of one scale (lo → hi, left to right); the top one
+        // is the x2axis (the axis: 'right' series)
+        const valueRow = (sc: Scale, top: boolean): View => html`<div class="lm-chart-xvalues"
+            data-top="${top ? 'true' : false}">${[...sc.ticks].reverse().map(
+            (t) => html`<div class="lm-chart-xval"><span>${percent ? Math.round(t) + '%' : fmt(t)}</span></div>`)}</div>`;
+        // an axis with no visible series is not drawn
+        const topScale = topOnly ? primary : dualH ? secondary : null;
+        const showBottom = !topOnly;
         return html`<div class="lm-chart-plotblock" data-orient="h"
             style="${css({ '--lm-ycats-w': (m.ylabels ? ycatsW : 0) + 'px' })}">
+            ${topScale && m.x2title ? html`<div class="lm-chart-xtitle lm-chart-xtitle-h lm-chart-x2title">${m.x2title}</div>` : false}
+            ${topScale && m.x2labels ? valueRow(topScale, true) : false}
             <div class="lm-chart-harea">
                 ${m.ytitle ? html`<div class="lm-chart-ytitle"><span>${m.ytitle}</span></div>` : false}
                 ${m.ylabels ? html`<div class="lm-chart-ycats" data-reverse="${m.yreverse ? 'true' : false}">${Array.from({ length: n }, (_, i) =>
@@ -708,9 +732,8 @@ export const bars = (mFull: Model, ctx0: RenderCtx): View => {
                     ${refLines}
                 </div>
             </div>
-            ${m.xlabels ? html`<div class="lm-chart-xvalues">${vticks.map(
-                (t) => html`<div class="lm-chart-xval"><span>${percent ? Math.round(t) + '%' : fmt(t)}</span></div>`)}</div>` : false}
-            ${m.xtitle ? html`<div class="lm-chart-xtitle lm-chart-xtitle-h">${m.xtitle}</div>` : false}
+            ${showBottom && m.xlabels ? valueRow(primary, false) : false}
+            ${showBottom && m.xtitle ? html`<div class="lm-chart-xtitle lm-chart-xtitle-h">${m.xtitle}</div>` : false}
         </div>`;
     }
 

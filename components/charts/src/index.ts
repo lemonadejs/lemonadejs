@@ -102,6 +102,16 @@
  * categories are on `yaxis`. The fields are the CSS variables
  * `--lm-chart-xgrid-color`, `-width` and `-style` (and `ygrid`).
  *
+ * In horizontal bars the `axis: 'right'` series (the secondary axis) get
+ * a value axis of their own at the top, configured by `x2axis` (`title`,
+ * `titlefont`, `font`, `labels`, `reverse`; fonts fall back to `xaxis`).
+ * Its ticks share the bottom axis' gridlines, and an axis with no visible
+ * series is not drawn: only secondary series show only the top axis.
+ * Mirrored bars, and stacks that mix both axes, have no secondary axis (a
+ * stack sums on one axis, a pyramid shares one centred at zero): every
+ * series uses the bottom one. A stack whose series are all secondary is a
+ * single stack on the top axis.
+ *
  * `reverse: true` reverses an axis, physically like the rest:
  * `yaxis.reverse` (or `yreverse`) makes the values grow downwards, or with
  * `horizontal` runs the categories bottom to top (the Excel default);
@@ -179,6 +189,7 @@ export const Charts = component('charts', {
     xaxis: Object,           // bottom axis { title?, titlefont?, font?, labels?, grid?, reverse? } — font = its tick labels; labels: false hides them; grid = its vertical lines
     yaxis: Object,           // left axis { title?, titlefont?, font?, labels?, grid?, reverse? } — grid = the horizontal lines
     y2axis: Object,          // right axis { title?, titlefont?, font?, labels? } (falls back to yaxis fonts)
+    x2axis: Object,          // top axis of horizontal bars (the axis: 'right' series) { title?, titlefont?, font?, labels?, reverse? } (falls back to xaxis fonts)
     markers: true,           // line/area: show point markers
     smooth: false,           // line/area: smooth (spline) curves
     step: false,             // line/area: step (stairs) — true/'before' or 'mid'
@@ -272,6 +283,7 @@ export const Charts = component('charts', {
         xaxis: props.xaxis.value as ChartAxis,
         yaxis: props.yaxis.value as ChartAxis,
         y2axis: props.y2axis.value as ChartAxis,
+        x2axis: props.x2axis.value as ChartAxis,
         markers: props.markers.value,
         smooth: props.smooth.value,
         step: props.step.value as boolean | 'before' | 'mid',

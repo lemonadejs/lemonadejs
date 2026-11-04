@@ -127,6 +127,14 @@
             "pass": true
         },
         {
+            "name": "prop x2axis",
+            "pass": true
+        },
+        {
+            "name": "prop x2axis (live state)",
+            "pass": true
+        },
+        {
             "name": "prop markers",
             "pass": true
         },

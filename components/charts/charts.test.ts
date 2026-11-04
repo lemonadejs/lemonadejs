@@ -211,6 +211,54 @@ describe('components/charts', () => {
         expect(handle.queryAll('.lm-chart-tick').map((e) => e.textContent)).toEqual(['0', '2', '4', '6', '8']);
     });
 
+    it('x2axis: horizontal bars draw the axis: right series on a top axis', () => {
+        const cats = ['A', 'B'];
+        const dual = [{ name: 'u', data: [1, 2] }, { name: 'r', axis: 'right', data: [100, 400] }];
+        handle = t(Chart, { type: 'bar', horizontal: true, categories: cats, series: dual,
+            xaxis: { title: 'Units' }, x2axis: { title: 'Revenue', font: { color: 'red' } } });
+        const rows = handle.queryAll('.lm-chart-xvalues');
+        expect(rows.map((r) => r.getAttribute('data-top'))).toEqual(['true', null]); // top first, then bottom
+        expect(handle.query('.lm-chart-x2title')!.textContent).toBe('Revenue');
+        expect(handle.queryAll('.lm-chart-xtitle').map((e) => e.textContent)).toEqual(['Revenue', 'Units']);
+        expect(styleN(handle.query('.lm-chart')!)).toContain('--lm-chart-x2labels-color:red');
+        // the top ticks belong to the secondary scale (hundreds), the bottom to the primary
+        const top = rows[0].querySelectorAll('.lm-chart-xval');
+        expect(Number(top[top.length - 1].textContent)).toBeGreaterThanOrEqual(400);
+        handle.unmount();
+        // only secondary series: only the top axis
+        handle = t(Chart, { type: 'bar', horizontal: true, categories: cats, series: [dual[1]],
+            xaxis: { title: 'Units' }, x2axis: { title: 'Revenue' } });
+        expect(handle.queryAll('.lm-chart-xvalues').map((r) => r.getAttribute('data-top'))).toEqual(['true']);
+        expect(handle.queryAll('.lm-chart-xtitle').map((e) => e.textContent)).toEqual(['Revenue']);
+        handle.unmount();
+        // stacked: no secondary — everything stacks on the bottom axis
+        handle = t(Chart, { type: 'stackedbar', horizontal: true, categories: cats, series: dual, x2axis: { title: 'Revenue' } });
+        expect(handle.queryAll('.lm-chart-xvalues').map((r) => r.getAttribute('data-top'))).toEqual([null]);
+        expect(handle.query('.lm-chart-x2title')).toBeNull();
+        handle.unmount();
+        // stacked / percent with ALL series secondary: one stack on the top axis
+        for (const stackmode of ['normal', 'percent']) {
+            handle = t(Chart, { type: 'stackedbar', stackmode, horizontal: true, categories: cats,
+                series: [{ name: 'p', axis: 'right', data: [1, 2] }, { name: 'q', axis: 'right', data: [3, 1] }],
+                xaxis: { title: 'Units' }, x2axis: { title: 'Revenue', reverse: true } });
+            const rows = handle.queryAll('.lm-chart-xvalues');
+            expect(rows.map((r) => r.getAttribute('data-top'))).toEqual(['true']);
+            expect(handle.queryAll('.lm-chart-xtitle').map((e) => e.textContent)).toEqual(['Revenue']);
+            // x2axis.reverse applies to the stack
+            const tv = Array.from(rows[0].querySelectorAll('.lm-chart-xval')).map((e) => parseFloat(e.textContent!));
+            expect(tv[0]).toBeGreaterThan(tv[tv.length - 1]);
+            handle.unmount();
+        }
+        // mirror (pyramid): one shared axis, no top axis
+        handle = t(Chart, { type: 'bar', horizontal: true, mirror: true, categories: cats, series: dual, x2axis: { title: 'Revenue' } });
+        expect(handle.queryAll('.lm-chart-xvalues').map((r) => r.getAttribute('data-top'))).toEqual([null]);
+        handle.unmount();
+        // x2axis.reverse: the top ticks run right to left
+        handle = t(Chart, { type: 'bar', horizontal: true, categories: cats, series: dual, x2axis: { reverse: true } });
+        const tv = Array.from(handle.queryAll('.lm-chart-xvalues')[0].querySelectorAll('.lm-chart-xval')).map((e) => Number(e.textContent));
+        expect(tv[0]).toBeGreaterThan(tv[tv.length - 1]);
+    });
+
     it('legend: false, { show: false } and the "false" attribute all hide it', () => {
         for (const legend of [false, { show: false }, 'false']) {
             handle = t(Chart, { type: 'bar', legend, categories: ['A'], series: [{ name: 's', data: [1] }, { name: 'r', data: [2] }] });

@@ -7,8 +7,8 @@
        labels 0.7em bold). */
     /* Per-element typography: --lm-chart-<el>-size|color|family|weight|style
        for <el> = title, subtitle, legend, legendtitle, xtitle, ytitle,
-       y2title, xlabels, ylabels, y2labels (physical axes: x bottom, y
-       left, y2 right; y2* fall back to y*). Unset = the defaults below.
+       y2title, x2title, xlabels, ylabels, y2labels, x2labels (physical
+       axes: x bottom, y left, y2 right, x2 top; y2/x2 fall back to y/x). Unset = the defaults below.
        The title/subtitle/legend/xaxis/yaxis/y2axis props write them here. */
     --lm-chart-font: 'Helvetica Neue', Helvetica, Arial, sans-serif;
     --lm-chart-font-size: 1rem;
@@ -859,6 +859,32 @@
 
 .lm-chart-xtitle-h {
     padding-left: var(--lm-ycats-w);
+}
+
+/* horizontal bars: the top (x2) axis of the axis: 'right' series — its
+   own value row above the plot and its title above that; fonts fall back
+   to the bottom axis */
+.lm-chart-xvalues[data-top='true'] {
+    margin-top: 0;
+    margin-bottom: 4px;
+}
+
+.lm-chart-xvalues[data-top='true'] .lm-chart-xval > span {
+    font-size: var(--lm-chart-x2labels-size, var(--lm-chart-xlabels-size, 0.8em));
+    color: var(--lm-chart-x2labels-color, var(--lm-chart-xlabels-color, var(--lm-chart-axis)));
+    font-family: var(--lm-chart-x2labels-family, var(--lm-chart-xlabels-family, inherit));
+    font-style: var(--lm-chart-x2labels-style, var(--lm-chart-xlabels-style, normal));
+    font-weight: var(--lm-chart-x2labels-weight, var(--lm-chart-xlabels-weight, normal));
+}
+
+.lm-chart-x2title {
+    margin-top: 0;
+    margin-bottom: 4px;
+    font-size: var(--lm-chart-x2title-size, var(--lm-chart-xtitle-size, 0.8em));
+    color: var(--lm-chart-x2title-color, var(--lm-chart-xtitle-color, var(--lm-chart-muted)));
+    font-family: var(--lm-chart-x2title-family, var(--lm-chart-xtitle-family, inherit));
+    font-style: var(--lm-chart-x2title-style, var(--lm-chart-xtitle-style, normal));
+    font-weight: var(--lm-chart-x2title-weight, var(--lm-chart-xtitle-weight, normal));
 }
 
 /* horizontal bars grow from the left (scaleX) instead of up */

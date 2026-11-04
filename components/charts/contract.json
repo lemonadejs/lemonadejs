@@ -53,6 +53,9 @@
         "y2axis": {
             "type": "object"
         },
+        "x2axis": {
+            "type": "object"
+        },
         "markers": {
             "type": "boolean",
             "default": true

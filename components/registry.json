@@ -474,7 +474,7 @@
         "name": "charts",
         "path": "components/charts",
         "verified": true,
-        "checks": 129,
+        "checks": 131,
         "contract": {
             "name": "charts",
             "props": {
@@ -528,6 +528,9 @@
                     "type": "object"
                 },
                 "y2axis": {
+                    "type": "object"
+                },
+                "x2axis": {
                     "type": "object"
                 },
                 "markers": {

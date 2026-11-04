@@ -106,6 +106,8 @@ export interface ChartOptions {
     xaxis?: ChartAxis;
     yaxis?: ChartAxis;
     y2axis?: ChartAxis;
+    /** horizontal bars: the top axis, for the series with axis: 'right' */
+    x2axis?: ChartAxis;
     gridlines?: boolean;
     valueprefix?: string;
     valuesuffix?: string;
@@ -211,9 +213,9 @@ export interface ChartGrid {
 }
 
 /** The internal per-element font map behind the CSS variables
- *  --lm-chart-<key>-size|color|family|weight|style. y2title and y2labels
+ *  --lm-chart-<key>-size|color|family|weight|style. The y2 and x2 keys (right/top)
  *  fall back to their y counterparts in the stylesheet. */
-export const FONT_KEYS = ['title', 'subtitle', 'legend', 'legendtitle', 'xtitle', 'ytitle', 'y2title', 'xlabels', 'ylabels', 'y2labels'] as const;
+export const FONT_KEYS = ['title', 'subtitle', 'legend', 'legendtitle', 'xtitle', 'ytitle', 'y2title', 'x2title', 'xlabels', 'ylabels', 'y2labels', 'x2labels'] as const;
 export type ChartFontKey = typeof FONT_KEYS[number];
 export type ChartFonts = Partial<Record<ChartFontKey, ChartFont>>;
 
@@ -232,7 +234,7 @@ export const fontsOf = (def: ChartOptions): ChartFonts => {
     put('subtitle', fontOf(def.subtitle));
     if (isObj(def.legend)) { put('legend', def.legend.font); put('legendtitle', def.legend.titlefont); }
     const axes: Array<[unknown, ChartFontKey, ChartFontKey]> = [
-        [def.xaxis, 'xtitle', 'xlabels'], [def.yaxis, 'ytitle', 'ylabels'], [def.y2axis, 'y2title', 'y2labels']];
+        [def.xaxis, 'xtitle', 'xlabels'], [def.yaxis, 'ytitle', 'ylabels'], [def.y2axis, 'y2title', 'y2labels'], [def.x2axis, 'x2title', 'x2labels']];
     for (const [ax, t, l] of axes) if (isObj(ax)) { put(t, ax.titlefont); put(l, ax.font); }
     return out;
 };
@@ -454,6 +456,8 @@ export interface Model {
     xtitle: string;
     ytitle: string;
     y2title: string;
+    /** horizontal bars: the top axis title (x2axis.title) */
+    x2title: string;
     gridlines: boolean;
     valueprefix: string;
     valuesuffix: string;
@@ -499,6 +503,9 @@ export interface Model {
     xlabels: boolean;
     ylabels: boolean;
     y2labels: boolean;
+    x2labels: boolean;
+    /** horizontal bars: the top axis is reversed (x2axis.reverse) */
+    x2reverse: boolean;
     /** waffle mode: one palette-partitioned grid per series (type="waffle") */
     waffle: boolean;
 }
@@ -644,6 +651,7 @@ export const normalize = (def: ChartOptions): Model => {
         xtitle: axisTitle(def.xaxis, def.xtitle),
         ytitle: axisTitle(def.yaxis, def.ytitle),
         y2title: axisTitle(def.y2axis, def.y2title),
+        x2title: axisTitle(def.x2axis, undefined),
         gridlines: def.gridlines !== false,
         valueprefix: def.valueprefix != null ? String(def.valueprefix) : '',
         valuesuffix: def.valuesuffix != null ? String(def.valuesuffix) : '',
@@ -690,6 +698,8 @@ export const normalize = (def: ChartOptions): Model => {
         xlabels: !(isObj(def.xaxis) && def.xaxis.labels === false),
         ylabels: !(isObj(def.yaxis) && def.yaxis.labels === false),
         y2labels: !(isObj(def.y2axis) && def.y2axis.labels === false),
+        x2labels: !(isObj(def.x2axis) && def.x2axis.labels === false),
+        x2reverse: isObj(def.x2axis) && def.x2axis.reverse === true,
         waffle: isWaffle,
     };
 };
