@@ -474,7 +474,7 @@
         "name": "charts",
         "path": "components/charts",
         "verified": true,
-        "checks": 131,
+        "checks": 133,
         "contract": {
             "name": "charts",
             "props": {
@@ -646,6 +646,9 @@
                     "type": "number"
                 },
                 "bins": {
+                    "type": "number"
+                },
+                "binwidth": {
                     "type": "number"
                 },
                 "plotlines": {

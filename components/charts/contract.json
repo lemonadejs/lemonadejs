@@ -171,6 +171,9 @@
         "bins": {
             "type": "number"
         },
+        "binwidth": {
+            "type": "number"
+        },
         "plotlines": {
             "type": "array"
         },

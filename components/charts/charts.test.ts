@@ -419,6 +419,32 @@ describe('components/charts', () => {
         expect(sl[2].tagName.toLowerCase()).toBe('path'); // the lone inner slice is a full annulus
     });
 
+    it('histogram: binwidth makes exact-width bins from the minimum, past the maximum', () => {
+        const data = [28, 33, 40, 55, 61, 62, 70, 80];
+        handle = t(Chart, { type: 'histogram', binwidth: 5, series: [{ data }] });
+        const cats = handle.queryAll('.lm-chart-cat-label').map((e) => e.textContent).filter(Boolean);
+        expect(cats[0]).toBe('[28, 33]');
+        expect(cats[1]).toBe('(33, 38]');
+        expect(cats[cats.length - 1]).toBe('(78, 83]'); // 11 bins of 5: the last runs past 80
+        expect(cats.length).toBe(11);
+        // closed on the right: 33 counts in [28, 33] (2 there, none in (33, 38]); 80 in the last
+        const vals = handle.queryAll('.lm-chart-value').map((e) => e.textContent);
+        expect(vals[0]).toBe('2');
+        expect(handle.queryAll('.lm-chart-bar')[1].textContent).toBe('');
+        expect(vals[vals.length - 1]).toBe('1');
+        handle.unmount();
+        // a maximum on a boundary joins the last bin: 28..48 by 5 → 4 bins, not 5
+        handle = t(Chart, { type: 'histogram', binwidth: 5, series: [{ data: [28, 30, 48] }] });
+        expect(handle.queryAll('.lm-chart-cat-label').map((e) => e.textContent).filter(Boolean).length).toBe(4);
+        handle.unmount();
+        // binwidth wins over bins; a tiny width (> 200 bins) falls back to bins
+        handle = t(Chart, { type: 'histogram', binwidth: 26, bins: 7, series: [{ data }] });
+        expect(handle.queryAll('.lm-chart-cat-label').map((e) => e.textContent).filter(Boolean)).toEqual(['[28, 54]', '(54, 80]']); // 52/26 = 2 exactly
+        handle.unmount();
+        handle = t(Chart, { type: 'histogram', binwidth: 0.01, bins: 4, series: [{ data }] });
+        expect(handle.queryAll('.lm-chart-cat-label').map((e) => e.textContent).filter(Boolean).length).toBe(4);
+    });
+
     it('legend: false, { show: false } and the "false" attribute all hide it', () => {
         for (const legend of [false, { show: false }, 'false']) {
             handle = t(Chart, { type: 'bar', legend, categories: ['A'], series: [{ name: 's', data: [1] }, { name: 'r', data: [2] }] });
@@ -541,12 +567,13 @@ describe('components/charts', () => {
     it('histogram: bins raw samples into count bars with range labels', () => {
         handle = t(Chart, { type: 'histogram', bins: 4, series: [{ data: [1, 2, 2, 3, 5, 6, 7, 8, 8, 9] }] });
         expect(handle.query('.lm-chart')!.getAttribute('data-type')).toBe('histogram');
-        // 10 samples over 1..9 in 4 bins of width 2 → counts 3,1,2,4
+        // 10 samples over 1..9 in 4 bins of width 2, closed on the right
+        // ([1,3], (3,5], (5,7], (7,9]) → counts 4,1,2,3
         const bars = handle.queryAll('.lm-chart-bar');
         expect(bars.length).toBe(4);
-        expect(handle.queryAll('.lm-chart-value').map((l) => l.textContent)).toEqual(['3', '1', '2', '4']);
-        // bin labels are ranges
-        expect(handle.query('.lm-chart-cat-label')!.textContent).toBe('1–3');
+        expect(handle.queryAll('.lm-chart-value').map((l) => l.textContent)).toEqual(['4', '1', '2', '3']);
+        // bin labels are intervals
+        expect(handle.query('.lm-chart-cat-label')!.textContent).toBe('[1, 3]');
         // no legend for a frequency chart
         expect(handle.query('.lm-chart-legend')).toBeNull();
     });

@@ -383,6 +383,14 @@
             "pass": true
         },
         {
+            "name": "prop binwidth",
+            "pass": true
+        },
+        {
+            "name": "prop binwidth (live state)",
+            "pass": true
+        },
+        {
             "name": "prop plotlines",
             "pass": true
         },

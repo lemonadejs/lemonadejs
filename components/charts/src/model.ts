@@ -146,6 +146,8 @@ export interface ChartOptions {
     xmin?: number;
     xmax?: number;
     bins?: number;
+    /** histogram: a fixed bin width (wins over `bins`; at most 200 bins) */
+    binwidth?: number;
     plotlines?: PlotLine[];
     plotbands?: PlotBand[];
     annotations?: Annotation[];
@@ -561,12 +563,23 @@ export const normalize = (def: ChartOptions): Model => {
         let hi = Math.max(...samples);
         if (!Number.isFinite(lo)) { lo = 0; hi = 1; }
         if (hi <= lo) hi = lo + 1;
-        // bin count: explicit `bins` prop, else Sturges' rule
-        const k = Math.max(1, Math.round(Number(def.bins) > 0 ? Number(def.bins) : Math.ceil(Math.log2(samples.length || 1)) + 1));
-        const w = (hi - lo) / k;
+        // a fixed bin WIDTH (Excel's "bin width"): the bins start at the
+        // minimum and the last one runs past the maximum to a whole width;
+        // a maximum on a boundary joins the last bin rather than opening an
+        // empty one. Capped at 200 bins — a tiny width falls back to the
+        // count below. Else a bin COUNT: the `bins` prop, or Sturges' rule.
+        const bw = Number(def.binwidth) > 0 ? Number(def.binwidth) : 0;
+        const kw = bw > 0 ? Math.max(1, Math.ceil((hi - lo) / bw - 1e-9)) : 0;
+        const fixed = kw > 0 && kw <= 200;
+        const k = fixed ? kw
+            : Math.max(1, Math.round(Number(def.bins) > 0 ? Number(def.bins) : Math.ceil(Math.log2(samples.length || 1)) + 1));
+        const w = fixed ? bw : (hi - lo) / k;
+        // Excel's bins: closed on the right, (a, b], a value on a boundary
+        // counts in the LOWER bin; the first bin is closed on both sides,
+        // [min, b], and the labels say so
         const counts = new Array(k).fill(0);
-        for (const v of samples) counts[Math.min(k - 1, Math.floor((v - lo) / w))]++;
-        categories = counts.map((_, i) => compact(lo + i * w, null) + '–' + compact(lo + (i + 1) * w, null));
+        for (const v of samples) counts[Math.max(0, Math.min(k - 1, Math.ceil((v - lo) / w - 1e-9) - 1))]++;
+        categories = counts.map((_, i) => (i === 0 ? '[' : '(') + compact(lo + i * w, null) + ', ' + compact(lo + (i + 1) * w, null) + ']');
         rawSeries = [{ name: (rawSeries[0] && rawSeries[0].name) || 'Frequency', color: rawSeries[0] && rawSeries[0].color,
             bordercolor: rawSeries[0] && rawSeries[0].bordercolor, borderwidth: rawSeries[0] && rawSeries[0].borderwidth, data: counts }];
     }

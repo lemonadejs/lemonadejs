@@ -2,7 +2,7 @@
 
 LemonadeJS charts block — 35 chart types from one data definition, responsive with no resize code.
 
-**✓ verified** — 131 contract checks · framework-agnostic · zero dependencies
+**✓ verified** — 133 contract checks · framework-agnostic · zero dependencies
 
 ## Overview
 
@@ -85,6 +85,9 @@ series cycle circle, diamond, square, triangle.
   compact notation, decimals or a custom formatter
 - Category, datetime and linear x-axes; logarithmic, reversed, fixed-step
   and secondary y-axes; trendlines
+- Histogram binning by count (`bins`, default Sturges' rule) or by a
+  fixed width from the minimum (`binwidth`); Excel's bins, closed on the
+  right — `[28, 33]`, `(33, 38]`… — a boundary value counts in the lower
 - Reference lines, reference bands and annotations pinned to data points
 - Zoom by drag selection, a navigator strip and drilldown with a breadcrumb
 - Sparkline mode for inline charts, and a toolbar with CSV download
@@ -250,6 +253,7 @@ state for a two-way live wire. Attribute strings are coerced to the declared typ
 | `xmin` | number | — | scatter/bubble: force the x-axis lower bound (auto if unset) |
 | `xmax` | number | — | scatter/bubble: force the x-axis upper bound (auto if unset) |
 | `bins` | number | — | histogram only: bin count (unset = Sturges' rule) |
+| `binwidth` | number | — | histogram only: fixed bin width from the minimum (wins over bins; at most 200 bins) |
 | `plotlines` | array | — | reference lines [{ value, color?, label?, dashed?, axis? }] |
 | `plotbands` | array | — | reference bands [{ from, to, color?, label?, axis? }] |
 | `annotations` | array | — | callouts [{ x, y, text, color? }] pinned to data points |

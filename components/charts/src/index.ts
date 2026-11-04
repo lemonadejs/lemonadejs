@@ -78,6 +78,9 @@
  *   compact notation, decimals or a custom formatter
  * - Category, datetime and linear x-axes; logarithmic, reversed, fixed-step
  *   and secondary y-axes; trendlines
+ * - Histogram binning by count (`bins`, default Sturges' rule) or by a
+ *   fixed width from the minimum (`binwidth`); Excel's bins, closed on the
+ *   right — `[28, 33]`, `(33, 38]`… — a boundary value counts in the lower
  * - Reference lines, reference bands and annotations pinned to data points
  * - Zoom by drag selection, a navigator strip and drilldown with a breadcrumb
  * - Sparkline mode for inline charts, and a toolbar with CSV download
@@ -244,6 +247,7 @@ export const Charts = component('charts', {
     xmin: Number,            // scatter/bubble: force the x-axis lower bound (auto if unset)
     xmax: Number,            // scatter/bubble: force the x-axis upper bound (auto if unset)
     bins: Number,            // histogram only: bin count (unset = Sturges' rule)
+    binwidth: Number,        // histogram only: fixed bin width from the minimum (wins over bins; at most 200 bins)
     plotlines: Array,        // reference lines [{ value, color?, label?, dashed?, axis? }]
     plotbands: Array,        // reference bands [{ from, to, color?, label?, axis? }]
     annotations: Array,      // callouts [{ x, y, text, color? }] pinned to data points
@@ -333,6 +337,7 @@ export const Charts = component('charts', {
         xmin: props.xmin.value as number,
         xmax: props.xmax.value as number,
         bins: props.bins.value as number,
+        binwidth: props.binwidth.value as number,
         plotlines: props.plotlines.value as PlotLine[],
         plotbands: props.plotbands.value as PlotBand[],
         annotations: props.annotations.value as Annotation[],
