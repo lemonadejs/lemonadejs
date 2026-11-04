@@ -63,12 +63,15 @@
  * `'polynomial'` (`order`) or `'movingAverage'` (`period`), as a type or
  * `{ type, order?, period?, color?, dashed?, width? }`.
  *
- * `marker` (line and scatter points) is a filled `'circle'`, `'square'`,
+ * `marker` (line, radar and scatter points) is a filled `'circle'`, `'square'`,
  * `'triangle'` or `'diamond'`, or a stroked `'x'`, `'plus'`, `'dash'` or
  * `'star'` (the Excel asterisk, plus and x together): no fill, drawn in
  * `bordercolor` (else `color`), `borderwidth` px wide (at least 1.5; 2
  * without a `bordercolor`). `markersize` is the radius in px. Unset, scatter
- * series cycle circle, diamond, square, triangle.
+ * series cycle circle, diamond, square, triangle. A radar series keeps its
+ * small vertex dots until it asks for markers (`markers: true`, a `marker`
+ * or a `markersize`), and `markers: false` hides them; its polygon takes
+ * `bordercolor` as the stroke and `color` as the fill, like a line.
  *
  * ### Features
  *
@@ -451,8 +454,9 @@ export const Charts = component('charts', {
         // scatter swatches mirror the marker shape (explicit or the cycled
         // default — keep the order in sync with scatterChart's CYCLE)
         const cycle = ['circle', 'diamond', 'square', 'triangle'];
-        // scatter base: only 'line' series show a line swatch (the rest are points)
-        const lineSwatch = (s: NormSeries): boolean => (m.type === 'scatter' ? s.type === 'line' : s.type !== 'bar');
+        // scatter base: only 'line' series show a line swatch (the rest are
+        // points); radar series are lines whatever their resolved type
+        const lineSwatch = (s: NormSeries): boolean => (m.type === 'scatter' ? s.type === 'line' : m.type === 'radar' || s.type !== 'bar');
         // line swatches keep their centre dot, except for a stroked marker
         // (x/plus/dash/star), which replaces it
         const shapeOf = (s: NormSeries, i: number): string =>

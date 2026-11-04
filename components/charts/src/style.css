@@ -1107,6 +1107,11 @@
     r: 2.4;
 }
 
+/* markers: false — the vertex stays as a hover target only */
+.lm-chart-radar-dot[data-hidden='true']:hover {
+    r: 1.6;
+}
+
 .lm-chart-radar-dot[data-dim='true'] {
     opacity: 0.18;
 }

@@ -5,6 +5,7 @@
 import { css, html, type View } from 'lemonadejs';
 import { PALETTES, type Model, type NormPoint, type RenderCtx } from './model';
 import { R, annulus, f, kbKeydown, niceScale, polar, roundedRing, textOn, wedge } from './helpers';
+import { lineColor, markerStyle } from './cartesian';
 
 /** Inline tip for the keyboard-active mark (the radial twin of the
  *  cartesian .lm-chart-kbtip; state-driven, survives rebuilds). */
@@ -40,10 +41,17 @@ export const radarChart = (m: Model, ctx: RenderCtx): View => {
         const [x, y] = at(i, RR);
         return html`<line class="lm-chart-radar-spoke" x1="50" y1="50" x2="${x.toFixed(2)}" y2="${y.toFixed(2)}" />`;
     });
-    // one polygon per series + a vertex dot per point (hover → category + value)
+    // one polygon per series + a vertex marker per point (hover → category
+    // + value). Colours as a line series: `bordercolor` strokes the polygon
+    // and rings the markers, `color` fills both. The vertices are the small
+    // svg dots unless the series asks for markers (markers/marker/markersize:
+    // then the line chart's HTML markers, any shape), or turns them off.
     const shapes: View[] = [];
     const dots: View[] = [];
+    const markers: View[] = [];
     vis.forEach((s) => {
+        const stroke = lineColor(s);
+        const custom = s.markers === true || !!s.marker || s.markersize != null;
         const dim = ctx.hover.value && ctx.hover.value !== s.name ? 'true' : false;
         const verts = Array.from({ length: cats }, (_, i) => {
             const v = s.points[i] && !s.points[i].gap ? s.points[i].value : 0;
@@ -52,14 +60,22 @@ export const radarChart = (m: Model, ctx: RenderCtx): View => {
         // a 'line' series is the outline only (no fill)
         shapes.push(html`<polygon class="lm-chart-radar-area"
             points="${verts.map((e) => e.xy.map((c) => c.toFixed(2)).join(',')).join(' ')}"
-            style="${css(s.width ? { fill: s.color, stroke: s.color, 'stroke-width': s.width } : { fill: s.color, stroke: s.color })}"
+            style="${css(s.width ? { fill: s.color, stroke, 'stroke-width': s.width } : { fill: s.color, stroke })}"
             data-nofill="${s.type === 'line' ? 'true' : false}" data-dashed="${s.dashed || false}" data-dim="${dim}" />`);
         for (const e of verts) {
             const cat = m.categories[e.i] != null ? m.categories[e.i] : '';
+            const tip = (ev: MouseEvent): void => ctx.showTip(ev, s.name, [{ name: cat, value: ctx.fmt(e.v), color: s.color, border: s.bordercolor }]);
+            if (custom && s.markers !== false) {
+                markers.push(html`<span class="lm-chart-marker" data-shape="${s.marker || false}"
+                    style="${markerStyle(s, { left: e.xy[0].toFixed(2) + '%', top: e.xy[1].toFixed(2) + '%' })}"
+                    data-dim="${dim}" onmousemove="${tip}" onmouseleave="${ctx.hideTip}"></span>`);
+                continue;
+            }
+            // markers off: an invisible hover target keeps the tooltip
             dots.push(html`<circle class="lm-chart-radar-dot" cx="${e.xy[0].toFixed(2)}" cy="${e.xy[1].toFixed(2)}" r="1.6"
-                style="${css({ fill: s.color })}" data-dim="${dim}"
-                onmousemove="${(ev: MouseEvent) => ctx.showTip(ev, s.name, [{ name: cat, value: ctx.fmt(e.v), color: s.color }])}"
-                onmouseleave="${ctx.hideTip}" />`);
+                style="${css({ fill: s.markers === false ? 'transparent' : s.color })}" data-dim="${dim}"
+                data-hidden="${s.markers === false ? 'true' : false}"
+                onmousemove="${tip}" onmouseleave="${ctx.hideTip}" />`);
         }
     });
     // category labels (HTML overlay, fixed px)
@@ -77,7 +93,7 @@ export const radarChart = (m: Model, ctx: RenderCtx): View => {
     return html`<div class="lm-chart-pie-core">
         <div class="lm-chart-pie-area">
             <svg class="lm-chart-pie" viewBox="0 0 100 100" aria-hidden="true">${rings}${spokes}${shapes}${dots}</svg>
-            ${labels}${tickLabels}
+            ${markers}${labels}${tickLabels}
         </div>
     </div>`;
 };

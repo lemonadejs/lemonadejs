@@ -462,6 +462,38 @@ describe('components/charts', () => {
         expect(handle.query('.lm-chart-legend')).toBeNull();
     });
 
+    it('radar: bordercolor strokes the polygon, markers follow the line series options', () => {
+        const cats = ['A', 'B', 'C'];
+        handle = t(Chart, { type: 'radar', categories: cats, legendposition: 'bottom', series: [
+            { name: 'd', color: '#ff0000', bordercolor: '#00aa00', borderwidth: 2, marker: 'diamond', markersize: 5, data: [1, 2, 3] },
+            { name: 'x', color: '#0000ff', marker: 'x', data: [3, 2, 1] },
+            { name: 'plain', color: '#123456', data: [2, 2, 2] },
+            { name: 'off', color: '#654321', markers: false, data: [1, 1, 1] },
+        ] });
+        const polys = handle.queryAll('.lm-chart-radar-area');
+        expect(styleN(polys[0])).toMatch(/stroke:(#00aa00|rgb\(0, 170, 0\))/i);
+        expect(styleN(polys[0])).toMatch(/fill:(#ff0000|rgb\(255, 0, 0\))/i);
+        expect(styleN(polys[2])).toMatch(/stroke:(#123456|rgb\(18, 52, 86\))/i); // no bordercolor: as before
+        // HTML markers for the configured series (3 vertices each), svg dots for the rest
+        const mk = handle.queryAll('.lm-chart-marker');
+        expect(mk.length).toBe(6);
+        expect(mk[0].getAttribute('data-shape')).toBe('diamond');
+        expect(styleN(mk[0])).toMatch(/background:(#ff0000|rgb\(255, 0, 0\))/i);
+        expect(styleN(mk[0])).toMatch(/border-color:(#00aa00|rgb\(0, 170, 0\))/i);
+        expect(styleN(mk[0])).toContain('width:10px'); // markersize 5 → 10px
+        expect(mk[3].getAttribute('data-shape')).toBe('x');
+        expect(styleN(mk[3])).toContain('--lm-mk-c:#0000ff');
+        const dots = handle.queryAll('.lm-chart-radar-dot');
+        expect(dots.length).toBe(6); // plain + off
+        expect(dots.filter((d) => d.getAttribute('data-hidden') === 'true').length).toBe(3);
+        expect(styleN(dots[3])).toContain('fill:transparent');
+        // legend: line in the border colour, dot in the fill; the x shape for series 2
+        const sw = handle.queryAll('.lm-chart-swatch');
+        expect(styleN(sw[0])).toMatch(/background:(#00aa00|rgb\(0, 170, 0\))/i);
+        expect(styleN(sw[0])).toMatch(/--lm-swatch-dot:#ff0000/i);
+        expect(sw[1].getAttribute('data-shape')).toBe('x');
+    });
+
     it('legend: false, { show: false } and the "false" attribute all hide it', () => {
         for (const legend of [false, { show: false }, 'false']) {
             handle = t(Chart, { type: 'bar', legend, categories: ['A'], series: [{ name: 's', data: [1] }, { name: 'r', data: [2] }] });
