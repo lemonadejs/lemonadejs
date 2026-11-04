@@ -760,6 +760,24 @@
     inset: 0 var(--lm-chart-pad-r) 0 var(--lm-chart-gutter);
 }
 
+/* the points, lines and bubble labels share that same box, so a % x lands
+   under its tick (not shifted into the y gutter) */
+.lm-chart-scatterbox {
+    position: absolute;
+    inset: 0 var(--lm-chart-pad-r) 0 var(--lm-chart-gutter);
+}
+
+/* right (y2) axis on scatter/bubble: its 40px gutter, like the bars' */
+.lm-chart-plot[data-right='true'] .lm-chart-scatterbox,
+.lm-chart[data-type='scatter'] .lm-chart-plot[data-right='true'] .lm-chart-grid,
+.lm-chart[data-type='bubble'] .lm-chart-plot[data-right='true'] .lm-chart-grid {
+    right: 40px;
+}
+
+.lm-chart-plot[data-right='true'] + .lm-chart-xvalues {
+    padding-right: 40px;
+}
+
 .lm-chart[data-type='scatter'] .lm-chart-xvalues,
 .lm-chart[data-type='bubble'] .lm-chart-xvalues {
     padding-left: var(--lm-chart-gutter);

@@ -111,10 +111,11 @@
  * categories are on `yaxis`. The fields are the CSS variables
  * `--lm-chart-xgrid-color`, `-width` and `-style` (and `ygrid`).
  *
- * In vertical charts the `axis: 'right'` series use the right axis
- * (`y2axis`, whose `reverse` and fonts fall back to `yaxis`). When every
- * visible series is on the right, stacked included, only the right axis
- * is drawn: the left one, its title and its gutter go.
+ * In vertical charts, scatter and bubble included, the `axis: 'right'`
+ * series use the right axis (`y2axis`, whose `reverse` and fonts fall back
+ * to `yaxis`) on a scale of their own, its ticks aligned to the gridlines.
+ * When every visible series is on the right, stacked included, only the
+ * right axis is drawn: the left one, its title and its gutter go.
  *
  * In horizontal bars the `axis: 'right'` series (the secondary axis) get
  * a value axis of their own at the top, configured by `x2axis` (`title`,

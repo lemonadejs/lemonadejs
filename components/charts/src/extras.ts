@@ -4,8 +4,8 @@
  */
 import { css, html, type View } from 'lemonadejs';
 import { PALETTES, isStrokeMarker, markerStroke, type Model, type NormSeries, type RenderCtx } from './model';
-import { lerpColor, niceExtent, polyPath, smoothPath, squarify, stepPath, textOn } from './helpers';
-import { strokeStyle, trendPath, yGutter } from './cartesian';
+import { fixedScale, lerpColor, niceExtent, polyPath, smoothPath, squarify, stepPath, textOn } from './helpers';
+import { strokeStyle, trendPath } from './cartesian';
 
 /* ----- scatter / bubble (numeric x + y axes) ----- */
 export const scatterChart = (m: Model, ctx: RenderCtx): View => {
@@ -14,15 +14,30 @@ export const scatterChart = (m: Model, ctx: RenderCtx): View => {
     const all = vis.flatMap((s) => s.points.filter((p) => !p.gap).map((p) => ({ p, s })));
     let xmin = Infinity;
     let xmax = -Infinity;
-    let ymin = Infinity;
-    let ymax = -Infinity;
     let zmax = 0;
     for (const { p } of all) {
         xmin = Math.min(xmin, p.x); xmax = Math.max(xmax, p.x);
-        ymin = Math.min(ymin, p.value); ymax = Math.max(ymax, p.value);
         zmax = Math.max(zmax, p.z);
     }
-    if (!Number.isFinite(xmin)) { xmin = 0; xmax = 1; ymin = 0; ymax = 1; }
+    if (!Number.isFinite(xmin)) { xmin = 0; xmax = 1; }
+    // y axes (physical): the axis: 'right' series get the right axis with a
+    // scale of their own; all of them on the right → only that axis, with
+    // the one scale (the left axis, its title and its gutter go)
+    const anyRight = vis.some((s) => s.axis === 'right');
+    const anyLeft = vis.some((s) => s.axis !== 'right');
+    const dual = anyRight && anyLeft;
+    const rightOnly = anyRight && !anyLeft;
+    const leftSet = dual ? vis.filter((s) => s.axis !== 'right') : vis;
+    const rightSet = dual ? vis.filter((s) => s.axis === 'right') : [];
+    const yExtent = (set: NormSeries[]): [number, number] => {
+        let lo = Infinity;
+        let hi = -Infinity;
+        for (const s of set) for (const p of s.points) {
+            if (p.gap) continue;
+            lo = Math.min(lo, p.value); hi = Math.max(hi, p.value);
+        }
+        return Number.isFinite(lo) ? [lo, hi] : [0, 1];
+    };
     // pad the extents 5% so edge points sit INSIDE the plot instead of
     // half-clipped on the axis line — including past zero: a point at an
     // exact 0 boundary must not sit half outside the grid, so the axis
@@ -32,7 +47,7 @@ export const scatterChart = (m: Model, ctx: RenderCtx): View => {
         return [min - p, max + p];
     };
     const [pxlo, pxhi] = pad(xmin, xmax);
-    const [pylo, pyhi] = pad(ymin, ymax);
+    const [pylo, pyhi] = pad(...yExtent(leftSet));
     // explicit bounds replace the padded extents (ticks every quarter)
     const bounded = (auto: { lo: number; hi: number; ticks: number[] }, lo: number | null, hi: number | null): { lo: number; hi: number; ticks: number[] } => {
         if (lo == null && hi == null) return auto;
@@ -41,15 +56,29 @@ export const scatterChart = (m: Model, ctx: RenderCtx): View => {
         return { lo: a, hi: b, ticks: [0, 1, 2, 3, 4].map((k) => a + ((b - a) * k) / 4) };
     };
     const xs = bounded(niceExtent(pxlo, pxhi), m.xmin, m.xmax);
+    // ymin/ymax bound the scale that owns the left axis (or the lone right one)
     const ys = bounded(niceExtent(pylo, pyhi), m.ymin, m.ymax);
-    // reversed axes (physical): x grows leftwards, y downwards
-    const xf0 = (v: number): number => (xs.hi > xs.lo ? (v - xs.lo) / (xs.hi - xs.lo) : 0.5);
-    const yf0 = (v: number): number => (ys.hi > ys.lo ? (v - ys.lo) / (ys.hi - ys.lo) : 0.5);
-    const xf = (v: number): number => (m.xreverse ? 1 - xf0(v) : xf0(v));
-    const yf = (v: number): number => (m.yreverse ? 1 - yf0(v) : yf0(v));
+    // the right scale (two axes): the same tick count, so its tick labels
+    // line up with the left gridlines (as the bars' secondary axis)
+    const ys2 = dual ? ((): { lo: number; hi: number; ticks: number[] } => {
+        const sc = fixedScale(...pad(...yExtent(rightSet)), ys.ticks.length - 1);
+        return { lo: sc.lo, hi: sc.hi, ticks: [...sc.ticks].reverse() };
+    })() : null;
+    // reversed axes (physical): x grows leftwards, y downwards; the lone
+    // right axis follows y2axis.reverse
+    const yRev = rightOnly ? m.y2reverse : m.yreverse;
+    const frac = (sc: { lo: number; hi: number }, v: number): number => (sc.hi > sc.lo ? (v - sc.lo) / (sc.hi - sc.lo) : 0.5);
+    const xf = (v: number): number => (m.xreverse ? 1 - frac(xs, v) : frac(xs, v));
+    const yfOf = (s: NormSeries): ((v: number) => number) => {
+        const right = !!ys2 && s.axis === 'right';
+        const sc = right ? ys2 : ys;
+        const rev = right ? m.y2reverse : yRev;
+        return (v: number): number => (rev ? 1 - frac(sc, v) : frac(sc, v));
+    };
     // tick labels in screen order (left → right, top → bottom)
     const xTicks = m.xreverse ? [...xs.ticks].reverse() : xs.ticks;
-    const yTicks = m.yreverse ? ys.ticks : [...ys.ticks].reverse();
+    const yTicks = yRev ? ys.ticks : [...ys.ticks].reverse();
+    const y2Ticks = ys2 ? (m.y2reverse ? ys2.ticks : [...ys2.ticks].reverse()) : [];
     // radius in px (the SVG has no viewBox → user units are pixels, so
     // circles stay round; cx/cy are % of the viewport). Scales to many points.
     const rOf = (z: number, s?: NormSeries): number =>
@@ -71,6 +100,7 @@ export const scatterChart = (m: Model, ctx: RenderCtx): View => {
         // break the line on gaps (null points), connecting in data order
         const segs: Array<Array<[number, number]>> = [];
         let cur: Array<[number, number]> = [];
+        const yf = yfOf(s);
         for (const p of s.points) {
             if (p.gap) { if (cur.length && !s.connectgaps) { segs.push(cur); cur = []; } continue; }
             cur.push([xf(p.x) * 100, (1 - yf(p.value)) * 100]);
@@ -84,7 +114,7 @@ export const scatterChart = (m: Model, ctx: RenderCtx): View => {
     // trendlines fitted on the x/y values, in the same stretched viewBox
     const trendPaths = vis.filter((s) => s.trendline).map((s) => trendPath(s,
         s.points.filter((p) => !p.gap).map((p) => ({ x: p.x, y: p.value })),
-        (x, y) => [xf(x) * 100, (1 - yf(y)) * 100],
+        (x, y) => [xf(x) * 100, (1 - yfOf(s)(y)) * 100],
         ctx.hover.value && ctx.hover.value !== s.name ? 'true' : false)).filter(Boolean);
     const lineOverlay = linePaths.length || trendPaths.length
         ? html`<div class="lm-chart-lineoverlay">
@@ -98,7 +128,7 @@ export const scatterChart = (m: Model, ctx: RenderCtx): View => {
         const shape = shapeOf(s);
         const r = rOf(p.z, s);
         const cx = (xf(p.x) * 100).toFixed(2) + '%';
-        const cy = ((1 - yf(p.value)) * 100).toFixed(2) + '%';
+        const cy = ((1 - yfOf(s)(p.value)) * 100).toFixed(2) + '%';
         const dim = ctx.hover.value && ctx.hover.value !== s.name ? 'true' : false;
         const tip = (e: MouseEvent): void => ctx.showTip(e, s.name, [{ name: '', value: tipVal, color: s.color, border: s.bordercolor }]);
         // the point: filled with color, outlined with bordercolor when set
@@ -136,8 +166,8 @@ export const scatterChart = (m: Model, ctx: RenderCtx): View => {
 
     // bubble name labels (annotated-bubble look): centred dark text
     const bubbleNames = bubble && m.labels
-        ? all.filter(({ p }) => p.name).map(({ p }) => html`<span class="lm-chart-bubble-name"
-            style="${css({ left: (xf(p.x) * 100).toFixed(2) + '%', top: ((1 - yf(p.value)) * 100).toFixed(2) + '%' })}"
+        ? all.filter(({ p }) => p.name).map(({ p, s }) => html`<span class="lm-chart-bubble-name"
+            style="${css({ left: (xf(p.x) * 100).toFixed(2) + '%', top: ((1 - yfOf(s)(p.value)) * 100).toFixed(2) + '%' })}"
             >${p.name}</span>`)
         : [];
 
@@ -151,21 +181,33 @@ export const scatterChart = (m: Model, ctx: RenderCtx): View => {
         </div>`
         : false;
 
-    return html`<div class="lm-chart-plotblock" style="${yGutter(m)}">
+    // the left axis goes when every series is on the right; the right one
+    // (ticks aligned to the gridlines, in a 40px gutter) shows for its series
+    const leftLabels = m.ylabels && !rightOnly;
+    const rightShown = (dual || rightOnly) && m.y2labels;
+    const rightTicks = rightOnly ? yTicks : y2Ticks;
+    const rightAxis = rightShown
+        ? html`<div class="lm-chart-grid-right">${rightTicks.map(
+            (t) => html`<div class="lm-chart-gridline-r"><span class="lm-chart-tick-r">${ctx.fmt(t)}</span></div>`)}</div>`
+        : false;
+    return html`<div class="lm-chart-plotblock" style="${leftLabels ? false : css({ '--lm-chart-gutter': 'var(--lm-chart-pad-r)' })}">
         <div class="lm-chart-area">
-            ${m.ytitle ? html`<div class="lm-chart-ytitle"><span>${m.ytitle}</span></div>` : false}
+            ${m.ytitle && !rightOnly ? html`<div class="lm-chart-ytitle"><span>${m.ytitle}</span></div>` : false}
             <div class="lm-chart-plotcol">
-                <div class="lm-chart-plot">
+                <div class="lm-chart-plot" data-right="${rightShown ? 'true' : false}">
                     <div class="lm-chart-grid" data-off="${m.gridlines ? false : 'true'}">${yTicks.map(
-                        (t) => html`<div class="lm-chart-gridline">${m.ylabels ? html`<span class="lm-chart-tick">${ctx.fmt(t)}</span>` : false}</div>`,
+                        (t) => html`<div class="lm-chart-gridline">${leftLabels ? html`<span class="lm-chart-tick">${ctx.fmt(t)}</span>` : false}</div>`,
                     )}</div>
                     <div class="lm-chart-grid" data-orient="h" data-off="${m.gridlines ? false : 'true'}">${xs.ticks.map(
                         () => html`<div class="lm-chart-gridline"></div>`,
                     )}</div>
-                    ${lineOverlay}
-                    <svg class="lm-chart-scatter" width="100%" height="100%">${markers}</svg>
-                    ${bubbleNames}
-                    ${sizeLegend}
+                    <div class="lm-chart-scatterbox">
+                        ${lineOverlay}
+                        <svg class="lm-chart-scatter" width="100%" height="100%">${markers}</svg>
+                        ${bubbleNames}
+                        ${sizeLegend}
+                    </div>
+                    ${rightAxis}
                 </div>
                 ${m.xlabels ? html`<div class="lm-chart-xvalues">${xTicks.map(
                     (t) => {
@@ -174,6 +216,7 @@ export const scatterChart = (m: Model, ctx: RenderCtx): View => {
                     })}</div>` : false}
                 ${m.xtitle ? html`<div class="lm-chart-xtitle">${m.xtitle}</div>` : false}
             </div>
+            ${m.y2title && (dual || rightOnly) ? html`<div class="lm-chart-ytitle lm-chart-y2title"><span>${m.y2title}</span></div>` : false}
         </div>
     </div>`;
 };

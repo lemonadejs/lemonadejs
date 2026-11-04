@@ -326,6 +326,38 @@ describe('components/charts', () => {
         expect(handle.query('.lm-chart-tick-r')).not.toBeNull();
     });
 
+    it('scatter: axis right series get the right y axis; all on the right → right axis alone', () => {
+        const left = { name: 'l', data: [[1, 1], [2, 4]] };
+        const right = { name: 'r', axis: 'right', marker: 'circle', data: [[1, 100], [2, 400]] };
+        // mixed: two axes, the same tick count (aligned), each its own scale
+        handle = t(Chart, { type: 'scatter', series: [left, right], ytitle: 'L', y2title: 'R' });
+        const lt = handle.queryAll('.lm-chart-tick').map((e) => Number(e.textContent));
+        const rt = handle.queryAll('.lm-chart-tick-r').map((e) => Number(e.textContent));
+        expect(rt.length).toBe(lt.length);
+        expect(Math.max(...lt)).toBeLessThan(10);
+        expect(Math.max(...rt)).toBeGreaterThanOrEqual(400);
+        expect(handle.query('.lm-chart-plot')!.getAttribute('data-right')).toBe('true');
+        expect(handle.queryAll('.lm-chart-ytitle').map((e) => e.textContent)).toEqual(['L', 'R']);
+        // the right series sits on its own scale: y=400 inside the plot, above y=100
+        // (on the left scale, 0.5–4.5, it would be far off the top)
+        const cy = handle.queryAll('circle.lm-chart-dot').map((d) => parseFloat(d.getAttribute('cy')!));
+        expect(cy[3]).toBeGreaterThanOrEqual(0);
+        expect(cy[3]).toBeLessThan(cy[2]);
+        handle.unmount();
+        // all on the right: no left ticks/title, collapsed gutter, right axis with the one scale
+        handle = t(Chart, { type: 'scatter', series: [right], ytitle: 'L', y2title: 'R', y2axis: { reverse: true } });
+        expect(handle.query('.lm-chart-tick')).toBeNull();
+        expect(handle.queryAll('.lm-chart-ytitle').map((e) => e.textContent)).toEqual(['R']);
+        expect(styleN(handle.query('.lm-chart-plotblock')!)).toContain('--lm-chart-gutter:var(--lm-chart-pad-r)');
+        const rv = handle.queryAll('.lm-chart-tick-r').map((e) => Number(e.textContent));
+        expect(rv[0]).toBeLessThan(rv[rv.length - 1]); // y2axis.reverse on the lone axis
+        handle.unmount();
+        // the points live in the plot box shared with the grid (the x offset fix)
+        handle = t(Chart, { type: 'bubble', series: [left] });
+        expect(handle.query('.lm-chart-scatterbox svg.lm-chart-scatter')).not.toBeNull();
+        expect(handle.query('.lm-chart-plot')!.getAttribute('data-right')).toBeNull();
+    });
+
     it('legend: false, { show: false } and the "false" attribute all hide it', () => {
         for (const legend of [false, { show: false }, 'false']) {
             handle = t(Chart, { type: 'bar', legend, categories: ['A'], series: [{ name: 's', data: [1] }, { name: 'r', data: [2] }] });
