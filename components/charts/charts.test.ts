@@ -531,6 +531,40 @@ describe('components/charts', () => {
         expect(handle.queryAll('.lm-chart-radar-tickval').length).toBe(0);
     });
 
+    it('gaps: radar and stacked area honour null points and connectgaps', () => {
+        const cats = ['A', 'B', 'C', 'D'];
+        // radar, connectgaps off: the polygon breaks at the gap — an open stroke
+        // per run plus a fill closed through the centre; no marker at the gap
+        handle = t(Chart, { type: 'radar', categories: cats, series: [{ name: 's', data: [1, null, 3, 4] }] });
+        expect(handle.query('polygon.lm-chart-radar-area')).toBeNull();
+        expect(handle.queryAll('polyline.lm-chart-radar-area').length).toBe(1);
+        expect(handle.query('path.lm-chart-radar-area')!.getAttribute('d')).toMatch(/^M 50,50 L .* Z$/);
+        expect(handle.queryAll('.lm-chart-radar-dot').length).toBe(3);
+        handle.unmount();
+        // connectgaps on: one closed polygon over the three points
+        handle = t(Chart, { type: 'radar', categories: cats, series: [{ name: 's', connectgaps: true, data: [1, null, 3, 4] }] });
+        const poly = handle.query('polygon.lm-chart-radar-area')!;
+        expect(poly.getAttribute('points')!.split(' ').length).toBe(3);
+        expect(handle.queryAll('.lm-chart-radar-dot').length).toBe(3);
+        handle.unmount();
+        // stacked area, connectgaps off: the gapped series breaks into two
+        // bands; the one above treats the gap as 0; the a11y table shows it empty
+        handle = t(Chart, { type: 'stackedarea', categories: cats, series: [{ name: 'lo', data: [2, null, 2, 2] }, { name: 'hi', data: [1, 1, 1, 1] }] });
+        // lo: the lone point before the gap draws no band, the run after it does; hi: one band
+        expect(handle.queryAll('.lm-chart-areafill').length).toBe(2);
+        expect(handle.queryAll('.lm-chart-line').length).toBe(2);
+        const cells = handle.queryAll('.lm-chart-a11y tbody tr')[0].querySelectorAll('td');
+        expect(cells[2].textContent).toBe('');
+        handle.unmount();
+        // connectgaps on: the gap is interpolated (2) for the line and the stack
+        handle = t(Chart, { type: 'stackedarea', categories: cats, series: [{ name: 'lo', connectgaps: true, data: [2, null, 2, 2] }, { name: 'hi', data: [1, 1, 1, 1] }] });
+        expect(handle.queryAll('.lm-chart-areafill').length).toBe(2);
+        const d = handle.queryAll('.lm-chart-line')[0].getAttribute('d')!;
+        const ys = d.match(/[\d.]+,([\d.]+)/g)!.map((m) => Number(m.split(',')[1]));
+        expect(ys[1]).toBeCloseTo(ys[0], 1); // flat at 2 across the bridged gap
+        expect(handle.queryAll('.lm-chart-marker').length).toBe(7); // no marker at the gap
+    });
+
     it('legend: false, { show: false } and the "false" attribute all hide it', () => {
         for (const legend of [false, { show: false }, 'false']) {
             handle = t(Chart, { type: 'bar', legend, categories: ['A'], series: [{ name: 's', data: [1] }, { name: 'r', data: [2] }] });

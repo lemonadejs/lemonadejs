@@ -361,39 +361,62 @@ export const bars = (mFull: Model, ctx0: RenderCtx): View => {
         if (stackedArea) {
             const sc = primary;
             const yOf = (val: number): number => (1 - sc.frac(val)) * 100;
-            const colTotal = (i: number): number => lineSeries.reduce(
-                (sum, sr) => sum + (sr.points[i] && !sr.points[i].gap ? sr.points[i].value : 0), 0);
+            // the value a series draws at i: its point, or — bridging a gap
+            // (connectgaps) — the straight line between its neighbours; null
+            // breaks the series there and adds nothing to the stack
+            const drawn = new Map<NormSeries, Array<number | null>>();
+            for (const s of lineSeries) {
+                const vals: Array<number | null> = [];
+                for (let i = 0; i < n; i++) {
+                    const p = s.points[i];
+                    if (p && !p.gap) { vals.push(p.value); continue; }
+                    if (!s.connectgaps) { vals.push(null); continue; }
+                    let a = i - 1; while (a >= 0 && (!s.points[a] || s.points[a].gap)) a--;
+                    let b = i + 1; while (b < n && (!s.points[b] || s.points[b].gap)) b++;
+                    vals.push(a >= 0 && b < n ? s.points[a].value + ((s.points[b].value - s.points[a].value) * (i - a)) / (b - a) : null);
+                }
+                drawn.set(s, vals);
+            }
+            const valAt = (s: NormSeries, i: number): number | null => (drawn.get(s) as Array<number | null>)[i];
+            const colTotal = (i: number): number => lineSeries.reduce((sum, sr) => sum + (valAt(sr, i) || 0), 0);
             // streamgraph: each column's stack starts at -total/2 (silhouette)
             const cum = Array.from({ length: n }, (_, i) => (stream ? -colTotal(i) / 2 : 0));
             for (const s of lineSeries) {
                 const dim = ctx.hover.value && ctx.hover.value !== s.name ? 'true' : false;
                 const topPts: Array<[number, number]> = [];
-                const botPts: Array<[number, number]> = [];
+                // the band splits into runs at the breaks (unbridged gaps)
+                const runs: Array<{ top: Array<[number, number]>; bot: Array<[number, number]> }> = [];
+                let run: { top: Array<[number, number]>; bot: Array<[number, number]> } | null = null;
                 for (let i = 0; i < n; i++) {
-                    const p = s.points[i];
-                    const raw = p && !p.gap ? p.value : 0;
-                    const add = percent ? (raw / (colTotal(i) || 1)) * 100 : raw;
+                    const v = valAt(s, i);
                     const x = colCenter(i);
-                    botPts.push([x, yOf(cum[i])]);
+                    if (v == null) { topPts.push([x, yOf(cum[i])]); run = null; continue; }
+                    const add = percent ? (v / (colTotal(i) || 1)) * 100 : v;
+                    if (!run) { run = { top: [], bot: [] }; runs.push(run); }
+                    run.bot.push([x, yOf(cum[i])]);
                     cum[i] += add;
+                    run.top.push([x, yOf(cum[i])]);
                     topPts.push([x, yOf(cum[i])]);
                 }
                 // streams smooth both edges when the series asks for it
                 const curved = stream && s.smooth;
-                const topD = curved ? smoothPath(topPts) : polyPath(topPts);
-                let areaD: string;
-                if (curved) {
-                    areaD = topD + ' ' + smoothPath([...botPts].reverse()).replace(/^M/, 'L') + ' Z';
-                } else {
-                    areaD = topD;
-                    for (let i = botPts.length - 1; i >= 0; i--) areaD += ' L ' + botPts[i][0].toFixed(2) + ',' + botPts[i][1].toFixed(2);
-                    areaD += ' Z';
+                for (const r of runs) {
+                    if (r.top.length < 2) continue;
+                    const topD = curved ? smoothPath(r.top) : polyPath(r.top);
+                    let areaD: string;
+                    if (curved) {
+                        areaD = topD + ' ' + smoothPath([...r.bot].reverse()).replace(/^M/, 'L') + ' Z';
+                    } else {
+                        areaD = topD;
+                        for (let i = r.bot.length - 1; i >= 0; i--) areaD += ' L ' + r.bot[i][0].toFixed(2) + ',' + r.bot[i][1].toFixed(2);
+                        areaD += ' Z';
+                    }
+                    areas.push(html`<path class="lm-chart-areafill" d="${areaD}" data-stacked="true"
+                        style="${css({ fill: s.color })}" data-dim="${dim}" data-stream="${stream ? 'true' : false}" />`);
+                    // streams read as soft ribbons: no top stroke, no markers
+                    if (!stream) paths.push(html`<path class="lm-chart-line" d="${topD}"
+                        style="${css({ stroke: lineColor(s) })}" data-dim="${dim}" />`);
                 }
-                areas.push(html`<path class="lm-chart-areafill" d="${areaD}" data-stacked="true"
-                    style="${css({ fill: s.color })}" data-dim="${dim}" data-stream="${stream ? 'true' : false}" />`);
-                // streams read as soft ribbons: no top stroke, no markers
-                if (!stream) paths.push(html`<path class="lm-chart-line" d="${topD}"
-                    style="${css({ stroke: lineColor(s) })}" data-dim="${dim}" />`);
                 if ((s.markers != null ? s.markers : m.markers) && !stream) {
                     for (let i = 0; i < n; i++) {
                         const p = s.points[i];

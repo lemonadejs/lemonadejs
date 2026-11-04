@@ -63,16 +63,45 @@ export const radarChart = (m: Model, ctx: RenderCtx): View => {
         const stroke = lineColor(s);
         const custom = s.markers === true || !!s.marker || s.markersize != null;
         const dim = ctx.hover.value && ctx.hover.value !== s.name ? 'true' : false;
+        // a null point is a gap: no vertex, marker or hover there. The
+        // polygon skips it (connectgaps: the neighbours join across it) or
+        // breaks there (each run of points is an open stroke, its fill
+        // closed through the centre)
         const verts = Array.from({ length: cats }, (_, i) => {
-            const v = s.points[i] && !s.points[i].gap ? s.points[i].value : 0;
-            return { xy: at(i, rOf(v)), v, i };
+            const p = s.points[i];
+            const gap = !p || p.gap;
+            const v = gap ? 0 : p.value;
+            return { xy: at(i, rOf(v)), v, i, gap };
         });
-        // a 'line' series is the outline only (no fill)
-        shapes.push(html`<polygon class="lm-chart-radar-area"
-            points="${verts.map((e) => e.xy.map((c) => c.toFixed(2)).join(',')).join(' ')}"
-            style="${css(s.width ? { fill: s.color, stroke, 'stroke-width': s.width } : { fill: s.color, stroke })}"
-            data-nofill="${s.type === 'line' ? 'true' : false}" data-dashed="${s.dashed || false}" data-dim="${dim}" />`);
-        for (const e of verts) {
+        const solid = verts.filter((e) => !e.gap);
+        const pt = (e: { xy: [number, number] }): string => e.xy.map((c) => c.toFixed(2)).join(',');
+        const shapeStyle = css(s.width ? { fill: s.color, stroke, 'stroke-width': s.width } : { fill: s.color, stroke });
+        const nofill = s.type === 'line' ? 'true' : false; // a 'line' series is the outline only
+        if (solid.length === verts.length || s.connectgaps) {
+            if (solid.length) shapes.push(html`<polygon class="lm-chart-radar-area"
+                points="${solid.map(pt).join(' ')}"
+                style="${shapeStyle}" data-nofill="${nofill}" data-dashed="${s.dashed || false}" data-dim="${dim}" />`);
+        } else {
+            // runs of consecutive points around the circle (wrapping past the end)
+            const first = verts.findIndex((e) => e.gap);
+            const runs: Array<typeof verts> = [];
+            let cur: typeof verts = [];
+            for (let k = 1; k <= cats; k++) {
+                const e = verts[(first + k) % cats];
+                if (e.gap) { if (cur.length) { runs.push(cur); cur = []; } } else cur.push(e);
+            }
+            if (cur.length) runs.push(cur);
+            for (const run of runs) {
+                if (s.type !== 'line' && run.length > 1) shapes.push(html`<path class="lm-chart-radar-area"
+                    d="${'M 50,50 L ' + run.map(pt).join(' L ') + ' Z'}"
+                    style="${css({ fill: s.color, stroke: 'none' })}" data-dim="${dim}" />`);
+                if (run.length > 1) shapes.push(html`<polyline class="lm-chart-radar-area"
+                    points="${run.map(pt).join(' ')}"
+                    style="${css(s.width ? { fill: 'none', stroke, 'stroke-width': s.width } : { fill: 'none', stroke })}"
+                    data-dashed="${s.dashed || false}" data-dim="${dim}" />`);
+            }
+        }
+        for (const e of solid) {
             const cat = m.categories[e.i] != null ? m.categories[e.i] : '';
             const tip = (ev: MouseEvent): void => ctx.showTip(ev, s.name, [{ name: cat, value: ctx.fmt(e.v), color: s.color, border: s.bordercolor }]);
             if (custom && s.markers !== false) {
