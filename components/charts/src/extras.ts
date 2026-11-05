@@ -475,8 +475,9 @@ export const treemapChart = (m: Model, ctx: RenderCtx): View => {
         </div>`;
     };
     if (!groups.length) {
-        // flat: every point a tile, squarified over the whole box
-        const pts = all.filter((p) => !p.gap && p.value > 0);
+        // flat: every point a tile, squarified over the whole box; tiles
+        // hidden from the legend (keyed as the pie's slices) drop out
+        const pts = all.filter((p, i) => !p.gap && p.value > 0 && !ctx.isHidden(p.name || '#' + i));
         const total = pts.reduce((sum, p) => sum + p.value, 0) || 1;
         const rects = squarify(pts.map((p) => p.value), 0, 0, 100, 100);
         return html`<div class="lm-chart-treemap">${rects.map((r) => {

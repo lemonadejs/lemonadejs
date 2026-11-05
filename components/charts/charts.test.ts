@@ -720,10 +720,17 @@ describe('components/charts', () => {
         (items[0] as HTMLElement).click();
         expect(handle.queryAll('.lm-chart-treemap-group').length).toBe(1);
         handle.unmount();
-        // flat (no parent): as before, no groups, no legend
-        handle = t(Chart, { type: 'treemap', series: [{ data: [{ name: 'A', value: 3 }, { name: 'B', value: 1 }] }] });
+        // flat (no parent): no groups; the legend lists the tiles and toggles them
+        handle = t(Chart, { type: 'treemap', series: [{ data: [{ name: 'A', value: 3, color: '#123456' }, { name: 'B', value: 1 }] }] });
         expect(handle.query('.lm-chart-treemap-group')).toBeNull();
         expect(handle.queryAll('.lm-chart-treemap-tile').length).toBe(2);
+        const flat = handle.queryAll('.lm-chart-legend-item');
+        expect(flat.map((e) => e.textContent!.trim())).toEqual(['A', 'B']);
+        expect(styleN(handle.query('.lm-chart-swatch')!)).toMatch(/background:(#123456|rgb\(18, 52, 86\))/i);
+        (flat[0] as HTMLElement).click();
+        expect(handle.queryAll('.lm-chart-treemap-tile').length).toBe(1);
+        handle.unmount();
+        handle = t(Chart, { type: 'treemap', legend: false, series: [{ data: [{ name: 'A', value: 3 }] }] });
         expect(handle.query('.lm-chart-legend')).toBeNull();
     });
 

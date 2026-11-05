@@ -31,7 +31,7 @@
  * with a header band naming the parent, and the leaves inside; a group's
  * leaves share its colour (the palette by group, or the series `color` for
  * all) unless a leaf has its own, and the legend lists the groups. Without
- * `parent` the treemap is flat.
+ * `parent` the treemap is flat and the legend lists the tiles.
  * A donut is a `pie` with `innerradius`. An area chart is a `line` with `area`.
  * Pie slices take a `bordercolor` per point (`{ name, value, color,
  * bordercolor }`), with the series `bordercolor` as the fallback and its
@@ -481,8 +481,9 @@ export const Charts = component('charts', {
     const legendEntries = (m: Model): LegendEntry[] => {
         // multi-series radialbar (stacked polar) legends by SERIES like bars;
         // waffle legends by CATEGORY (its cells are palette-partitioned)
-        // grouped treemap: one entry per group (its parent name and colour), toggling it
-        if (m.type === 'treemap') {
+        // grouped treemap: one entry per group (its parent name and colour),
+        // toggling it; a flat one lists its tiles like the pie's slices
+        if (m.type === 'treemap' && treemapGroups(m).length) {
             return treemapGroups(m).map((g) => ({ name: g.name || '—', key: g.name, color: g.color, line: false, shape: '' }));
         }
         // funnel / pyramid: one informative entry per series (Excel names
@@ -494,7 +495,7 @@ export const Charts = component('charts', {
                 return { name: s.name, key: s.name, line: false, shape: '', static: true, color: own };
             });
         }
-        if (m.type === 'pie' || m.type === 'polararea' || (m.type === 'radialbar' && m.series.length < 2)
+        if (m.type === 'pie' || m.type === 'polararea' || m.type === 'treemap' || (m.type === 'radialbar' && m.series.length < 2)
             || (m.type === 'pictogram' && m.waffle)) {
             const points = m.series[0] ? m.series[0].points : [];
             // slice swatches carry the slice border (point, else series)
@@ -571,8 +572,6 @@ export const Charts = component('charts', {
         const noLegend = ['gauge', 'bullet', 'heatmap',
             'candlestick', 'ohlc', 'boxplot', 'arearange', 'columnrange', 'dumbbell',
             'sankey', 'chord', 'arcdiagram', 'sunburst', 'icicle', 'wordcloud'].includes(m.type)
-            // a flat treemap (no `parent`) labels its own tiles
-            || (m.type === 'treemap' && !treemapGroups(m).length)
             // pictogram rows carry their own labels; the WAFFLE variant needs
             // the category legend (its colours aren't labelled anywhere else)
             || (m.type === 'pictogram' && !m.waffle)
@@ -621,8 +620,10 @@ export const Charts = component('charts', {
 
     /** True when there is at least one visible, non-zero data point to draw. */
     const hasData = (m: Model): boolean => {
-        if (m.type === 'treemap' && treemapGroups(m).length) {
-            return treemapGroups(m).some((g) => !isHidden(g.name));
+        if (m.type === 'treemap') {
+            if (treemapGroups(m).length) return treemapGroups(m).some((g) => !isHidden(g.name));
+            const pts = m.series[0] ? m.series[0].points : [];
+            return pts.some((p, i) => !p.gap && p.value > 0 && !isHidden(p.name || '#' + i));
         }
         if (m.type === 'pie') {
             // slices are keyed by the first ring's names (shared across rings)
