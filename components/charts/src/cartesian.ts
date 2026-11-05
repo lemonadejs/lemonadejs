@@ -957,18 +957,32 @@ export const ohlcChart = (m: Model, ctx: RenderCtx): View => {
     const sc = niceExtent(lo, hi);
     const range = sc.hi - sc.lo || 1;
     const yf = (v: number): number => (1 - (v - sc.lo) / range) * 100;
+    // the look of a candle by its kind — positive (close > open) or
+    // negative (close <= open, a doji included, as in Excel) — as in the waterfall: body = kind.color (an unset one the
+    // up / down token), outline = kind.border.color (unset: the body),
+    // outline width = kind.border.width (default 1); the wick takes the
+    // series' bordercolor, unset the outline. An ohlc has no fill: its
+    // lines are the outline colour.
+    const ser = m.series[0];
+    const look = (up: boolean): { body: string; edge: string; width: number; wick: string } => {
+        const kind = ser ? (up ? ser.positive : ser.negative) : null;
+        const body = (kind && kind.color) || (up ? 'var(--lm-chart-up)' : 'var(--lm-chart-down)');
+        const edge = (kind && kind.bordercolor) || body;
+        return { body, edge, width: kind && kind.borderwidth != null ? kind.borderwidth : 1, wick: (ser && ser.bordercolor) || edge };
+    };
     const colMark = (i: number): View | false => {
         const p = pts[i];
         if (!p || p.gap || p.extra.length < 4) return false;
         const [o, h, l, c] = p.extra;
-        const color = c >= o ? 'var(--lm-chart-up)' : 'var(--lm-chart-down)';
+        const { body, edge, width, wick } = look(c > o);
+        const color = body;
         const bt = yf(Math.max(o, c));
         const bb = yf(Math.min(o, c));
         const tip = (e: MouseEvent): void => ctx.showTip(e, m.categories[i] != null ? String(m.categories[i]) : '',
-            [{ name: 'O', value: ctx.fmt(o), color }, { name: 'H', value: ctx.fmt(h), color }, { name: 'L', value: ctx.fmt(l), color }, { name: 'C', value: ctx.fmt(c), color }]);
+            [{ name: 'O', value: ctx.fmt(o), color, border: edge }, { name: 'H', value: ctx.fmt(h), color, border: edge }, { name: 'L', value: ctx.fmt(l), color, border: edge }, { name: 'C', value: ctx.fmt(c), color, border: edge }]);
         return html`<div class="lm-chart-ohlc" onmousemove="${tip}" ontouchstart="${tip}" onmouseleave="${ctx.hideTip}">
-            <div class="lm-chart-ohlc-wick" style="${css({ top: yf(h) + '%', height: (yf(l) - yf(h)) + '%', background: color })}"></div>
-            <div class="lm-chart-ohlc-body" style="${css({ top: bt + '%', height: Math.max(0.6, bb - bt) + '%', background: m.type === 'ohlc' ? 'none' : color, borderColor: color })}"></div>
+            <div class="lm-chart-ohlc-wick" style="${css({ top: yf(h) + '%', height: (yf(l) - yf(h)) + '%', background: wick })}"></div>
+            <div class="lm-chart-ohlc-body" style="${css({ top: bt + '%', height: Math.max(0.6, bb - bt) + '%', background: m.type === 'ohlc' ? 'none' : body, borderColor: edge, borderWidth: width })}"></div>
             ${m.labels ? html`<span class="lm-chart-ohlc-val" data-pos="hi" style="${css({ top: yf(h) + '%' })}">${ctx.fmt(h)}</span>
                 <span class="lm-chart-ohlc-val" data-pos="lo" style="${css({ top: yf(l) + '%' })}">${ctx.fmt(l)}</span>` : false}
         </div>`;

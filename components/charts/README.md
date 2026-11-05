@@ -87,6 +87,15 @@ the running sum — with the running sum continuing from them. Its legend
 is one entry per kind (`name`: "Increase", "Decrease", "Total" by
 default), informative only, all three whatever the data holds.
 
+A candlestick or ohlc styles its candles the same way: `positive` (close
+> open) and `negative` (close <= open, as in Excel) on the series, each `{ color, border: { color,
+width } }` — the body's `color` (unset: the `--lm-chart-up` / `-down`
+token), its outline `border.color` (unset: the body) and `border.width`
+(default 1). The wick (the high–low line) takes the series' `bordercolor`,
+unset the outline; an ohlc, with no fill, draws its lines in the outline
+colour. Excel's look is `bordercolor: '#000', positive: { color: '#fff',
+border: { color: '#000' } }, negative: { color: '#000' }`.
+
 Fills (an area, a stacked area, a filled radar, a range band) are
 translucent by default (0.16; stacked 0.85). `fillopacity` (0–1) on the
 chart sets them all, and a series' own `fillopacity` wins for it; the

@@ -71,7 +71,12 @@ export interface ChartSeries {
      *  `borderwidth`), the decreases and the totals. A kind's missing
      *  fields take the series' own; an unset colour takes the
      *  --lm-chart-up / -down / -total token. A point's own `color` and
-     *  `bordercolor` win. */
+     *  `bordercolor` win.
+     *  Candlestick / ohlc: the look of the rising (`positive`, close >
+     *  open) and falling (`negative`, close <= open, as in Excel) candles — body `color` (unset: the
+     *  up / down token), outline `border.color` (unset: the body) and
+     *  `border.width` (default 1); the wick takes the series' `bordercolor`,
+     *  unset the outline. An ohlc draws its lines in the outline colour. */
     positive?: WaterfallKind;
     negative?: WaterfallKind;
     total?: WaterfallKind;
@@ -567,7 +572,7 @@ export interface NormSeries {
     connectgaps: boolean;
     /** null = the chart's fillopacity / the stylesheet default */
     fillopacity: number | null;
-    /** waterfall: the look per kind of bar; positive.color is the series
+    /** waterfall / candlestick: the look per kind of bar; positive.color is the series
      *  `color` when given ('' = the up token) */
     positive: NormKind;
     negative: NormKind;

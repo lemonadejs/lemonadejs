@@ -812,6 +812,39 @@ describe('components/charts', () => {
         expect(handle.queryAll('.lm-chart-ohlc-wick').length).toBe(2);
     });
 
+    it('candlestick / ohlc: positive / negative kinds colour the body, outline and wick (Excel look)', () => {
+        const series = [{
+            bordercolor: '#000000',
+            positive: { color: '#ffffff', border: { color: '#111111', width: 2 } },
+            negative: { color: '#222222' },
+            data: [[20, 28, 18, 25], [25, 30, 24, 22], [24, 26, 23, 24]],
+        }];
+        handle = t(Chart, { type: 'candlestick', categories: ['Mon', 'Tue', 'Wed'], series });
+        let bodies = handle.queryAll('.lm-chart-ohlc-body');
+        let wicks = handle.queryAll('.lm-chart-ohlc-wick');
+        expect(styleN(bodies[0])).toMatch(/background:(#ffffff|rgb\(255, 255, 255\))/i);
+        expect(styleN(bodies[0])).toMatch(/border-color:(#111111|rgb\(17, 17, 17\))/i);
+        expect(styleN(bodies[0])).toMatch(/border-width:2px/);
+        expect(styleN(bodies[1])).toMatch(/background:(#222222|rgb\(34, 34, 34\))/i);
+        expect(styleN(bodies[1])).toMatch(/border-color:(#222222|rgb\(34, 34, 34\))/i); // outline unset: the body
+        expect(styleN(bodies[1])).toMatch(/border-width:1px/);
+        expect(styleN(wicks[0])).toMatch(/background:(#000000|rgb\(0, 0, 0\))/i); // the series bordercolor
+        expect(styleN(wicks[1])).toMatch(/background:(#000000|rgb\(0, 0, 0\))/i);
+        expect(styleN(bodies[2])).toMatch(/background:(#222222|rgb\(34, 34, 34\))/i); // open == close: negative, as in Excel
+        handle.unmount();
+        // ohlc: no fill, lines in the outline colour; no bordercolor → the wick follows the outline
+        handle = t(Chart, { type: 'ohlc', categories: ['Mon'], series: [{ positive: { border: { color: '#333333' } }, data: [[20, 28, 18, 25]] }] });
+        bodies = handle.queryAll('.lm-chart-ohlc-body');
+        wicks = handle.queryAll('.lm-chart-ohlc-wick');
+        expect(styleN(bodies[0])).toMatch(/background:none/);
+        expect(styleN(bodies[0])).toMatch(/border-color:(#333333|rgb\(51, 51, 51\))/i);
+        expect(styleN(wicks[0])).toMatch(/background:(#333333|rgb\(51, 51, 51\))/i);
+        handle.unmount();
+        // nothing set: the up / down tokens, as before (jsdom drops var() backgrounds)
+        handle = t(Chart, { type: 'candlestick', categories: ['Mon'], series: [{ data: [[20, 28, 18, 25]] }] });
+        expect(styleN(handle.query('.lm-chart-ohlc-body')!)).not.toMatch(/background:(#|rgb)/);
+    });
+
     it('boxplot: a box + median + whisker per category', () => {
         handle = t(Chart, { type: 'boxplot', categories: ['A'], series: [{ data: [[5, 18, 24, 30, 42]] }] });
         expect(handle.query('.lm-chart-box-rect')).toBeTruthy();
