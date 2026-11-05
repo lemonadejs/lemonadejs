@@ -5,7 +5,7 @@
  * boxplot, arearange/columnrange/dumbbell, lollipop.
  */
 import { css, html, type View } from 'lemonadejs';
-import { PALETTES, fillVar, fontPx, isStrokeMarker, markerStroke, outline, type Model, type NormSeries, type RenderCtx } from './model';
+import { PALETTES, fillVar, fontPx, isStrokeMarker, markerStroke, outline, type Model, type NormKind, type NormPoint, type NormSeries, type RenderCtx } from './model';
 import { fixedScale, lerpColor, niceExtent, niceScale, parseX, polyPath, smoothPath, stepPath, timeTicks } from './helpers';
 import { fit } from './trend';
 
@@ -835,15 +835,25 @@ export const bars = (mFull: Model, ctx0: RenderCtx): View => {
 
 /* ----- waterfall (floating bars, running total) ----- */
 export const waterfallChart = (m: Model, ctx: RenderCtx): View => {
-    const pts = m.series[0] ? m.series[0].points : [];
+    const ser = m.series[0];
+    const pts = ser ? ser.points : [];
     const n = m.categories.length || pts.length;
     let cum = 0;
+    // a total point (series `totals`) is drawn from zero to its own value —
+    // the total, as in Excel (null: the running sum so far) — and the
+    // running sum continues from it
     const steps = Array.from({ length: n }, (_, i) => {
         const p = pts[i];
+        const total = !!ser && ser.totals.includes(i);
+        const name = m.categories[i] != null ? m.categories[i] : (p ? p.name : '');
+        if (total) {
+            if (p && !p.gap) cum = p.value;
+            return { base: 0, top: cum, delta: cum, total, name, p };
+        }
         const delta = p && !p.gap ? p.value : 0;
         const base = cum;
         cum += delta;
-        return { base, top: cum, delta, name: m.categories[i] != null ? m.categories[i] : (p ? p.name : '') };
+        return { base, top: cum, delta, total, name, p };
     });
     let lo = 0;
     let hi = 0;
@@ -851,22 +861,35 @@ export const waterfallChart = (m: Model, ctx: RenderCtx): View => {
     const sc = niceScale(lo, hi);
     const range = sc.hi - sc.lo || 1;
     const frac = (v: number): number => (v - sc.lo) / range;
-    const up = 'var(--lm-chart-up)';
-    const down = 'var(--lm-chart-down)';
+    // the look of a bar: its kind (positive / negative / total — colour,
+    // outline, width), a kind's missing fields falling back to the series'
+    // own, an unset colour to the up / down / total token; the point's own
+    // colour and outline win
+    type Step = { delta: number; total: boolean; p?: NormPoint };
+    const kindOf = (s: Step): { kind: NormKind; token: string } => !ser
+        ? { kind: { color: '', bordercolor: '', borderwidth: null }, token: 'var(--lm-chart-up)' }
+        : s.total ? { kind: ser.total, token: 'var(--lm-chart-total)' }
+            : s.delta >= 0 ? { kind: ser.positive, token: 'var(--lm-chart-up)' } : { kind: ser.negative, token: 'var(--lm-chart-down)' };
+    const colorOf = (s: Step): string => (s.p && s.p.owncolor) || kindOf(s).kind.color || kindOf(s).token;
+    const borderOf = (s: Step): string => (s.p && s.p.bordercolor) || kindOf(s).kind.bordercolor || (ser ? ser.bordercolor : '');
+    const widthOf = (s: Step): number => { const w = kindOf(s).kind.borderwidth; return w != null ? w : (ser ? ser.borderwidth : 1); };
     // xaxis.reverse: the running total keeps the data order, only the
     // drawing runs right to left
     const shown = m.xreverse ? [...steps].reverse() : steps;
     const cols = shown.map((s) => {
         const a = frac(Math.min(s.base, s.top)) * 100;
         const b = frac(Math.max(s.base, s.top)) * 100;
-        const color = s.delta >= 0 ? up : down;
+        const color = colorOf(s);
+        const bc = borderOf(s);
+        // a total reads as its value, a step as a signed delta
+        const text = s.total ? ctx.fmt(s.top) : (s.delta >= 0 ? '+' : '') + ctx.fmt(s.delta);
         return html`<div class="lm-chart-col">
             <div class="lm-chart-stack">
-                <div class="lm-chart-barslot"><div class="lm-chart-bar"
-                    style="${css({ bottom: a.toFixed(2) + '%', height: (b - a).toFixed(2) + '%', background: color })}"
-                    onmousemove="${(e: MouseEvent) => ctx.showTip(e, s.name || '', [{ name: '', value: (s.delta >= 0 ? '+' : '') + ctx.fmt(s.delta), color }])}"
+                <div class="lm-chart-barslot"><div class="lm-chart-bar" data-total="${s.total ? 'true' : false}"
+                    style="${css({ bottom: a.toFixed(2) + '%', height: (b - a).toFixed(2) + '%', background: color, boxShadow: outline(bc, widthOf(s)) })}"
+                    onmousemove="${(e: MouseEvent) => ctx.showTip(e, s.name || '', [{ name: '', value: text, color, border: bc }])}"
                     onmouseleave="${ctx.hideTip}">${
-                    m.labels ? html`<span class="lm-chart-value">${(s.delta >= 0 ? '+' : '') + ctx.fmt(s.delta)}</span>` : false
+                    m.labels ? html`<span class="lm-chart-value">${text}</span>` : false
                 }</div></div>
             </div>
         </div>`;

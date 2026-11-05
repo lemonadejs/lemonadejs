@@ -31,6 +31,7 @@
     --lm-chart-surface: var(--lm-background-color, #ffffff);
     --lm-chart-up: #16a34a;
     --lm-chart-down: #dc2626;
+    --lm-chart-total: #6b7280; /* waterfall total bars */
     /* plot gutters: room for the y ticks on the left, breathing room on
        the right (Highcharts spacingRight) so the last column doesn't sit
        flush against the container edge */

@@ -66,6 +66,19 @@ export interface ChartSeries {
     step?: boolean | 'before' | 'mid';
     /** Dash the line: `true` is dashed; a style picks the pattern. */
     dashed?: boolean | 'dashed' | 'dotted' | 'dashdot';
+    /** Waterfall: the look of each kind of bar — the increases (`positive`,
+     *  the explicit form of the series' own `color`/`bordercolor`/
+     *  `borderwidth`), the decreases and the totals. A kind's missing
+     *  fields take the series' own; an unset colour takes the
+     *  --lm-chart-up / -down / -total token. A point's own `color` and
+     *  `bordercolor` win. */
+    positive?: WaterfallKind;
+    negative?: WaterfallKind;
+    total?: WaterfallKind;
+    /** Waterfall: the indices of the points that are totals — drawn from
+     *  zero to the point's own value (the total, as in Excel), the running
+     *  sum continuing from it; a null total takes the running sum so far. */
+    totals?: number[];
     /** Opacity (0–1) of this series' fill: an area, a stacked area, a
      *  filled radar, an arearange band. Wins over the chart `fillopacity`. */
     fillopacity?: number;
@@ -171,6 +184,15 @@ export interface ChartOptions {
     /** pictogram: the value that fills every glyph (default 100 → values read as percentages). */
     total?: number;
 }
+
+/** One kind of waterfall bar: its fill and outline. */
+export interface WaterfallKind {
+    color?: string;
+    border?: { color?: string; width?: number };
+}
+
+/** A normalized waterfall kind ('' / null = inherit the series' own). */
+export interface NormKind { color: string; bordercolor: string; borderwidth: number | null; }
 
 /** The typography of one chart element. `size` is px when a number (or any
  *  CSS length as a string); unset fields keep the stylesheet default. */
@@ -322,6 +344,18 @@ export const markerStroke = (s: NormSeries): { color: string; width: number } =>
     width: s.bordercolor ? Math.max(1.5, s.borderwidth) : 2,
 });
 
+/** A waterfall kind as given, over a default colour. */
+const normKind = (k: unknown, color: string): NormKind => {
+    const o = isObj(k) ? k : {};
+    const b = isObj(o.border) ? o.border : {};
+    const w = Number(b.width);
+    return {
+        color: o.color ? String(o.color) : color,
+        bordercolor: b.color ? String(b.color) : '',
+        borderwidth: b.width != null && Number.isFinite(w) && w >= 0 ? w : null,
+    };
+};
+
 /** The inline fill-opacity override of a series (its own `fillopacity`),
  *  as the custom property the fills read; nothing when unset. */
 export const fillVar = (s: NormSeries): Record<string, string> =>
@@ -336,7 +370,7 @@ export const categoryCount = (m: Model): number =>
  *  to right. Missing points become gaps so the slots stay aligned. */
 export const reverseCategories = (m: Model): Model => {
     const n = categoryCount(m);
-    const gap: NormPoint = { name: '', value: 0, x: 0, z: 0, extra: [], color: '', bordercolor: '', gap: true, from: '', to: '', parent: '' };
+    const gap: NormPoint = { name: '', value: 0, x: 0, z: 0, extra: [], color: '', bordercolor: '', owncolor: '', gap: true, from: '', to: '', parent: '' };
     return {
         ...m,
         categories: m.categories.length ? Array.from({ length: n }, (_, i) => m.categories[n - 1 - i]) : [],
@@ -502,6 +536,8 @@ export interface NormPoint {
     name: string; value: number; x: number; z: number; extra: number[]; color: string; gap: boolean;
     /** '' = the series outline (pie slices) */
     bordercolor: string;
+    /** the point's own colour when given ('' = the palette / series one) */
+    owncolor: string;
     /** link endpoints (sankey/chord) and tree parent (sunburst/icicle) */
     from: string; to: string; parent: string;
 }
@@ -528,6 +564,13 @@ export interface NormSeries {
     connectgaps: boolean;
     /** null = the chart's fillopacity / the stylesheet default */
     fillopacity: number | null;
+    /** waterfall: the look per kind of bar; positive.color is the series
+     *  `color` when given ('' = the up token) */
+    positive: NormKind;
+    negative: NormKind;
+    total: NormKind;
+    /** waterfall: the indices of the total points */
+    totals: number[];
     trendline: Trendline | null;
 }
 export interface Model {
@@ -721,12 +764,16 @@ export const normalize = (def: ChartOptions): Model => {
             markers: typeof s.markers === 'boolean' ? s.markers : null,
             connectgaps: s.connectgaps === true,
             fillopacity: s.fillopacity != null && Number.isFinite(Number(s.fillopacity)) ? Math.max(0, Math.min(1, Number(s.fillopacity))) : null,
+            positive: normKind(s.positive, typeof s.color === 'string' ? s.color : ''),
+            negative: normKind(s.negative, ''),
+            total: normKind(s.total, ''),
+            totals: Array.isArray(s.totals) ? s.totals.map(Number).filter((i) => Number.isInteger(i) && i >= 0) : [],
             trendline: normalizeTrend(s.trendline),
             step: s.step === true || s.step === 'mid' || (s.step == null && (def.step === true || def.step === 'mid')) ? (s.step === 'mid' || (s.step == null && def.step === 'mid') ? 'mid' : 'before') : '',
             // '' = not specified (scatter cycles shapes per series, HC-style)
             marker: ['circle', 'square', 'triangle', 'diamond', ...STROKE_MARKERS].includes(s.marker as string) ? (s.marker as string) : '',
             points: data.map((p, pi) => p == null
-                ? { name: categories[pi] != null ? categories[pi] : '', value: 0, x: pi, z: 0, extra: [], color: palette[pi % palette.length], bordercolor: '', gap: true, from: '', to: '', parent: '' }
+                ? { name: categories[pi] != null ? categories[pi] : '', value: 0, x: pi, z: 0, extra: [], color: palette[pi % palette.length], bordercolor: '', owncolor: '', gap: true, from: '', to: '', parent: '' }
                 : {
                     name: pointName(p, pi, categories),
                     value: pointValue(p),
@@ -737,6 +784,7 @@ export const normalize = (def: ChartOptions): Model => {
                     // Pie reads per-point colour first, then walks the palette
                     color: (typeof p === 'object' && !Array.isArray(p) && p && p.color) || palette[pi % palette.length],
                     bordercolor: typeof p === 'object' && !Array.isArray(p) && p && p.bordercolor ? String(p.bordercolor) : '',
+                    owncolor: typeof p === 'object' && !Array.isArray(p) && p && p.color ? String(p.color) : '',
                     gap: false,
                     // link/tree fields (sankey/chord/sunburst/icicle)
                     from: typeof p === 'object' && !Array.isArray(p) && p.from != null ? String(p.from) : '',

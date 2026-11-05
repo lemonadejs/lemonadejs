@@ -63,6 +63,15 @@
  * `'polynomial'` (`order`) or `'movingAverage'` (`period`), as a type or
  * `{ type, order?, period?, color?, dashed?, width? }`.
  *
+ * A waterfall styles its bars by kind: `positive` (the increases),
+ * `negative` and `total` on the series, each `{ color, border: { color,
+ * width } }`. A kind's missing fields take the series' own `color`,
+ * `bordercolor` and `borderwidth`; an unset colour takes the
+ * `--lm-chart-up`, `-down` or `-total` token; a point's own `color` and
+ * `bordercolor` win. `totals` lists the indices of the total points, drawn
+ * from zero to their own value — the total, as in Excel; a null total takes
+ * the running sum — with the running sum continuing from them.
+ *
  * Fills (an area, a stacked area, a filled radar, a range band) are
  * translucent by default (0.16; stacked 0.85). `fillopacity` (0–1) on the
  * chart sets them all, and a series' own `fillopacity` wins for it; the
@@ -210,7 +219,7 @@ import { bulletChart, heatmapChart, packedbubbleChart, pictogramChart, scatterCh
 import { arcChart, chordChart, sankeyChart } from './flow';
 import { icicleChart, sunburstChart } from './hierarchy';
 
-export type { ChartPoint, ChartSeries, PlotBand, PlotLine, Annotation, ChartFont, ChartText, ChartLegend, ChartAxis, ChartGrid, ChartRAxis } from './model';
+export type { ChartPoint, ChartSeries, PlotBand, PlotLine, Annotation, ChartFont, ChartText, ChartLegend, ChartAxis, ChartGrid, ChartRAxis, WaterfallKind } from './model';
 
 /* ------------------------------------------------------------------ *
  *  The component                                                      *

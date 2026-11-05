@@ -613,6 +613,49 @@ describe('components/charts', () => {
         }
     });
 
+    it('waterfall: colours per kind, per point, totals and the series outline', () => {
+        const cats = ['Start', 'Up', 'Down', 'Total', 'Up2', 'End'];
+        handle = t(Chart, { type: 'waterfall', categories: cats, series: [{
+            color: '#00aa00', negative: { color: '#aa0000' }, total: { color: '#333333' }, bordercolor: '#000', borderwidth: 2,
+            totals: [3, 5], data: [10, 5, -3, 12, { value: 4, color: '#0000ff' }, null],
+        }] });
+        const bars = handle.queryAll('.lm-chart-bar');
+        const bg = (i: number): string => (styleN(bars[i]).match(/background:([^;]+)/) || [])[1];
+        expect(bg(0)).toMatch(/#00aa00|rgb\(0, 170, 0\)/i);
+        expect(bg(2)).toMatch(/#aa0000|rgb\(170, 0, 0\)/i);
+        expect(bg(3)).toMatch(/#333333|rgb\(51, 51, 51\)/i);
+        expect(bg(4)).toMatch(/#0000ff|rgb\(0, 0, 255\)/i); // the point's own colour
+        expect(styleN(bars[0])).toMatch(/inset 0(px)? 0(px)? 0(px)? 2px (#000|rgb\(0, 0, 0\))/i);
+        expect(bars.map((b) => b.getAttribute('data-total'))).toEqual([null, null, null, 'true', null, 'true']);
+        // the total at 3 is its own value (12) from zero; the sum continues from it: 12 + 4 = 16 = the null total
+        expect(handle.queryAll('.lm-chart-value').map((e) => e.textContent)).toEqual(['+10', '+5', '-3', '12', '+4', '16']);
+        expect(styleN(bars[3])).toContain('bottom:0.00%');
+        handle.unmount();
+        // nothing set: the up / down tokens as before (jsdom drops var() backgrounds,
+        // so: no explicit colour inline)
+        handle = t(Chart, { type: 'waterfall', categories: ['a', 'b'], series: [{ data: [3, -1] }] });
+        expect(styleN(handle.queryAll('.lm-chart-bar')[0])).not.toMatch(/background:(#|rgb)/);
+        expect(handle.queryAll('.lm-chart-bar').map((b) => b.getAttribute('data-total'))).toEqual([null, null]);
+    });
+
+    it('waterfall: kinds { color, border: { color, width } } inherit the series look; point bordercolor on top', () => {
+        handle = t(Chart, { type: 'waterfall', categories: ['a', 'b', 'c', 'd', 'e'], series: [{
+            bordercolor: '#111111', borderwidth: 1, totals: [2, 4],
+            positive: { border: { width: 3 } },
+            negative: { border: { color: '#222222' } },
+            total: { color: '#999999', border: { color: '#333333', width: 2 } },
+            data: [5, -2, 9, { value: 1, bordercolor: '#444444' }, null],
+        }] });
+        const bars = handle.queryAll('.lm-chart-bar');
+        const sh = (i: number): string => (styleN(bars[i]).match(/box-shadow:([^;]+)/) || [])[1] || '';
+        expect(sh(0)).toMatch(/3px (#111111|rgb\(17, 17, 17\))/i);  // positive: series colour, own width
+        expect(sh(1)).toMatch(/1px (#222222|rgb\(34, 34, 34\))/i);  // negative: own colour, series width
+        expect(sh(2)).toMatch(/2px (#333333|rgb\(51, 51, 51\))/i);  // total: own colour and width
+        expect(sh(3)).toMatch(/3px (#444444|rgb\(68, 68, 68\))/i);  // the point's outline, positive width
+        expect(styleN(bars[2])).toMatch(/background:(#999999|rgb\(153, 153, 153\))/i);
+        expect(styleN(bars[4])).toMatch(/background:(#999999|rgb\(153, 153, 153\))/i); // the null total
+    });
+
     it('legend: false, { show: false } and the "false" attribute all hide it', () => {
         for (const legend of [false, { show: false }, 'false']) {
             handle = t(Chart, { type: 'bar', legend, categories: ['A'], series: [{ name: 's', data: [1] }, { name: 'r', data: [2] }] });
