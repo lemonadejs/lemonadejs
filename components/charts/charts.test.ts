@@ -698,6 +698,35 @@ describe('components/charts', () => {
         expect(handle.query('.lm-chart-legend')).toBeNull();
     });
 
+    it('treemap: points with parent group under a header, group colours, a legend per group', () => {
+        const data = [
+            { name: 'Adm', parent: 'Brasil', value: 30 }, { name: 'TI', parent: 'Brasil', value: 20 },
+            { name: 'Adm', parent: 'Chile', value: 25 }, { name: 'Ops', parent: 'Chile', value: 25, color: '#ff00ff' },
+        ];
+        handle = t(Chart, { type: 'treemap', series: [{ data }] });
+        const groups = handle.queryAll('.lm-chart-treemap-group');
+        expect(groups.length).toBe(2);
+        expect(handle.queryAll('.lm-chart-treemap-head').map((e) => e.textContent)).toEqual(['Brasil', 'Chile']);
+        expect(handle.queryAll('.lm-chart-treemap-tile').length).toBe(4);
+        // leaves take the group colour (palette by group) unless they have their own
+        const brasil = styleN(groups[0]).match(/background:([^;]+)/)![1];
+        const leaves = groups[0].querySelectorAll('.lm-chart-treemap-tile');
+        expect(styleN(leaves[0])).toContain('background:' + brasil);
+        const ops = Array.from(groups[1].querySelectorAll('.lm-chart-treemap-tile')).find((e) => e.textContent!.includes('Ops'))!;
+        expect(styleN(ops)).toMatch(/background:(#ff00ff|rgb\(255, 0, 255\))/i);
+        // legend: one entry per group; toggling hides the group
+        const items = handle.queryAll('.lm-chart-legend-item');
+        expect(items.map((e) => e.textContent!.trim())).toEqual(['Brasil', 'Chile']);
+        (items[0] as HTMLElement).click();
+        expect(handle.queryAll('.lm-chart-treemap-group').length).toBe(1);
+        handle.unmount();
+        // flat (no parent): as before, no groups, no legend
+        handle = t(Chart, { type: 'treemap', series: [{ data: [{ name: 'A', value: 3 }, { name: 'B', value: 1 }] }] });
+        expect(handle.query('.lm-chart-treemap-group')).toBeNull();
+        expect(handle.queryAll('.lm-chart-treemap-tile').length).toBe(2);
+        expect(handle.query('.lm-chart-legend')).toBeNull();
+    });
+
     it('legend: false, { show: false } and the "false" attribute all hide it', () => {
         for (const legend of [false, { show: false }, 'false']) {
             handle = t(Chart, { type: 'bar', legend, categories: ['A'], series: [{ name: 's', data: [1] }, { name: 'r', data: [2] }] });

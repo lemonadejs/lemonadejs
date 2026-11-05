@@ -33,6 +33,12 @@ html`<${Charts} type="bar" title="Sales" categories="${categories}" series="${se
 | Flows and relations | `sankey`, `chord`, `arcdiagram` |
 | Text | `wordcloud` |
 
+A treemap whose points carry `parent` (`{ name, parent, value }`, one per
+leaf) groups them as Excel does: the groups are laid out first, each
+with a header band naming the parent, and the leaves inside; a group's
+leaves share its colour (the palette by group, or the series `color` for
+all) unless a leaf has its own, and the legend lists the groups. Without
+`parent` the treemap is flat.
 A donut is a `pie` with `innerradius`. An area chart is a `line` with `area`.
 Pie slices take a `bordercolor` per point (`{ name, value, color,
 bordercolor }`), with the series `bordercolor` as the fallback and its

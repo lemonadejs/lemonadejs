@@ -3,7 +3,7 @@
  * treemap and the sparkline mode.
  */
 import { css, html, type View } from 'lemonadejs';
-import { PALETTES, isStrokeMarker, markerStroke, type Model, type NormSeries, type RenderCtx } from './model';
+import { PALETTES, isStrokeMarker, markerStroke, type Model, type NormPoint, type NormSeries, type RenderCtx } from './model';
 import { fixedScale, lerpColor, niceExtent, polyPath, smoothPath, squarify, stepPath, textOn } from './helpers';
 import { strokeStyle, trendPath } from './cartesian';
 
@@ -435,25 +435,80 @@ export const heatmapChart = (m: Model, ctx: RenderCtx): View => {
 
 
 /* ----- treemap: squarified rectangles, sized by value (HTML divs) ----- */
+/** The groups of a treemap whose points carry `parent`: one per parent in
+ *  order of appearance, its leaves' indices and its colour — the series'
+ *  own when given, else the palette by group index. Empty = a flat treemap. */
+export const treemapGroups = (m: Model): Array<{ name: string; color: string; leaves: number[] }> => {
+    const s = m.series[0];
+    if (!s || !s.points.some((p) => !p.gap && p.parent)) return [];
+    const groups: Array<{ name: string; color: string; leaves: number[] }> = [];
+    s.points.forEach((p, i) => {
+        if (p.gap || p.value <= 0) return;
+        const name = p.parent || '';
+        let g = groups.find((x) => x.name === name);
+        if (!g) {
+            // a series colour applies to every group (Excel's single colour)
+            const own = s.color !== m.palette[0] ? s.color : m.palette[groups.length % m.palette.length];
+            g = { name, color: own, leaves: [] };
+            groups.push(g);
+        }
+        g.leaves.push(i);
+    });
+    return groups;
+};
+
 export const treemapChart = (m: Model, ctx: RenderCtx): View => {
-    const pts = (m.series[0] ? m.series[0].points : []).filter((p) => !p.gap && p.value > 0);
-    const total = pts.reduce((s, p) => s + p.value, 0) || 1;
-    const rects = squarify(pts.map((p) => p.value), 0, 0, 100, 100);
-    return html`<div class="lm-chart-treemap">${rects.map((r) => {
-        const p = pts[r.i];
-        const bg = p.color;
-        const pct = Math.round((p.value / total) * 100);
-        const tip = (e: MouseEvent): void => ctx.showTip(e, p.name || '', [{ name: '', value: ctx.fmt(p.value) + ' (' + pct + '%)', color: bg }]);
+    const all = m.series[0] ? m.series[0].points : [];
+    const groups = treemapGroups(m);
+    const tile = (p: NormPoint, i: number, r: { x: number; y: number; w: number; h: number; pct?: number }, bg: string, title: string, dimKey: string): View => {
+        const tip = (e: MouseEvent): void => ctx.showTip(e, title, [{ name: '', value: ctx.fmt(p.value) + (r.pct != null ? ' (' + r.pct + '%)' : ''), color: bg }]);
         const big = r.w > 11 && r.h > 9; // only label tiles with room
         return html`<div class="lm-chart-treemap-tile"
-            data-dim="${ctx.hover.value && ctx.hover.value !== (p.name || '#' + r.i) ? 'true' : false}"
+            data-dim="${ctx.hover.value && ctx.hover.value !== dimKey ? 'true' : false}"
             style="${css({ left: r.x + '%', top: r.y + '%', width: r.w + '%', height: r.h + '%', background: bg, color: textOn(bg) })}"
             onmousemove="${tip}" ontouchstart="${tip}" onmouseleave="${ctx.hideTip}"
-            onclick="${() => ctx.fire({ ...p }, 0, r.i)}">
+            onclick="${() => ctx.fire({ ...p }, 0, i)}">
             ${big ? html`<span class="lm-chart-treemap-label">
                 <span class="lm-chart-treemap-name">${p.name}</span>
                 ${m.labels ? html`<span class="lm-chart-treemap-val">${ctx.fmt(p.value)}</span>` : false}
             </span>` : false}
+        </div>`;
+    };
+    if (!groups.length) {
+        // flat: every point a tile, squarified over the whole box
+        const pts = all.filter((p) => !p.gap && p.value > 0);
+        const total = pts.reduce((sum, p) => sum + p.value, 0) || 1;
+        const rects = squarify(pts.map((p) => p.value), 0, 0, 100, 100);
+        return html`<div class="lm-chart-treemap">${rects.map((r) => {
+            const p = pts[r.i];
+            return tile(p, all.indexOf(p), { ...r, pct: Math.round((p.value / total) * 100) }, p.color, p.name || '', p.name || '#' + r.i);
+        })}</div>`;
+    }
+    // grouped (points with `parent`, Excel's two-level treemap): the groups
+    // are squarified first by their leaves' sum, then each group's leaves
+    // inside its box under a header band naming the parent. Leaves take the
+    // group colour unless they carry their own; a group hidden from the
+    // legend drops out and the rest re-flow.
+    const shown = groups.filter((g) => !ctx.isHidden(g.name));
+    const sums = shown.map((g) => g.leaves.reduce((sum, i) => sum + all[i].value, 0));
+    const grand = sums.reduce((a, b) => a + b, 0) || 1;
+    const boxes = squarify(sums, 0, 0, 100, 100);
+    return html`<div class="lm-chart-treemap" data-grouped="true">${boxes.map((b) => {
+        const g = shown[b.i];
+        const dim = ctx.hover.value && ctx.hover.value !== g.name ? 'true' : false;
+        const leaves = g.leaves.map((i) => all[i]);
+        const rects = squarify(leaves.map((p) => p.value), 0, 0, 100, 100);
+        const groupPct = Math.round((sums[b.i] / grand) * 100);
+        const headTip = (e: MouseEvent): void => ctx.showTip(e, g.name, [{ name: '', value: ctx.fmt(sums[b.i]) + ' (' + groupPct + '%)', color: g.color }]);
+        return html`<div class="lm-chart-treemap-group" data-dim="${dim}"
+            style="${css({ left: b.x + '%', top: b.y + '%', width: b.w + '%', height: b.h + '%', background: g.color, color: textOn(g.color) })}">
+            <div class="lm-chart-treemap-head"
+                onmousemove="${headTip}" ontouchstart="${headTip}" onmouseleave="${ctx.hideTip}">${g.name}</div>
+            <div class="lm-chart-treemap-leaves">${rects.map((r) => {
+                const p = leaves[r.i];
+                const bg = p.owncolor || g.color;
+                return tile(p, g.leaves[r.i], { ...r, pct: Math.round((p.value / sums[b.i]) * 100) }, bg, g.name + ' · ' + (p.name || ''), g.name);
+            })}</div>
         </div>`;
     })}</div>`;
 };

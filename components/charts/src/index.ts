@@ -26,6 +26,12 @@
  * | Flows and relations | `sankey`, `chord`, `arcdiagram` |
  * | Text | `wordcloud` |
  *
+ * A treemap whose points carry `parent` (`{ name, parent, value }`, one per
+ * leaf) groups them as Excel does: the groups are laid out first, each
+ * with a header band naming the parent, and the leaves inside; a group's
+ * leaves share its colour (the palette by group, or the series `color` for
+ * all) unless a leaf has its own, and the legend lists the groups. Without
+ * `parent` the treemap is flat.
  * A donut is a `pie` with `innerradius`. An area chart is a `line` with `area`.
  * Pie slices take a `bordercolor` per point (`{ name, value, color,
  * bordercolor }`), with the series `bordercolor` as the fallback and its
@@ -217,7 +223,7 @@ import {
 import { compact, plain } from './helpers';
 import { bars, boxplotChart, lollipopChart, ohlcChart, rangeChart, waterfallChart } from './cartesian';
 import { funnelChart, gaugeChart, pie, polarareaChart, radarChart, radialbarChart } from './radial';
-import { bulletChart, heatmapChart, packedbubbleChart, pictogramChart, scatterChart, sparkline, treemapChart, waffleChart, wordcloudChart } from './extras';
+import { bulletChart, heatmapChart, packedbubbleChart, pictogramChart, scatterChart, sparkline, treemapChart, treemapGroups, waffleChart, wordcloudChart } from './extras';
 import { arcChart, chordChart, sankeyChart } from './flow';
 import { icicleChart, sunburstChart } from './hierarchy';
 
@@ -475,6 +481,10 @@ export const Charts = component('charts', {
     const legendEntries = (m: Model): LegendEntry[] => {
         // multi-series radialbar (stacked polar) legends by SERIES like bars;
         // waffle legends by CATEGORY (its cells are palette-partitioned)
+        // grouped treemap: one entry per group (its parent name and colour), toggling it
+        if (m.type === 'treemap') {
+            return treemapGroups(m).map((g) => ({ name: g.name || '—', key: g.name, color: g.color, line: false, shape: '' }));
+        }
         // funnel / pyramid: one informative entry per series (Excel names
         // the series, not the slices); its colour, else the first slice's own
         if (m.type === 'funnel' || m.type === 'pyramid') {
@@ -559,8 +569,10 @@ export const Charts = component('charts', {
         const pos = m.legendposition
             || (['pie', 'radar', 'polararea', 'radialbar'].includes(m.type) ? 'right' : 'bottom');
         const noLegend = ['gauge', 'bullet', 'heatmap',
-            'candlestick', 'ohlc', 'boxplot', 'arearange', 'columnrange', 'dumbbell', 'treemap',
+            'candlestick', 'ohlc', 'boxplot', 'arearange', 'columnrange', 'dumbbell',
             'sankey', 'chord', 'arcdiagram', 'sunburst', 'icicle', 'wordcloud'].includes(m.type)
+            // a flat treemap (no `parent`) labels its own tiles
+            || (m.type === 'treemap' && !treemapGroups(m).length)
             // pictogram rows carry their own labels; the WAFFLE variant needs
             // the category legend (its colours aren't labelled anywhere else)
             || (m.type === 'pictogram' && !m.waffle)
@@ -609,6 +621,9 @@ export const Charts = component('charts', {
 
     /** True when there is at least one visible, non-zero data point to draw. */
     const hasData = (m: Model): boolean => {
+        if (m.type === 'treemap' && treemapGroups(m).length) {
+            return treemapGroups(m).some((g) => !isHidden(g.name));
+        }
         if (m.type === 'pie') {
             // slices are keyed by the first ring's names (shared across rings)
             const first = m.series[0] ? m.series[0].points : [];

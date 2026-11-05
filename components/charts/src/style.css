@@ -1710,6 +1710,46 @@
     opacity: 0.85;
 }
 
+/* grouped treemap (points with `parent`): one box per group with a header
+   band naming it and its leaves squarified below */
+.lm-chart-treemap-group {
+    position: absolute;
+    box-sizing: border-box;
+    border: 1px solid var(--lm-chart-surface);
+    overflow: hidden;
+    transition: opacity 0.1s ease;
+}
+
+.lm-chart-treemap-group[data-dim='true'] {
+    opacity: 0.4;
+}
+
+.lm-chart-treemap-head {
+    box-sizing: border-box;
+    height: 18px; /* a fixed band: the leaves fill the rest */
+    padding: 0 6px;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: flex;
+    align-items: center;
+}
+
+.lm-chart-treemap-leaves {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 18px;
+    bottom: 0;
+}
+
+.lm-chart-treemap-leaves .lm-chart-treemap-tile {
+    border-color: rgba(255, 255, 255, 0.55);
+}
+
 /* ---- sparkline: tiny axisless inline chart ---- */
 
 .lm-chart[data-spark='true'] {
