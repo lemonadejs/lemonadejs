@@ -475,6 +475,15 @@ export const Charts = component('charts', {
     const legendEntries = (m: Model): LegendEntry[] => {
         // multi-series radialbar (stacked polar) legends by SERIES like bars;
         // waffle legends by CATEGORY (its cells are palette-partitioned)
+        // funnel / pyramid: one informative entry per series (Excel names
+        // the series, not the slices); its colour, else the first slice's own
+        if (m.type === 'funnel' || m.type === 'pyramid') {
+            return m.series.map((s) => {
+                const p0 = s.points.find((p) => !p.gap);
+                const own = s.color !== m.palette[0] ? s.color : (p0 && p0.owncolor) || s.color;
+                return { name: s.name, key: s.name, line: false, shape: '', static: true, color: own };
+            });
+        }
         if (m.type === 'pie' || m.type === 'polararea' || (m.type === 'radialbar' && m.series.length < 2)
             || (m.type === 'pictogram' && m.waffle)) {
             const points = m.series[0] ? m.series[0].points : [];
@@ -549,7 +558,7 @@ export const Charts = component('charts', {
     const layout = (m: Model, core: View): View => {
         const pos = m.legendposition
             || (['pie', 'radar', 'polararea', 'radialbar'].includes(m.type) ? 'right' : 'bottom');
-        const noLegend = ['gauge', 'funnel', 'pyramid', 'bullet', 'heatmap',
+        const noLegend = ['gauge', 'bullet', 'heatmap',
             'candlestick', 'ohlc', 'boxplot', 'arearange', 'columnrange', 'dumbbell', 'treemap',
             'sankey', 'chord', 'arcdiagram', 'sunburst', 'icicle', 'wordcloud'].includes(m.type)
             // pictogram rows carry their own labels; the WAFFLE variant needs

@@ -678,6 +678,26 @@ describe('components/charts', () => {
         expect(handle.query('.lm-chart-legend')).toBeNull();
     });
 
+    it('funnel / pyramid: one informative legend entry per series', () => {
+        const data = [{ name: 'Leads', value: 100, color: '#111111' }, { name: 'Trials', value: 40 }, { name: 'Sales', value: 10 }];
+        for (const type of ['funnel', 'pyramid']) {
+            handle = t(Chart, { type, series: [{ name: 'Vendas', color: '#00aa00', data }] });
+            const items = handle.queryAll('.lm-chart-legend-item');
+            expect(items.map((e) => e.textContent!.trim()), type).toEqual(['Vendas']);
+            expect(items[0].getAttribute('data-static'), type).toBe('true');
+            expect(styleN(handle.query('.lm-chart-swatch')!), type).toMatch(/background:(#00aa00|rgb\(0, 170, 0\))/i);
+            (items[0] as HTMLElement).click();
+            expect(handle.queryAll('.lm-chart-funnel-seg').length, type).toBe(3); // no toggle
+            handle.unmount();
+        }
+        // no series colour: the first slice's own colour
+        handle = t(Chart, { type: 'funnel', series: [{ name: 's', data }] });
+        expect(styleN(handle.query('.lm-chart-swatch')!)).toMatch(/background:(#111111|rgb\(17, 17, 17\))/i);
+        handle.unmount();
+        handle = t(Chart, { type: 'funnel', legend: false, series: [{ data }] });
+        expect(handle.query('.lm-chart-legend')).toBeNull();
+    });
+
     it('legend: false, { show: false } and the "false" attribute all hide it', () => {
         for (const legend of [false, { show: false }, 'false']) {
             handle = t(Chart, { type: 'bar', legend, categories: ['A'], series: [{ name: 's', data: [1] }, { name: 'r', data: [2] }] });
