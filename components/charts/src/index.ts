@@ -70,7 +70,9 @@
  * `--lm-chart-up`, `-down` or `-total` token; a point's own `color` and
  * `bordercolor` win. `totals` lists the indices of the total points, drawn
  * from zero to their own value — the total, as in Excel; a null total takes
- * the running sum — with the running sum continuing from them.
+ * the running sum — with the running sum continuing from them. Its legend
+ * is one entry per kind (`name`: "Increase", "Decrease", "Total" by
+ * default), informative only, all three whatever the data holds.
  *
  * Fills (an area, a stacked area, a filled radar, a range band) are
  * translucent by default (0.16; stacked 0.85). `fillopacity` (0–1) on the
@@ -209,7 +211,7 @@
 
 import { component, css, html, type View } from 'lemonadejs';
 import {
-    categoryCount, fontsOf, fontVars, isStrokeMarker, markerStroke, gridVars, normalize, radialGridVars, reverseCategories, outline, textOf, type Annotation, type ChartAxis, type ChartLegend, type ChartRAxis, type ChartText, type ChartOptions, type ChartSeries, type Model,
+    categoryCount, fontsOf, fontVars, isStrokeMarker, markerStroke, gridVars, normalize, radialGridVars, type NormKind, reverseCategories, outline, textOf, type Annotation, type ChartAxis, type ChartLegend, type ChartRAxis, type ChartText, type ChartOptions, type ChartSeries, type Model,
     type NormPoint, type NormSeries, type PlotBand, type PlotLine, type RenderCtx, type TipRow,
 } from './model';
 import { compact, plain } from './helpers';
@@ -469,7 +471,7 @@ export const Charts = component('charts', {
     };
 
     /* ----- legend (shared by all types) — real <button>s, toggle + highlight --- */
-    interface LegendEntry { name: string; color: string; key: string; line: boolean; shape: string; border?: string; width?: number; dot?: string; stroke?: { color: string; width: number }; }
+    interface LegendEntry { name: string; color: string; key: string; line: boolean; shape: string; border?: string; width?: number; dot?: string; stroke?: { color: string; width: number }; static?: boolean; }
     const legendEntries = (m: Model): LegendEntry[] => {
         // multi-series radialbar (stacked polar) legends by SERIES like bars;
         // waffle legends by CATEGORY (its cells are palette-partitioned)
@@ -480,6 +482,19 @@ export const Charts = component('charts', {
             const s0 = m.series[0];
             return points.map((p, i) => ({ name: p.name || '—', color: p.color, key: p.name || '#' + i, line: false, shape: '',
                 border: m.type === 'pie' && s0 ? p.bordercolor || s0.bordercolor : '', width: s0 ? s0.borderwidth : 1 }));
+        }
+        // waterfall: one informative entry per kind of bar (Excel's
+        // Increase / Decrease / Total), all three whatever the data holds
+        if (m.type === 'waterfall') {
+            const s0 = m.series[0];
+            if (!s0) return [];
+            const kinds: Array<[NormKind, string]> = [[s0.positive, 'var(--lm-chart-up)'], [s0.negative, 'var(--lm-chart-down)'], [s0.total, 'var(--lm-chart-total)']];
+            return kinds.map(([k, token]) => ({
+                name: k.name, key: '#' + k.name, line: false, shape: '', static: true,
+                color: k.color || token,
+                border: k.bordercolor || s0.bordercolor,
+                width: k.borderwidth != null ? k.borderwidth : s0.borderwidth,
+            }));
         }
         // scatter swatches mirror the marker shape (explicit or the cycled
         // default — keep the order in sync with scatterChart's CYCLE)
@@ -514,8 +529,9 @@ export const Charts = component('charts', {
             (e) => html`<button type="button" class="lm-chart-legend-item"
                 data-hidden="${isHidden(e.key) ? 'true' : false}"
                 data-dim="${hover.value && hover.value !== e.key ? 'true' : false}"
-                aria-pressed="${isHidden(e.key) ? 'false' : 'true'}"
-                onclick="${() => toggle(e.key)}"
+                data-static="${e.static ? 'true' : false}"
+                aria-pressed="${e.static ? false : isHidden(e.key) ? 'false' : 'true'}"
+                onclick="${() => { if (!e.static) toggle(e.key); }}"
                 onmouseenter="${() => (hover.value = e.key)}"
                 onmouseleave="${() => (hover.value = null)}">
                 <span class="lm-chart-swatch" data-line="${e.line ? 'true' : false}"
@@ -533,7 +549,7 @@ export const Charts = component('charts', {
     const layout = (m: Model, core: View): View => {
         const pos = m.legendposition
             || (['pie', 'radar', 'polararea', 'radialbar'].includes(m.type) ? 'right' : 'bottom');
-        const noLegend = ['gauge', 'funnel', 'pyramid', 'waterfall', 'bullet', 'heatmap',
+        const noLegend = ['gauge', 'funnel', 'pyramid', 'bullet', 'heatmap',
             'candlestick', 'ohlc', 'boxplot', 'arearange', 'columnrange', 'dumbbell', 'treemap',
             'sankey', 'chord', 'arcdiagram', 'sunburst', 'icicle', 'wordcloud'].includes(m.type)
             // pictogram rows carry their own labels; the WAFFLE variant needs

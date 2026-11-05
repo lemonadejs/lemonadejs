@@ -867,7 +867,7 @@ export const waterfallChart = (m: Model, ctx: RenderCtx): View => {
     // colour and outline win
     type Step = { delta: number; total: boolean; p?: NormPoint };
     const kindOf = (s: Step): { kind: NormKind; token: string } => !ser
-        ? { kind: { color: '', bordercolor: '', borderwidth: null }, token: 'var(--lm-chart-up)' }
+        ? { kind: { name: '', color: '', bordercolor: '', borderwidth: null }, token: 'var(--lm-chart-up)' }
         : s.total ? { kind: ser.total, token: 'var(--lm-chart-total)' }
             : s.delta >= 0 ? { kind: ser.positive, token: 'var(--lm-chart-up)' } : { kind: ser.negative, token: 'var(--lm-chart-down)' };
     const colorOf = (s: Step): string => (s.p && s.p.owncolor) || kindOf(s).kind.color || kindOf(s).token;

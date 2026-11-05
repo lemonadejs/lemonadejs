@@ -185,14 +185,16 @@ export interface ChartOptions {
     total?: number;
 }
 
-/** One kind of waterfall bar: its fill and outline. */
+/** One kind of waterfall bar: its fill, outline and legend name
+ *  ("Increase" / "Decrease" / "Total" by default). */
 export interface WaterfallKind {
+    name?: string;
     color?: string;
     border?: { color?: string; width?: number };
 }
 
 /** A normalized waterfall kind ('' / null = inherit the series' own). */
-export interface NormKind { color: string; bordercolor: string; borderwidth: number | null; }
+export interface NormKind { name: string; color: string; bordercolor: string; borderwidth: number | null; }
 
 /** The typography of one chart element. `size` is px when a number (or any
  *  CSS length as a string); unset fields keep the stylesheet default. */
@@ -345,11 +347,12 @@ export const markerStroke = (s: NormSeries): { color: string; width: number } =>
 });
 
 /** A waterfall kind as given, over a default colour. */
-const normKind = (k: unknown, color: string): NormKind => {
+const normKind = (k: unknown, color: string, name: string): NormKind => {
     const o = isObj(k) ? k : {};
     const b = isObj(o.border) ? o.border : {};
     const w = Number(b.width);
     return {
+        name: o.name != null && String(o.name) !== '' ? String(o.name) : name,
         color: o.color ? String(o.color) : color,
         bordercolor: b.color ? String(b.color) : '',
         borderwidth: b.width != null && Number.isFinite(w) && w >= 0 ? w : null,
@@ -764,9 +767,9 @@ export const normalize = (def: ChartOptions): Model => {
             markers: typeof s.markers === 'boolean' ? s.markers : null,
             connectgaps: s.connectgaps === true,
             fillopacity: s.fillopacity != null && Number.isFinite(Number(s.fillopacity)) ? Math.max(0, Math.min(1, Number(s.fillopacity))) : null,
-            positive: normKind(s.positive, typeof s.color === 'string' ? s.color : ''),
-            negative: normKind(s.negative, ''),
-            total: normKind(s.total, ''),
+            positive: normKind(s.positive, typeof s.color === 'string' ? s.color : '', 'Increase'),
+            negative: normKind(s.negative, '', 'Decrease'),
+            total: normKind(s.total, '', 'Total'),
             totals: Array.isArray(s.totals) ? s.totals.map(Number).filter((i) => Number.isInteger(i) && i >= 0) : [],
             trendline: normalizeTrend(s.trendline),
             step: s.step === true || s.step === 'mid' || (s.step == null && (def.step === true || def.step === 'mid')) ? (s.step === 'mid' || (s.step == null && def.step === 'mid') ? 'mid' : 'before') : '',

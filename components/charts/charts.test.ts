@@ -656,6 +656,28 @@ describe('components/charts', () => {
         expect(styleN(bars[4])).toMatch(/background:(#999999|rgb\(153, 153, 153\))/i); // the null total
     });
 
+    it('waterfall legend: Increase / Decrease / Total entries always, informative only', () => {
+        handle = t(Chart, { type: 'waterfall', categories: ['a', 'b'], series: [{ data: [3, -1] }] });
+        let items = handle.queryAll('.lm-chart-legend-item');
+        expect(items.map((e) => e.textContent!.trim())).toEqual(['Increase', 'Decrease', 'Total']); // no totals, still three
+        expect(items[0].getAttribute('data-static')).toBe('true');
+        (items[0] as HTMLElement).click();
+        expect(handle.queryAll('.lm-chart-bar').length).toBe(2); // no toggle
+        handle.unmount();
+        handle = t(Chart, { type: 'waterfall', categories: ['a', 'b', 'c'], series: [{
+            color: '#00aa00', negative: { name: 'Queda', color: '#aa0000', border: { color: '#000', width: 2 } }, total: { name: 'Soma' },
+            totals: [2], data: [3, -1, null],
+        }] });
+        items = handle.queryAll('.lm-chart-legend-item');
+        expect(items.map((e) => e.textContent!.trim())).toEqual(['Increase', 'Queda', 'Soma']);
+        const sw = handle.queryAll('.lm-chart-swatch');
+        expect(styleN(sw[0])).toMatch(/background:(#00aa00|rgb\(0, 170, 0\))/i);
+        expect(styleN(sw[1])).toMatch(/inset 0(px)? 0(px)? 0(px)? 2px (#000|rgb\(0, 0, 0\))/i);
+        handle.unmount();
+        handle = t(Chart, { type: 'waterfall', legend: false, categories: ['a'], series: [{ data: [1] }] });
+        expect(handle.query('.lm-chart-legend')).toBeNull();
+    });
+
     it('legend: false, { show: false } and the "false" attribute all hide it', () => {
         for (const legend of [false, { show: false }, 'false']) {
             handle = t(Chart, { type: 'bar', legend, categories: ['A'], series: [{ name: 's', data: [1] }, { name: 'r', data: [2] }] });

@@ -77,7 +77,9 @@ width } }`. A kind's missing fields take the series' own `color`,
 `--lm-chart-up`, `-down` or `-total` token; a point's own `color` and
 `bordercolor` win. `totals` lists the indices of the total points, drawn
 from zero to their own value — the total, as in Excel; a null total takes
-the running sum — with the running sum continuing from them.
+the running sum — with the running sum continuing from them. Its legend
+is one entry per kind (`name`: "Increase", "Decrease", "Total" by
+default), informative only, all three whatever the data holds.
 
 Fills (an area, a stacked area, a filled radar, a range band) are
 translucent by default (0.16; stacked 0.85). `fillopacity` (0–1) on the

@@ -2175,6 +2175,10 @@ button.lm-chart-crumb:hover {
     transition: opacity 0.12s ease, background 0.12s ease;
 }
 
+.lm-chart-legend-item[data-static='true'] {
+    cursor: default;
+}
+
 .lm-chart-legend-item:hover {
     background: var(--lm-background-color-highlight, rgba(0, 0, 0, 0.04));
 }
