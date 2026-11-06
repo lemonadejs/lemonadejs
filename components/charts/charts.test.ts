@@ -2279,6 +2279,49 @@ describe('components/charts — series options, trendlines and axes', () => {
         expect(poly.getAttribute('data-dashed')).toBeNull();
     });
 
+    it('trendline: horizontal bars draw it with the axes swapped (category down the rows, value along x)', () => {
+        const series = [
+            { name: 'A', data: [1, 3, 2], trendline: 'linear' },
+            { name: 'B', data: [2, 2, 4], trendline: 'linear', axis: 'right' },
+        ];
+        const cats = ['a', 'b', 'c'];
+        const pathPts = (el: Element): number[][] =>
+            el.getAttribute('d')!.split(/[ML]\s*/).filter(Boolean).map((seg) => seg.trim().split(',').map(Number));
+        h = t(Chart, { type: 'bar', categories: cats, series });
+        const vert = h.queryAll('.lm-chart-trend').map(pathPts);
+        expect(vert.length).toBe(2);
+        h.unmount();
+        for (const type of ['bar', 'stackedbar']) {
+            h = t(Chart, { type, horizontal: true, categories: cats, series });
+            const trends = h.queryAll('.lm-chart-trend');
+            expect(trends.length).toBe(2);
+            // the second series rides the top (x2) axis; both sit in the horizontal cols box
+            expect(h.queryAll('.lm-chart-cols[data-orient="h"] .lm-chart-trend').length).toBe(2);
+            expect(trends[0].getAttribute('data-dashed')).toBe('dashed');
+            for (const el of trends) {
+                for (const [x, y] of pathPts(el)) {
+                    expect(x).toBeGreaterThanOrEqual(0); expect(x).toBeLessThanOrEqual(100);
+                    expect(y).toBeGreaterThanOrEqual(0); expect(y).toBeLessThanOrEqual(100);
+                }
+            }
+            // the category coordinate moves to y: a linear fit spans the first and last row centres
+            const horiz = pathPts(trends[0]);
+            expect(horiz.map((p) => p[1].toFixed(1))).toEqual(['16.7', '83.3']);
+            if (type === 'bar') {
+                // same chart vertical: x/y swap, and the value coordinate
+                // mirrors (vertical values grow upward = a smaller y)
+                for (let i = 0; i < horiz.length; i++) {
+                    expect(horiz[i][1]).toBeCloseTo(vert[0][i][0], 1);
+                    expect(horiz[i][0]).toBeCloseTo(100 - vert[0][i][1], 1);
+                }
+            }
+            h.unmount();
+        }
+        // yreverse: the first category at the bottom
+        h = t(Chart, { type: 'bar', horizontal: true, yreverse: true, categories: cats, series: [series[0]] });
+        expect(pathPts(h.query('.lm-chart-trend')!).map((p) => p[1].toFixed(1))).toEqual(['83.3', '16.7']);
+    });
+
     it('trendline: none when the data cannot be fitted', () => {
         h = t(Chart, { type: 'line', categories: ['A'], series: [{ data: [1], trendline: 'linear' }] });
         expect(h.query('.lm-chart-trend')).toBeNull();

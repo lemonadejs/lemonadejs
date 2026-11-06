@@ -548,16 +548,22 @@ export const bars = (mFull: Model, ctx0: RenderCtx): View => {
         </div>`;
     })();
 
-    // trendlines: fitted on the category index (x = i), one path per series
+    // trendlines: fitted on the category index (x = i), one path per series.
+    // Horizontal bars swap the axes: the category runs down the rows (the
+    // first at the top, or at the bottom with yreverse) and the value along
+    // x on the series' value scale (primary, or the top axis for 'right')
+    const rowCenter = (i: number): number => (m.yreverse ? 100 - ((i + 0.5) / n) * 100 : ((i + 0.5) / n) * 100);
     const trendOverlay = ((): View | false => {
-        if (horizontal) return false;
         const trends = vis.filter((s) => s.trendline).map((s) => {
             const sc = scaleOf(s);
             // reversed x: fit in the data order and mirror the curve (a fit on
             // the reversed index would differ for log/power/moving averages)
             const ix = (i: number): number => (catFlip ? n - 1 - i : i);
             const pts = s.points.map((p, i) => ({ x: ix(i), y: p.value })).filter((_, i) => s.points[i] && !s.points[i].gap);
-            return trendPath(s, pts, (x, y) => [colCenter(ix(x)), (1 - sc.frac(y)) * 100], ctx.hover.value && ctx.hover.value !== s.name ? 'true' : false);
+            const toXY = horizontal
+                ? (x: number, y: number): [number, number] => [sc.frac(y) * 100, rowCenter(ix(x))]
+                : (x: number, y: number): [number, number] => [colCenter(ix(x)), (1 - sc.frac(y)) * 100];
+            return trendPath(s, pts, toXY, ctx.hover.value && ctx.hover.value !== s.name ? 'true' : false);
         }).filter(Boolean);
         return trends.length
             ? html`<div class="lm-chart-lineoverlay">
@@ -799,7 +805,9 @@ export const bars = (mFull: Model, ctx0: RenderCtx): View => {
                         (t) => html`<div class="lm-chart-gridline" data-zero="${Math.abs(t - baseV) < 1e-9 ? 'true' : false}"></div>`,
                     )}</div>
                     ${refBands}
-                    <div class="lm-chart-cols" data-orient="h" data-reverse="${m.yreverse ? 'true' : false}">${Array.from({ length: n }, (_, i) => column(i))}</div>
+                    <div class="lm-chart-cols" data-orient="h" data-reverse="${m.yreverse ? 'true' : false}">${
+                        Array.from({ length: n }, (_, i) => column(i))
+                    }${trendOverlay}</div>
                     ${refLines}
                 </div>
             </div>
