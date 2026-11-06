@@ -98,6 +98,8 @@ export interface ChartSeries {
     markersize?: number;
     /** Show markers on this series; overrides the chart `markers` prop. */
     markers?: boolean;
+    /** Value labels on this series; overrides the chart `labels` prop. */
+    labels?: boolean;
     /** Connect the line across gaps (`null` points) instead of breaking it. */
     connectgaps?: boolean;
     /** A least-squares trendline through the series: a type, or the options. */
@@ -150,6 +152,7 @@ export interface ChartOptions {
     legend?: boolean | string | ChartLegend;
     legendposition?: string;
     labels?: boolean;
+    endlabels?: boolean;
     horizontal?: boolean;
     mirror?: boolean;
     markers?: boolean;
@@ -364,6 +367,11 @@ const normKind = (k: unknown, color: string, name: string): NormKind => {
     };
 };
 
+/** Whether a series shows its value labels: its own `labels` when set,
+ *  else the chart `labels` prop. */
+export const showLabels = (s: NormSeries, m: Model): boolean =>
+    (s.labels != null ? s.labels : m.labels);
+
 /** The inline fill-opacity override of a series (its own `fillopacity`),
  *  as the custom property the fills read; nothing when unset. */
 export const fillVar = (s: NormSeries): Record<string, string> =>
@@ -569,6 +577,8 @@ export interface NormSeries {
     markersize: number | null;
     /** null = the chart `markers` prop decides */
     markers: boolean | null;
+    /** null = the chart `labels` prop decides */
+    labels: boolean | null;
     connectgaps: boolean;
     /** null = the chart's fillopacity / the stylesheet default */
     fillopacity: number | null;
@@ -605,6 +615,8 @@ export interface Model {
     legend: boolean;
     legendposition: 'top' | 'bottom' | 'left' | 'right' | '';
     labels: boolean;
+    /** line: the series name at each line's end (the legend goes) */
+    endlabels: boolean;
     horizontal: boolean;
     /** population pyramid: series[0] grows leftward (horizontal only) */
     mirror: boolean;
@@ -770,6 +782,7 @@ export const normalize = (def: ChartOptions): Model => {
             width: Number(s.width) > 0 ? Number(s.width) : 0,
             markersize: s.markersize != null && Number.isFinite(Number(s.markersize)) ? Math.max(0, Number(s.markersize)) : null,
             markers: typeof s.markers === 'boolean' ? s.markers : null,
+            labels: typeof s.labels === 'boolean' ? s.labels : null,
             connectgaps: s.connectgaps === true,
             fillopacity: s.fillopacity != null && Number.isFinite(Number(s.fillopacity)) ? Math.max(0, Math.min(1, Number(s.fillopacity))) : null,
             positive: normKind(s.positive, typeof s.color === 'string' ? s.color : '', 'Increase'),
@@ -827,6 +840,7 @@ export const normalize = (def: ChartOptions): Model => {
         legend: lg ? lg.show !== false : !(def.legend === false || def.legend === 'false' || def.legend === '0'),
         legendposition: pos === 'top' || pos === 'bottom' || pos === 'left' || pos === 'right' ? pos : '',
         labels: def.labels !== false,
+        endlabels: def.endlabels === true,
         horizontal: def.horizontal === true,
         mirror: def.mirror === true,
         markers: def.markers !== false,

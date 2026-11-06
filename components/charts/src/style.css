@@ -686,15 +686,21 @@
     opacity: 0.18;
 }
 
-.lm-chart-marker-label {
+/* value label above a line/area/scatter point (positioned in %, like the markers) */
+.lm-chart-point-label {
     position: absolute;
-    bottom: 11px;
-    left: 50%;
-    transform: translateX(-50%);
+    transform: translate(-50%, calc(-100% - 7px));
     font-size: 0.7em;
     font-weight: bold;
     color: var(--lm-chart-text);
     white-space: nowrap;
+    pointer-events: none;
+    text-shadow: 0 0 3px var(--lm-chart-surface), 0 0 3px var(--lm-chart-surface);
+    transition: opacity 0.12s ease;
+}
+
+.lm-chart-point-label[data-dim='true'] {
+    opacity: 0.18;
 }
 
 /* ---- horizontal orientation (categories on the y-axis, values on x) ---- */

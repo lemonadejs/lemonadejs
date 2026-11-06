@@ -5,13 +5,19 @@
  * boxplot, arearange/columnrange/dumbbell, lollipop.
  */
 import { css, html, type View } from 'lemonadejs';
-import { PALETTES, fillVar, fontPx, isStrokeMarker, markerStroke, outline, type Model, type NormKind, type NormPoint, type NormSeries, type RenderCtx } from './model';
+import { PALETTES, fillVar, fontPx, isStrokeMarker, markerStroke, outline, showLabels, type Model, type NormKind, type NormPoint, type NormSeries, type RenderCtx } from './model';
 import { fixedScale, lerpColor, niceExtent, niceScale, parseX, polyPath, smoothPath, stepPath, timeTicks } from './helpers';
 import { fit } from './trend';
 
 /** Hidden y tick labels: shrink the left gutter to the right-hand spacing. */
 export const yGutter = (m: Model): string | false =>
     m.ylabels ? false : css({ '--lm-chart-gutter': 'var(--lm-chart-pad-r)' });
+
+/** A value label pinned above one point, placed in % like the markers
+ *  (line/area/stacked area/scatter; independent of the markers). */
+export const pointLabel = (x: number, y: number, text: string, dim: string | false): View =>
+    html`<span class="lm-chart-point-label" data-dim="${dim}"
+        style="${css({ left: x.toFixed(2) + '%', top: y.toFixed(2) + '%' })}">${text}</span>`;
 
 /** The line of a series: `bordercolor` when set (as on bars, the outline
  *  colour), else its `color`. `color` stays the fill (markers, areas). */
@@ -304,7 +310,7 @@ export const bars = (mFull: Model, ctx0: RenderCtx): View => {
             const share = percent ? Math.round(len) : null;
             const tipName = cat ? cat + ' · ' + s.name : s.name;
             const tipValue = share != null ? fmt(v) + ' (' + share + '%)' : fmt(v);
-            const showLabel = m.labels && v !== 0 && (!stacked || len >= 9);
+            const showLabel = showLabels(s, m) && v !== 0 && (!stacked || len >= 9);
             const labelText = share != null ? share + '%' : fmt(v);
             // bottom/height map to the value axis; horizontal swaps them to left/width
             const barStyle = horizontal
@@ -435,6 +441,18 @@ export const bars = (mFull: Model, ctx0: RenderCtx): View => {
                             onclick="${() => ctx.fire({ ...p, color: s.color }, sIndex(s), i)}"></span>`);
                     }
                 }
+                // value labels: one per point on the band's top edge, with or
+                // without markers (streams stay unlabelled: soft ribbons);
+                // 100%-stacked shows the share like the stacked bars
+                if (showLabels(s, m) && !stream) {
+                    for (let i = 0; i < n; i++) {
+                        const p = s.points[i];
+                        if (!p || p.gap) continue;
+                        const [x, y] = topPts[i];
+                        const text = percent ? Math.round((p.value / (colTotal(i) || 1)) * 100) + '%' : fmt(p.value);
+                        markers.push(pointLabel(x, y, text, dim));
+                    }
+                }
             }
             return html`<div class="lm-chart-lineoverlay" data-interactive="${shared ? false : 'true'}">
                 <svg class="lm-chart-linesvg" viewBox="0 0 100 100" preserveAspectRatio="none">${areas}${paths}</svg>
@@ -473,9 +491,9 @@ export const bars = (mFull: Model, ctx0: RenderCtx): View => {
                     style="${strokeStyle(s)}" data-dim="${dim}"
                     data-dashed="${s.dashed || false}" />`);
             }
-            // series-name label at the line's end (multi-series pure-line
-            // charts; the legend is suppressed for these in layout())
-            if (crosshair && m.labels && lineSeries.length > 1) {
+            // series-name label at the line's end (pure-line charts with
+            // endlabels; the legend is suppressed for these in layout())
+            if (crosshair && m.endlabels) {
                 for (let i = n - 1; i >= 0; i--) {
                     const p = s.points[i];
                     if (!p || p.gap) continue;
@@ -499,11 +517,17 @@ export const bars = (mFull: Model, ctx0: RenderCtx): View => {
                             if (!shared) ctx.showTip(e, tipName, [{ name: s.name, value: fmt(p.value), color: s.color, border: s.bordercolor }]);
                         }}"
                         onmouseleave="${() => { if (!shared) ctx.hideTip(); }}"
-                        onclick="${() => ctx.fire({ ...p, color: s.color }, sIndex(s), i)}">${
-                        // value labels only for a single, not-too-dense series (else overlap; tooltip covers it)
-                        m.labels && lineSeries.length === 1 && n <= 15
-                            ? html`<span class="lm-chart-marker-label">${fmt(p.value)}</span>` : false
-                    }</span>`);
+                        onclick="${() => ctx.fire({ ...p, color: s.color }, sIndex(s), i)}"></span>`);
+                }
+            }
+            // value labels: one above every point of every series, markers
+            // or not (Excel's "show value"); the tooltip still covers hover
+            if (showLabels(s, m)) {
+                for (let i = 0; i < n; i++) {
+                    const p = s.points[i];
+                    if (!p || p.gap) continue;
+                    const [x, y] = xy(i, p.value);
+                    markers.push(pointLabel(x, y, fmt(p.value), dim));
                 }
             }
         }

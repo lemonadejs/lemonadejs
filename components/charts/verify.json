@@ -271,6 +271,14 @@
             "pass": true
         },
         {
+            "name": "prop endlabels",
+            "pass": true
+        },
+        {
+            "name": "prop endlabels (live state)",
+            "pass": true
+        },
+        {
             "name": "prop horizontal",
             "pass": true
         },

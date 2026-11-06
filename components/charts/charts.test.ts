@@ -1612,6 +1612,153 @@ describe('components/charts', () => {
         expect(handle.queryAll('.lm-chart-areafill[data-stacked="true"]').length).toBe(2);
     });
 
+    it('line labels: one value per point without markers, placed in % like a marker', () => {
+        handle = t(Chart, {
+            type: 'line', categories: ['A', 'B', 'C'], labels: true,
+            series: [{ name: 'S', data: [2, 8, 4], markers: false }],
+        });
+        expect(handle.queryAll('.lm-chart-marker').length).toBe(0);
+        const labels = handle.queryAll('.lm-chart-point-label');
+        expect(labels.map((l) => l.textContent)).toEqual(['2', '8', '4']);
+        // the peak sits at the top of the plot (max 8 → niceMax 8)
+        const peak = styleN(labels[1]);
+        expect(peak).toContain('left:50.00%');
+        expect(peak).toContain('top:0.00%');
+        // gaps get no label; labels: false hides them
+        handle.unmount();
+        handle = t(Chart, { type: 'line', categories: ['A', 'B', 'C'], labels: true, series: [{ data: [2, null, 4] }] });
+        expect(handle.queryAll('.lm-chart-point-label').map((l) => l.textContent)).toEqual(['2', '4']);
+        handle.unmount();
+        handle = t(Chart, { type: 'line', categories: ['A', 'B'], labels: false, series: [{ data: [1, 2] }] });
+        expect(handle.queryAll('.lm-chart-point-label').length).toBe(0);
+    });
+
+    it('line labels: every series shows its values and the legend stays; endlabels name the lines instead', () => {
+        const def = {
+            type: 'line', categories: Array.from({ length: 20 }, (_, i) => 'c' + i),
+            series: [
+                { name: 'A', data: Array.from({ length: 20 }, (_, i) => i + 1) },
+                { name: 'B', data: Array.from({ length: 20 }, (_, i) => 40 - i) },
+            ],
+        };
+        handle = t(Chart, { ...def, labels: true });
+        // 2 series × 20 points, no density cap
+        expect(handle.queryAll('.lm-chart-point-label').length).toBe(40);
+        expect(handle.queryAll('.lm-chart-line-endlabel').length).toBe(0);
+        expect(handle.queryAll('.lm-chart-legend-name').map((e) => e.textContent)).toEqual(['A', 'B']);
+        // endlabels: the series name at each line's end, no legend, no values
+        handle.unmount();
+        handle = t(Chart, { ...def, labels: false, endlabels: true });
+        expect(handle.queryAll('.lm-chart-line-endlabel').map((e) => e.textContent)).toEqual(['B', 'A']);
+        expect(handle.queryAll('.lm-chart-legend-item').length).toBe(0);
+        expect(handle.queryAll('.lm-chart-point-label').length).toBe(0);
+        // both: values and end labels together
+        handle.unmount();
+        handle = t(Chart, { ...def, labels: true, endlabels: true });
+        expect(handle.queryAll('.lm-chart-point-label').length).toBe(40);
+        expect(handle.queryAll('.lm-chart-line-endlabel').length).toBe(2);
+    });
+
+    it('area and stackedarea labels: a value per point on the band tops; percent mode shows the share', () => {
+        handle = t(Chart, { type: 'line', area: true, categories: ['A', 'B'], labels: true, series: [{ data: [3, 5], markers: false }] });
+        expect(handle.queryAll('.lm-chart-point-label').map((l) => l.textContent)).toEqual(['3', '5']);
+        handle.unmount();
+        handle = t(Chart, {
+            type: 'stackedarea', categories: ['A', 'B'], labels: true, markers: false,
+            series: [{ name: 'X', data: [2, 4] }, { name: 'Y', data: [3, 1] }],
+        });
+        const labels = handle.queryAll('.lm-chart-point-label');
+        expect(labels.map((l) => l.textContent)).toEqual(['2', '4', '3', '1']);
+        // Y at B stacks to 5 = the scale top; X at B (4) sits lower than it
+        const yB = parseFloat(styleN(labels[3]).match(/top:([\d.]+)%/)![1]);
+        const xB = parseFloat(styleN(labels[1]).match(/top:([\d.]+)%/)![1]);
+        expect(yB).toBeLessThan(xB);
+        handle.unmount();
+        handle = t(Chart, {
+            type: 'stackedarea', stackmode: 'percent', categories: ['A'], labels: true,
+            series: [{ name: 'X', data: [1] }, { name: 'Y', data: [3] }],
+        });
+        expect(handle.queryAll('.lm-chart-point-label').map((l) => l.textContent)).toEqual(['25%', '75%']);
+    });
+
+    it('scatter labels: the y value above every point, line series included', () => {
+        handle = t(Chart, {
+            type: 'scatter', labels: true,
+            series: [
+                { name: 'Measured', data: [[1, 4], [2, 7]] },
+                { name: 'Trend', type: 'line', data: [[1, 3], [2, 6]] },
+            ],
+        });
+        const labels = handle.queryAll('.lm-chart-point-label');
+        expect(labels.map((l) => l.textContent)).toEqual(['4', '7', '3', '6']);
+        // placed at the point's x/y in %
+        const dot = handle.queryAll('.lm-chart-dot')[1];
+        expect(styleN(labels[1])).toContain('left:' + parseFloat(dot.getAttribute('cx')!) + '%');
+        expect(styleN(labels[1])).toContain('top:' + parseFloat(dot.getAttribute('cy')!) + '%');
+        // bubbles keep their name labels only
+        handle.unmount();
+        handle = t(Chart, { type: 'bubble', labels: true, series: [{ data: [{ x: 1, y: 2, z: 3, name: 'P' }] }] });
+        expect(handle.queryAll('.lm-chart-point-label').length).toBe(0);
+        expect(handle.queryAll('.lm-chart-bubble-name').map((l) => l.textContent)).toEqual(['P']);
+    });
+
+    it('series labels: a series overrides the chart labels either way (unset = follow the chart)', () => {
+        const two = (extra: Record<string, unknown>) => [
+            { name: 'A', data: [1, 2], ...extra },
+            { name: 'B', data: [3, 4] },
+        ];
+        // bar: chart off, series A on → only A's values; chart on, A off → only B's
+        handle = t(Chart, { type: 'bar', categories: ['x', 'y'], labels: false, series: two({ labels: true }) });
+        expect(handle.queryAll('.lm-chart-value').map((l) => l.textContent)).toEqual(['1', '2']);
+        handle.unmount();
+        handle = t(Chart, { type: 'bar', categories: ['x', 'y'], labels: true, series: two({ labels: false }) });
+        expect(handle.queryAll('.lm-chart-value').map((l) => l.textContent)).toEqual(['3', '4']);
+        // stackedbar
+        handle.unmount();
+        handle = t(Chart, { type: 'stackedbar', categories: ['x', 'y'], labels: false, series: two({ labels: true }) });
+        expect(handle.queryAll('.lm-chart-value').map((l) => l.textContent)).toEqual(['1', '2']);
+        // line (no markers) and area
+        handle.unmount();
+        handle = t(Chart, { type: 'line', categories: ['x', 'y'], labels: false, markers: false, series: two({ labels: true }) });
+        expect(handle.queryAll('.lm-chart-point-label').map((l) => l.textContent)).toEqual(['1', '2']);
+        handle.unmount();
+        handle = t(Chart, { type: 'line', area: true, categories: ['x', 'y'], labels: true, series: two({ labels: false }) });
+        expect(handle.queryAll('.lm-chart-point-label').map((l) => l.textContent)).toEqual(['3', '4']);
+        // stackedarea
+        handle.unmount();
+        handle = t(Chart, { type: 'stackedarea', categories: ['x', 'y'], labels: false, series: two({ labels: true }) });
+        expect(handle.queryAll('.lm-chart-point-label').map((l) => l.textContent)).toEqual(['1', '2']);
+        // scatter: points + a line series
+        handle.unmount();
+        handle = t(Chart, { type: 'scatter', labels: false, series: [
+            { name: 'A', data: [[1, 5]], labels: true },
+            { name: 'B', type: 'line', data: [[1, 2], [2, 3]] },
+        ] });
+        expect(handle.queryAll('.lm-chart-point-label').map((l) => l.textContent)).toEqual(['5']);
+        handle.unmount();
+        handle = t(Chart, { type: 'scatter', labels: true, series: [
+            { name: 'A', data: [[1, 5]], labels: false },
+            { name: 'B', type: 'line', data: [[1, 2], [2, 3]] },
+        ] });
+        expect(handle.queryAll('.lm-chart-point-label').map((l) => l.textContent)).toEqual(['2', '3']);
+        // bubble names follow the same switch
+        handle.unmount();
+        handle = t(Chart, { type: 'bubble', labels: false, series: [
+            { name: 'A', data: [{ x: 1, y: 2, z: 3, name: 'P' }], labels: true },
+            { name: 'B', data: [{ x: 2, y: 3, z: 1, name: 'Q' }] },
+        ] });
+        expect(handle.queryAll('.lm-chart-bubble-name').map((l) => l.textContent)).toEqual(['P']);
+        // pie: per-slice chips and callouts switch with the series
+        handle.unmount();
+        handle = t(Chart, { type: 'pie', labels: false, series: [{ data: [{ name: 'a', value: 60 }, { name: 'b', value: 40 }], labels: true }] });
+        expect(handle.queryAll('.lm-chart-pie-label').length).toBe(2);
+        expect(handle.queryAll('.lm-chart-pie-olabel').map((l) => l.textContent)).toEqual(['a', 'b']);
+        handle.unmount();
+        handle = t(Chart, { type: 'pie', labels: true, series: [{ data: [{ name: 'a', value: 60 }, { name: 'b', value: 40 }], labels: false }] });
+        expect(handle.queryAll('.lm-chart-pie-label').length).toBe(0);
+        expect(handle.queryAll('.lm-chart-pie-olabel').length).toBe(0);
+    });
+
     it('formatting: compact=false + thousands groups full numbers; decimals fixes places', () => {
         handle = t(Chart, {
             type: 'bar', categories: ['A'], compact: false, thousands: true,

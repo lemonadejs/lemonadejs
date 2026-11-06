@@ -3,9 +3,9 @@
  * treemap and the sparkline mode.
  */
 import { css, html, type View } from 'lemonadejs';
-import { PALETTES, isStrokeMarker, markerStroke, type Model, type NormPoint, type NormSeries, type RenderCtx } from './model';
+import { PALETTES, isStrokeMarker, markerStroke, showLabels, type Model, type NormPoint, type NormSeries, type RenderCtx } from './model';
 import { fixedScale, lerpColor, niceExtent, polyPath, smoothPath, squarify, stepPath, textOn } from './helpers';
-import { strokeStyle, trendPath } from './cartesian';
+import { pointLabel, strokeStyle, trendPath } from './cartesian';
 
 /* ----- scatter / bubble (numeric x + y axes) ----- */
 export const scatterChart = (m: Model, ctx: RenderCtx): View => {
@@ -165,10 +165,16 @@ export const scatterChart = (m: Model, ctx: RenderCtx): View => {
     });
 
     // bubble name labels (annotated-bubble look): centred dark text
-    const bubbleNames = bubble && m.labels
-        ? all.filter(({ p }) => p.name).map(({ p, s }) => html`<span class="lm-chart-bubble-name"
+    const bubbleNames = bubble
+        ? all.filter(({ p, s }) => p.name && showLabels(s, m)).map(({ p, s }) => html`<span class="lm-chart-bubble-name"
             style="${css({ left: (xf(p.x) * 100).toFixed(2) + '%', top: ((1 - yfOf(s)(p.value)) * 100).toFixed(2) + '%' })}"
             >${p.name}</span>`)
+        : [];
+    // scatter value labels: the y value above every point of every series
+    // (points and line series alike), markers or not
+    const valueLabels = !bubble
+        ? all.filter(({ s }) => showLabels(s, m)).map(({ p, s }) => pointLabel(xf(p.x) * 100, (1 - yfOf(s)(p.value)) * 100, ctx.fmt(p.value),
+            ctx.hover.value && ctx.hover.value !== s.name ? 'true' : false))
         : [];
 
     // bubble size legend (two reference circles)
@@ -205,6 +211,7 @@ export const scatterChart = (m: Model, ctx: RenderCtx): View => {
                         ${lineOverlay}
                         <svg class="lm-chart-scatter" width="100%" height="100%">${markers}</svg>
                         ${bubbleNames}
+                        ${valueLabels}
                         ${sizeLegend}
                     </div>
                     ${rightAxis}

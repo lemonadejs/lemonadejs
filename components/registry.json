@@ -474,7 +474,7 @@
         "name": "charts",
         "path": "components/charts",
         "verified": true,
-        "checks": 137,
+        "checks": 139,
         "contract": {
             "name": "charts",
             "props": {
@@ -596,6 +596,10 @@
                 "labels": {
                     "type": "boolean",
                     "default": true
+                },
+                "endlabels": {
+                    "type": "boolean",
+                    "default": false
                 },
                 "horizontal": {
                     "type": "boolean",

@@ -3,7 +3,7 @@
  * gauge, radialbar, polararea and funnel/pyramid.
  */
 import { css, html, type View } from 'lemonadejs';
-import { PALETTES, fillVar, type Model, type NormPoint, type RenderCtx } from './model';
+import { PALETTES, fillVar, showLabels, type Model, type NormPoint, type RenderCtx } from './model';
 import { R, annulus, f, kbKeydown, niceScale, polar, roundedRing, textOn, wedge } from './helpers';
 import { lineColor, markerStyle } from './cartesian';
 
@@ -568,8 +568,8 @@ export const pie = (m: Model, ctx: RenderCtx): View => {
     const insideLabels: View[] = [];
     const outsideLabels: View[] = [];
     const leaders: View[] = [];
-    if (m.labels) {
-        for (const r of rings) {
+    for (const r of rings) {
+        if (showLabels(r.ser, m)) {
             // chips need room: a thin ring (several of them) goes without
             const chips = r.rOut - r.rIn >= 9;
             const labelR = r.rIn > 0 ? (r.rOut + r.rIn) / 2 : r.rOut * 0.62;

@@ -2,7 +2,7 @@
 
 LemonadeJS charts block — 35 chart types from one data definition, responsive with no resize code.
 
-**✓ verified** — 137 contract checks · framework-agnostic · zero dependencies
+**✓ verified** — 139 contract checks · framework-agnostic · zero dependencies
 
 ## Overview
 
@@ -74,7 +74,9 @@ series take `width`, `dashed` (`true`, `'dashed'`, `'dotted'` or
 `'dashdot'`), `markers`, `markersize`, `marker` and `connectgaps`, and a
 `trendline`: `'linear'`, `'exponential'`, `'logarithmic'`, `'power'`,
 `'polynomial'` (`order`) or `'movingAverage'` (`period`), as a type or
-`{ type, order?, period?, color?, dashed?, width? }`.
+`{ type, order?, period?, color?, dashed?, width? }`. Any series takes
+`labels` (its value labels, overriding the chart `labels`; unset =
+follow the chart).
 
 A waterfall styles its bars by kind: `positive` (the increases),
 `negative` and `total` on the series, each `{ color, border: { color,
@@ -281,7 +283,8 @@ state for a two-way live wire. Attribute strings are coerced to the declared typ
 | `labelrotation` | number | — | x-label angle in deg (unset = auto-rotate when crowded) |
 | `legend` | any | — | show the legend (default on): boolean \| { show?, position?, title?, font?, titlefont? } |
 | `legendposition` | string | `''` | '' auto \| 'top' \| 'bottom' \| 'left' \| 'right' (or legend.position) |
-| `labels` | boolean | `true` | value labels on bars / % on slices (set false to hide) |
+| `labels` | boolean | `true` | value labels: on bars, % on slices, the value above every line/area/scatter point (set false to hide) |
+| `endlabels` | boolean | `false` | line: the series name at each line's end instead of the legend |
 | `horizontal` | boolean | `false` | bar/stacked: horizontal bars (categories on the y-axis) |
 | `mirror` | boolean | `false` | horizontal bars: population pyramid — series[0] grows leftward, abs labels |
 | `tooltip` | boolean | `true` | styled hover tooltip following the cursor |

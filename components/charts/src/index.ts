@@ -67,7 +67,9 @@
  * `'dashdot'`), `markers`, `markersize`, `marker` and `connectgaps`, and a
  * `trendline`: `'linear'`, `'exponential'`, `'logarithmic'`, `'power'`,
  * `'polynomial'` (`order`) or `'movingAverage'` (`period`), as a type or
- * `{ type, order?, period?, color?, dashed?, width? }`.
+ * `{ type, order?, period?, color?, dashed?, width? }`. Any series takes
+ * `labels` (its value labels, overriding the chart `labels`; unset =
+ * follow the chart).
  *
  * A waterfall styles its bars by kind: `positive` (the increases),
  * `negative` and `total` on the series, each `{ color, border: { color,
@@ -275,7 +277,8 @@ export const Charts = component('charts', {
     labelrotation: Number,   // x-label angle in deg (unset = auto-rotate when crowded)
     legend: null,            // show the legend (default on): boolean | { show?, position?, title?, font?, titlefont? }
     legendposition: '',      // '' auto | 'top' | 'bottom' | 'left' | 'right' (or legend.position)
-    labels: true,            // value labels on bars / % on slices (set false to hide)
+    labels: true,            // value labels: on bars, % on slices, the value above every line/area/scatter point (set false to hide)
+    endlabels: false,        // line: the series name at each line's end instead of the legend
     horizontal: false,       // bar/stacked: horizontal bars (categories on the y-axis)
     mirror: false,           // horizontal bars: population pyramid — series[0] grows leftward, abs labels
     tooltip: true,           // styled hover tooltip following the cursor
@@ -372,6 +375,7 @@ export const Charts = component('charts', {
         legend: props.legend.value as boolean | string | ChartLegend,
         legendposition: props.legendposition.value,
         labels: props.labels.value,
+        endlabels: props.endlabels.value,
         horizontal: props.horizontal.value,
         mirror: props.mirror.value,
         tooltip: props.tooltip.value,
@@ -588,10 +592,10 @@ export const Charts = component('charts', {
             // the legend only shows when labels are off or a position is
             // explicitly requested (it would duplicate the callouts)
             || (m.type === 'pie' && m.labels && !m.legendposition)
-            // multi-series pure-line charts label each series at its line
+            // pure-line charts with endlabels name each series at its line
             // end instead (cleaner than legend + colour matching)
-            || (m.type === 'line' && m.labels && !m.legendposition
-                && m.series.length > 1 && m.series.every((s) => s.type === 'line'));
+            || (m.type === 'line' && m.endlabels && !m.legendposition
+                && m.series.every((s) => s.type === 'line'));
         const leg = m.legend && !noLegend ? legend(m, legendEntries(m)) : false;
         return html`<div class="lm-chart-content" data-legend="${pos}">
             ${pos === 'top' || pos === 'left' ? leg : false}

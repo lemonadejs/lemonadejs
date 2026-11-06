@@ -104,6 +104,7 @@ interface Cfg {
     categories: string[];
     series: ChartSeries[];
     labels: boolean;
+    endlabels?: boolean;
     legend: boolean;
     gridlines: boolean;
     animate: boolean;
@@ -153,7 +154,7 @@ const presets = (): Cfg[] => [
         { name: 'Users', data: walk(12, rnd(40, 70), 12) },
         { name: 'Sessions', data: walk(12, rnd(25, 45), 8) },
         { name: 'Average', data: walk(12, rnd(10, 20), 4), dashed: true },
-    ] as ChartSeries[], ...base, labels: true, markers: false, smooth: true },
+    ] as ChartSeries[], ...base, endlabels: true, markers: false, smooth: true },
     { title: 'Datetime axis', type: 'line', xtype: 'datetime',
         categories: Array.from({ length: 12 }, (_, i) => new Date(2026, 0, 1 + i * 7).toISOString().slice(0, 10)),
         series: [{ name: 'Visitors', data: walk(12, rnd(40, 80), 10) }], ...base, area: true, markers: false, smooth: true },
