@@ -21,6 +21,15 @@ LemonadeJS router block — contract-verified, framework-agnostic.
     leaked these listeners forever; v6 routers destroy clean)
   - slide animation between sibling pages by route order (v5)
   - document.title from route.title or the page's first <h1> (v5)
+  - page hooks: a page component calls onEnter(fn) / onLeave(fn) in
+    its setup (v5: self.onenter / self.onleave) — fn runs on EVERY
+    show / hide of the cached page, so a page reloads its own data:
+      import { onEnter } from '@lemonadejs/router';
+      const Account = () => { onEnter(load); return html`...`; };
+    onEnter(route, previous) fires after route.onenter and after the
+    page's onMount; onLeave(route, next) after route.onleave. A
+    ':param' remount drops the old instance's hooks. Outside a
+    router page both are a no-op (the page still works standalone).
 
 v5 → v6 mapping: controller → component (by value, the v6 way);
 declaring routes as HTML children was dropped — routes are a typed

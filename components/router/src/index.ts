@@ -14,6 +14,15 @@
  *     leaked these listeners forever; v6 routers destroy clean)
  *   - slide animation between sibling pages by route order (v5)
  *   - document.title from route.title or the page's first <h1> (v5)
+ *   - page hooks: a page component calls onEnter(fn) / onLeave(fn) in
+ *     its setup (v5: self.onenter / self.onleave) — fn runs on EVERY
+ *     show / hide of the cached page, so a page reloads its own data:
+ *       import { onEnter } from '@lemonadejs/router';
+ *       const Account = () => { onEnter(load); return html`...`; };
+ *     onEnter(route, previous) fires after route.onenter and after the
+ *     page's onMount; onLeave(route, next) after route.onleave. A
+ *     ':param' remount drops the old instance's hooks. Outside a
+ *     router page both are a no-op (the page still works standalone).
  *
  * v5 → v6 mapping: controller → component (by value, the v6 way);
  * declaring routes as HTML children was dropped — routes are a typed
@@ -38,12 +47,32 @@ export interface Route {
     onleave?: (route: Route, next: Route) => void;
 }
 
+type EnterHook = (route: Route, previous: Route | null) => void;
+type LeaveHook = (route: Route, next: Route) => void;
+
 interface Page {
     route: Route;
     el: HTMLElement | null;
     handle: Handle | null;
     key: string; // serialized params — a change remounts the component
+    enter: EnterHook[]; // onEnter() hooks of the mounted instance
+    leave: LeaveHook[]; // onLeave() hooks of the mounted instance
 }
+
+/** The page whose component is being set up right now (mount is sync) */
+let mounting: Page | null = null;
+
+/** Page hook: run fn every time this page is shown — the first visit
+ *  and every revisit of the cached DOM. Call it in the setup of a page
+ *  component (or of a child rendered with it). */
+export const onEnter = (fn: EnterHook): void => {
+    mounting?.enter.push(fn);
+};
+
+/** Page hook: run fn every time the router leaves this page. */
+export const onLeave = (fn: LeaveHook): void => {
+    mounting?.leave.push(fn);
+};
 
 const ANIMATION = 400;
 
@@ -75,10 +104,13 @@ export const Router = component('router', {
         el: null,
         handle: null,
         key: '',
+        enter: [],
+        leave: [],
     }));
 
     let root: HTMLElement | null = null;
     let current: Page | null = null;
+    let leaving: LeaveHook[] = []; // onLeave hooks of the instance on screen
     let path = '';
     let fetching: AbortController | null = null;
     let animationTimer: ReturnType<typeof setTimeout> | null = null;
@@ -123,9 +155,18 @@ export const Router = component('router', {
         el.style.display = 'none';
         page.el = el;
         page.key = key;
+        page.enter = [];
+        page.leave = [];
         reorder();
         if (page.route.component) {
-            page.handle = mount(page.route.component, el, params);
+            // Collect the onEnter/onLeave calls made during this setup
+            const outer = mounting;
+            mounting = page;
+            try {
+                page.handle = mount(page.route.component, el, params);
+            } finally {
+                mounting = outer;
+            }
         } else if (remote != null) {
             el.innerHTML = remote;
         }
@@ -173,9 +214,18 @@ export const Router = component('router', {
             old.el.style.display = 'none';
         }
         page.el!.style.display = '';
-        old?.route.onleave?.(old.route, page.route);
+        if (old) {
+            old.route.onleave?.(old.route, page.route);
+            for (const fn of leaving) {
+                fn(old.route, page.route);
+            }
+        }
         current = page;
+        leaving = page.leave;
         page.route.onenter?.(page.route, old ? old.route : null);
+        for (const fn of page.enter) {
+            fn(page.route, old ? old.route : null);
+        }
         const title = page.route.title || page.el!.querySelector('h1')?.textContent;
         if (title) {
             document.title = title;
@@ -243,6 +293,10 @@ export const Router = component('router', {
             page.el.remove();
             page.el = null;
             page.handle = null;
+            // The unmounted instance's hooks are never called again
+            if (page === current) {
+                leaving = [];
+            }
         }
         const existed = !!page.el;
         const controller = page.route.url && !existed ? new AbortController() : null;

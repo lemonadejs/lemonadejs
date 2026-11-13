@@ -6,7 +6,7 @@
 import { describe, it, expect, afterEach, vi } from 'vitest';
 import { html, type Component } from 'lemonadejs';
 import { render as t, verify } from 'lemonadejs/test';
-import Router, { type Route } from '@lemonadejs/router';
+import Router, { onEnter, onLeave, type Route } from '@lemonadejs/router';
 
 type Api = { setPath(p: string, ignore?: boolean): Route | null; current(): Route | null };
 
@@ -157,6 +157,85 @@ describe('components/router — behaviors', () => {
             { path: '/about', component: About, onenter: () => calls.push('enter:/about') },
         ]).setPath('/about');
         expect(calls).toEqual(['enter:/', 'leave:/', 'enter:/about']);
+    });
+
+    it('page onEnter/onLeave fire on every show/hide of the cached page (v5 self.onenter)', () => {
+        const calls: string[] = [];
+        const A: Component = (_, { onMount }) => {
+            onMount(() => {
+                calls.push('mount:a');
+            });
+            onEnter((route, previous) => calls.push('enter:a:' + route.path + ':' + (previous ? previous.path : null)));
+            onLeave((route, next) => calls.push('leave:a:' + route.path + ':' + next.path));
+            return html`<div><h1>A</h1></div>`;
+        };
+        const B: Component = () => {
+            onEnter(() => calls.push('enter:b'));
+            return html`<div><h1>B</h1></div>`;
+        };
+        const api = open({}, [
+            { path: '/', component: A, onenter: () => calls.push('route-enter:a'), onleave: () => calls.push('route-leave:a') },
+            { path: '/b', component: B },
+        ]);
+        expect(calls).toEqual(['mount:a', 'route-enter:a', 'enter:a:/:null']);
+        calls.length = 0;
+        api.setPath('/b');
+        expect(calls).toEqual(['route-leave:a', 'leave:a:/:/b', 'enter:b']);
+        calls.length = 0;
+        api.setPath('/'); // cached DOM reshown: no mount, hooks still fire
+        expect(calls).toEqual(['route-enter:a', 'enter:a:/:/b']);
+    });
+
+    it('page hooks: a child component of the page can register too', () => {
+        const calls: string[] = [];
+        const Child: Component = () => {
+            onEnter(() => calls.push('child'));
+            return html`<span>child</span>`;
+        };
+        const Parent: Component = () => {
+            onEnter(() => calls.push('parent'));
+            return html`<div><h1>P</h1><${Child} /></div>`;
+        };
+        const api = open({}, [
+            { path: '/', component: Parent },
+            { path: '/about', component: About },
+        ]);
+        expect(calls).toEqual(['parent', 'child']);
+        api.setPath('/about');
+        api.setPath('/');
+        expect(calls).toEqual(['parent', 'child', 'parent', 'child']);
+    });
+
+    it('page hooks: a :param remount replaces the hooks with the new instance', () => {
+        const calls: string[] = [];
+        const U: Component<{ id?: string }> = (props) => {
+            const id = props.id;
+            onEnter(() => calls.push('enter:' + id));
+            onLeave(() => calls.push('leave:' + id));
+            return html`<div><h1>User</h1></div>`;
+        };
+        const api = open({}, [
+            { path: '/', component: Home },
+            { path: '/user/:id', component: U },
+        ]);
+        api.setPath('/user/1');
+        api.setPath('/user/2'); // instance 1 unmounted: its hooks are dead
+        api.setPath('/');
+        api.setPath('/user/2');
+        expect(calls).toEqual(['enter:1', 'enter:2', 'leave:2', 'enter:2']);
+    });
+
+    it('page hooks are a no-op outside a router page', () => {
+        const fn = vi.fn();
+        const Solo: Component = () => {
+            onEnter(fn);
+            onLeave(fn);
+            return html`<div>solo</div>`;
+        };
+        const h = t(Solo, {});
+        expect(h.root.textContent).toContain('solo');
+        expect(fn).not.toHaveBeenCalled();
+        h.unmount();
     });
 
     it('single mode keeps ONE page attached (v5)', () => {
