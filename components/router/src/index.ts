@@ -329,11 +329,18 @@ export const Router = component('router', {
     });
 
     // v5 intercepted every internal <a> — v6 does too, but cleans up
+    // Only a plain primary click on a same-origin link is ours: modifier
+    // clicks (new tab/window, download), other buttons, clicks someone
+    // already handled, and mailto:/tel:/cross-origin links stay native.
     const onClick = (e: MouseEvent) => {
+        if (e.defaultPrevented || e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) {
+            return;
+        }
         const a = (e.target as Element).closest?.('a');
-        if (a && a.href && !a.getAttribute('target')) {
+        if (a && a.href && !a.getAttribute('target') && !a.hasAttribute('download')) {
             const href = a.getAttribute('href') || '';
-            if (href.indexOf('http') !== 0 && href.indexOf('#') === -1) {
+            // 'http' prefix kept from v5: an absolute URL is the way to force a full load
+            if (href.indexOf('http') !== 0 && a.origin === window.location.origin && href.indexOf('#') === -1) {
                 setPath(a.pathname + a.search);
                 e.preventDefault();
             }

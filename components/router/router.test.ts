@@ -116,6 +116,50 @@ describe('components/router — behaviors', () => {
         expect(changes.filter((p) => p === '/about')).toHaveLength(0);
     });
 
+    it('leaves modifier, non-primary and already-handled clicks to the browser', () => {
+        const changes: string[] = [];
+        open({ onchangepage: (r: Route) => changes.push(r.path) });
+        const link = handle!.query('a')!; // internal: /about
+        const stop = (e: Event) => e.preventDefault();
+        document.addEventListener('click', stop);
+        const inits: MouseEventInit[] = [{ ctrlKey: true }, { metaKey: true }, { shiftKey: true }, { altKey: true }, { button: 1 }];
+        for (const init of inits) {
+            const e = new MouseEvent('click', { bubbles: true, cancelable: true, ...init });
+            link.dispatchEvent(e);
+        }
+        document.removeEventListener('click', stop);
+        // A click a closer handler already prevented is not ours either
+        link.addEventListener('click', stop);
+        link.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+        link.removeEventListener('click', stop);
+        expect(changes).toEqual(['/']);
+        expect(window.location.pathname).toBe('/');
+    });
+
+    it('leaves mailto:, tel:, protocol-relative, download and absolute links alone', () => {
+        const changes: string[] = [];
+        open({ onchangepage: (r: Route) => changes.push(r.path) });
+        const page = visible()[0];
+        for (const a of [
+            '<a href="mailto:a@b.co">x</a>',
+            '<a href="tel:+123">x</a>',
+            '<a href="//x.com/about">x</a>',
+            '<a href="/about" download>x</a>',
+            `<a href="${window.location.origin}/about">x</a>`, // absolute = full load, as in v5
+        ]) {
+            page.insertAdjacentHTML('beforeend', a);
+        }
+        const push = vi.spyOn(history, 'pushState');
+        const stop = (e: Event) => e.preventDefault();
+        document.addEventListener('click', stop);
+        for (const link of [...page.querySelectorAll('a')].slice(1)) {
+            link.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+        }
+        document.removeEventListener('click', stop);
+        expect(push).not.toHaveBeenCalled();
+        expect(changes).toEqual(['/']);
+    });
+
     it('popstate navigates without pushing history (v5 back button)', () => {
         const api = open();
         api.setPath('/about');
